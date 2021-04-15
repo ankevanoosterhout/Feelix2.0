@@ -1,0 +1,146 @@
+
+    #field-inset {
+      display: inline-block;
+      position: absolute;
+      top: 0;
+      left: 44px;
+      margin: 0;
+      height: calc(65vh - 20px);
+      width: calc(100vw - 44px);
+      min-height:400px;
+      overflow: hidden;
+      z-index: 0;
+    }
+
+    #field-inset.toolbarInset-hidden {
+      left:0;
+      width: 100%;
+    }
+
+    .grid line {
+      stroke: #ddd;
+      stroke-width: 0.3;
+      /* vector-effect: non-scaling-stroke; */
+    }
+    .gridSub line {
+      stroke: #ddd;
+      stroke-width: 0.3;
+      opacity: 0.8;
+      /* vector-effect: non-scaling-stroke; */
+    }
+
+    .spacingSubX {
+      opacity: 0.8;
+    }
+
+    #boxOutline path {
+      stroke-width: 0.8;
+    }
+
+    /* .lines path,
+    .lines line {
+      vector-effect: non-scaling-stroke;
+    }
+    .forceNode line,
+    .forceNode path,
+    .lineThicknessCursorConn line,
+    .innerNode line,
+    .innerNode path,
+    .node line,
+    .node path {
+      vector-effect: non-scaling-stroke;
+    } */
+
+    line.stepLine {
+      stroke-width: 0.3;
+      /* vector-effect: non-scaling-stroke; */
+    }
+
+    .stepLine.M line {
+      stroke-width: 1;
+    }
+    #selectionBox path {
+      shape-rendering: geometricPrecision;
+      stroke-width: 1px;
+      /* vector-effect: non-scaling-stroke; */
+    }
+    #selectionBox line {
+      stroke-width:1px;
+      /* vector-effect: non-scaling-stroke; */
+      shape-rendering: geometricPrecision;
+    }
+    .centerBBox:hover {
+      cursor: url('../../../../assets/icons/tools/cursor-drag.png'), none;
+    }
+    /*draw area*/
+
+    /*.drawAreaContainer {*/
+      /*overflow: hidden;*/
+    /*}*/
+
+
+    #handle_0 {
+      cursor: nw-resize;
+    }
+    #handle_2 {
+      cursor: ne-resize;
+    }
+    #handle_4 {
+      cursor: se-resize;
+    }
+    #handle_6 {
+      cursor: sw-resize;
+    }
+    #handle_1, #handle_5 {
+      cursor: n-resize;
+    }
+
+    #handle_3, #handle_7 {
+      cursor: e-resize;
+    }
+
+    #field-inset rect.guide {
+      fill: #005baa;
+    }
+    #field-inset rect.guide.selected {
+      fill: #00c9cc;
+    }
+    .guide {
+      fill: #005baa;
+    }
+    .guide.selected {
+      fill: #00c9cc;
+    }
+
+    .smallAxisX text, .smallAxisY text {
+      display: none;
+    }
+
+    .axis path, .axisBottom path, .smallAxisX path, .smallAxisY path {
+      display: none;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .axis text, .axisBottom text {
+      fill: #999;
+      font-size: 8px;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .axis line, .axisBottom line, .smallAxisX line, .smallAxisY line {
+      fill: none;
+      stroke: #999;
+      stroke-width: 1;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .axis line, .axisBottom line {
+      stroke-width: 1.5;
+    }
+
+    .axis .tick:first-child {
+      display: none;
+    }

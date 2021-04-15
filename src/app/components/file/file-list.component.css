@@ -1,0 +1,182 @@
+.open-tabs {
+  position:absolute;
+  top:0;
+  left:0;
+  width: 100%;
+  box-sizing:border-box;
+  padding-left: 0;
+  height: 22px;
+  background: #2c2c2c;
+  border-bottom: 1px solid #202020;
+  z-index:10;
+  overflow: hidden;
+}
+
+.open-tabs.effects {
+  top: 44px;
+  left: 45px;
+  height: 20px;
+  width: calc(100% - 44px);
+  border-top: 1px solid #1c1c1c;
+  border-bottom: 1px solid #1c1c1c;
+  margin-left: -1px;
+}
+.open-tabs.effects.wide {
+  left: 0;
+  width: 100%;
+  margin:0;
+}
+
+
+.open-tabs.FeelixioFiles {
+  margin-top:0;
+  border-top: 1px solid #1c1c1c;
+  border-bottom: 1px solid #1c1c1c;
+  height: 23px;
+}
+
+.scroll-arrows {
+  position:absolute;
+  width: 32px;
+  height: 22px;
+  margin-top: 0;
+  top:0;
+  right:0;
+  background: #2c2c2c;
+  z-index: 25;
+}
+
+.scroll-arrows div {
+  position:relative;
+  width: 16px;
+  height: 22px;
+  float:left;
+}
+
+.arrow {
+  top:0;
+  margin:0;
+  width: 16px;
+  height: 22px;
+  position:absolute;
+  display: inline-block;
+  box-sizing: border-box;
+  background: #4a4a4a;
+  border-left: 1px solid #2f2f2f;
+  border-top: 1px solid #2f2f2f;
+  border-bottom: 1px solid #2f2f2f;
+}
+
+.arrow:hover {
+  background: #333;
+}
+.arrow:active {
+  background: #555;
+}
+
+.arrow.left:after,
+.arrow.right:after {
+  content:"";
+  position:absolute;
+  display: block;
+  left:0;
+  margin-left: 5px;
+  top: 6px;
+  width: 0;
+  height: 0;
+  border-bottom: 4px solid transparent;
+  border-top: 4px solid transparent;
+  border-right: 4px solid #999;
+}
+
+.arrow.right:after {
+  border-right: none;
+  border-left: 4px solid #999;
+}
+
+.tabs {
+  display: inline-flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  width: auto;
+  height: 22px;
+  list-style-type: none;
+  color: #c7c7c7;
+  margin:0;
+  padding:0;
+  float:left;
+}
+
+
+.tabs.effects {
+  height: 20px;
+  margin:-1px 0 0;
+}
+
+.tabs li {
+  position:relative;
+  display: inline-block;
+  padding: 0 10px 0 12px;
+  line-height: 20px;
+  width:130px;
+  height:21px;
+  font-size: 11px;
+  background: #3a3a3a;
+  border-right:1px solid #2c2c2c;
+  border-top:1px solid #2c2c2c;
+  box-sizing: content-box;
+}
+
+.tabs.effects li {
+  height:20px;
+  line-height: 17px;
+}
+
+
+.tabs.FeelixioFiles li {
+  border-top:none;
+  height: 22px;
+  line-height: 21px;
+  border-right:1px solid #1c1c1c;
+}
+.filename-tab {
+  position:relative;
+  width: auto;
+  margin-right:3px;
+  max-width: calc(100% - 25px);
+  left:0;
+  overflow: hidden;
+  display: flex;
+  display: -webkit-box;
+  text-overflow: ellipsis;
+  -webkit-line-clamp:1;
+  -webkit-box-orient: vertical;
+  float:left;
+  user-select: none;
+  cursor:default;
+}
+
+.tabs li.active {
+  background:#4a4a4a;
+  border-bottom:1px solid #4a4a4a;
+}
+
+.saved {
+  display:inline-block;
+  padding: 0 4px;
+  font-size: 10px;
+  user-select: none;
+  cursor:default;
+}
+
+.close.closeTab {
+  right:0;
+  margin-right:8px;
+  margin-top: 3px;
+  position:absolute;
+  z-index: 20;
+}
+
+.close.effects {
+  margin-top: 1px;
+}

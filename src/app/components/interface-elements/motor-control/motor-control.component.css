@@ -1,0 +1,329 @@
+ul {
+  margin:0;
+  padding:0;
+  list-style-type: none;
+}
+
+#motor-control-section {
+  position: absolute;
+  display: inline-block;
+  width: calc(100% - 44px);
+  height:100%;
+  top:0;
+  right:0;
+  overflow-x:hidden;
+  overflow-y: scroll;
+}
+
+#motor-control-section.wide {
+  width: 100%;
+}
+
+
+#motor-list {
+  position: relative;
+  display: inline-block;
+  width: calc(100% - 6px);
+  height:auto;
+  padding: 20px 0;
+}
+
+
+/* width */
+#motor-control-section::-webkit-scrollbar {
+  width: 6px;
+}
+
+/* Track */
+#motor-control-section::-webkit-scrollbar-track {
+  background-image: url('../../../../assets/images/transparent-bg.png') repeat-y !important;
+}
+
+/* Handle */
+#motor-control-section::-webkit-scrollbar-thumb {
+  background: #1c1c1c;
+}
+
+/* Handle on hover */
+#motor-control-section::-webkit-scrollbar-thumb:hover {
+  background: #111;
+}
+
+
+#motor-list li {
+  position: relative;
+  display:inline-block;
+  width: 100%;
+  height: auto;
+  box-sizing: border-box;
+  padding: 0px 10px 20px;
+  vertical-align: top;
+}
+
+#motor-list.small li {
+  padding: 0 10px;
+  height: auto;
+}
+
+.info {
+  display: inline-block;
+  position: relative;
+  top:0;
+  left:0;
+  width: 100%;
+  height: 25px;
+  margin: 0;
+  padding: 2px 0;
+  box-sizing: border-box;
+  z-index: 100;
+  overflow: visible;
+}
+
+.column-visualization {
+  position: relative;
+  display:inline-block;
+  width: 100%;
+  height: auto;
+}
+
+.PID-control {
+  position:relative;
+  display:inline-block;
+  width: 60px;
+  height: 180px;
+  vertical-align: middle;
+}
+
+#PID-controller li {
+  display: inline-block;
+  width: 60px;
+  height: 20px;
+  padding: 0;
+  margin: 5px 10px;
+  line-height: 20px;
+}
+
+.PID-control input {
+  width: 25px;
+  font-size: 10px;
+  padding: 4px;
+}
+
+.PID-control label {
+  width: 20px;
+}
+
+.comport, .PID-name, .motor-info {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 11px;
+  color:#eee;
+}
+.comport, .motor-info {
+  display:inline-block;
+  position:relative;
+  vertical-align: top;
+}
+
+.motor-info {
+  float:right;
+  color: #FF9100;
+  margin-left: 10px;
+  margin-top: 2px;
+}
+
+.motor-info.posUnits {
+  margin: 0 4px 0 2px;
+}
+
+.selectList {
+  display: inline-block;
+  vertical-align:top;
+  cursor: default;
+  width: 135px;
+  height: 17px;
+  margin-top: -2px;
+  z-index: 100;
+}
+
+
+.dropdown {
+  margin: 0;
+  padding: 0;
+  list-style-type:none;
+  position: absolute;
+  display: inline-block;
+  top:16px;
+  left: 35px;
+  width: auto;
+  background: #4a4a4a;
+  border: 1px solid #999;
+  z-index: 110;
+}
+
+.dropdown li, .selectedPort {
+  display: block;
+  position: relative;
+  height: 18px;
+  width: 120px;
+  font-size: 12px;
+  line-height: 18px;
+  padding: 2px 10px 2px 5px;
+  color: #ccc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.selectedPort  {
+  line-height: 11px;
+}
+.dropdown li:hover {
+  background: #4a4a4a;
+  color: #ccc;
+}
+
+.dropdown-arrow {
+  position: absolute;
+  top: 5px;
+  margin-left: 132px;
+  width: 4px;
+  height: 4px;
+  border-bottom: 1px solid #ccc;
+  border-left: 1px solid #ccc;
+  transform: rotate(-45deg);
+  vertical-align:top;
+}
+
+.selectedPort {
+  padding-right: 12px;
+  padding-left: 6px;
+  color: #ccc;
+  width: 115px;
+}
+
+#buttonsMotorControl .dropdown-buttons {
+  list-style-type: none;
+  position: relative;
+  left: 30px;
+  height: 20px;
+  vertical-align: top;
+  display: inline-block;
+}
+
+#buttonsMotorControl .dropdown-buttons li {
+  display: inline-block;
+  position: relative;
+  vertical-align: top;
+  width: 20px;
+  height: 20px;
+  border: 1px solid #1c1c1c;
+  background: #3a3a3a;
+  opacity: 0.6;
+  margin-right: 6px;
+  margin-top: -3px;
+  padding:0;
+}
+
+#buttonsMotorControl .dropdown-buttons li:hover {
+  opacity: 0.8;
+  background: #4a4a4a;
+}
+
+#buttonsMotorControl .dropdown-buttons li img {
+  position:absolute;
+  width: 80%;
+  height: 80%;
+  padding: 10%;
+}
+
+#buttonsMotorControl, #rangeValues {
+  position:relative;
+  width: auto;
+  height: 17px;
+  display: inline-block;
+}
+
+#rangeValues {
+  font-size: 11px;
+  color: #ccc;
+  margin-left: 70px;
+  vertical-align: top;
+  margin-top: -2px;
+}
+
+input {
+  width: 35px;
+  -webkit-appearance: none;
+  background: #aaa;
+  padding: 2px 5px;
+  border: 1px solid #222;
+  border-radius: 2px;
+  font-size: 11px;
+  margin: 0;
+  text-align: right;
+  z-index: 110;
+  user-select: auto !important;
+  pointer-events: auto !important;
+  vertical-align: top;
+}
+
+input:focus {
+  outline: none;
+}
+
+input#collection-name {
+  background: transparent;
+  border:none;
+  color: #ccc;
+  text-align: left;
+  left:0;
+  width: 75px;
+  margin-top: -2px;
+}
+
+.form-row {
+  padding: 0;
+  width: auto;
+  float: right;
+  margin-right: -8px;
+}
+.form-row.left {
+  float:none;
+}
+
+select {
+  -webkit-appearance:none;
+  display: inline-block;
+  padding: 3px 8px 3px 8px;
+  width: 48px;
+  font-size: 11px;
+  font-family: Arial, sans-serif;
+  background: #3a3a3a;
+  border: 1px solid #2c2c2c;
+  border-radius: 0;
+  box-shadow:none;
+  margin: -3px 0 0 15px;
+  vertical-align: top;
+  text-align: right;
+  color:#ccc;
+}
+
+select#comport {
+  width: 80px;
+}
+
+select option {
+  height: 30px;
+}
+
+select:after {
+  content:"";
+  position: absolute;
+  left: 80px;
+  /* top: 0; */
+  vertical-align: top;
+  margin-top:11px;
+  border-top:5px solid #666;
+  border-left:5px solid transparent;
+  border-right:5px solid transparent;
+  pointer-events: none;
+}

@@ -1,0 +1,51 @@
+<div id="motor-control-section">
+
+  <ul id="motor-list">
+    <li *ngFor="let collection of this.motorControlService.file.collections">
+      <div class="info">
+        <div class="form-row left" *ngIf="collection.name">
+          <input type="text" id="collection-name" name="collection-name" [(ngModel)]="collection.name">
+        </div>
+
+        <div class="form-row left">
+          <label class="select comport"></label>
+          <select class="form-control" id="comport" [(ngModel)]="collection.microcontroller" name="comport">
+              <option *ngFor="let port of savedMicrocontrollers" [ngValue]="port">{{ port.serialPort.path }}</option>
+          </select>
+        </div>
+
+        <div id="buttonsMotorControl">
+          <ul class="dropdown-buttons">
+            <li id="upload" (click)="upload()"><img src="./assets/icons/buttons/upload.svg" title="upload"></li>
+            <li id="play" (click)="play()"><img src="./assets/icons/buttons/play.svg" title="play"></li>
+            <li id="loop" (click)="loop()"><img src="./assets/icons/buttons/refresh.svg" title="repeat every rotation"></li>
+            <li id="delete" (click)="delete(collection.id)"><img src="./assets/icons/buttons/bin.svg" title="delete collection"></li>
+          </ul>
+        </div>
+
+        <div id="rangeValues" *ngIf="this.motorControlService.file.configuration.collectionDisplay === 'large'">
+          <label>range</label>
+          <input type="number" id="range-start" name="rotation-start">
+          <input type="number" id="range-end" name="rotation-end">
+        </div>
+
+
+
+        <div class="form-row">
+          <label class="select percentages"></label>
+          <select class="form-control" id="select" (change)="this.motorControlService.updateScale(collection.id)" [(ngModel)]="collection.scale" name="scale" [compareWith]="compareValue">
+              <option *ngFor="let scale of scaleOptions" [ngValue]="scale">{{ scale.text }}</option>
+          </select>
+        </div>
+
+        <div class="motor-info" id="speed">0 RPM</div>
+        <div class="motor-info posUnits" id="posUnits">&deg;</div>
+        <div class="motor-info" id="position">0 </div>
+      </div>
+
+      <div id="collection-{{ collection.id }}" class="column-visualization" (drop)="drop($event)" (dragover)="allowDrop($event)"></div>
+
+    </li>
+  </ul>
+
+</div>

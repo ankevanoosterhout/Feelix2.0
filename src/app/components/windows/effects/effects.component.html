@@ -1,0 +1,226 @@
+  <div class="library-content">
+
+    <ul class="tabsContainer">
+      <li *ngFor="let tab of tabs" id="tab-{{ tab.id }}" [ngClass]="{ active: tab.selected, disabled: tab.disabled }"
+      (click)="selectTab(tab.id);">{{ tab.name }}</li>
+    </ul>
+
+    <ul class="tabContent" id="outer">
+      <!-- normal tab -->
+
+      <div class="innerContent" id="inner" [hidden]="activeTab !== 0">
+        <li class="blockContent large" *ngFor="let item of this.drawingService.file.effects">
+          <div class="rowDetails">
+            <div class="title">{{ item.name }}</div>
+          </div>
+          <div class="row">
+            <div id="effectSVG-{{ item.id }}" class="effectSVG"></div>
+            <div class="buttonsPlayWindow">
+              <div class="buttonPlayWindow delete" (click)="editEffectItem(item.id)">
+                <img src="./assets/icons/buttons/edit.svg">
+              </div>
+              <div class="buttonPlayWindow delete" (click)="deleteEffectItem(item.id)">
+                <img src="./assets/icons/buttons/bin.svg">
+              </div>
+            </div>
+          </div>
+          <div class="overlayEffect" id="overlayEffect-{{ item.id }}"></div>
+          <div class="dragOverlayEffect" id="dragOverlayEffect-{{ item.id }}" draggable="true"
+              (mousedown)="dragstartLib(item)" (dragend)="dragendLib(item)" (mouseup)="dragendLib(item)"></div>
+        </li>
+
+      </div>
+
+      <!-- library tab -->
+
+      <div class="innerContent" id="inner" [hidden]="activeTab !== 1">
+        <li class="blockContent large" *ngFor="let item of this.effectLibraryService.effectLibrary">
+          <div class="rowDetails">
+            <div class="title">{{ item.effect.name }}</div>
+          </div>
+          <div class="row">
+            <div id="effectSVG-{{ item.id }}" class="effectSVG"></div>
+            <div class="buttonsPlayWindow">
+              <div class="buttonPlayWindow delete" (click)="deleteLibraryItem(item.id)">
+                <img src="./assets/icons/buttons/bin.svg">
+              </div>
+              <div class="buttonPlayWindow delete" (click)="exportLibraryItem(item.id)">
+                <img src="./assets/icons/buttons/export.svg">
+              </div>
+            </div>
+          </div>
+          <div class="overlayEffect" id="overlayEffect-{{ item.id }}"></div>
+          <div class="dragOverlayEffect" id="dragOverlayEffect-{{ item.id }}" draggable="true"
+              (mousedown)="dragstartLib(item)" (dragend)="dragendLib(item)" (mouseup)="dragendLib(item)"></div>
+        </li>
+      </div>
+
+      <!-- details tab -->
+
+      <div class="innerContent-details" id="inner" *ngIf="activeTab === 2 && this.drawingService.file.activeEffect">
+        <div class="form-group">
+          <div class="row">
+            <label class="labelRow" for="name">Name</label>
+            <input type="text" class="form-control" id="name" [(ngModel)]="this.drawingService.file.activeEffect.name" name="name"
+            (change)="updateEffect(this.drawingService.file.activeEffect)">
+          </div>
+        </div>
+
+
+        <div class="horizontalSeparator"></div>
+
+        <!-- details -->
+
+        <div class="form-group">
+          <div class="opencloseArrow" [ngClass]="{ open: detailsVisible }" (click)="detailsVisible = !detailsVisible"><div></div></div>
+          <label class="labelRow fullwidth">Details</label>
+          <div *ngIf="detailsVisible">
+            <div class="row">
+              <label class="label">Direction</label>
+              <input type="text" class="form-control" id="name" disabled
+                [(ngModel)]="this.drawingService.file.activeEffect.details.direction" name="direction"
+                (change)="updateEffect(this.drawingService.file.activeEffect)">
+            </div>
+            <div class="row">
+              <label class="label select">Direction</label>
+              <select class="form-control" [(ngModel)]="this.drawingService.file.activeEffect.details.direction" name="directionRotation"
+                (change)="changeLayerEffect(this.drawingService.file.activeEffect)">
+                <option *ngFor="let direction of directionOptions" [ngValue]="direction.name">{{ direction.name }}</option>
+              </select>
+            </div>
+            <div class="row">
+              <label class="label">Mirror</label>
+              <label class="radio-container">
+                <input type="checkbox" class="type" id="mirror" name="mirror"
+                [(ngModel)]="mirror" [checked]="mirror"
+                (change)="mirrorEffect(mirror, this.drawingService.file.activeEffect)">
+                <span class="checkmark radio"></span>
+              </label>
+            </div>
+            <div class="row">
+              <label class="label">Infinite</label>
+              <label class="radio-container">
+                <input type="checkbox" class="type" id="infinite" name="infinite"
+                [(ngModel)]="this.drawingService.file.activeEffect.details.infinite" [checked]="this.drawingService.file.activeEffect.details.infinite"
+                (change)="updateEffect(this.drawingService.file.activeEffect)">
+                <span class="checkmark radio"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!--
+        <div class="horizontalSeparator"  *ngIf="this.drawingService.file.activeEffect.slug < 5"></div>
+
+
+        <div class="form-group" *ngIf="this.drawingService.file.activeEffect.slug < 5">
+          <div class="opencloseArrow" [ngClass]="{ open: advancedVisible }" (click)="advancedVisible = !advancedVisible"><div></div></div>
+          <label class="labelRow fullwidth">Advanced</label>
+          <div class="row variables" *ngIf="advancedVisible">
+
+            <div *ngIf="this.drawingService.file.activeEffect.slug === 0 || this.drawingService.file.activeEffect.slug === 2">
+              <label class="label">{{ this.drawingService.file.activeEffect.details.parameter.name }}</label>
+
+              <div class="el-container" *ngIf="this.drawingService.file.activeEffect.details.parameter.value && this.drawingService.file.activeEffect.details.parameter.value.val &&
+                !this.drawingService.file.activeEffect.details.parameter.value.val2">
+                <input type="number" class="form-control small" id="{{ this.drawingService.file.activeEffect.details.parameter.name }}"
+                  [(ngModel)]="this.drawingService.file.activeEffect.details.parameter.value.val"
+                  (change)="updateVariableValue(this.drawingService.file.activeEffect, this.drawingService.file.activeEffect.details.parameter.value)">
+                <div class="unitSymbol" [innerHtml]="this.drawingService.file.activeEffect.details.parameter.value.unitOptions[0].symbol"></div>
+              </div>
+
+              <div class="row-slider variable" *ngIf="this.drawingService.file.activeEffect.details.parameter.value">
+                <div class="el-slider-container normal">
+                  <input type="range" class="html-slider" [min]="this.drawingService.file.activeEffect.details.parameter.value.start"
+                    [max]="this.drawingService.file.activeEffect.details.parameter.value.end" step="1"
+                    [(ngModel)]="this.drawingService.file.activeEffect.details.parameter.value.val"
+                    (change)="updateVariableValue(this.drawingService.file.activeEffect, this.drawingService.file.activeEffect.details.parameter.value)">
+                </div>
+              </div>
+            </div>
+
+            <div *ngIf="this.drawingService.file.activeEffect.slug === 3">
+              <label class="label">Speed min</label>
+
+              <div class="el-container" *ngIf="this.drawingService.file.activeEffect.details.parameter.value">
+                <input type="number" class="form-control small" id="speedMin" name="speedMin"
+                  [(ngModel)]="this.drawingService.file.activeEffect.details.parameter.value.start"
+                  (change)="updateVariableValue(this.drawingService.file.activeEffect, this.drawingService.file.activeEffect.details.parameter.value)">
+                <div class="unitSymbol" [innerHtml]="this.drawingService.file.activeEffect.details.parameter.value.unitOptions[0].symbol"></div>
+              </div>
+
+              <div class="row-slider variable" *ngIf="this.drawingService.file.activeEffect.details.parameter.value">
+                <div class="el-slider-container normal">
+                  <input type="range" class="html-slider" [min]="0" [max]="150" step="1"
+                    [(ngModel)]="this.drawingService.file.activeEffect.details.parameter.value.start"
+                    (change)="updateVariableValue(this.drawingService.file.activeEffect, this.drawingService.file.activeEffect.details.parameter.value)">
+                </div>
+              </div>
+
+              <label class="label">Speed max</label>
+
+              <div class="el-container" *ngIf="this.drawingService.file.activeEffect.details.parameter.value">
+                <input type="number" class="form-control small" id="speedMax" name="speedMax"
+                  [(ngModel)]="this.drawingService.file.activeEffect.details.parameter.value.end"
+                  (change)="updateVariableValue(this.drawingService.file.activeEffect, this.drawingService.file.activeEffect.details.parameter.value)">
+                <div class="unitSymbol" [innerHtml]="this.drawingService.file.activeEffect.details.parameter.value.unitOptions[0].symbol"></div>
+              </div>
+
+              <div class="row-slider variable" *ngIf="this.drawingService.file.activeEffect.details.parameter.value">
+                <div class="el-slider-container normal">
+                  <input type="range" class="html-slider" [min]="0" [max]="150" step="1"
+                    [(ngModel)]="this.drawingService.file.activeEffect.details.parameter.value.end"
+                    (change)="updateVariableValue(this.drawingService.file.activeEffect, this.drawingService.file.activeEffect.details.parameter.value)">
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div id="linearSVG" class="linearSVG"></div>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="horizontalSeparator" *ngIf="this.drawingService.file.activeEffect.slug === 5"></div>
+
+
+        <div class="form-group" *ngIf="this.drawingService.file.activeEffect.slug === 5">
+          <div class="opencloseArrow" [ngClass]="{ open: repeatVisible }" (click)="repeatVisible = !repeatVisible"><div></div></div>
+          <label class="labelRow fullwidth">Repeat</label>
+          <div *ngIf="repeatVisible">
+            <div class="row">
+              <label class="label">repeat</label>
+              <input type="number" class="form-control small" [(ngModel)]="this.drawingService.file.activeEffect.details.repeat.instances"
+              name="repeatInstances" (change)="repeatEffect(this.drawingService.file.activeEffect)">
+              <span class="span-text no-padding">times</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="horizontalSeparator" *ngIf="this.drawingService.file.activeEffect.slug === 5"></div>
+
+        <div class="form-group" *ngIf="this.drawingService.file.activeEffect.slug === 5">
+          <div class="opencloseArrow" [ngClass]="{ open: qualityVisible }" (click)="qualityVisible = !qualityVisible"><div></div></div>
+          <label class="labelRow small">Quality</label>
+          <input type="text" class="form-control" name="quality" id="quality" disabled [(ngModel)]="this.drawingService.file.activeEffect.details.quality.name">
+
+          <div class="row-slider" *ngIf="qualityVisible">
+            <div class="slider">
+              <input type="range" class="html-slider" [min]="0" [max]="3" step="1" [(ngModel)]="this.drawingService.file.activeEffect.details.quality.level"
+                (change)="changeQuality(this.drawingService.file.activeEffect)">
+            </div>
+          </div>
+        </div>
+
+        <div class="horizontalSeparator" *ngIf="this.drawingService.file.activeEffect.slug === 5"></div>
+
+        <div class="form-group" *ngIf="this.drawingService.file.activeEffect.slug === 5">
+          <div class="text-button" (click)="saveToLibrary(this.drawingService.file.activeEffect)" *ngIf="!this.inLibrary">Save effect to library</div>
+          <div class="text-button" (click)="saveToLibrary(this.drawingService.file.activeEffect)" *ngIf="this.inLibrary">Update effect in library</div>
+        </div>
+      -->
+      </div>
+
+
+    </ul>
+  </div>
