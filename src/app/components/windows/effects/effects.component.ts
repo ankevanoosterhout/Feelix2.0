@@ -180,7 +180,7 @@ export class EffectsComponent implements OnInit, AfterViewInit {
   }
 
   editEffectItem(effectID: string) {
-    // this.drawingService.openEffect(effectID);
+    this.drawingService.openEffect(effectID);
   }
 
   deleteEffectItem(effectID: string) {

@@ -9,7 +9,7 @@ import { Router } from '@angular/router';
   selector: 'app-select-com',
   template: `
     <div class="window-title-bar" *ngIf="this.type === 'custom'">Connect to serialport</div>
-    <div class="window-title-bar" *ngIf="this.type !== 'custom'">Connect to motor</div>
+    <div class="window-title-bar" *ngIf="this.type !== 'custom'">New microcontroller</div>
     <div class="window-content">
 
       <div class="form-row" *ngIf="this.type === 'custom'">
@@ -33,7 +33,7 @@ import { Router } from '@angular/router';
       </div>
       <div class="form-row buttons">
           <button id="submit" (click)="save(selectedPort, selectedController)" *ngIf="this.type === 'custom'">Save</button>
-          <button id="submit" (click)="connect(selectedPort, selectedController)" *ngIf="this.type !== 'custom'">Connect</button>
+          <button id="submit" (click)="saveMicrocontroller(selectedPort, selectedController)" *ngIf="this.type !== 'custom'">Save</button>
           <button id="cancel" (click)="close()">Cancel</button>
       </div>
     </div>`,
@@ -99,15 +99,16 @@ export class SelectComComponent implements OnInit {
   }
 
 
-  connect(selectedPort: any, selectedController: string) {
+  saveMicrocontroller(selectedPort: any, selectedController: string) {
+    this.hardwareService.addMicroController(selectedPort, this.selectedController);
     if (selectedPort !== null && selectedController !== null) {
-      this.electronService.ipcRenderer.send('connectToCOM', { port: this.selectedPort.serialPort, type: this.selectedController });
+      this.electronService.ipcRenderer.send('addMicrocontroller', { port: selectedPort.serialPort, type: this.selectedController });
     }
   }
 
   save(selectedPort: any) {
     if (selectedPort !== null) {
-      this.electronService.ipcRenderer.send('addSerialPort', { port: this.selectedPort.serialPort, type: this.selectedController, name: this.name, baudrate: this.baudrate });
+      this.electronService.ipcRenderer.send('addSerialPort', { port: selectedPort.serialPort, type: this.selectedController, name: this.name, baudrate: this.baudrate });
     }
   }
 

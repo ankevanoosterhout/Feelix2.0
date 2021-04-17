@@ -569,6 +569,10 @@ export class DrawingService {
     this.fileService.update(file);
   }
 
+  openEffect(effectID: string) {
+    this.fileService.openEffect(effectID);
+  }
+
   resetPathData() {
     this.nodeService.reset();
   }
@@ -777,7 +781,7 @@ export class DrawingService {
           .attr('x', x)
           .attr('width', 0.3)
           .attr('y', 0)
-          .attr('height', this.config.svgDy);
+          .attr('height', this.config.svgDy - 20);
     }
 
     this.config.svg.selectAll('.' + cl + '.new')
@@ -846,19 +850,19 @@ export class DrawingService {
           .attr('x', (d: { axis: string; coords: { x: any; }; }) =>
             d.axis === 'x' ? this.config.margin.left : this.nodeService.scale.scaleX(d.coords.x) + this.config.margin.left)
           .attr('width', (d: { axis: string; coords: { x: any; }; }) =>
-            d.axis === 'x' ? this.config.chartDx : 0.3)
+            d.axis === 'x' ? this.config.chartDx : 0.5)
           .attr('y', (d: { axis: string; coords: { y: any; }; }) => {
             if (d.axis === 'y') {
-              return this.config.rulerWidth * -1;
+              return 0;
             } else {
               return this.nodeService.scale.scaleY(d.coords.y) + this.config.margin.top;
             }
           })
           .attr('height', (d: { axis: string; coords: { y: any; }; }) => {
             if (d.axis === 'y') {
-              return this.config.svgDy;
+              return this.config.svgDy - 20;
              } else {
-              return 0.3;
+              return 0.5;
             }
           })
           .style('stroke', 'transparent')
@@ -924,7 +928,7 @@ export class DrawingService {
         .attr('id', 'gridSVG')
         .attr('class', 'gridSVG')
         .attr('clip-path', 'url(#clip)')
-        .attr('transform', 'translate(' + this.config.margin.left + ', ' + this.config.margin.top + ')');
+        .attr('transform', 'translate(0, ' + this.config.margin.top + ')');
 
       this.config.gridSVG.selectAll('rect.gridX')
         .data(gridData.x)

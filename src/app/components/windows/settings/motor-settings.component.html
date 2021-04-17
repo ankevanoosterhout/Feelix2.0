@@ -9,58 +9,7 @@
       (click)="selectTab(tab.id);">{{ tab.name }}</li>
     </ul>
     <div class="tabContent" id="outer">
-      <div class="innerContent-details" id="inner" [hidden]="selectedTabID !== 0" *ngIf="microcontroller">
-        <div>
-          <div class="motorItem">
-            <div class="rowDetails" (mouseleave)="fileDropdownVisible = 0">
-              <div class="motorid">Files</div>
-
-              <div class="filesSelectList" (mouseleave)="fileDropdownVisible = 0">
-                <div class="selectedFile" (click)="changeFileDropdown(microcontroller.motor.id)" *ngIf="microcontroller.motor.file !== null">
-                   {{ microcontroller.motor.file.name }}
-                </div>
-                <div class="selectedFile" (click)="changeFileDropdown(microcontroller.motor.id)" *ngIf="microcontroller.motor.file === null">
-                  select file...
-                </div>
-                <div class="dropdown-arrow" (click)="changeFileDropdown(microcontroller.motor.id)"></div>
-                <ul class="dropdown-buttons">
-                  <li class="addFileToList" (click)="openFiles()"><img src="./assets/icons/buttons/add.svg" title="add file"></li>
-                  <li class="refreshFileList" (click)="refreshFileList()"><img src="./assets/icons/buttons/refresh.svg" title="refresh"></li>
-                  <li class="removeFromList" (click)="removeSelectedFileFromList(microcontroller.motor.id)"><img src="./assets/icons/buttons/bin.svg" title="delete from list"></li>
-                </ul>
-
-                <ul class="dropdown" *ngIf="fileDropdownVisible === microcontroller.motor.id">
-                  <li *ngFor="let file of filelist" (click)="selectFile(file)">{{ file.name }}</li>
-                </ul>
-              </div>
-            <div class="speed posUnits" id="posUnits"></div>
-            <div class="speed pos" id="position">{{ microcontroller.motor.position.current }}</div>
-            <div class="speed" id="speed"> {{ microcontroller.motor.speed }} rpm</div>
-            </div>
-            <div class="row">
-              <div id="overviewSVG-0-{{ microcontroller.motor.id }}" class="overviewSVG cw"></div>
-              <div class="buttonsPlayWindow">
-                <div class="buttonPlayWindow uploadFile" (click)="uploadFile()">
-                  <img src="./assets/icons/buttons/upload-icon.svg" title="upload">
-                </div>
-                <!-- <div class="buttonPlayWindow moveToPos" (click)="moveToPos()">
-                  <img src="./assets/icons/buttons/rotate-to-start.svg" title="move to start position">
-                </div> -->
-              </div>
-              <div id="overviewSVG-1-{{ microcontroller.motor.id }}" class="overviewSVG ccw"></div>
-            </div>
-            <div class="row sleepmode" [ngClass]="{ active: microcontroller.connected }">
-              <div class="icon"><img src="./assets/icons/buttons/sleep.svg" title="sleep mode"></div>
-              <label class="switch sleepmode">
-                <input type="checkbox" [(ngModel)]="microcontroller.motor.sleep" name="sleepmode" class="toggle">
-                <span class="toggleSlider round"></span>
-              </label>
-            </div>
-          </div>
-          <div class="horizontalSeparator"></div>
-        </div>
-      </div>
-
+      
       <div class="innerContent-details" id="inner" *ngIf="selectedTabID === 1 && microcontroller">
         <div class="form-group">
           <label class="labelRow" for="name">Motor</label>

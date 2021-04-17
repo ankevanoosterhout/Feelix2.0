@@ -1,3 +1,4 @@
+import { SliderDrawplane } from './drawing-plane-config.model';
 import { Effect } from './effect.model';
 import { MicroController } from './hardware.model';
 
@@ -32,11 +33,27 @@ export class GeneralInfo {
 export class Scale {
   text: string = null;
   value: number = null;
+  graphD3: any = null;
 
   constructor(text: string, value: number) {
     this.text = text;
     this.value = value;
   }
+}
+
+export class Config {
+  scale = new Scale('100%', 100);
+  zoom: any = null;
+  yScale: any = null;
+  xScale: any = null;
+  newXscale: any = null;
+  newYscale: any = null;
+  xAxis: any = null;
+  xAxisSmall: any = null;
+  xAxisThicks: any = null;
+  xAxisSmallThicks: any = null;
+  slider = new SliderDrawplane();
+  svg: any = null;
 }
 
 export class Collection {
@@ -46,7 +63,7 @@ export class Collection {
   effects: Array<Effect> = [];
   microcontroller: MicroController = null;
   rotation = new Rotation();
-  scale = new Scale('100%', 100);
+  config = new Config();
 
   constructor(id: string) {
     this.id = id;

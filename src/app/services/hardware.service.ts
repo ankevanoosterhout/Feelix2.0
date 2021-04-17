@@ -33,6 +33,8 @@ export class HardwareService {
       this.disconnectAllDevices();
     }
 
+    console.log(data);
+
     window.addEventListener('storage', event => {
         if (event.storageArea === localStorage) {
           if (event.key === HardwareService.MICROCONTROLLER_LOCATION) {
@@ -51,18 +53,22 @@ export class HardwareService {
     );
   }
 
-  addMicroController(COM: any) {
+  addMicroController(COM: any, type: string) {
+    console.log(COM);
     if (COM !== null) {
       if (this.microcontrollers.length > 0) {
-        const controller = this.microcontrollers.filter(m => m.serialPort.path === COM.port.path);
+        const controller = this.microcontrollers.filter(m => m.serialPort.path === COM.serialPort.path);
         if (controller.length === 0) {
-          this.microcontrollers.push(new MicroController(uuid(), COM.port, COM.type));
+          this.microcontrollers.push(new MicroController(uuid(), COM.serialPort, type));
           this.store();
+        } else {
+          controller[0] = new MicroController(controller[0].id, COM.serialPort, type);
         }
       } else {
-        this.microcontrollers.push(new MicroController(uuid(), COM.port, COM.type));
+        this.microcontrollers.push(new MicroController(uuid(), COM.serialPort, type));
         this.store();
       }
+      console.log(this.microcontrollers);
     }
   }
 

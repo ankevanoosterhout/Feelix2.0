@@ -56,7 +56,8 @@ export class MotorSettingsComponent implements OnInit, AfterViewInit {
     { name: 'Arduino DUE' },
     { name: 'Teensy 3.2' },
     { name: 'Teensy 3.5' },
-    { name: 'Teensy 3.6' }
+    { name: 'Teensy 3.6' },
+    { name: 'STM32' }
   ];
 
   public qualityOptions = [

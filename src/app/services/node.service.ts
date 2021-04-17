@@ -381,12 +381,9 @@ export class NodeService {
 
 
   loadFile(paths: Array<Path>) {
-    // console.log('load file ', nodes);
     this.reset();
-    if (paths !== undefined) {
+    if (paths) {
       this.paths = paths;
-    } else {
-      this.paths = [];
     }
     this.selectedNodes = [];
     this.selectedPaths = [];

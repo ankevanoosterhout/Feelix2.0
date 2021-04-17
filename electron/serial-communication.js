@@ -272,15 +272,15 @@ class newSerialPort {
           main.updateSerialProgress({ progress: 0, str: 'Error opening ' + this.COM + ' ' + error });
           this.sp.close();
         } else {
-          main.updateSerialProgress({ progress: 65, str: this.COM + ' is open' });
+          main.updateSerialProgress({ progress: 100, str: this.COM + ' has been added' });
           if (!activePorts.includes(this.COM)) {
             activePorts.push(this.COM);
           }
-          if (!this.connected) {
-            this.sp.write('C', (err) => {
-                if (err) { return console.log(err); }
-            });
-          }
+          // if (!this.connected) {
+          //   this.sp.write('C', (err) => {
+          //       if (err) { return console.log(err); }
+          //   });
+          // }
         }
       });
 

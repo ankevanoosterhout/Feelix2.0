@@ -83,8 +83,8 @@ export class FileService {
     defaultFile.effects.push(defaultEffect);
     defaultFile.activeEffect = defaultEffect;
     const effectTab = new OpenTab(defaultEffect.id, defaultEffect.name);
+    effectTab.isActive = true;
     defaultFile.configuration.openTabs.push(effectTab);
-    console.log(defaultFile);
     this.setEffectActive(defaultFile.activeEffect);
     this.add(defaultFile);
   }
@@ -114,12 +114,20 @@ export class FileService {
     }
   }
 
+  updateCollection(collection: Collection) {
+    const activeFile = this.files.filter(f => f.isActive)[0];
+    if (activeFile) {
+      activeFile.collections.filter(c => c.id === collection.id)[0] = collection;
+      this.store();
+    }
+  }
+
   deleteCollection(collectionID: string) {
-    const selectedFile = this.files.filter(f => f.isActive)[0];
-    if (selectedFile) {
-      const collection = selectedFile.collections.filter(c => c.id === collectionID)[0];
-      const selectIndex = selectedFile.collections.indexOf(collection);
-      selectedFile.collections.splice(selectIndex, 1);
+    const activeFile = this.files.filter(f => f.isActive)[0];
+    if (activeFile) {
+      const collection = activeFile.collections.filter(c => c.id === collectionID)[0];
+      const selectIndex = activeFile.collections.indexOf(collection);
+      activeFile.collections.splice(selectIndex, 1);
       this.store();
     }
   }
@@ -128,7 +136,6 @@ export class FileService {
     const activeFile = this.files.filter(f => f.isActive)[0];
     if (activeFile) {
       activeFile.effects.push(effect);
-      activeFile.activeEffect = effect;
       const tab = new OpenTab(effect.id, effect.name);
       const tabIndex = activeFile.configuration.openTabs.indexOf(tab);
       if (tabIndex === -1) {
@@ -138,10 +145,23 @@ export class FileService {
     }
   }
 
+  openEffect(effectID: string) {
+    const activeFile = this.files.filter(f => f.isActive)[0];
+    if (activeFile) {
+      const effect = activeFile.effects.filter(e => e.id === effectID)[0];
+      const tab = activeFile.configuration.openTabs.filter(t => t.id === effectID)[0];
+      if (!tab) {
+        const newTab = new OpenTab(effect.id, effect.name);
+        activeFile.configuration.openTabs.push(newTab);
+      }
+      this.setEffectActive(effect);
+    }
+  }
+
   closeEffectTab(effectID: string) {
     const activeFile = this.files.filter(f => f.isActive)[0];
     if (activeFile) {
-      const tab = activeFile.configuration.openTabs.filter(e => e.id === effectID)[0];
+      const tab = activeFile.configuration.openTabs.filter(t => t.id === effectID)[0];
       if (tab) {
         const tabIndex = activeFile.configuration.openTabs.indexOf(tab);
         activeFile.configuration.openTabs.splice(tabIndex, 1);
@@ -157,13 +177,12 @@ export class FileService {
     if (activeFile) {
       activeFile.effects.filter(e => e.id === activeFile.activeEffect.id)[0] = JSON.parse(JSON.stringify(activeFile.activeEffect));
       activeFile.effects.filter(e => e.id === activeFile.activeEffect.id)[0].paths = this.nodeService.getAll();
-      console.log(activeFile);
 
       for (const tab of activeFile.configuration.openTabs) {
         tab.isActive = tab.id === effect.id ? true : false;
       }
-      activeFile.activeEffect = JSON.parse(JSON.stringify(effect));
-      this.nodeService.loadFile(activeFile.activeEffect.paths);
+      activeFile.activeEffect = effect;
+      this.nodeService.loadFile(effect.paths);
       this.store();
     }
   }

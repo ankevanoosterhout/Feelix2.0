@@ -43,7 +43,7 @@ import { HardwareService } from './services/hardware.service';
 import { StatusbarComponent } from './components/interface-elements/statusbar.component';
 import { EaseFunctionLibraryService } from './services/ease-function-library.service';
 import { VariableService } from './services/variable.service';
-import { MotorSettingsComponent } from './components/windows/play/motor-settings.component';
+import { MotorSettingsComponent } from './components/windows/settings/motor-settings.component';
 import { MotorControlComponent } from './components/interface-elements/motor-control/motor-control.component';
 import { MotorControlToolbarInset } from './components/interface-elements/toolbars/motor-control-toolbar-inset.component';
 import { MotorControlToolbar } from './components/interface-elements/toolbars/motor-control-toolbar.component';

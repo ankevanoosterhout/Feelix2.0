@@ -209,13 +209,6 @@ export class FixedToolbarComponent implements OnInit {
       this.returnToStart = data.returnToStart;
     });
 
-    this.electronService.ipcRenderer.on('updateStatus', (event: Event, data: any) => {
-      if (data.microcontroller && data.connected !== undefined && !data.connected) {
-        this.rendered = false;
-        this.play = false;
-      }
-    });
-
     this.innerHeight = window.innerHeight;
   }
 

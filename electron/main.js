@@ -959,65 +959,50 @@ function createEffectSettingWindow(filepath) {
   drawTemporaryWindow(400, 370, 'Effect Settings', false, filepath);
 }
 
-function createPlayWindow(data) {
+function createMotorSettingsWindow(data) {
 
-  const exisitingWindow = playWindows.filter(p => p.data.serialPort.path === data.serialPort.path)[0];
+  let newPlayWindow = new BrowserWindow({
+    minWidth: 360,
+    height: 380,
+    minHeight: 320,
+    backgroundColor: '#333',
+    frame: false,
+    resizable: true,
+    alwaysOnTop: true,
+    center: true,
+    movable: true,
+    show: false,
+    parent: mainWindow,
+    icon: path.join(__dirname, '../src/assets/icons/png/64x64.png'),
+    webPreferences: {
+      nodeIntegration: true
+    }
+  });
 
-  if (!exisitingWindow) {
-    let newPlayWindow;
-
-    newPlayWindow = new BrowserWindow({
-       minWidth: 400,
-      height: 380,
-      minHeight: 320,
-      backgroundColor: '#333',
-      frame: false,
-      resizable: true,
-      alwaysOnTop: true,
-      center: false,
-      movable: true,
-      show: false,
-      minimizable: true,
-      // parent: mainWindow,
-      icon: path.join(__dirname, '../src/assets/icons/png/64x64.png'),
-      webPreferences: {
-        nodeIntegration: true
-      }
-    });
-
-    newPlayWindow.loadURL(
-      url.format({
-        pathname: path.join(__dirname, `../dist/feelix/index.html`),
-        protocol: "file:",
-        slashes: true,
-        hash: '/play-settings-' + playWindows.length,
-      })
-    )
-
-
-    newPlayWindow.once('ready-to-show', () => {
-      newPlayWindow.show();
-      newPlayWindow.focus();
-      newPlayWindow.webContents.send('port', data);
+  newPlayWindow.loadURL(
+    url.format({
+      pathname: path.join(__dirname, `../dist/feelix/index.html`),
+      protocol: "file:",
+      slashes: true,
+      hash: '/motor-settings',
     })
+  )
 
-    // newPlayWindow.webContents.openDevTools();
 
-    newPlayWindow.on('close', function () {
-      const exisitingWindow = playWindows.filter(p => p.data.serialPort.path === data.serialPort.path);
-      if (exisitingWindow) {
-        const windowIndex = playWindows.indexOf(exisitingWindow);
-        playWindows.splice(windowIndex, 1);
-      }
-      newPlayWindow = null
-    })
+  newPlayWindow.once('ready-to-show', () => {
+    newPlayWindow.show();
+    newPlayWindow.focus();
+    newPlayWindow.webContents.send('port', data);
+  })
 
-    playWindows.push({ window: newPlayWindow, data });
+  newPlayWindow.webContents.openDevTools();
 
-  } else {
+  newPlayWindow.on('close', function () {
+    newPlayWindow = null
+  })
 
-    exisitingWindow.window.webContents.send('port', data);
-  }
+
+
 }
 
 
@@ -1040,7 +1025,7 @@ function createConnectToCOM(comPorts) {
   if (tmpWindow !== null && (activeWindow === 'connect-to-com' || activeWindow === 'connect-to-com-custom')) {
     tmpWindow.webContents.send('comports', comPorts);
   } else {
-    drawTemporaryWindow(500, (comType !== 'custom' ? 230 : 260), (comType !== 'custom' ? 'Connect to Motor' : 'Connect to Serialport' ), false, (comType !== 'custom' ? 'connect-to-com' : 'connect-to-com-custom'), null, null);
+    drawTemporaryWindow(500, (comType !== 'custom' ? 230 : 260), (comType !== 'custom' ? 'Connect to Motor' : 'Connect to Serialport' ), true, (comType !== 'custom' ? 'connect-to-com' : 'connect-to-com-custom'), null, null);
   }
 }
 
@@ -1191,7 +1176,8 @@ ipcMain.on('listSerialPorts', function (e, data) {
 })
 
 
-ipcMain.on('connectToCOM', function (e, data) {
+ipcMain.on('addMicrocontroller', function (e, data) {
+  console.log(data);
   serialPort.createConnection(data);
   mainWindow.webContents.send('updateStatus', { microcontroller: data, connected: false, error: false });
   tmpWindow.close();
@@ -1217,9 +1203,8 @@ ipcMain.on('playEffect', function(e, data) {
   serialPort.playEffect(data.play, data.microcontroller);
 })
 
-ipcMain.on('playSettings', function (e, data) {
-  console.log(data);
-  // createPlayWindow(data);
+ipcMain.on('motorSettings', function (e, data) {
+  createMotorSettingsWindow(data);
 });
 
 
