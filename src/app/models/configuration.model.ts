@@ -25,4 +25,7 @@ export class Configuration {
   collectionDisplay = 'large';
   openTabs: Array<OpenTab> = [];
   rendered = false;
+  libraryViewSettings = 'large-thumbnails';
+  sortType = 'date-modified';
+  sortDirection = 'first-last';
 }

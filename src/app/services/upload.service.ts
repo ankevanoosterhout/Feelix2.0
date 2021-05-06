@@ -15,114 +15,114 @@ export class UploadService {
 
 
   getMultiplyFactor(effectUnits: any, motor: Motor, PR = null) {
-    let conversion = 1;
-    let multiply = 1;
-    const unitsPR = PR === null ? effectUnits.PR : PR;
-    if (motor.rotation.linear && (effectUnits.name === 'mm' || effectUnits.name === 'cm')) {
-      const radialValue = motor.rotation.translation.radial.unit.name === 'degrees' ?
-        motor.rotation.translation.radial.value * (motor.encoder.PR / 360) : motor.rotation.translation.radial.value;
-      const radialFactor = radialValue / motor.encoder.PR;
-      let linearValue = motor.rotation.translation.linear.value;
-      if (effectUnits.name === 'mm' && motor.rotation.translation.linear.unit.name === 'cm') {
-        linearValue *= 10;
-      } else if (effectUnits.name === 'cm' && motor.rotation.translation.linear.unit.name === 'mm') {
-        linearValue /= 10;
-      }
-      linearValue *= radialFactor;
-      conversion = motor.encoder.PR / linearValue;
-      multiply = conversion * motor.transmission;
-    } else {
-      if (effectUnits.name !== 'mm' || effectUnits.name !== 'cm') {
-        multiply = (motor.encoder.PR / unitsPR) * motor.transmission;
-      } else {
-        // console.log('effect linear, motor details not linear');
-        return false;
-      }
-    }
-    return multiply;
+    // let conversion = 1;
+    // let multiply = 1;
+    // const unitsPR = PR === null ? effectUnits.PR : PR;
+    // if (motor.config.rotation.linear && (effectUnits.name === 'mm' || effectUnits.name === 'cm')) {
+    //   const radialValue = motor.config.rotation.translation.radial.unit.name === 'degrees' ?
+        // motor.config.rotation.translation.radial.value * (motor.config.encoder.PR / 360) : motor.config.rotation.translation.radial.value;
+      // const radialFactor = radialValue / motor.config.encoder.PR;
+      // let linearValue = motor.config.rotation.translation.linear.value;
+      // if (effectUnits.name === 'mm' && motor.config.rotation.translation.linear.unit.name === 'cm') {
+      //   linearValue *= 10;
+      // } else if (effectUnits.name === 'cm' && motor.config.rotation.translation.linear.unit.name === 'mm') {
+      //   linearValue /= 10;
+      // }
+      // linearValue *= radialFactor;
+      // conversion = motor.config.encoder.PR / linearValue;
+    //   multiply = conversion * motor.config.transmission;
+    // } else {
+    //   if (effectUnits.name !== 'mm' || effectUnits.name !== 'cm') {
+    //     // multiply = (motor.config.encoder.PR / unitsPR) * motor.config.transmission;
+    //   } else {
+    //     // console.log('effect linear, motor details not linear');
+    //     return false;
+    //   }
+    // }
+    // return multiply;
   }
 
   getInvertedMultiplyFactor(effectUnits: any, motor: Motor) {
-    if (effectUnits.name === 'mm' || effectUnits.name === 'cm') {
-      const radialValue = motor.rotation.translation.radial.unit.name === 'degrees' ?
-        motor.rotation.translation.radial.value * (motor.encoder.PR / 360) : motor.rotation.translation.radial.value;
-      const radialFactor = radialValue / motor.encoder.PR;
-      let linearValue = motor.rotation.translation.linear.value;
-      if (effectUnits.name === 'mm' && motor.rotation.translation.linear.unit.name === 'cm') {
-        linearValue *= 10;
-      } else if (effectUnits.name === 'cm' && motor.rotation.translation.linear.unit.name === 'mm') {
-        linearValue /= 10;
-      }
-      linearValue *= radialFactor;
-      return linearValue / motor.encoder.PR;
-    } else if (effectUnits.name === 'degrees') {
-      return 360 / 4096;
-    } else {
-      return 1;
-    }
+    // if (effectUnits.name === 'mm' || effectUnits.name === 'cm') {
+    //   const radialValue = motor.config.rotation.translation.radial.unit.name === 'degrees' ?
+    //     motor.config.rotation.translation.radial.value * (motor.config.encoder.PR / 360) : motor.config.rotation.translation.radial.value;
+    //   const radialFactor = radialValue / motor.config.encoder.PR;
+    //   let linearValue = motor.config.rotation.translation.linear.value;
+    //   if (effectUnits.name === 'mm' && motor.config.rotation.translation.linear.unit.name === 'cm') {
+    //     linearValue *= 10;
+    //   } else if (effectUnits.name === 'cm' && motor.config.rotation.translation.linear.unit.name === 'mm') {
+    //     linearValue /= 10;
+    //   }
+    //   linearValue *= radialFactor;
+    //   return linearValue / motor.config.encoder.PR;
+    // } else if (effectUnits.name === 'degrees') {
+    //   return 360 / 4096;
+    // } else {
+    //   return 1;
+    // }
   }
 
   translateFileData(file: any, motor: Motor) {
 
     const multiply = this.getMultiplyFactor(file.grid.units, motor);
 
-    if (multiply) {
+    // if (multiply) {
 
-      const fileData = JSON.parse(JSON.stringify(file));
+    //   const fileData = JSON.parse(JSON.stringify(file));
 
-      const effectModelList: Array<EffectUploadModel> = [];
-      let index = 0;
-      for (const effect of fileData.effects) {
+    //   const effectModelList: Array<EffectUploadModel> = [];
+    //   let index = 0;
+    //   for (const effect of fileData.effects) {
 
-        if (effect.details.linked === null) {
-          const effectModel = new EffectUploadModel(uuid(), effect.id);
-          effectModel.index = index;
-          effectModel.name = effect.interface.name;
-          effectModel.quality = effect.details.quality.division;
-          effectModel.angle = Math.round(effect.details.position.end * multiply) - Math.round(effect.details.position.start * multiply);
-          effectModel.slug = effect.slug;
-          effectModel.mirror = effect.details.mirror !== null ? true : false;
-          effectModel.enabled = true;
-          effectModel.infinite = effect.details.infinite ? true : false;
-          effectModel.layer = effect.interface.layer;
-          effectModel.playAfterUpload = true;
+    //     if (effect.details.linked === null) {
+    //       const effectModel = new EffectUploadModel(uuid(), effect.id);
+    //       effectModel.index = index;
+    //       effectModel.name = effect.interface.name;
+    //       effectModel.quality = effect.details.quality.division;
+    //       effectModel.angle = Math.round(effect.details.position.end * multiply) - Math.round(effect.details.position.start * multiply);
+    //       effectModel.slug = effect.slug;
+    //       effectModel.mirror = effect.details.mirror !== null ? true : false;
+    //       effectModel.enabled = true;
+    //       effectModel.infinite = effect.details.infinite ? true : false;
+    //       effectModel.layer = effect.interface.layer;
+    //       effectModel.playAfterUpload = true;
 
-          if (effectModel.slug === 1 || effectModel.slug === 3) {
-            effectModel.linear = this.getLinearValues(effectModel.slug, effect.details, multiply);
-          } else if (effectModel.slug < 5) {
-            effectModel.scaleY = effect.details.parameter.value.val / 100;
-          }
+    //       if (effectModel.slug === 1 || effectModel.slug === 3) {
+    //         effectModel.linear = this.getLinearValues(effectModel.slug, effect.details, multiply);
+    //       } else if (effectModel.slug < 5) {
+    //         effectModel.scaleY = effect.details.parameter.value.val / 100;
+    //       }
 
-          let direction = 0;
-          if (effect.details.direction === 'clockwise') {
-            direction = 1;
-          } else if (effect.details.direction === 'counterclockwise') { direction = -1; }
-          effectModel.direction = direction;
+    //       let direction = 0;
+    //       if (effect.details.direction === 'clockwise') {
+    //         direction = 1;
+    //       } else if (effect.details.direction === 'counterclockwise') { direction = -1; }
+    //       effectModel.direction = direction;
 
-          effectModel.position = effect.slug < 2 && effectModel.direction === -1 ?
-            Math.round(effect.details.position.end * multiply) : Math.round(effect.details.position.start * multiply);
+    //       effectModel.position = effect.slug < 2 && effectModel.direction === -1 ?
+    //         Math.round(effect.details.position.end * multiply) : Math.round(effect.details.position.start * multiply);
 
-          effectModel.repeat = this.getRepeatList(effect.details.parent, file.effects, effectModel.position, multiply);
+    //       effectModel.repeat = this.getRepeatList(effect.details.parent, file.effects, effectModel.position, multiply);
 
-          if (effect.slug === 5) {
-            const path = fileData.nodes.filter(p => p.id === effect.path)[0];
-            effectModel.translatedData =
-              this.translateDataPathEffects(path, multiply, effect.details.quality.division, file.type, file.stepDetails);
+    //       if (effect.slug === 5) {
+    //         const path = fileData.nodes.filter(p => p.id === effect.path)[0];
+    //         effectModel.translatedData =
+    //           this.translateDataPathEffects(path, multiply, effect.details.quality.division, file.type, file.stepDetails);
 
-          }
+    //       }
 
-          if (effect.slug === 5 && effectModel.translatedData.length === 0) {
-            // remove effect
-          } else {
-            effectModel.slug === 0 ? effectModelList.unshift(effectModel) : effectModelList.push(effectModel);
-          }
-          index++;
+    //       if (effect.slug === 5 && effectModel.translatedData.length === 0) {
+    //         // remove effect
+    //       } else {
+    //         effectModel.slug === 0 ? effectModelList.unshift(effectModel) : effectModelList.push(effectModel);
+    //       }
+    //       index++;
 
-        }
-      }
-      const dataList = this.getOverlappingEffects(effectModelList);
-      return dataList;
-    }
+    //     }
+    //   }
+    //   const dataList = this.getOverlappingEffects(effectModelList);
+    //   return dataList;
+    // }
   }
 
   getOverlappingEffects(list: Array<EffectUploadModel>) {
@@ -293,20 +293,20 @@ export class UploadService {
       const multiply = this.getMultiplyFactor(file.grid.units, motor);
       // console.log(multiply);
 
-      if (multiply) {
-        effectModel.angle = Math.round(frame.rangeX.end - frame.rangeX.start);
-        effectModel.slug = 4;
-        effectModel.loop = false;
-        effectModel.enabled = true;
-        effectModel.name = file.name;
-        effectModel.quality = 1;
-        effectModel.translatedData = this.translateTimeBasedData(frame.path.nodes, 1, multiply);
-        effectModel.startTime = effectModel.translatedData[0].x;
-        effectModel.position = Math.round(frame.position.start * multiply);
-        effectModel.index = 0;
+      // if (multiply) {
+      //   effectModel.angle = Math.round(frame.rangeX.end - frame.rangeX.start);
+      //   effectModel.slug = 4;
+      //   effectModel.loop = false;
+      //   effectModel.enabled = true;
+      //   effectModel.name = file.name;
+      //   effectModel.quality = 1;
+      //   effectModel.translatedData = this.translateTimeBasedData(frame.path.nodes, 1, multiply);
+      //   effectModel.startTime = effectModel.translatedData[0].x;
+      //   effectModel.position = Math.round(frame.position.start * multiply);
+      //   effectModel.index = 0;
 
-        effectModelList.push(effectModel);
-      }
+      //   effectModelList.push(effectModel);
+      // }
       i++;
     }
     if (file.rotation.loop) {
@@ -318,33 +318,33 @@ export class UploadService {
 
   translateSingleTimeBasedEffectData(effectObj: EffectObject, motor: Motor) {
     const multiply = this.getMultiplyFactor(effectObj.effect.units, motor);
-    if (multiply) {
-      const effectModel = new EffectUploadModel(uuid(), effectObj.effect.id);
-      effectModel.angle = this.getDurationAsValue(effectObj);
-      effectModel.scaleX = this.getDurationValue(effectObj);
-      effectModel.scaleY = this.getAngleValue(effectObj, motor);
-      effectModel.position = this.getPositionValue(effectObj, motor);
-      // effectModel.mirror = this.getBooleanValue(effectObj.parameters.input.filter(p => p.name === 'mirror')[0]);
-      effectModel.enabled = this.getBooleanValue(effectObj.parameters.input.filter(p => p.name === 'enabled')[0]);
-      effectModel.loop = this.getBooleanValue(effectObj.parameters.input.filter(p => p.name === 'loop')[0]);
-      if (effectObj.effect.type === 'ease') {
-        effectModel.translatedData = this.translateTimeBasedData(effectObj.effect.nodes[0].nodes, effectObj.effect.details.duration, 4096);
-      } else {
-        effectModel.translatedData = this.translateTimeBasedData(effectObj.effect.nodes[0].nodes, 1, multiply);
-      }
-      const startX = effectModel.translatedData[0].x;
-      effectModel.startTime = this.getStartTime(effectObj, startX);
-      for (const item of effectModel.translatedData) {
-        item.x -= startX;
-        item.cp1x -= startX;
-        item.cp1x -= startX;
-      }
-      effectModel.slug = 4;
-      effectModel.name = effectObj.effect.interface.name;
-      effectModel.quality = 1;
+    // if (multiply) {
+    //   const effectModel = new EffectUploadModel(uuid(), effectObj.effect.id);
+    //   effectModel.angle = this.getDurationAsValue(effectObj);
+    //   effectModel.scaleX = this.getDurationValue(effectObj);
+    //   effectModel.scaleY = this.getAngleValue(effectObj, motor);
+    //   effectModel.position = this.getPositionValue(effectObj, motor);
+    //   // effectModel.mirror = this.getBooleanValue(effectObj.parameters.input.filter(p => p.name === 'mirror')[0]);
+    //   effectModel.enabled = this.getBooleanValue(effectObj.parameters.input.filter(p => p.name === 'enabled')[0]);
+    //   effectModel.loop = this.getBooleanValue(effectObj.parameters.input.filter(p => p.name === 'loop')[0]);
+    //   if (effectObj.effect.type === 'ease') {
+    //     effectModel.translatedData = this.translateTimeBasedData(effectObj.effect.nodes[0].nodes, effectObj.effect.details.duration, 4096);
+    //   } else {
+    //     effectModel.translatedData = this.translateTimeBasedData(effectObj.effect.nodes[0].nodes, 1, multiply);
+    //   }
+    //   const startX = effectModel.translatedData[0].x;
+    //   effectModel.startTime = this.getStartTime(effectObj, startX);
+    //   for (const item of effectModel.translatedData) {
+    //     item.x -= startX;
+    //     item.cp1x -= startX;
+    //     item.cp1x -= startX;
+    //   }
+    //   effectModel.slug = 4;
+    //   effectModel.name = effectObj.effect.interface.name;
+    //   effectModel.quality = 1;
 
-      return effectModel;
-    }
+    //   return effectModel;
+    // }
     return null;
   }
 
@@ -378,10 +378,10 @@ export class UploadService {
 
     if (effectObj.effect.slug === 5) {
       const multiply = this.getMultiplyFactor(effectObj.effect.units, motor);
-      if (multiply) {
-        effectModel.translatedData =
-          this.translateDataPathEffects(effectObj.effect.path, multiply, effectObj.effect.details.quality.division, 'default', []);
-      }
+      // if (multiply) {
+      //   effectModel.translatedData =
+      //     this.translateDataPathEffects(effectObj.effect.path, multiply, effectObj.effect.details.quality.division, 'default', []);
+      // }
     }
     return effectModel;
   }
@@ -439,9 +439,9 @@ export class UploadService {
       const angle = effectObj.parameters.input.filter(p => p.name === 'angle')[0];
       const value = !angle.hidden ? angle.value : angle.defaultVal;
       const multiply = this.getMultiplyFactor(value.units, motor, value.units.name === 'degrees' ? 360 : motor.encoder.PR);
-      if (multiply) {
-        return Math.round(value.type.val * multiply);
-      }
+      // if (multiply) {
+      //   return Math.round(value.type.val * multiply);
+      // }
       return Math.round(value.type.val);
       // if (angle.defaultVal.units !== 'mm' && angle.defaultVal.units !== 'cm') {
       //   return value.units.symbol === 'ppr' ? Math.round(value.type.val) : Math.round(value.type.val * (motor.encoder.PR / 360));
@@ -549,9 +549,9 @@ export class UploadService {
       }
     } else {
       const multiply = this.getMultiplyFactor(pos.units, motor);
-      if (multiply) {
-        return Math.round(pos.type.val * multiply);
-      }
+      // if (multiply) {
+      //   return Math.round(pos.type.val * multiply);
+      // }
     }
     return posVal;
   }
@@ -598,32 +598,32 @@ export class UploadService {
     let data = '';
     let translatedData: any;
     const multiply = this.getMultiplyFactor(effectObj.effect.units, motor);
-    if (multiply) {
-      translatedData =
-        this.translateDataPathEffects(effectObj.path, multiply, 8, 'default', []);
-      const angle = translatedData[translatedData.length - 1].x - translatedData[0].x;
-      let forceArray = '{ ';
-      let offsetArray = '{ ';
-      let i = 0;
-      for (const item of translatedData) {
-        if (i < translatedData.length - 1) {
-          forceArray += item.y + ', ';
-          offsetArray += item.d + ', ';
-        } else {
-          forceArray += item.y + ' }';
-          offsetArray += item.d + ' } ';
-        }
-        i++;
-      }
+    // if (multiply) {
+    //   translatedData =
+    //     this.translateDataPathEffects(effectObj.path, multiply, 8, 'default', []);
+    //   const angle = translatedData[translatedData.length - 1].x - translatedData[0].x;
+    //   let forceArray = '{ ';
+    //   let offsetArray = '{ ';
+    //   let i = 0;
+    //   for (const item of translatedData) {
+    //     if (i < translatedData.length - 1) {
+    //       forceArray += item.y + ', ';
+    //       offsetArray += item.d + ', ';
+    //     } else {
+    //       forceArray += item.y + ' }';
+    //       offsetArray += item.d + ' } ';
+    //     }
+    //     i++;
+    //   }
 
-      data = '/* initialize */ \nEffect ' + effectObj.effect.interface.name.replace('-', '_') + ';\nint force_' +
-          effectObj.effect.interface.name.replace('-', '_') + '[] = ' + forceArray + ';\nint offset_' +
-          effectObj.effect.interface.name.replace('-', '_') + '[] = ' + offsetArray + ';\n\r/* call in setup */\n' +
-          effectObj.effect.interface.name.replace('-', '_') + '.initPositionEffect(force_' +
-          effectObj.effect.interface.name.replace('-', '_') + ',  offset_' +
-          effectObj.effect.interface.name.replace('-', '_') + ', ' + angle + ', ' + (translatedData.length) + ');\n\r';
-      return data;
-    }
+    //   data = '/* initialize */ \nEffect ' + effectObj.effect.interface.name.replace('-', '_') + ';\nint force_' +
+    //       effectObj.effect.interface.name.replace('-', '_') + '[] = ' + forceArray + ';\nint offset_' +
+    //       effectObj.effect.interface.name.replace('-', '_') + '[] = ' + offsetArray + ';\n\r/* call in setup */\n' +
+    //       effectObj.effect.interface.name.replace('-', '_') + '.initPositionEffect(force_' +
+    //       effectObj.effect.interface.name.replace('-', '_') + ',  offset_' +
+    //       effectObj.effect.interface.name.replace('-', '_') + ', ' + angle + ', ' + (translatedData.length) + ');\n\r';
+    //   return data;
+    // }
 
   }
 
@@ -634,32 +634,32 @@ export class UploadService {
       effectObj.effect.units = { name: 'degrees', PR: 360 };
     }
     const multiply = this.getMultiplyFactor(effectObj.effect.units, motor);
-    if (multiply) {
-      translatedData = this.translateTimeBasedData(effectObj.effect.nodes[0].nodes, 1, multiply);
+  //   if (multiply) {
+  //     translatedData = this.translateTimeBasedData(effectObj.effect.nodes[0].nodes, 1, multiply);
 
-      let positionArray = '{ ';
-      let i = 0;
-      for (const item of translatedData) {
-        positionArray += '{ ' + (item.x - translatedData[0].x) + ', ' + (item.y - translatedData[0].y) + ', ' +
-          (item.cp1x - translatedData[0].x) + ', ' + (item.cp1y - translatedData[0].y) + ', ' + (item.cp2x - translatedData[0].x) + ', ' +
-          (item.cp2y - translatedData[0].y) + '}';
+  //     let positionArray = '{ ';
+  //     let i = 0;
+  //     for (const item of translatedData) {
+  //       positionArray += '{ ' + (item.x - translatedData[0].x) + ', ' + (item.y - translatedData[0].y) + ', ' +
+  //         (item.cp1x - translatedData[0].x) + ', ' + (item.cp1y - translatedData[0].y) + ', ' + (item.cp2x - translatedData[0].x) + ', ' +
+  //         (item.cp2y - translatedData[0].y) + '}';
 
-        if (i < translatedData.length - 1) {
-          positionArray += ', ';
-        } else {
-          positionArray += ' }';
-        }
+  //       if (i < translatedData.length - 1) {
+  //         positionArray += ', ';
+  //       } else {
+  //         positionArray += ' }';
+  //       }
 
-        i++;
-      }
+  //       i++;
+  //     }
 
-      data = '/* initialize */ \nEffect ' + effectObj.effect.interface.name.replace('-', '_') + '; \n' + 'int data_' +
-             effectObj.effect.interface.name.replace('-', '_') + '[][6] = ' + positionArray +
-             ';\n\r\/* call in setup */ \n' + effectObj.effect.interface.name.replace('-', '_') + '.initTimeEffect(' +
-             'data_' + effectObj.effect.interface.name.replace('-', '_') + ', ' + (translatedData.length) + ');\n\r';
+  //     data = '/* initialize */ \nEffect ' + effectObj.effect.interface.name.replace('-', '_') + '; \n' + 'int data_' +
+  //            effectObj.effect.interface.name.replace('-', '_') + '[][6] = ' + positionArray +
+  //            ';\n\r\/* call in setup */ \n' + effectObj.effect.interface.name.replace('-', '_') + '.initTimeEffect(' +
+  //            'data_' + effectObj.effect.interface.name.replace('-', '_') + ', ' + (translatedData.length) + ');\n\r';
 
-      return data;
-    }
+  //     return data;
+  //   }
   }
 }
 

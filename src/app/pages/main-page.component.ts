@@ -142,6 +142,7 @@ export class MainPageComponent implements AfterViewInit {
         let fullHeight = window.innerHeight - 40;
         let division = 100 / (fullHeight / yValue);
         this.drawingService.updateResize(division, 'horizontal');
+        this.drawingService.redraw();
       }
     }
 
@@ -149,6 +150,7 @@ export class MainPageComponent implements AfterViewInit {
       if (coord <= window.innerWidth - 18) {
         let division = 100 / (window.innerWidth / coord);
         this.drawingService.updateResize(division, 'vertical');
+        this.drawingService.redraw();
       }
     }
 

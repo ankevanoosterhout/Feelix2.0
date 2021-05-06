@@ -897,9 +897,6 @@ export class BezierService {
     }
   }
 
-  setInputFieldsActive(active: boolean) {
-    this.nodeService.inputFieldsActive = active;
-  }
-
+ 
 
 }

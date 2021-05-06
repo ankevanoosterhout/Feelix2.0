@@ -5,6 +5,8 @@ import { DrawingService } from 'src/app/services/drawing.service';
 import { DOCUMENT } from '@angular/common';
 import { BezierService } from 'src/app/services/bezier.service';
 import { ElectronService } from 'ngx-electron';
+import { EffectLibraryService } from 'src/app/services/effect-library.service';
+import { Unit } from 'src/app/models/effect.model';
 
 @Component({
   selector: 'app-fixed-toolbar',
@@ -16,40 +18,43 @@ import { ElectronService } from 'ngx-electron';
         <ul class="buttons-list">
           <li id="new" (click)="createNewEffect()"><img src="./assets/icons/tools/collections.svg" title="New effect"></li>
           <li id="settings" (click)="openEffectSettings()"><img src="./assets/icons/tools/settings.svg" title="Effect settings"></li>
-          <li id="save" (click)="this.drawingService.saveEffect()"><img src="./assets/icons/buttons/save.svg" title="Save effect"></li>
+          <li id="save" (click)="saveEffectToLibrary(this.drawingService.file.activeEffect)"><img src="./assets/icons/buttons/save.svg" title="Save effect to library"></li>
+          <li id="export" (click)="exportEffect(this.drawingService.file.activeEffect)"><img src="./assets/icons/buttons/export.svg" title="Export effect"></li>
         </ul>
       </div>
 
-      <div class="form-row" *ngIf="this.drawingService.file.activeEffect">
+      <div class="form-row" *ngIf="this.drawingService.file.activeEffect" title="select effect visualization type">
         <label class="select"></label>
-        <select class="form-control" id="select" (change)="this.drawingService.saveFile(this.drawingService.file)" [(ngModel)]="this.drawingService.file.activeEffect.type" name="type">
+        <select class="form-control" id="select" (change)="this.updateEffectType()" [(ngModel)]="this.drawingService.file.activeEffect.type" name="type">
             <option *ngFor="let type of typeOptions" [ngValue]="type">{{ type }}</option>
         </select>
       </div>
 
-      <div class="form-row" *ngIf="this.drawingService.file.activeEffect">
+      <div class="form-row" *ngIf="this.drawingService.file.activeEffect" title="select units x-axis">
         <label class="select axes">x </label>
-        <select class="form-control" id="select" [(ngModel)]="xAxis" name="x-axis">
-            <option *ngFor="let type of xAxisOptions" [ngValue]="type">{{ type }}</option>
+        <select class="form-control" id="select" value="{{ this.drawingService.file.activeEffect.grid.xUnit.name }}" (change)="this.drawingService.updateUnitsActiveEffect($event.target.value)"
+          name="x-axis">
+            <option *ngFor="let type of this.drawingService.config.xAxisOptions" [ngValue]="type">{{ type.name }}</option>
         </select>
       </div>
 
-      <div class="form-row" *ngIf="this.drawingService.file.activeEffect">
+      <div class="form-row" *ngIf="this.drawingService.file.activeEffect" title="select units y-axis">
         <label class="select axes">y </label>
-        <select class="form-control" id="select" [(ngModel)]="yAxis" name="y-axis">
-            <option *ngFor="let type of yAxisOptions" [ngValue]="type">{{ type }}</option>
+        <select class="form-control" id="select" [(ngModel)]="this.drawingService.file.activeEffect.grid.yUnit" name="y-axis" [compareWith]="compareUnits">
+            <option *ngFor="let type of yAxisOptions" [ngValue]="type">{{ type.name }}</option>
         </select>
       </div>
 
-      <div class="form-row" *ngIf="this.drawingService.file.activeEffect">
+      <div class="form-row" *ngIf="this.drawingService.file.activeEffect" title="select type of haptic effect">
         <label class="select"></label>
-        <select class="form-control" id="select" [(ngModel)]="rotationType" name="y-axis">
+        <select class="form-control" id="select" [(ngModel)]="this.drawingService.file.activeEffect.rotation"
+          (change)="this.drawingService.saveEffect(this.drawingService.file.activeEffect)" name="rotation-type">
             <option *ngFor="let type of rotationOptions" [ngValue]="type">{{ type }}</option>
         </select>
       </div>
 
       <ul>
-        <li id="align-buttons" *ngIf="this.drawingService.config.svgDx > 925">
+        <li id="align-buttons" *ngIf="this.drawingService.config.svgDx > 900">
           <div>
             <ul class="align" id="distribute">
                 <li *ngFor="let item of distribute" (click)="selectItem(item.value);">
@@ -63,7 +68,7 @@ import { ElectronService } from 'ngx-electron';
         </li>
 
         <li id="reference-point" class="scaling-options" [ngClass]="{ active: toolbar.boxSelection }"
-          *ngIf="this.drawingService.config.svgDx > 800">
+          *ngIf="this.drawingService.config.svgDx > 600">
             <div class="bg-line"></div>
             <div class="row">
                 <div *ngFor="let point of referencePoints" class="point"
@@ -72,7 +77,7 @@ import { ElectronService } from 'ngx-electron';
             </div>
         </li>
 
-        <li id="current-x" class="scaling-options">
+        <li id="current-x" class="scaling-options" *ngIf="this.drawingService.config.svgDx > 600">
           <label class="coordinates-label">x</label>
           <input type="number" id="x-value" name="points-x" [(ngModel)]="toolbar.points.x"
           (click)="focus()" (change)="onChange('x-value')">
@@ -80,7 +85,7 @@ import { ElectronService } from 'ngx-electron';
           <div class="arrow down x" id="downX" name="downX" (click)="transform('x', -1);"></div></div>
         </li>
 
-        <li id="current-y" class="scaling-options">
+        <li id="current-y" class="scaling-options" *ngIf="this.drawingService.config.svgDx > 600">
           <label class="coordinates-label">y</label>
           <input type="number" id="y-value" name="points-y" (change)="onChange('y-value')" [(ngModel)]="toolbar.points.y"
           (click)="focus()">
@@ -88,7 +93,7 @@ import { ElectronService } from 'ngx-electron';
           <div class="arrow down y" id="downY" name="downY" (click)="transform('y', -1);"></div></div>
         </li>
 
-        <li id="current-w" class="scaling-options">
+        <li id="current-w" class="scaling-options" *ngIf="this.drawingService.config.svgDx > 600">
           <label class="coordinates-label">w</label>
           <input type="number" id="w-value" name="points-w" (change)="onChange('w-value')" [(ngModel)]="toolbar.points.w"
           (click)="focus()">
@@ -96,14 +101,14 @@ import { ElectronService } from 'ngx-electron';
           <div class="arrow down w" id="downW" name="downW" (click)="transform('w', -1);"></div></div>
         </li>
 
-        <li id="link" class="scaling-options">
+        <li id="link" class="scaling-options" *ngIf="this.drawingService.config.svgDx > 600">
           <div class="aspectRatio active" (click)="toolbar.linked = !toolbar.linked">
             <img *ngIf="toolbar.linked" src="./assets/icons/align/link.svg" title="aspect ratio">
             <img *ngIf="!toolbar.linked" src="./assets/icons/align/unlink.svg" title="aspect ratio">
           </div>
         </li>
 
-        <li id="current-h" class="scaling-options">
+        <li id="current-h" class="scaling-options" *ngIf="this.drawingService.config.svgDx > 600">
           <label class="coordinates-label">h</label>
           <input type="number" id="h-value" name="points-h" (change)="onChange('h-value')" [(ngModel)]="toolbar.points.h"
           (click)="focus()">
@@ -141,8 +146,8 @@ export class FixedToolbarComponent implements OnInit {
   typeOptions = ['torque','position','velocity'];
   rotationOptions = ['independent', 'dependent'];
 
-  xAxisOptions = [ 'degrees', 'radians' ];
-  yAxisOptions = [ 'voltage (%)' ];
+
+  yAxisOptions = [ new Unit('voltage (%)', 100), new Unit('current (%)', 100) ];
 
   referencePoints = [
     { name: 'nw', id: 0 },
@@ -201,13 +206,13 @@ export class FixedToolbarComponent implements OnInit {
 
   // tslint:disable-next-line: variable-name
   constructor(@Inject(DOCUMENT) private document: Document, private dataService: DataService, private bezierService: BezierService,
-              public drawingService: DrawingService, private electronService: ElectronService) {
+              public drawingService: DrawingService, private electronService: ElectronService, public effectLibraryService: EffectLibraryService) {
 
-    this.electronService.ipcRenderer.on('updateButtonState', (event: Event, data: any) => {
-      this.loop = data.loop;
-      this.rendered = data.rendered;
-      this.returnToStart = data.returnToStart;
-    });
+    // this.electronService.ipcRenderer.on('updateButtonState', (event: Event, data: any) => {
+    //   this.loop = data.loop;
+    //   this.rendered = data.rendered;
+    //   this.returnToStart = data.returnToStart;
+    // });
 
     this.innerHeight = window.innerHeight;
   }
@@ -273,8 +278,13 @@ export class FixedToolbarComponent implements OnInit {
   }
 
 
-  public updateEffectType(type: any) {
-
+  public updateEffectType() {
+    if (this.drawingService.config.editBounds.yMin < 0 && this.drawingService.file.activeEffect.type !== 'torque' ) {
+      this.drawingService.scaleActiveEffectFromTorqueToPosition(0.5, 100);
+    } else if (this.drawingService.config.editBounds.yMin >= 0 && this.drawingService.file.activeEffect.type === 'torque') {
+      this.drawingService.scaleActiveEffectFromTorqueToPosition(2, 100);
+    }
+    this.drawingService.saveFile(this.drawingService.file);
   }
 
   public toggleDrawPlane() {
@@ -289,7 +299,7 @@ export class FixedToolbarComponent implements OnInit {
 
 
   focus() {
-    this.bezierService.setInputFieldsActive(true);
+    this.drawingService.setInputFieldsActive(true);
     this.pointsCopy = JSON.stringify(this.toolbar.points);
   }
 
@@ -331,7 +341,7 @@ export class FixedToolbarComponent implements OnInit {
   }
 
   unFocusAll() {
-    this.bezierService.setInputFieldsActive(false);
+    this.drawingService.setInputFieldsActive(false);
     this.document.getElementById('x-value').blur();
     this.document.getElementById('y-value').blur();
     this.document.getElementById('w-value').blur();
@@ -344,14 +354,29 @@ export class FixedToolbarComponent implements OnInit {
 
   createNewEffect() {
     this.document.getElementById('field-inset').style.cursor = 'wait';
+    this.drawingService.saveEffect();
     this.electronService.ipcRenderer.send('effectSettings', 'effect-settings');
   }
 
   openEffectSettings() {
     this.document.getElementById('field-inset').style.cursor = 'wait';
+    this.drawingService.saveEffect();
     this.electronService.ipcRenderer.send('effectSettings', 'effect-update-settings');
   }
 
+  saveEffectToLibrary() {
+    this.drawingService.saveEffect();
+    setTimeout(() => this.effectLibraryService.addEffect(this.drawingService.file.activeEffect), 200);
+  }
+
+  exportEffect(effectID: string) {
+    const item = this.effectLibraryService.getEffect(effectID);
+    this.electronService.ipcRenderer.send('export', item);
+  }
+
+  compareUnits(unit1: Unit, unit2: Unit) {
+    return unit1 && unit2 ? unit1.name === unit2.name : unit1 === unit2;
+  }
 
 
 }

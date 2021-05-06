@@ -2,49 +2,77 @@
 
   <ul id="motor-list">
     <li *ngFor="let collection of this.motorControlService.file.collections">
-      <div class="info">
-        <div class="form-row left" *ngIf="collection.name">
-          <input type="text" id="collection-name" name="collection-name" [(ngModel)]="collection.name">
+      <div class="motor-control-rows" id="row-{{ collection.id }}" draggable="true" (drag)="dragListItem($event)" (dragend)="resetDraggingListItemVariable()"
+        (drop)="reorderList($event, this)" (dragover)="allowDropListItem($event, this)">
+        <div class="info" draggable="false">
+          <div class="form-row left" *ngIf="collection.name">
+            <input type="text" id="collection-name" name="collection-name" [(ngModel)]="collection.name">
+          </div>
+
+          <div class="form-row left" title="select port">
+            <select class="form-control" id="comport" [(ngModel)]="collection.microcontroller" (change)="saveCollection(collection)" name="comport" [compareWith]="compareCOM">
+                <option *ngFor="let port of microcontrollers" [ngValue]="port">{{ port.serialPort.path }}</option>
+            </select>
+          </div>
+
+          <div class="form-row left" *ngIf="collection.microcontroller" title="motor index">
+            <select class="form-control" id="motorID" [(ngModel)]="collection.motorID" (change)="saveCollection(collection)" name="comport" [compareWith]="compareID">
+                <option *ngFor="let motor of collection.microcontroller.motors" [ngValue]="motor.id">{{ motor.id }}</option>
+            </select>
+          </div>
+
+          <div id="buttonsMotorControl">
+            <ul class="dropdown-buttons">
+              <li id="upload" (click)="upload(collection.id)"><img src="./assets/icons/buttons/upload.svg" title="upload"></li>
+              <li id="play" (click)="play(collection.id)"><img src="./assets/icons/buttons/play.svg" title="run"></li>
+              <li id="loop" (click)="loop(collection.id)"><img src="./assets/icons/buttons/infinite.svg" title="loop"></li>
+              <li id="units" (click)="changeUnits(collection)" *ngIf="this.motorControlService.file.configuration.collectionDisplay === 'large'">
+                <img src="./assets/icons/buttons/units.svg" title="change units"></li>
+              <li id="delete" (click)="delete(collection)"><img src="./assets/icons/buttons/bin.svg" title="delete collection"></li>
+            </ul>
+          </div>
+
+          <div id="rangeValues" *ngIf="this.motorControlService.file.configuration.collectionDisplay === 'large'">
+            <label>range</label>
+            <input type="number" id="range-start" name="rotation-start" [(ngModel)]="collection.rotation.start" (change)="this.motorControlService.drawCollection(collection)">
+            <input type="number" id="range-end" name="rotation-end" [(ngModel)]="collection.rotation.end" (change)="this.motorControlService.drawCollection(collection)">
+          </div>
+
+          <div id="visualizationType" class="form-row left" title="visualization type"  *ngIf="this.motorControlService.file.configuration.collectionDisplay === 'large'">
+            <select class="form-control" id="visualizationType" [(ngModel)]="collection.visualizationType" (change)="this.motorControlService.drawCollection(collection)" name="visualizationType">
+                <option *ngFor="let type of visualizationTypes" [ngValue]="type.name">{{ type.name }}</option>
+            </select>
+          </div>
+
+          <div class="form-row left">
+            <div id="coll-layers-row" *ngFor="let layer of collection.layers">
+              <ul id="coll-layers">
+                <li id="visible" [ngClass]="{ active: layer.visible }" (click)="toggleVisibility(collection, layer)"><img src="./assets/icons/layers/visible-icon.svg" title="toggle visibility {{ layer.name }} layer"></li>
+                <li id="lock" [ngClass]="{ active: layer.locked }" (click)="toggleLocked(collection, layer)"><img src="./assets/icons/layers/disable-layer.svg" title="toggle lock {{ layer.name }} layer"></li>
+              </ul>
+              <label>{{ layer.name }}</label>
+            </div>
+          </div>
+
+          <div class="form-row" *ngIf="this.motorControlService.file.configuration.collectionDisplay === 'large'">
+            <select class="form-control" id="select" (change)="this.motorControlService.updateScale(collection)" [(ngModel)]="collection.config.scale" name="scale" [compareWith]="compareValue">
+                <option *ngFor="let scale of scaleOptions" [ngValue]="scale">{{ scale.text }}</option>
+            </select>
+          </div>
+
+          <div class="form-row">
+            <div class="motor-info" id="speed">0 RPM</div>
+            <div class="motor-info posUnits" id="posUnits">&deg;</div>
+            <div class="motor-info" id="position">0 </div>
+          </div>
         </div>
 
-        <div class="form-row left">
-          <select class="form-control" id="comport" [(ngModel)]="collection.microcontroller" (change)="saveCOMPort(collection)" name="comport" [compareWith]="compareCOM">
-              <option *ngFor="let port of savedMicrocontrollers" [ngValue]="port">{{ port.serialPort.path }}</option>
-          </select>
-        </div>
-
-        <div id="buttonsMotorControl">
-          <ul class="dropdown-buttons">
-            <li id="upload" (click)="upload(collection.id)"><img src="./assets/icons/buttons/upload.svg" title="upload"></li>
-            <li id="play" (click)="play(collection.id)"><img src="./assets/icons/buttons/play.svg" title="run"></li>
-            <li id="loop" (click)="loop(collection.id)"><img src="./assets/icons/buttons/infinite.svg" title="loop"></li>
-            <li id="delete" (click)="delete(collection.id)"><img src="./assets/icons/buttons/bin.svg" title="delete collection"></li>
-          </ul>
-        </div>
-
-        <div id="rangeValues" *ngIf="this.motorControlService.file.configuration.collectionDisplay === 'large'">
-          <label>range</label>
-          <input type="number" id="range-start" name="rotation-start" [(ngModel)]="collection.rotation.start" (change)="this.motorControlService.drawCollection(collection)">
-          <input type="number" id="range-end" name="rotation-end" [(ngModel)]="collection.rotation.end" (change)="this.motorControlService.drawCollection(collection)">
-        </div>
-
-
-
-        <div class="form-row" *ngIf="this.motorControlService.file.configuration.collectionDisplay === 'large'">
-          <select class="form-control" id="select" (change)="this.motorControlService.updateScale(collection)" [(ngModel)]="collection.config.scale" name="scale" [compareWith]="compareValue">
-              <option *ngFor="let scale of scaleOptions" [ngValue]="scale">{{ scale.text }}</option>
-          </select>
-        </div>
-
-        <div class="form-row">
-          <div class="motor-info" id="speed">0 RPM</div>
-          <div class="motor-info posUnits" id="posUnits">&deg;</div>
-          <div class="motor-info" id="position">0 </div>
+        <div class="row" id="row2{{ collection.id }}" draggable="false">
+          <div class="draggable-area-collection {{ this.motorControlService.file.configuration.collectionDisplay }}" id="drg-{{ collection.id }}"></div>
+          <div id="col-{{ collection.id }}" class="column-visualization" (drop)="drop($event, this)" (dragleave)="removeTmpEffect($event, this)"
+            (dragend)="resetTmpEffect()" (dragover)="allowDrop($event, this)"></div>
         </div>
       </div>
-
-      <div id="collection-{{ collection.id }}" class="column-visualization" (drop)="drop($event)" (dragover)="allowDrop($event)"></div>
-
     </li>
   </ul>
 

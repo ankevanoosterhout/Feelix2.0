@@ -56,9 +56,8 @@ export class FeelixioPartsComponent implements OnInit, AfterViewInit {
 
   public controllerOptions = [
     { name: 'Arduino DUE' },
-    { name: 'Teensy 3.2' },
-    { name: 'Teensy 3.5' },
-    { name: 'Teensy 3.6' }
+    { name: 'Teensy' },
+    { name: 'STM32' },
   ];
 
   public qualityOptions = [
@@ -102,9 +101,9 @@ export class FeelixioPartsComponent implements OnInit, AfterViewInit {
     this.electronService.ipcRenderer.on('updateCalibrationValue', (event: Event, d: any) => {
       const controller = this.microcontrollers.filter(m => m.serialPort.path === d.port)[0];
       if (controller) {
-        controller.motor.calibration.xStartPos = d.data;
+        // controller.motor.calibration.xStartPos = d.data;
 
-        this.hardwareService.updateMotorDetails(controller, controller.motor);
+        // this.hardwareService.updateMotorDetails(controller, controller.motor);
         (this.document.getElementById('calibration_val_' + d.port) as HTMLInputElement).value = d.data;
         this.updateMicrocontrollerFeelixIO(controller);
       }
@@ -115,15 +114,15 @@ export class FeelixioPartsComponent implements OnInit, AfterViewInit {
       const microcontroller = this.microcontrollers.filter(m => m.serialPort.path === d.port)[0];
       const data = d.d;
       if (microcontroller) {
-        microcontroller.motor.speed = data.speed;
-        microcontroller.motor.direction = data.pos < microcontroller.motor.position.current ? 0 : 1;
-        microcontroller.motor.position.current = data.pos;
-        this.document.getElementById('speed_' + d.port).innerHTML = microcontroller.motor.speed + ' rpm';
+        // microcontroller.motor.speed = data.speed;
+        // microcontroller.motor.direction = data.pos < microcontroller.motor.position.current ? 0 : 1;
+        // microcontroller.motor.position.current = data.pos;
+        // this.document.getElementById('speed_' + d.port).innerHTML = microcontroller.motor.speed + ' rpm';
         this.document.getElementById('position_' + d.port).innerHTML = ' ' +
-         (Math.round((microcontroller.motor.position.current * (360 / 4096)) * 100) / 100) + '°';
+        //  (Math.round((microcontroller.motor.position.current * (360 / 4096)) * 100) / 100) + '°';
 
         this.hardwareService.updateMicroController(microcontroller);
-        this.feelixioDrawElementsService.updateCursors(microcontroller.motor.position.current);
+        // this.feelixioDrawElementsService.updateCursors(microcontroller.motor.position.current);
 
         this.feelixioRenderService.updateOutputParametersMotor(microcontroller);
       }

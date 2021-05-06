@@ -107,6 +107,7 @@ export class BBoxService {
             }
             const boxPosition = this.config.svg.select('#boxOutline').node().getBoundingClientRect();
             this.updateInputBoxesBBox(boxPosition);
+            this.drawingService.drawCursorPosition(d3.event.x + this.config.margin.left, d3.event.y + this.config.margin.top);
           }
         })
         .on('end', () => {
@@ -137,8 +138,9 @@ export class BBoxService {
             for (const item of this.nodeService.selectedPaths) {
               this.nodeService.movePath(item, diff);
             }
-            this.drawingService.drawFileData();
             this.updateInputBoxesBBox(newPosBox);
+            this.drawingService.saveEffect();
+            // this.drawingService.drawFileData();
             // this.drawBox(newPosBox);
             this.drawBoundingBox();
           }
@@ -199,9 +201,10 @@ export class BBoxService {
         .attr('y', box.top - this.config.margin.top - this.config.margin.offsetTop)
         .attr('width', box.width)
         .attr('height', box.height)
-        .attr('fill', 'transparent')
-        .attr('stroke', 'steelblue')
-        .attr('stroke-width', 0.5);
+        .style('fill', 'transparent')
+        .style('stroke', 'steelblue')
+        .style('stroke-width', 0.5)
+        .style('shape-rendering', 'crispEdges');
 
     this.drawHandles(box);
 
@@ -216,7 +219,6 @@ export class BBoxService {
           this.historyService.addToHistory();
           d3.selectAll('.nodesSVG').remove();
           this.config.boxRef = this.config.svg.selectAll('#boxOutline').node().getBBox();
-          console.log(this.config.boxRef);
       })
       .on('drag', (d) => this.dragHandleResize(d))
       .on('end', () => {
@@ -227,10 +229,7 @@ export class BBoxService {
             this.nodeService.scale.scaleX.invert(this.config.offsetXnodes),
             this.nodeService.scale.scaleY.invert(this.config.offsetYnodes));
 
-          for (const item of this.nodeService.selectedPaths) {
-            const boxEl = this.getBBox(this.nodeService.getPath(item));
-          }
-          this.drawingService.drawFileData();
+          this.getBBoxSelectedPaths();
           this.drawBoundingBox();
 
       });
@@ -270,9 +269,10 @@ export class BBoxService {
         .attr('y', (d: { y: number; }) => (d.y - 2.5) - this.config.margin.top - this.config.margin.offsetTop)
         .attr('width', 5)
         .attr('height', 5)
-        .attr('fill', 'white')
-        .attr('stroke', 'steelblue')
-        .attr('stroke-width', 0.5)
+        .style('fill', 'white')
+        .style('stroke', 'steelblue')
+        .style('stroke-width', 0.5)
+        .style('shape-rendering', 'crispEdges')
         .call(dragResize);
 
 
@@ -370,6 +370,8 @@ export class BBoxService {
     const updateBox = this.config.svg.select('#boxOutline').node().getBoundingClientRect();
     this.updateInputBoxesBBox(updateBox);
     this.drawHandles(updateBox);
+    this.drawingService.drawCursorPosition(d3.event.x, d3.event.y);
+
   }
 
 
@@ -442,10 +444,10 @@ export class BBoxService {
 
   updateInputBoxesBBox(boxPosition: any) {
     const boxPos = {
-      left: this.nodeService.scale.scaleX.invert(boxPosition.left ),
-      top: this.nodeService.scale.scaleY.invert(boxPosition.top  ),
-      width: this.nodeService.scale.scaleX.invert(boxPosition.left + boxPosition.width) -
-              this.nodeService.scale.scaleX.invert(boxPosition.left),
+      left: this.nodeService.scale.scaleX.invert(boxPosition.left - this.config.margin.left),
+      top: this.nodeService.scale.scaleY.invert(boxPosition.top - this.config.margin.top - this.config.margin.offsetTop),
+      width: this.nodeService.scale.scaleX.invert(boxPosition.left - this.config.margin.left + boxPosition.width) -
+              this.nodeService.scale.scaleX.invert(boxPosition.left - this.config.margin.left),
       height: this.config.editBounds.yMax - this.nodeService.scale.scaleY.invert(boxPosition.height)
     };
     this.dataService.calculateInputBoxes(boxPos);
@@ -472,15 +474,23 @@ export class BBoxService {
     return null;
   }
 
+  getBBoxSelectedPaths() {
+    for (const path of this.nodeService.selectedPaths) {
+      const pathEl = this.nodeService.getPath(path);
+      this.getBBox(pathEl);
+    }
+    this.drawingService.saveEffect();
+  }
+
 
   mirrorPath(direction: any) {
     for (const id of this.nodeService.selectedPaths) {
-      const path = this.nodeService.getPath(id);
+      let path = this.nodeService.getPath(id);
       const mirrorLine = {
         x: (path.box.width / 2) + path.box.left,
         y: (path.box.height / 2) + path.box.bottom,
       };
-      this.nodeService.mirrorPath(path, mirrorLine, direction);
+      path = this.nodeService.mirrorPath(path, mirrorLine, (direction === 'horizontal' ? true : false), (direction === 'vertical' ? true : false) );
     }
     this.drawingService.drawFileData();
   }

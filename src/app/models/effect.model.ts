@@ -1,5 +1,5 @@
+import { Dates } from './file.model';
 import { Path } from './node.model';
-import { Details } from './position-effect.model';
 
 export class Color {
   name = 'Light gray';
@@ -11,6 +11,11 @@ export class Color {
   }
 }
 
+export class Repeat {
+  instances = 1;
+  index = 0;
+}
+
 export class GridSettings {
   spacingX = 20;
   spacingY = 20;
@@ -20,8 +25,13 @@ export class GridSettings {
 }
 
 export class Unit {
-  name = 'degrees';
-  PR = 360;
+  name: string = null;
+  PR: number = null;
+
+  constructor(name: string, PR: number) {
+    this.name = name;
+    this.PR = PR;
+  }
 }
 
 export class Coords {
@@ -40,7 +50,9 @@ export class Grid {
   visible = false;
   settings = new GridSettings();
   translation = 1.0;
-  units = new Unit();
+  // units = new Unit('degrees', 360);
+  xUnit = new Unit('degrees', 360);
+  yUnit = new Unit('voltage (%)', 100);
   guides: Array<Guide> = [];
   guidesVisible = true;
   lockGuides = false;
@@ -51,23 +63,69 @@ export class Range {
   end: number = 360;
 }
 
+export class XY {
+  x: any = null;
+  y: any = null;
+  uniform = true;
+
+  constructor(x: any, y: any) {
+    this.x = x;
+    this.y = y;
+  }
+}
+
+export class Size {
+  x: number = null;
+  y: number = null;
+  width: number = null;
+  height: number = null;
+
+  constructor(x: number, y: number, width: number, height: number) {
+    this.x = x;
+    this.y = y;
+    this.width = width;
+    this.height = height;
+  }
+}
+
+export class Details {
+  id: string = null;
+  name: string = null;
+  effectID: string = null;
+  direction = 'any';
+  scale = new XY(100,100);
+  position = new Size(0,0,0,0);
+  flip = new XY(false, false);
+  repeat = new Repeat();
+  infinite = false;
+  // quality = new Quality();
+
+  constructor(id: string, effectID: string, name: string) {
+    this.id = id;
+    this.effectID = effectID;
+    this.name = name;
+  }
+}
+
+
 export class Effect {
   id: string = null;
   name: string = 'effect-1';
+  date = new Dates();
   type = 'torque';
-  xUnit = new Unit();
-  yUnit = new Unit();
+  rotation = 'dependent';
   paths: Array<Path> = [];
-  details = new Details();
   grid = new Grid();
   scale: any = null;
   colors: Array<Color> = [];
   range = new Range();
+  size = new Size(0,0,0,0);
 
   constructor(id: string) {
     this.id = id;
     this.colors.push(new Color('Blue', '#003fc1'));
     this.colors.push(new Color('LightBlue', '#9bbef5'));
+    this.date.created = new Date().getTime();
   }
 }
 
@@ -75,13 +133,11 @@ export class Effect {
 
 export class LibraryEffect {
   id: string;
-  feelixio = 'effect';
+  // feelixio = 'effect';
   effect: Effect = null;
-  paths: Array<Path> = [];
 
-  constructor(id: string, effect: Effect, units: Unit) {
+  constructor(id: string, effect: Effect) {
     this.id = id;
     this.effect = effect;
-    this.effect.xUnit = units;
   }
 }

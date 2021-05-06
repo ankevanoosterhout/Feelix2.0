@@ -618,22 +618,22 @@ export class FeelixioRenderService {
           const effectObject = this.feelixioFile.effects.filter(e => e.id === treeItem.data.id)[0];
 
           if (effectObject.effect.type === 'motion' || effectObject.effect.type === 'ease') {
-            const translatedEffect = this.uploadService.
-              translateSingleTimeBasedEffectData(effectObject, microcontroller.motor);
-            if (translatedEffect) {
-              translatedEffect.treeIndex = treeIndex;
-              translatedEffect.index = effectIndex;
-              effectList.push(translatedEffect);
-            }
+            // const translatedEffect = this.uploadService.
+            //   translateSingleTimeBasedEffectData(effectObject, microcontroller.motor);
+            // if (translatedEffect) {
+            //   translatedEffect.treeIndex = treeIndex;
+            //   translatedEffect.index = effectIndex;
+            //   effectList.push(translatedEffect);
+            // }
           } else {
-            const translatedEffect = this.uploadService.
-              translateSinglePositionBasedEffectData(effectObject, microcontroller.motor);
+            // const translatedEffect = this.uploadService.
+            //   translateSinglePositionBasedEffectData(effectObject, microcontroller.motor);
 
-            if (translatedEffect) {
-              translatedEffect.treeIndex = treeIndex;
-              translatedEffect.index = effectIndex;
-              effectList.push(translatedEffect);
-            }
+            // if (translatedEffect) {
+            //   translatedEffect.treeIndex = treeIndex;
+            //   translatedEffect.index = effectIndex;
+            //   effectList.push(translatedEffect);
+            // }
           }
           effectIndex++;
         }
@@ -650,13 +650,13 @@ export class FeelixioRenderService {
           }
         }
 
-        this.hardwareService.updateMotorEffectList(microcontroller.id, effectList);
+        // this.hardwareService.updateMotorEffectList(microcontroller.id, effectList);
         // console.log(effectList);
 
         if (this.electronService.isElectronApp) {
-          this.electronService.ipcRenderer.send('addFilesToUploadList',
-            { effects: effectList, motor: microcontroller.motor,
-              microcontroller: { port: microcontroller.serialPort, type: microcontroller.type }});
+          // this.electronService.ipcRenderer.send('addFilesToUploadList',
+            // { effects: effectList, motor: microcontroller.motor,
+            //   microcontroller: { port: microcontroller.serialPort, type: microcontroller.type }});
         }
       } else {
         // show message
@@ -684,10 +684,10 @@ export class FeelixioRenderService {
   updateOutputParametersMotor(microcontroller: MicroController) {
     const motorObject = this.feelixioFile.hardware.filter(h => h.microcontroller.id === microcontroller.id)[0];
     if (motorObject) {
-      motorObject.parameters.output.filter(p => p.name === 'position')[0].defaultVal.type.val = microcontroller.motor.position.current;
-      motorObject.parameters.output.filter(p => p.name === 'speed')[0].defaultVal.type.val = microcontroller.motor.speed;
-      motorObject.parameters.output.filter(p => p.name === 'clockwise')[0].defaultVal.category.val =
-        microcontroller.motor.direction === 1 ? 'true' : 'false';
+      // motorObject.parameters.output.filter(p => p.name === 'position')[0].defaultVal.type.val = microcontroller.motor.position.current;
+      // motorObject.parameters.output.filter(p => p.name === 'speed')[0].defaultVal.type.val = microcontroller.motor.speed;
+      // motorObject.parameters.output.filter(p => p.name === 'clockwise')[0].defaultVal.category.val =
+        // microcontroller.motor.direction === 1 ? 'true' : 'false';
       this.updateOutputParametersLinkedParameter(motorObject.id);
     }
   }
@@ -741,62 +741,62 @@ export class FeelixioRenderService {
         const ms = time - microcontroller.lastDataSend;
         if (microcontroller) {
 
-          const effectInList = microcontroller.motor.effectList.filter(e => e.effectID === effectObj.effect.id)[0];
+          // const effectInList = microcontroller.motor.effectList.filter(e => e.effectID === effectObj.effect.id)[0];
 
-          if (effectInList) {
-            if (this.updateSendFunction) {
-              clearTimeout(this.updateSendFunction);
-            }
-            this.updateSendFunction = setTimeout(() => {
-              this.hardwareService.updateDataSendTime(microcontroller.id);
-              if (parameter.name === 'intensity') {
-                const intensity = this.uploadService.getIntensityValue(effectObj);
-                if (intensity !== -1) {
-                  this.sendDataElement('Y', intensity, effectInList.index, { port:  microcontroller.serialPort });
-                } else {
-                  const linear = this.uploadService.getLinearValue(effectObj, microcontroller.motor);
-                  if (linear) {
-                  this.sendDataElement('L', (linear.Xmin + ':' + linear.Xmax + ':' + linear.Ymin + ':' + linear.Ymax + ':' +
-                    (Math.round(linear.dYdX * 10000) / 10000)), effectInList.index, { port:  microcontroller.serialPort });
-                  }
-                }
+          // if (effectInList) {
+          //   if (this.updateSendFunction) {
+          //     clearTimeout(this.updateSendFunction);
+          //   }
+          //   this.updateSendFunction = setTimeout(() => {
+          //     this.hardwareService.updateDataSendTime(microcontroller.id);
+          //     if (parameter.name === 'intensity') {
+          //       const intensity = this.uploadService.getIntensityValue(effectObj);
+          //       if (intensity !== -1) {
+          //         // this.sendDataElement('Y', intensity, effectInList.index, { port:  microcontroller.serialPort });
+          //       } else {
+          //         const linear = this.uploadService.getLinearValue(effectObj, microcontroller.motor);
+          //         if (linear) {
+          //         // this.sendDataElement('L', (linear.Xmin + ':' + linear.Xmax + ':' + linear.Ymin + ':' + linear.Ymax + ':' +
+          //           // (Math.round(linear.dYdX * 10000) / 10000)), effectInList.index, { port:  microcontroller.serialPort });
+          //         // }
+          //       }
 
-              } else if (parameter.name === 'intensity (l)') {
-                const linear = this.uploadService.getLinearValue(effectObj, microcontroller.motor);
-                if (linear) {
-                  this.sendDataElement('L', (linear.Xmin + ':' + linear.Xmax + ':' + linear.Ymin + ':' + linear.Ymax + ':' +
-                      (Math.round(linear.dYdX * 10000) / 10000)), effectInList.index, { port:  microcontroller.serialPort });
-                }
+              // } else if (parameter.name === 'intensity (l)') {
+                // const linear = this.uploadService.getLinearValue(effectObj, microcontroller.motor);
+                // if (linear) {
+                  // this.sendDataElement('L', (linear.Xmin + ':' + linear.Xmax + ':' + linear.Ymin + ':' + linear.Ymax + ':' +
+                  //     (Math.round(linear.dYdX * 10000) / 10000)), effectInList.index, { port:  microcontroller.serialPort });
+                // }
 
-              } else if (parameter.name === 'position' || parameter.name === 'align') {
-                const position = this.uploadService.getPositionValue(effectObj, microcontroller.motor);
-                this.sendDataElement('A', position, effectInList.index, { port:  microcontroller.serialPort });
+              // } else if (parameter.name === 'position' || parameter.name === 'align') {
+              //   const position = this.uploadService.getPositionValue(effectObj, microcontroller.motor);
+              //   this.sendDataElement('A', position, effectInList.index, { port:  microcontroller.serialPort });
 
-              } else if (parameter.name === 'angle') {
-                const angle = this.uploadService.getAngleValue(effectObj, microcontroller.motor);
-                this.sendDataElement('X', angle, effectInList.index, { port:  microcontroller.serialPort });
+              // } else if (parameter.name === 'angle') {
+              //   const angle = this.uploadService.getAngleValue(effectObj, microcontroller.motor);
+              //   this.sendDataElement('X', angle, effectInList.index, { port:  microcontroller.serialPort });
 
-              } else if (parameter.name === 'direction') {
-                const direction = this.uploadService.getDirectionValue(effectObj);
-                this.sendDataElement('D', direction, effectInList.index, { port:  microcontroller.serialPort });
+              // } else if (parameter.name === 'direction') {
+              //   const direction = this.uploadService.getDirectionValue(effectObj);
+              //   this.sendDataElement('D', direction, effectInList.index, { port:  microcontroller.serialPort });
 
-              } else if (parameter.name === 'infinite' || parameter.name === 'loop') {
-                const infinite = this.uploadService.
-                  getBooleanValue(effectObj.parameters.input.filter((p: { name: string; }) =>
-                  p.name === 'infinite' || p.name === 'loop')[0]);
-                this.sendDataElement('I', infinite ? 1 : 0, effectInList.index, { port:  microcontroller.serialPort });
+            //   } else if (parameter.name === 'infinite' || parameter.name === 'loop') {
+            //     const infinite = this.uploadService.
+            //       getBooleanValue(effectObj.parameters.input.filter((p: { name: string; }) =>
+            //       p.name === 'infinite' || p.name === 'loop')[0]);
+            //     this.sendDataElement('I', infinite ? 1 : 0, effectInList.index, { port:  microcontroller.serialPort });
 
-              } else if (parameter.name === 'enabled') {
-                const enabled =
-                  this.uploadService.getBooleanValue(effectObj.parameters.input.filter((p: { name: string; }) => p.name === 'enabled')[0]);
-                this.sendDataElement('E', enabled ? 1 : 0, effectInList.index, { port:  microcontroller.serialPort });
+            //   } else if (parameter.name === 'enabled') {
+            //     const enabled =
+            //       this.uploadService.getBooleanValue(effectObj.parameters.input.filter((p: { name: string; }) => p.name === 'enabled')[0]);
+            //     this.sendDataElement('E', enabled ? 1 : 0, effectInList.index, { port:  microcontroller.serialPort });
 
-              } else if (parameter.name === 'start') {
-                const startTime = this.uploadService.getStartTime(effectObj);
-                this.sendDataElement('S', startTime, effectInList.index, { port:  microcontroller.serialPort });
-              }
-            }, (ms > 200 ? 0 : 200 - ms));
-          }
+            //   } else if (parameter.name === 'start') {
+            //     const startTime = this.uploadService.getStartTime(effectObj);
+            //     this.sendDataElement('S', startTime, effectInList.index, { port:  microcontroller.serialPort });
+            //   }
+            // }, (ms > 200 ? 0 : 200 - ms));
+          // }
         }
       }
     }
@@ -816,15 +816,15 @@ export class FeelixioRenderService {
         for (const device of microcontroller.dataToOtherDevices) {
           const dataList = [];
 
-          if (device.position && microcontroller.motor.position.current !== null) {
-            dataList.push({ identifier: 'P', value: microcontroller.motor.position.current });
-          }
-          if (device.speed && microcontroller.motor.speed !== null) {
-            dataList.push({ identifier: 'S', value: microcontroller.motor.speed });
-          }
-          if (device.direction && microcontroller.motor.direction !== null) {
-            dataList.push({ identifier: 'D', value: microcontroller.motor.direction });
-          }
+          // if (device.position && microcontroller.motor.position.current !== null) {
+          //   dataList.push({ identifier: 'P', value: microcontroller.motor.position.current });
+          // }
+          // if (device.speed && microcontroller.motor.speed !== null) {
+          //   dataList.push({ identifier: 'S', value: microcontroller.motor.speed });
+          // }
+          // if (device.direction && microcontroller.motor.direction !== null) {
+          //   dataList.push({ identifier: 'D', value: microcontroller.motor.direction });
+          // }
           if (dataList.length > 0) {
             device.serialPort.lastDataSend = new Date().getTime();
             this.electronService.ipcRenderer.send('updateExternalDevice', { COM: device.serialPort, list: dataList });

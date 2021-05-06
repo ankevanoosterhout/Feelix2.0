@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import { DrawingPlaneConfig } from '../models/drawing-plane-config.model';
 import { Curve } from '../models/ease-functions.model';
 import { Node, Path } from '../models/node.model';
-import { TimeEffect } from '../models/time-effect.model';
 import { Color } from '../models/colors.model';
 import { v4 as uuid } from 'uuid';
 import { DrawingService } from './drawing.service';
@@ -75,15 +74,7 @@ export class EaseFunctionLibraryService {
       path.nodes[1].id = path.nodes[0].id;
       path.nodes[2].id = path.nodes[3].id;
 
-      const motionEffect = new TimeEffect(uuid(), 1000, new Unit());
-      motionEffect.interface.name = f.name;
-      motionEffect.type = 'ease';
-      motionEffect.interface.colors = [new Color('purple', '#781fbd', '#8b16ca')];
-      motionEffect.details.range.min = this.config.editBounds.yMin;
-      motionEffect.details.range.max = this.config.editBounds.yMax;
-      motionEffect.nodes.push(path);
-
-      easeFunctions.push(motionEffect);
+      
     }
     return easeFunctions;
   }

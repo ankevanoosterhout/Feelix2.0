@@ -100,16 +100,16 @@
     }
 
     #field-inset rect.guide {
-      fill: #005baa;
+      fill: #01b8bb;
     }
     #field-inset rect.guide.selected {
-      fill: #00c9cc;
+      fill: #00eff3;
     }
     .guide {
-      fill: #005baa;
+      fill: #01b8bb;
     }
     .guide.selected {
-      fill: #00c9cc;
+      fill: #00eff3;
     }
 
     .smallAxisX text, .smallAxisY text {
@@ -120,6 +120,7 @@
       display: none;
       pointer-events: none;
       user-select: none;
+      shape-rendering: crisp-edges;
     }
 
     .axis text, .axisBottom text {
@@ -131,14 +132,16 @@
 
     .axis line, .axisBottom line, .smallAxisX line, .smallAxisY line {
       fill: none;
-      stroke: #999;
+      stroke: #888;
       stroke-width: 1;
       pointer-events: none;
       user-select: none;
+      shape-rendering: crisp-edges;
     }
 
     .axis line, .axisBottom line {
       stroke-width: 1.5;
+      shape-rendering: crisp-edges;
     }
 
     .axis .tick:first-child {

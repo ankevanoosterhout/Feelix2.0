@@ -227,8 +227,8 @@ const mainMenuTemplate = [
         accelerator: process.platform == 'darwin' ? 'Command+R' : 'Ctrl+R',
         visible: false,
         click() {
-          mainMenu.items[2].submenu.items[1].visible = false;
-          mainMenu.items[2].submenu.items[2].visible = true;
+          mainMenu.items[3].submenu.items[1].visible = false;
+          mainMenu.items[3].submenu.items[2].visible = true;
           mainWindow.webContents.send('rulers:toggle', true);
         }
       },
@@ -237,8 +237,8 @@ const mainMenuTemplate = [
         accelerator: process.platform == 'darwin' ? 'Command+Alt+R' : 'Ctrl+Alt+R',
         visible: true,
         click() {
-          mainMenu.items[2].submenu.items[1].visible = true;
-          mainMenu.items[2].submenu.items[2].visible = false;
+          mainMenu.items[3].submenu.items[1].visible = true;
+          mainMenu.items[3].submenu.items[2].visible = false;
           mainWindow.webContents.send('rulers:toggle', false);
         }
       },
@@ -249,9 +249,9 @@ const mainMenuTemplate = [
             label: 'Show grid',
             visible: true,
             click() {
-              mainMenu.items[2].submenu.items[3].submenu.items[0].visible = false;
-              mainMenu.items[2].submenu.items[3].submenu.items[1].visible = true;
-              mainMenu.items[2].submenu.items[3].submenu.items[2].enabled = false;
+              mainMenu.items[3].submenu.items[2].submenu.items[0].visible = false;
+              mainMenu.items[3].submenu.items[2].submenu.items[1].visible = true;
+              mainMenu.items[3].submenu.items[2].submenu.items[2].enabled = false;
               mainWindow.webContents.send('grid:toggle', true);
             }
           },
@@ -259,10 +259,10 @@ const mainMenuTemplate = [
             label: 'Hide grid',
             visible: false,
             click() {
-              mainMenu.items[2].submenu.items[3].submenu.items[0].visible = true;
-              mainMenu.items[2].submenu.items[3].submenu.items[1].visible = false;
-              mainMenu.items[2].submenu.items[3].submenu.items[2].enabled = true;
-              mainMenu.items[2].submenu.items[3].submenu.items[2].checked = false;
+              mainMenu.items[3].submenu.items[2].submenu.items[0].visible = true;
+              mainMenu.items[3].submenu.items[2].submenu.items[1].visible = false;
+              mainMenu.items[3].submenu.items[2].submenu.items[2].enabled = true;
+              mainMenu.items[3].submenu.items[2].submenu.items[2].checked = false;
               mainWindow.webContents.send('grid:toggle', false);
             }
           },
@@ -273,11 +273,11 @@ const mainMenuTemplate = [
             enabled: false,
             click() {
               if (gridSnap) {
-                mainMenu.items[2].submenu.items[3].submenu.items[2].checked = false;
+                mainMenu.items[3].submenu.items[2].submenu.items[2].checked = false;
                 mainWindow.webContents.send('grid:snap', false);
                 gridSnap = false;
               } else if (!gridSnap) {
-                mainMenu.items[2].submenu.items[3].submenu.items[2].checked = true;
+                mainMenu.items[3].submenu.items[2].submenu.items[2].checked = true;
                 mainWindow.webContents.send('grid:snap', true);
                 gridSnap = true;
               }
@@ -286,7 +286,7 @@ const mainMenuTemplate = [
           {
             label: 'Grid size',
             click() {
-              mainMenu.items[2].submenu.items[3].submenu.items[2].enabled = true;
+              mainMenu.items[3].submenu.items[2].submenu.items[2].enabled = true;
               adjustGridSettings();
             }
           }
@@ -950,7 +950,6 @@ function createLayerOptionWindow(layerDetails) {
   drawTemporaryWindow(380, 290, 'Layer Options', false, 'layer-option', layerDetails);
 }
 
-
 function createFileSettingWindow(filepath) {
   drawTemporaryWindow(380, 180, 'File Settings', false, filepath);
 }
@@ -960,51 +959,8 @@ function createEffectSettingWindow(filepath) {
 }
 
 function createMotorSettingsWindow(data) {
-
-  let newPlayWindow = new BrowserWindow({
-    minWidth: 360,
-    height: 380,
-    minHeight: 320,
-    backgroundColor: '#333',
-    frame: false,
-    resizable: true,
-    alwaysOnTop: true,
-    center: true,
-    movable: true,
-    show: false,
-    parent: mainWindow,
-    icon: path.join(__dirname, '../src/assets/icons/png/64x64.png'),
-    webPreferences: {
-      nodeIntegration: true
-    }
-  });
-
-  newPlayWindow.loadURL(
-    url.format({
-      pathname: path.join(__dirname, `../dist/feelix/index.html`),
-      protocol: "file:",
-      slashes: true,
-      hash: '/motor-settings',
-    })
-  )
-
-
-  newPlayWindow.once('ready-to-show', () => {
-    newPlayWindow.show();
-    newPlayWindow.focus();
-    newPlayWindow.webContents.send('port', data);
-  })
-
-  newPlayWindow.webContents.openDevTools();
-
-  newPlayWindow.on('close', function () {
-    newPlayWindow = null
-  })
-
-
-
+  drawTemporaryWindow(520, 450, 'Microcontroller settings', false, 'motor-settings');
 }
-
 
 function adjustGridSettings() {
   drawTemporaryWindow(400, 480, 'Grid size', false, 'grid-settings');
@@ -1022,7 +978,7 @@ function createConnectToCOM(comPorts) {
   // console.log("create window" + JSON.stringify(comPorts));
   mainWindow.webContents.send('updateAvailableCOMPorts', comPorts.serialPort);
 
-  if (tmpWindow !== null && (activeWindow === 'connect-to-com' || activeWindow === 'connect-to-com-custom')) {
+  if (tmpWindow !== null && (activeWindow === 'motor-settings')) {
     tmpWindow.webContents.send('comports', comPorts);
   } else {
     drawTemporaryWindow(500, (comType !== 'custom' ? 230 : 260), (comType !== 'custom' ? 'Connect to Motor' : 'Connect to Serialport' ), true, (comType !== 'custom' ? 'connect-to-com' : 'connect-to-com-custom'), null, null);
@@ -1180,7 +1136,6 @@ ipcMain.on('addMicrocontroller', function (e, data) {
   console.log(data);
   serialPort.createConnection(data);
   mainWindow.webContents.send('updateStatus', { microcontroller: data, connected: false, error: false });
-  tmpWindow.close();
 })
 
 ipcMain.on('connectToSerialPort', function (e, data) {
@@ -1288,21 +1243,12 @@ ipcMain.on('update', (event, details) => {
   }
 })
 
-ipcMain.on('getActiveTab', (event) => {
-  if (effectDetails !== null) {
-    effectWindow.webContents.send('showEffectDetails', effectDetails);
-  }
-});
-
 ipcMain.on('showTabEffectWindow', (event, tab) => {
   if (effectWindow !== null) {
     effectWindow.webContents.send('showTab', tab);
   }
 });
 
-ipcMain.on('updateHapticEffect', (event, data) => {
-  mainWindow.webContents.send('updateHapticEffect', data);
-});
 
 ipcMain.on('repeatEffect', (event, data) => {
   mainWindow.webContents.send('repeatEffect', data);

@@ -128,10 +128,12 @@ export class HardwareService {
   }
 
   updateMicroController(microcontroller: MicroController) {
-    let controller = this.microcontrollers.filter(m => m.serialPort.path === microcontroller.serialPort.path)[0];
-    if (controller) {
-      controller = microcontroller;
-      this.store();
+    if (microcontroller) {
+      let controller = this.microcontrollers.filter(m => m.serialPort.path === microcontroller.serialPort.path)[0];
+      if (controller) {
+        controller = microcontroller;
+        this.store();
+      }
     }
   }
 
@@ -179,18 +181,15 @@ export class HardwareService {
   updateMotorDetails(microcontroller: MicroController, motor: Motor) {
     const controller = this.microcontrollers.filter(m => m.serialPort.path === microcontroller.serialPort.path)[0];
     if (controller) {
-      controller.motor = motor;
-      this.store();
+      let m = controller.motors.filter(m => m.id === motor.id)[0];
+      if (m) {
+        m = motor;
+        this.store();
+      }
     }
   }
 
-  updateMotorEffectList(microControllerID: string, effectList: any) {
-    const microController = this.microcontrollers.filter(m => m.id === microControllerID)[0];
-    if (microController) {
-      microController.motor.effectList = effectList;
-      this.store();
-    }
-  }
+
 
   updateDataSendTime(microControllerID: string) {
     const microController = this.microcontrollers.filter(m => m.id === microControllerID)[0];
@@ -229,10 +228,10 @@ export class HardwareService {
     return this.microcontrollers.filter(m => m.serialPort.path === com)[0];
   }
 
-  getMotor(com: string) {
+  getMotor(com: string, id: number) {
     const microController = this.microcontrollers.filter(m => m.serialPort.path === com)[0];
     if (microController) {
-      return microController.motor;
+      return microController.motors[id];
     }
     return;
   }

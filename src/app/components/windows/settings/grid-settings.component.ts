@@ -23,7 +23,7 @@ import { DrawingService } from 'src/app/services/drawing.service';
           <div class="form-row">
               <label>grid line every</label>
               <input type="number" [(ngModel)]="file.activeEffect.grid.settings.spacingX" name="grid-spacingX" />
-              <span class="span-text"> {{ this.file.activeEffect.grid.units.name }}</span>
+              <span class="span-text"> {{ this.file.activeEffect.grid.xUnit.name }}</span>
           </div>
           <div class="form-row">
               <label>subdivision</label>
@@ -44,9 +44,9 @@ import { DrawingService } from 'src/app/services/drawing.service';
           </div>
         </div>
 
-        <div class="form-row" *ngIf="file.activeEffect.grid.units.name === 'custom'">
+        <div class="form-row" *ngIf="file.activeEffect.grid.xUnit.name === 'custom'">
           <label>Points per revolution</label>
-          <input type="number" id="PR" name="PR" [(ngModel)]="file.activeEffect.grid.units.PR">
+          <input type="number" id="PR" name="PR" [(ngModel)]="file.activeEffect.grid.xUnit.PR">
         </div>
 
         <div class="form-row buttons">
@@ -85,10 +85,10 @@ export class GridSettingsComponent implements OnInit {
   constructor(private electronService: ElectronService, public fileService: FileService, private drawingService: DrawingService) { }
 
   public submit() {
-    // if (this.selectedUnit.name !== this.file.grid.units.name) {
-    //   const oldUnits = this.file.grid.units;
-    //   this.file.rotation.end = Math.round(this.file.rotation.end * (this.file.grid.units.PR / this.selectedUnit.PR));
-    //   this.file.rotation.start = Math.round(this.file.rotation.start * (this.file.grid.units.PR / this.selectedUnit.PR));
+    // if (this.selectedUnit.name !== this.file.grid.xUnit.name) {
+    //   const oldUnits = this.file.grid.xUnit;
+    //   this.file.rotation.end = Math.round(this.file.rotation.end * (this.file.grid.xUnit.PR / this.selectedUnit.PR));
+    //   this.file.rotation.start = Math.round(this.file.rotation.start * (this.file.grid.xUnit.PR / this.selectedUnit.PR));
     //   this.drawingService.setEditBounds(this.file.mode);
     //   this.fileService.updateUnits(oldUnits, this.selectedUnit, this.file);
     // }

@@ -82,6 +82,9 @@ export class TransformComponent implements OnInit {
 
   ngOnInit(): void {
     this.file = this.fileService.getActiveFile();
+    if (this.file.activeEffect) {
+      this.units = this.file.activeEffect.grid.xUnit;
+    }
     // this.units = this.file.grid.units;
   }
 }

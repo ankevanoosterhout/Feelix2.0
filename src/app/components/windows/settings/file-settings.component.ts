@@ -65,7 +65,7 @@ export class FileSettingsComponent implements OnInit {
       this.fileService.updateActiveFile();
       this.electronService.ipcRenderer.send('updateNumberOfNewFiles');
       if (this.file.collections.length === 0) {
-        this.file.collections.push(new Collection(uuid()));
+        this.file.collections.push(new Collection(uuid(), 'Collection-' + (this.file.collections.length + 1)));
       }
       if (this.file.effects.length === 0) {
         this.file.effects.push(new Effect(uuid()));
@@ -74,7 +74,7 @@ export class FileSettingsComponent implements OnInit {
       this.fileService.add(this.file);
     } else {
       this.drawingService.setEditBounds();
-      this.fileService.updateUnits(this.initialUnits, this.file.activeEffect.grid.units, this.file);
+      this.fileService.updateUnits(this.initialUnits, this.file.activeEffect.grid.xUnit);
     }
     this.close();
   }

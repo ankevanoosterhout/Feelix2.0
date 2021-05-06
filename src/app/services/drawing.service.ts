@@ -9,6 +9,7 @@ import { Cursor } from '../models/tool.model';
 import { Subject } from 'rxjs';
 import { FileService } from './file.service';
 import { EffectVisualizationService } from './effect-visualization.service';
+import { Effect, Unit } from '../models/effect.model';
 
 
 
@@ -23,6 +24,7 @@ export class DrawingService {
   showMessage: Subject<any> = new Subject();
   align: Subject<any> = new Subject();
 
+  drawEffectsInLibrary: Subject<any> = new Subject();
 
   constructor(@Inject(DOCUMENT) private document: Document, public nodeService: NodeService,
               private dataService: DataService, private fileService: FileService, private effectVisualizationService: EffectVisualizationService) {
@@ -39,7 +41,7 @@ export class DrawingService {
       .attr('width', this.config.svgDx)
       .attr('height', this.config.svgDy);
 
-    if (this.file.activeEffect.scale !== null) {
+    if (this.file.activeEffect && this.file.activeEffect.scale !== null) {
       const t = d3.zoomIdentity.translate(this.file.activeEffect.scale.x, 0).scale(this.file.activeEffect.scale.k);
       this.config.svg.call(this.config.zoom.transform, t);
     }
@@ -65,46 +67,50 @@ export class DrawingService {
       .attr('width', this.config.svgDx)
       .attr('height', this.config.svgDy);
 
-    const innerContainer = this.config.svg.append('rect')
-      .attr('width', this.nodeService.scale.scaleX(this.config.editBounds.xMax) -
-                     this.nodeService.scale.scaleX(this.config.editBounds.xMin))
-      .attr('height', this.config.chartDy - 0.5)
-      .attr('x', this.nodeService.scale.scaleX(this.config.editBounds.xMin))
-      .attr('y', 0.25)
-      .attr('clip-path', 'url(#clip)')
-      .attr('transform', 'translate(0, ' + this.config.margin.top + ')')
-      .attr('class', 'innerContainer')
-      .attr('stroke-width', 0.5)
-      .attr('stroke', '#1c1c1c')
-      .attr('fill', '#fff')
-      .on('click', () => {
-        if (this.config.cursor.slug === 'zoom') {
-          let direction = 1;
-          if (d3.event.altKey) {
-            direction = -1;
-          } else {
-            this.document.getElementById('field-inset').style.cursor = this.config.cursor.cursor;
-          }
-          this.clickToZoom(direction);
-        }
-      });
+    if (this.file.activeEffect !== null) {
 
-    if (this.file.activeEffect.type === 'torque') {
-      const middleLine = this.config.svg.append('rect')
+      const innerContainer = this.config.svg.append('rect')
         .attr('width', this.nodeService.scale.scaleX(this.config.editBounds.xMax) -
                       this.nodeService.scale.scaleX(this.config.editBounds.xMin))
-        .attr('height', 0.6)
-        .attr('class', 'middleLine')
+        .attr('height', this.config.chartDy - 0.5)
         .attr('x', this.nodeService.scale.scaleX(this.config.editBounds.xMin))
-        .attr('y', (this.config.chartDy / 2) - 0.3)
-        .attr('fill', '#1c1c1c')
-        .attr('transform', 'translate(0, ' + this.config.margin.top + ')');
-    }
+        .attr('y', 0.25)
+        .attr('clip-path', 'url(#clip)')
+        .attr('transform', 'translate(0, ' + this.config.margin.top + ')')
+        .attr('class', 'innerContainer')
+        // .attr('stroke-width', 0.5)
+        // .attr('stroke', '#1c1c1c')
+        .attr('shape-rendering', 'crispEdges')
+        .attr('fill', '#fff')
+        .on('click', () => {
+          if (this.config.cursor.slug === 'zoom') {
+            let direction = 1;
+            if (d3.event.altKey) {
+              direction = -1;
+            } else {
+              this.document.getElementById('field-inset').style.cursor = this.config.cursor.cursor;
+            }
+            this.clickToZoom(direction);
+          }
+        });
 
-    if (this.config.rulerVisible) {
-      this.drawRulers();
+      if (this.file.activeEffect.type === 'torque') {
+        const middleLine = this.config.svg.append('rect')
+          .attr('width', this.nodeService.scale.scaleX(this.config.editBounds.xMax) -
+                        this.nodeService.scale.scaleX(this.config.editBounds.xMin))
+          .attr('height', 0.6)
+          .attr('class', 'middleLine')
+          .attr('x', this.nodeService.scale.scaleX(this.config.editBounds.xMin))
+          .attr('y', (this.config.chartDy / 2) - 0.3)
+          .attr('transform', 'translate(0, ' + this.config.margin.top + ')')
+          .style('fill', '#1c1c1c');
+      }
+
+      if (this.config.rulerVisible) {
+        this.drawRulers();
+      }
+      this.drawSliderDrawplane();
     }
-    this.drawSliderDrawplane();
   }
 
   clickToZoom(direction: any) {
@@ -149,6 +155,7 @@ export class DrawingService {
     this.config.chartDy = this.config.svgDy - this.config.margin.bottom - this.config.margin.top;
     this.getSliderDrawplanePosition();
     this.setZoom();
+
   }
 
 
@@ -166,7 +173,7 @@ export class DrawingService {
       .domain([this.config.editBounds.xMin, this.config.editBounds.xMax])
       .range([0, this.config.chartDx]);
 
-    if (this.file.activeEffect.scale === null) {
+    if (this.file.activeEffect === null || this.file.activeEffect.scale === null) {
       this.nodeService.setScale(this.config.xScale, this.config.yScale);
     } else {
       const t = d3.zoomIdentity.translate(this.file.activeEffect.scale.x, 0).scale(this.file.activeEffect.scale.k);
@@ -181,11 +188,10 @@ export class DrawingService {
   // }
 
   setZoom() {
-    let offsetLeft = this.config.chartDx * -0.5;
     this.config.zoom = d3
       .zoom()
       .scaleExtent([0.01, Infinity])
-      .translateExtent([[offsetLeft, 0], [(this.config.chartDx * 1.5), this.config.chartDy]]) // 1.2
+      .translateExtent([[this.config.chartDx * -0.5, 0], [(this.config.chartDx * 1.5), this.config.chartDy]]) // 1.2
       .on('zoom', () => {
         if (this.config.zoomable) {
           const transform = d3.event.transform;
@@ -198,15 +204,17 @@ export class DrawingService {
 
   setEditBounds() {
 
-    const yMin = this.file.activeEffect.type === 'torque' ? -100 : 0;
+    if (this.file.activeEffect !== null) {
+      const yMin = this.file.activeEffect.type === 'torque' ? -100 : 0;
 
-    this.config.margin.top = this.config.svgDy * 0.4;
-    this.config.editBounds = {
-      xMin: this.file.activeEffect.range.start,
-      xMax: this.file.activeEffect.range.end,
-      yMin: yMin,
-      yMax: 100
-    };
+      this.config.margin.top = this.config.svgDy * 0.4;
+      this.config.editBounds = {
+        xMin: this.file.activeEffect.range.start,
+        xMax: this.file.activeEffect.range.end,
+        yMin: yMin,
+        yMax: 100
+      };
+    }
     this.resetVariables();
   }
 
@@ -259,7 +267,7 @@ export class DrawingService {
 
     const width = this.config.sliderDrawplane.outer.max - this.config.sliderDrawplane.outer.min;
 
-    if (this.file.activeEffect.scale !== null) {
+    if (this.file.activeEffect && this.file.activeEffect.scale !== null) {
       scale = this.file.activeEffect.scale.k;
       scaleOffset = this.file.activeEffect.scale.x;
     }
@@ -274,6 +282,8 @@ export class DrawingService {
       this.config.sliderDrawplane.inner.min = this.config.sliderDrawplane.outer.min; }
     this.config.sliderDrawplane.inner.max = this.config.sliderDrawplane.inner.min + sliderWidth;
   }
+
+
 
   updateSlider(transform: any) {
     let planeWidth = this.config.chartDx * 2 * transform.k;
@@ -393,8 +403,6 @@ export class DrawingService {
       .style('font-size', '10px');
   }
 
-
-
   deselectAllElements() {
     this.dataService.deselectAll();
     this.deselectGuides();
@@ -410,6 +418,14 @@ export class DrawingService {
         .style('stroke', 'transparent');
 
       this.config.svg.selectAll('.forceNode').style('fill', 'transparent');
+    }
+    if (this.file.activeCollectionEffect !== null) {
+      const collection = this.file.collections.filter(c => c.id === this.file.activeCollection.id)[0];
+      if (collection) {
+        collection.config.svg.selectAll('#coll-effect-' + this.file.activeCollectionEffect.id).style('opacity', 0.3);
+      }
+      this.file.activeCollectionEffect = null;
+      this.file.activeCollection = null;
     }
   }
 
@@ -445,8 +461,8 @@ export class DrawingService {
       }
     }
     this.updateResize(division, 'vertical');
+    this.fileService.update(this.file);
   }
-
 
   toggleDrawPlane() {
     let division: number;
@@ -462,6 +478,7 @@ export class DrawingService {
       division = (100 / window.innerHeight) * (window.innerHeight - 38);
     }
     this.updateResize(division, 'horizontal');
+    this.fileService.update(this.file);
   }
 
   setDivToScreenDivision() {
@@ -508,7 +525,6 @@ export class DrawingService {
         }
       }
     }
-    this.redraw();
   }
 
 
@@ -516,11 +532,19 @@ export class DrawingService {
     this.fileService.updateEffect(this.file.activeEffect);
   }
 
+  setTmpEffect(effect: Effect) {
+    this.config.tmpEffect = effect;
+  }
 
 
   updateSelectedModule(xMin: number, xMax: number, yMin: number, yMax: number) {
     this.resetSelectedModule(xMin, xMax, yMin, yMax);
     this.redraw();
+  }
+
+  updateUnitsActiveEffect(value: any) {
+    const newUnits = this.config.xAxisOptions.filter(o => o.name === value)[0];
+    this.fileService.updateUnits(this.file.activeEffect.grid.xUnit, newUnits);
   }
 
   resetSelectedModule(xMin: number, xMax: number, yMin: number, yMax: number) {
@@ -564,17 +588,27 @@ export class DrawingService {
     this.align.next(direction);
   }
 
+  public drawEffects() {
+    this.drawEffectsInLibrary.next();
+  }
+
+
   saveFile(file: File) {
     // console.log(file);
     this.fileService.update(file);
   }
 
-  openEffect(effectID: string) {
-    this.fileService.openEffect(effectID);
-  }
 
   resetPathData() {
     this.nodeService.reset();
+  }
+
+
+
+  compareDateModified(a, b) {
+    if ( a.date.modified < b.date.modified ) { return -1; }
+    if ( a.date.modified > b.date.modified ) { return 1; }
+    return 0;
   }
 
   drawRulers() {
@@ -604,7 +638,7 @@ export class DrawingService {
         .on('mouseover', () => this.document.getElementById('field-inset').style.cursor = 'default')
         .on('mouseleave', () => this.document.getElementById('field-inset').style.cursor = this.config.cursor.cursor)
       .append('title')
-        .text(() => 'position (' + this.file.activeEffect.grid.units.name + ')');
+        .text(() => 'position (' + this.file.activeEffect.grid.xUnit.name + ')');
 
     this.config.yAxisSVG = this.config.svg.append('g')
       .attr('class', 'clipPathYAxis')
@@ -708,30 +742,34 @@ export class DrawingService {
   }
 
   drawCursorPosition(x: number, y: number) {
-    var yValue = y - (window.innerHeight * (this.file.configuration.horizontalScreenDivision / 100));
-    if (x > this.config.margin.left && yValue > 64) {
+    if (this.config.rulerVisible) {
+      const yValue = y - (window.innerHeight * (this.file.configuration.horizontalScreenDivision / 100));
 
-
-      this.config.svg.selectAll('.cursorPos').remove();
-      const posXaxis = this.config.svg.append('line')
-          .attr('class', 'cursorPos')
-          .attr('x1', x - this.config.margin.left)
-          .attr('x2', x - this.config.margin.left)
-          .attr('y1', 64 + this.config.rulerWidth)
-          .attr('y2', 64);
-
-      const posYaxis = this.config.svg.append('line')
-          .attr('class', 'cursorPos')
-          .attr('x1', this.config.chartDx + this.config.rulerWidth)
-          .attr('x2', this.config.chartDx)
-          .attr('y1', yValue)
-          .attr('y2', yValue);
-
-      this.config.svg.selectAll('.cursorPos')
-          .style('fill', '#00FFFF')
-          .style('stroke', '#00FFFF')
-          .style('stroke-width', 1);
+      if (!d3.select('.cursorPos').empty()) {
+        this.config.svg.selectAll('.cursorPos').remove();
       }
+
+      if (x > this.config.margin.left && yValue > 64) {
+
+        const posXaxis = this.config.svg.append('rect')
+            .attr('class', 'cursorPos')
+            .attr('x', x - this.config.margin.left - 0.5)
+            .attr('width', 1)
+            .attr('y', 64)
+            .attr('height', this.config.rulerWidth);
+
+        const posYaxis = this.config.svg.append('rect')
+            .attr('class', 'cursorPos')
+            .attr('x', this.config.chartDx)
+            .attr('width', this.config.rulerWidth)
+            .attr('y', yValue - 0.5)
+            .attr('height', 1);
+
+        this.config.svg.selectAll('.cursorPos')
+            .style('fill', '#00FFFF')
+            .attr('pointer-events', 'none');
+      }
+    }
   }
 
   rulerFunctions(e: MouseEvent) {
@@ -740,25 +778,32 @@ export class DrawingService {
 
     if (this.config.mouseDown.y !== null && this.config.mouseDown.x !== null) {
 
-      let yRef = { y1: 66, y2: 66 + this.config.rulerWidth };
-      let yRef2 = { y1: 66, y2: this.config.svgDy - 88 };
+      let yRef = { y1: this.config.margin.offsetTop + 65, y2: window.innerHeight - 40 };
+      let yRef2 = { y1: this.config.margin.offsetTop + 65, y2: this.config.margin.offsetTop + 65 + this.config.rulerWidth };
 
-      if (this.config.mouseDown.x < this.config.margin.left &&
-        this.config.mouseDown.x > this.config.margin.left - this.config.rulerWidth &&
-        this.config.mouseDown.y > yRef2.y1 && this.config.mouseDown.y < yRef2.y2) {
+      let xRef = { x1: this.config.margin.left, x2: window.innerWidth };
+      let xRef2 = { x1: window.innerWidth - this.config.rulerWidth, x2: window.innerWidth };
+
+      if (this.config.mouseDown.x > xRef2.x1 &&
+          this.config.mouseDown.x < xRef2.x2 &&
+          this.config.mouseDown.y > yRef.y1 &&
+          this.config.mouseDown.y < yRef.y2) {
 
         this.config.drawRulerAxis = 'y';
-        this.drawGuide(this.config.drawRulerAxis, e.clientX, e.clientY, 'guide');
+        this.drawGuide(this.config.drawRulerAxis, e.clientX - this.config.margin.left, e.clientY - this.config.margin.offsetTop, 'guide');
         this.dataService.updatePoints(
           this.nodeService.scale.scaleX.invert(e.clientX - this.config.margin.left), null, null, null);
 
         this.config.newGuide = true;
-      } else if (this.config.mouseDown.y > yRef.y1 && this.config.mouseDown.y < yRef.y2 &&
-                 this.config.mouseDown.x > this.config.margin.left) {
-        this.config.drawRulerAxis = 'x';
-        this.drawGuide(this.config.drawRulerAxis, e.clientX, e.clientY, 'guide');
-        this.dataService.updatePoints(null, this.nodeService.scale.scaleY.invert(e.clientY - this.config.margin.top), null, null);
-        this.config.newGuide = true;
+      } else if (this.config.mouseDown.x > xRef.x1 &&
+                 this.config.mouseDown.x < xRef.x2 &&
+                 this.config.mouseDown.y > yRef2.y1 &&
+                 this.config.mouseDown.y < yRef2.y2) {
+
+          this.config.drawRulerAxis = 'x';
+          this.drawGuide(this.config.drawRulerAxis, e.clientX - this.config.margin.left, e.clientY - this.config.margin.offsetTop, 'guide');
+          this.dataService.updatePoints(null, this.nodeService.scale.scaleY.invert(e.clientY - this.config.margin.top), null, null);
+          this.config.newGuide = true;
       }
     }
 
@@ -770,23 +815,25 @@ export class DrawingService {
     if (axis === 'x') {
       const rulerXaxis = this.config.svg.append('rect')
           .attr('class', cl + ' new')
-          .attr('x', this.config.margin.left - this.config.rulerWidth)
-          .attr('width', this.config.svgDx - (this.config.margin.left - this.config.rulerWidth))
-          .attr('y', y)
-          .attr('height', 0.3);
+          .attr('x', 0)
+          .attr('width', this.config.svgDx - this.config.margin.left)
+          .attr('y', y - 0.25)
+          .attr('height', 0.5);
 
     } else if (axis === 'y') {
       const rulerYaxis = this.config.svg.append('rect')
           .attr('class', cl + ' new')
-          .attr('x', x)
-          .attr('width', 0.3)
+          .attr('x', x - 0.25)
+          .attr('width', 0.5)
           .attr('y', 0)
           .attr('height', this.config.svgDy - 20);
     }
 
     this.config.svg.selectAll('.' + cl + '.new')
-        .style('fill', '#666')
-        .style('stroke', 'none');
+        .style('fill', '#999')
+        .style('stroke', 'transparent')
+        .style('stroke-width', 1);
+        // .style('shape-rendering', 'crispEdges');
         // .attr('stroke-dasharray', '4, 3')
         // .attr('stroke-linecap', 'square')
         // .attr('stroke-width', 0.1);
@@ -820,11 +867,11 @@ export class DrawingService {
           })
           .on('drag', (d: { id: string; axis: string; coords: { x: number; y: number; }; }) => {
               if (!this.file.activeEffect.grid.lockGuides && (this.config.cursor.slug === 'sel' || this.config.cursor.slug === 'dsel')) {
-                if (d.axis === 'x' && d3.event.y < this.config.svgDy - this.config.rulerWidth) {
+                if (d.axis === 'x' && d3.event.y < this.config.svgDy - 22) {
                   d3.select('#id_' + d.id).attr('y', d3.event.y);
                   this.dataService.updatePoints(
-                    null, this.nodeService.scale.scaleY.invert(d3.event.y - this.config.margin.top), null, null);
-                } else if (d.axis === 'y' && d3.event.x > this.config.margin.left) {
+                    null, this.nodeService.scale.scaleY.invert(d3.event.y - this.config.margin.top + this.config.rulerWidth), null, null);
+                } else if (d.axis === 'y' && d3.event.x > this.config.margin.left && d3.event.x < this.config.svgDx - this.config.rulerWidth) {
                   d3.select('#id_' + d.id).attr('x', d3.event.x);
                   this.dataService.updatePoints(
                     this.nodeService.scale.scaleX.invert(d3.event.x - this.config.margin.left), null, null, null);
@@ -848,25 +895,18 @@ export class DrawingService {
           .attr('id', (d: { id: string; }) => 'id_' + d.id)
           .attr('class', 'guide')
           .attr('x', (d: { axis: string; coords: { x: any; }; }) =>
-            d.axis === 'x' ? this.config.margin.left : this.nodeService.scale.scaleX(d.coords.x) + this.config.margin.left)
+            d.axis === 'x' ? 0 : this.nodeService.scale.scaleX(d.coords.x))
           .attr('width', (d: { axis: string; coords: { x: any; }; }) =>
-            d.axis === 'x' ? this.config.chartDx : 0.5)
+            d.axis === 'x' ? this.config.chartDx : 1)
           .attr('y', (d: { axis: string; coords: { y: any; }; }) => {
-            if (d.axis === 'y') {
-              return 0;
-            } else {
-              return this.nodeService.scale.scaleY(d.coords.y) + this.config.margin.top;
-            }
+            return d.axis === 'y' ? 64 + this.config.rulerWidth : this.nodeService.scale.scaleY(d.coords.y) + this.config.margin.top;
           })
           .attr('height', (d: { axis: string; coords: { y: any; }; }) => {
-            if (d.axis === 'y') {
-              return this.config.svgDy - 20;
-             } else {
-              return 0.5;
-            }
+            return d.axis === 'y' ? this.config.svgDy - 86 - this.config.rulerWidth : 1;
           })
           .style('stroke', 'transparent')
           .style('stroke-width', 3)
+          .style('shape-rendering', 'crispEdges')
           .on('click', (d: { id: string; axis: string; coords: { x: number; y: number; }; }) => {
             if (this.config.cursor.slug === 'pen') {
               d3.select('#id_' + d.id).attr('pointer-events', 'none');
@@ -918,129 +958,58 @@ export class DrawingService {
 
   drawGrid(gridSettings: any) {
 
-    this.config.svg.selectAll('.gridSVG').remove();
-
     if (this.file.activeEffect.grid.visible) {
 
-      const gridData = this.calculateGridArray(gridSettings);
+      this.config.svg.selectAll('.gridSVG').remove();
 
       this.config.gridSVG = this.config.svg.append('g')
-        .attr('id', 'gridSVG')
-        .attr('class', 'gridSVG')
-        .attr('clip-path', 'url(#clip)')
-        .attr('transform', 'translate(0, ' + this.config.margin.top + ')');
+          .attr('id', 'gridSVG')
+          .attr('class', 'gridSVG')
+          .attr('clip-path', 'url(#clip)')
+          .attr('transform', 'translate(0, ' + this.config.margin.top + ')');
 
-      this.config.gridSVG.selectAll('rect.gridX')
-        .data(gridData.x)
-        .enter()
-        .append('rect')
-        .attr('class', 'gridX')
-        .attr('x', (d) => this.nodeService.scale.scaleX(d) - 0.25)
-        .attr('width', 0.5)
-        .attr('y', this.nodeService.scale.scaleY(this.config.editBounds.yMax))
-        .attr('height', this.config.chartDy)
-        .style('fill', gridSettings.color.hash)
-        .style('opacity', 0.75)
-        .attr('pointer-events', 'none');
+      this.config.gridSVG.selectAll('line.verticalGrid').data(this.nodeService.scale.scaleX.ticks(20)).enter()
+        .append('line')
+        .attr('class', 'verticalGrid')
+        .attr('x1', (d) => this.nodeService.scale.scaleX(d))
+        .attr('x2', (d) => this.nodeService.scale.scaleX(d))
+        .attr('y1', 0)
+        .attr('y2', this.config.chartDy)
+        .style('fill', 'transparent')
+        .style('shape-rendering', 'crispEdges')
+        .style('stroke', '#666')
+        .style('stroke-width', 0.5);
 
-      this.config.gridSVG.selectAll('rect.gridY')
-        .data(gridData.y)
-        .enter()
-        .append('rect')
-        .attr('class', 'gridY')
-        .attr('x', this.nodeService.scale.scaleX(this.config.editBounds.xMin))
-        .attr('width', this.nodeService.scale.scaleX(this.config.editBounds.xMax) -
-                       this.nodeService.scale.scaleX(this.config.editBounds.xMin))
-        .attr('y', (d) => this.nodeService.scale.scaleY(d) + 0.25)
-        .attr('height', 0.5)
-        .style('fill', gridSettings.color.hash)
-        .style('opacity', 0.75)
-        .attr('pointer-events', 'none');
+      this.config.gridSVG.selectAll('line.horizontalGrid').data(this.nodeService.scale.scaleY.ticks(10)).enter()
+        .append('line')
+        .attr('class', 'horizontalGrid')
+        .attr('y1', (d) => this.nodeService.scale.scaleY(d))
+        .attr('y2', (d) => this.nodeService.scale.scaleY(d))
+        .attr('x1', 0)
+        .attr('x2', this.config.chartDx)
+        .style('fill', 'transparent')
+        .style('shape-rendering', 'crispEdges')
+        .style('stroke', '#666')
+        .style('stroke-width', 0.5);
 
-      if (this.file.activeEffect.scale !== null) {
-        if (this.file.activeEffect.scale.k >= 1) {
-
-          const subDivisions = this.calculateGridSubDivisions(gridSettings);
-
-          this.config.gridSVG.selectAll('rect.subDivisionX')
-            .data(subDivisions.x)
-            .enter()
-            .append('rect')
-            .attr('class', 'gridX')
-            .attr('x', (d) => this.nodeService.scale.scaleX(d) - 0.15)
-            .attr('width', 0.3)
-            .attr('y', this.nodeService.scale.scaleY(this.config.editBounds.yMax))
-            .attr('height', () => this.config.chartDy)
-            .style('fill', gridSettings.color.hash)
-            .style('opacity', 0.5)
-            .attr('pointer-events', 'none');
-
-          this.config.gridSVG.selectAll('rect.subDivisionY')
-            .data(subDivisions.y)
-            .enter()
-            .append('rect')
-            .attr('class', 'subDivisionY')
-            .attr('x', this.nodeService.scale.scaleX(this.config.editBounds.xMin))
-            .attr('width', this.nodeService.scale.scaleX(this.config.editBounds.xMax) -
-                       this.nodeService.scale.scaleX(this.config.editBounds.xMin))
-            .attr('y', (d) => this.nodeService.scale.scaleY(d) + 0.15)
-            .attr('height', 0.3)
-            .style('fill', gridSettings.color.hash)
-            .style('opacity', 0.5)
-            .attr('pointer-events', 'none');
-          }
-      }
     }
+
   }
 
-  calculateGridArray(gridSettings: any) {
 
-    const gridX = [];
-    const gridY = [];
-
-    const spacingX = (this.config.editBounds.xMax - this.config.editBounds.xMin) / gridSettings.spacingX;
-
-    for (let i = 0; i < spacingX; i++) {
-      const x = i * gridSettings.spacingX;
-      gridX.push(x);
-    }
-
-    const spacingY = (this.config.editBounds.yMax - this.config.editBounds.yMin) / gridSettings.spacingY;
-
-    for (let i = 0; i < spacingY; i++) {
-      const y = i * gridSettings.spacingY;
-      gridY.push(y);
-    }
-
-    return { x: gridX, y: gridY };
+  scaleActiveEffectFromTorqueToPosition(scaleFactor: number, offset: number) {
+    this.nodeService.selectAll();
+    this.nodeService.scalePath(this.nodeService.selectedPaths, 1, scaleFactor, 0, offset);
+    this.nodeService.deselectAll();
   }
 
-  calculateGridSubDivisions(gridSettings: any) {
 
-    const gridX = [];
-    const gridY = [];
 
-    const spacingX = (this.config.editBounds.xMax - this.config.editBounds.xMin) / gridSettings.spacingX;
-    const subX = gridSettings.spacingX / (gridSettings.subDivisionsX);
-    for (let i = 0; i < spacingX; i++) {
-      for (let j = 1; j < gridSettings.subDivisionsX; j++) {
-        const x = (j * subX) + (i * gridSettings.spacingX);
-        gridX.push(x);
-      }
-    }
-
-    const spacingY = (this.config.editBounds.yMax - this.config.editBounds.yMin) / gridSettings.spacingY;
-    const subY = gridSettings.spacingY / (gridSettings.subDivisionsY);
-
-    for (let i = 0; i < spacingY; i++) {
-      for (let j = 1; j < gridSettings.subDivisionsY; j++) {
-        const y = (j * subY) + (i * gridSettings.spacingY);
-        gridY.push(y);
-      }
-    }
-
-    return { x: gridX, y: gridY };
+  setInputFieldsActive(active: boolean) {
+    this.nodeService.inputFieldsActive = active;
   }
+
+
 
 
 

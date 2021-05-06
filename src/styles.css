@@ -33,10 +33,9 @@ html, body {
 .toolbar-header {
   top: 0;
   left:0;
-  height: 19px;
+  height: 24px;
   width: 100%;
   border:1px solid #1c1c1c;
-  border-bottom: none;
   box-sizing: border-box;
   padding: 2px 0;
   background: #2c2c2c;
@@ -252,9 +251,7 @@ input[type=number]::-webkit-outer-spin-button {
   margin-right: 10px;
 }
 
-#range-end, #range-start {
-  margin-left:5px;
-}
+
 button {
   -webkit-appearance:none;
   width: auto;
@@ -264,7 +261,7 @@ button {
   padding: 5px 10px;
   margin: 0 2px;
   background: #333;
-  color:#999;
+  color:#aaa;
   font-size: 13px;
 }
 
@@ -311,6 +308,7 @@ button.disabled:focus {
   width: 100%;
   color:#ccc;
   font-size: 10px;
+  font-weight: 600;
   height:16px;
   margin-top:3px;
   margin-left: 8px;
@@ -333,7 +331,6 @@ button.disabled:focus {
   background-image: url('./assets/icons/tools/draggable-area.svg');
   background-size:cover;
   background-position: center;
-
 }
 
 #ruler {
@@ -480,6 +477,8 @@ button.disabled:focus {
   user-select: none;
 }
 
+
+
 .checkbox-container.preview {
   display:inline-block;
   width: auto;
@@ -495,7 +494,7 @@ button.disabled:focus {
   margin: 0 0 15px;
 }
 
-.scale .radio-container {
+.scale {
   display:inline-block;
   width: 50px!important;
   top:0;
@@ -692,5 +691,7 @@ button.disabled:focus {
   z-index: 150;
 }
 
-
-
+.row-inline {
+  display:inline-block;
+  width: auto;
+}

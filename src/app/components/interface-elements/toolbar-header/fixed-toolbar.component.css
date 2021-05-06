@@ -230,7 +230,7 @@ input#effect-name {
 select {
   -webkit-appearance:none;
   display: inline-block;
-  padding: 3px 25px 3px 8px;
+  padding: 3px 18px 3px 8px;
   width: 90px;
   font-size: 11px;
   font-family: Arial, sans-serif;
@@ -252,7 +252,7 @@ select option {
 label.select:after {
   content:"";
   position: absolute;
-  left: 83px;
+  left: 85px;
   /* top: 0; */
   vertical-align: top;
   margin-top:11px;
@@ -262,7 +262,7 @@ label.select:after {
   pointer-events: none;
 }
 label.select.axes:after {
-  left: 90px;
+  left: 93px;
 }
 .rotation-setting-icon {
   position: relative;
@@ -603,6 +603,11 @@ ul#playButtons {
 .buttons-list li:hover {
   opacity: 1;
   background: #2c2c2c;
+}
+
+.buttons-list li:active {
+  opacity: 1;
+  background: #333;
 }
 
 .buttons-list li img {

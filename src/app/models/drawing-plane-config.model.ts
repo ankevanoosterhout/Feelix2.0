@@ -1,5 +1,6 @@
 import { Cursor } from './tool.model';
 import { Node } from './node.model';
+import { Unit } from './effect.model';
 
 
 export class Margin {
@@ -69,10 +70,7 @@ export class DrawingPlaneConfig {
   planeSVG: any;
   cpSVG: any;
   bbox: any;
-  stepSVG: any;
-  steplinesSVG: any;
   gridSVG: any;
-  fplSVG: any;
   svgDx = innerWidth;
   svgDy = innerHeight;
   margin = new Margin();
@@ -104,23 +102,15 @@ export class DrawingPlaneConfig {
   offsetXnodes = 0;
   closestCoords = new Coords();
   newControlPoints: Array<Node> = [];
-  timelineScale: any = null;
-  timelineScaleX: any = null;
-  timelineAxisSeconds: any;
-  timelineAxisMilliseconds: any;
-  timelineSeconds: any;
-  timelineMilliseconds: any;
   slider = new ReferenceBox();
   sliderDrawplane = new SliderDrawplane();
-  dragModule: any = null;
   timeCursor = 0;
   playing = false;
   activeInput = null;
   tmpEffect: any = null;
-  animationInterval = null;
   newGuide = false;
-  activeLibraryEffect = null;
   dataLoggingEnabled = false;
+  xAxisOptions = [ new Unit('degrees', 360), new Unit('radians', 2*Math.PI) ];
 }
 
 

@@ -380,11 +380,9 @@ export class NodeService {
   }
 
 
-  loadFile(paths: Array<Path>) {
+  loadFile(paths: Array<any>) {
     this.reset();
-    if (paths) {
-      this.paths = paths;
-    }
+    this.paths = paths;
     this.selectedNodes = [];
     this.selectedPaths = [];
   }
@@ -1052,7 +1050,7 @@ export class NodeService {
   }
 
 
-  scalePath(paths: Array<string>, scaleX: number, scaleY: number, offsetX: number, offsetY: number, updateBox = false) {
+  scalePath(paths: Array<string>, scaleX: number, scaleY: number, offsetX: number, offsetY: number) {
     for (const path of paths) {
       const pathEl = this.paths.filter(p => p.id === path)[0];
       if (pathEl) {
@@ -1064,7 +1062,7 @@ export class NodeService {
           n.angle.x = ((old.ax - offsetX) * scaleX) + offsetX;
           n.angle.y = ((old.ay - offsetY) * scaleY) + offsetY;
         }
-        if (updateBox) {
+        // if (updateBox) {
           const oldBox = { left: pathEl.box.left, right: pathEl.box.right, top: pathEl.box.top, bottom: pathEl.box.bottom };
           pathEl.box.left = ((oldBox.left - offsetX) * scaleX) + offsetX;
           pathEl.box.right = ((oldBox.right - offsetX) * scaleX) + offsetX;
@@ -1072,7 +1070,7 @@ export class NodeService {
           pathEl.box.bottom = ((oldBox.right - offsetY) * scaleY) + offsetY;
           pathEl.box.width = pathEl.box.right - pathEl.box.left;
           pathEl.box.height = pathEl.box.bottom - pathEl.box.top;
-        }
+        // }
       }
     }
   }
@@ -1170,17 +1168,19 @@ export class NodeService {
   }
 
 
-  mirrorPath(path: Path, mirrorLine: any, direction: string) {
+  mirrorPath(path: Path, mirrorLine: any, reflectX: boolean, reflectY: boolean) {
+    // console.log(path, direction);
     for (const node of path.nodes) {
       const old = { x: node.pos.x, y: node.pos.y, ax: node.angle.x, ay: node.angle.y };
-      if (direction === 'vertical') {
+      if (reflectY) {
         const diff = {
           pos: mirrorLine.y - old.y,
           angle: mirrorLine.y - old.ay
         };
         node.pos.y = mirrorLine.y + diff.pos;
         node.angle.y = mirrorLine.y + diff.angle;
-      } else if (direction === 'horizontal') {
+      }
+      if (reflectX) {
         const diff = {
           pos: mirrorLine.x - old.x,
           angle: mirrorLine.x - old.ax
@@ -1189,9 +1189,11 @@ export class NodeService {
         node.angle.x = mirrorLine.x + diff.angle;
       }
     }
-    if (direction === 'horizontal') {
+    if (reflectX) {
       path.nodes.reverse();
     }
+    // console.log(path);
+    return JSON.parse(JSON.stringify(path));
   }
 
 

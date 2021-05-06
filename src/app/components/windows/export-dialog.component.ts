@@ -134,11 +134,11 @@ export class ExportDialogComponent implements OnInit {
   public exportEffect(libEffect: any) {
     let dataStr = '';
     if (libEffect.effect.slug === 5) {
-      dataStr = this.uploadService
-        .translatePositionEffectForExport(libEffect, (this.useDefault ? this.defaultSettings.motor : this.selectedDevice.motor));
+      // dataStr = this.uploadService
+        // .translatePositionEffectForExport(libEffect, (this.useDefault ? this.defaultSettings.motor : this.selectedDevice.motor));
     } else {
-      dataStr = this.uploadService.
-        translateTimeEffectForExport(libEffect, (this.useDefault ? this.defaultSettings.motor : this.selectedDevice.motor));
+      // dataStr = this.uploadService.
+        // translateTimeEffectForExport(libEffect, (this.useDefault ? this.defaultSettings.motor : this.selectedDevice.motor));
     }
     this.data = dataStr;
   }

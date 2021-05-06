@@ -36,7 +36,7 @@ ul {
 
 /* Track */
 #motor-control-section::-webkit-scrollbar-track {
-  background-image: url('../../../../assets/images/transparent-bg.png') repeat-y !important;
+  background: 'transparent';
 }
 
 /* Handle */
@@ -65,25 +65,70 @@ ul {
   height: auto;
 }
 
+
 .info {
   display: inline-block;
   position: relative;
   top:0;
   left:0;
-  width: 100%;
-  height: 25px;
+  width: calc(100% - 6px);
+  height: 26px;
   margin: 0;
   padding: 2px 1px;
   box-sizing: border-box;
   z-index: 100;
   overflow: visible;
+  cursor: default;
 }
 
 .column-visualization {
   position: relative;
   display:inline-block;
-  width: 100%;
+  width: calc(100% - 10px);
+  margin-left: 5px;
   height: auto;
+  cursor:default;
+}
+
+.row {
+  position: relative;
+  display: inline-block;
+}
+
+.draggable-area-collection {
+  position:absolute;
+  display: inline-block;
+  left: 0;
+  margin-left: -7px;
+  height:40px;
+  width: 8px;
+  top: 50%;
+  transform: translateY(-62%);
+  background-image: radial-gradient(#666 1px, transparent 0);
+  background-size: 4px 4px;
+  background-repeat: repeat;
+  background-position: 0 0;
+  pointer-events: none;
+}
+
+.draggable-area-collection.large {
+  transform: translateY(-42%);
+}
+
+.motor-control-rows {
+  display: inline-block;
+  width: auto;
+  cursor: grab;
+}
+
+.motor-control-rows.active {
+  padding-top: 8px;
+  margin-top: 8px;
+  border-top: 1px solid #999;
+}
+
+.draggable-area-collection:active {
+  cursor: grabbing;
 }
 
 .PID-control {
@@ -235,19 +280,37 @@ ul {
   padding: 10%;
 }
 
-#buttonsMotorControl, #rangeValues {
+#buttonsMotorControl, #rangeValues, #coll-layers-row, #visualizationType  {
   position:relative;
   width: auto;
   height: 17px;
   display: inline-block;
 }
+#buttonsMotorControl {
+   margin-right: 25px;
+}
 
-#rangeValues {
+#rangeValues, #coll-layers-row {
   font-size: 11px;
   color: #ccc;
-  margin-left: 45px;
+  margin-left: 20px;
   vertical-align: top;
+  margin-top: -1px;
+}
+
+#coll-layers-row label {
+  position:relative;
+  vertical-align: middle;
   margin-top: -2px;
+}
+
+#visualizationType {
+  height: auto;
+  margin-left: 0;
+  font-size: 11px;
+  color: #ccc;
+  vertical-align: top;
+  text-align: right;
 }
 
 input {
@@ -271,6 +334,8 @@ input:focus {
   outline: none;
 }
 
+
+
 input#collection-name {
   background: transparent;
   border:none;
@@ -278,7 +343,13 @@ input#collection-name {
   text-align: left;
   left:0;
   width: 75px;
-  margin-top: -2px;
+  margin-top: -1px;
+}
+
+#range-end, #range-start {
+  margin-left:5px;
+  margin-top: -1px;
+  padding: 3px 4px;
 }
 
 .form-row {
@@ -291,10 +362,11 @@ input#collection-name {
   float:none;
 }
 
+
 select {
   -webkit-appearance:none;
   display: inline-block;
-  padding: 3px 8px 3px 8px;
+  padding: 3px 8px;
   width: 48px;
   font-size: 11px;
   font-family: Arial, sans-serif;
@@ -309,7 +381,19 @@ select {
 }
 
 select#comport {
-  width: 80px;
+  width: 70px;
+  padding: 3px 5px;
+}
+
+select#motorID {
+  width: 28px;
+  padding: 3px 5px;
+}
+select#visualizationType {
+  width: 55px;
+  padding: 3px 5px;
+  margin-left: 5px;
+  margin-top: -3px;
 }
 
 select option {
@@ -327,4 +411,41 @@ select:after {
   border-left:5px solid transparent;
   border-right:5px solid transparent;
   pointer-events: none;
+}
+
+
+ul#coll-layers {
+  width: auto;
+  height: 21px;
+  display: inline-block;
+  position: relative;
+  margin: 0 2px;
+}
+
+ul#coll-layers li {
+  display: inline-block !important;
+  position: relative !important;
+  width: 19px !important;
+  height: 19px !important;
+  padding: 3px !important;
+  margin: 0;
+  text-align: center;
+  opacity: 0.2;
+}
+
+ul#coll-layers li:hover {
+  opacity: 0.8;
+}
+
+ul#coll-layers li:active {
+  opacity: 1;
+}
+
+ul#coll-layers li.active {
+  opacity: 0.9;
+}
+
+ul#coll-layers li img {
+  width: auto;
+  height: 100%;
 }

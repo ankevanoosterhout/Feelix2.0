@@ -2,11 +2,9 @@ import { Component, OnInit, Inject } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { ElectronService } from 'ngx-electron';
 import { FileService } from 'src/app/services/file.service';
-import { File } from 'src/app/models/file.model';
 import { v4 as uuid } from 'uuid';
 import { Router } from '@angular/router';
-import { DrawingService } from 'src/app/services/drawing.service';
-import { Effect } from 'src/app/models/effect.model';
+import { Effect, Unit } from 'src/app/models/effect.model';
 
 
 @Component({
@@ -27,8 +25,7 @@ import { Effect } from 'src/app/models/effect.model';
 
                 <div class="form-row">
                   <label class="select units">Control Type</label>
-                  <select class="form-control" id="select-units"
-                      required (change)="updateRotationRange(prevUnits)" [(ngModel)]="effect.type" name="type">
+                  <select class="form-control" id="select-type" [(ngModel)]="effect.type" name="type">
                       <option *ngFor="let type of controlTypes" [ngValue]="type">{{ type }}</option>
                   </select>
                 </div>
@@ -37,7 +34,7 @@ import { Effect } from 'src/app/models/effect.model';
                 <div class="form-row">
                     <label class="select units">Units</label>
                     <select class="form-control" id="select-units"
-                        required (change)="updateRotationRange(prevUnits)" [(ngModel)]="effect.xUnit" name="xUnit">
+                        (change)="updateRotationRange()" [(ngModel)]="effect.grid.xUnit" name="xUnit" [compareWith]="compareUnits">
                         <option *ngFor="let unit of unitOptions" [ngValue]="unit">{{ unit.name }}</option>
                     </select>
                 </div>
@@ -96,14 +93,13 @@ export class EffectSettingsComponent implements OnInit {
 
   controlTypes = ['position', 'velocity', 'torque' ];
 
-  prevUnits = 'degrees';
+  prevUnits = { name: 'degrees', PR: 360 };
   initialUnits = { name: 'degrees', PR: 360 };
 
 
   // tslint:disable-next-line: variable-name
   constructor(@Inject(DOCUMENT) private document: Document, private electronService: ElectronService,
-              public fileService: FileService, public drawingService: DrawingService,
-              private router: Router) {
+              public fileService: FileService, private router: Router) {
 
     if (this.router.url === '/effect-update-settings') {
       this.updateMode = true;
@@ -111,12 +107,16 @@ export class EffectSettingsComponent implements OnInit {
     }
   }
 
-  updateRotationRange(units: any) {
-    const _PR = this.unitOptions.filter(u => u.name === units)[0].PR;
-    this.effect.range.end = (this.effect.range.end / this.effect.grid.units.PR) * _PR;
-    this.effect.range.start = (this.effect.range.start / this.effect.grid.units.PR) * _PR;
-    this.effect.grid.translation = _PR;
-    this.effect.grid.units = { name: units, PR: _PR };
+  compareUnits(unit1: Unit, unit2: Unit) {
+    return unit1 && unit2 ? unit1.name === unit2.name : unit1 === unit2;
+  }
+
+
+  updateRotationRange() {
+    this.effect.range.end *= (this.effect.grid.xUnit.PR / this.prevUnits.PR);
+    this.effect.range.start *= (this.effect.grid.xUnit.PR / this.prevUnits.PR);
+    // this.effect.grid.translation = units.PR;
+    this.prevUnits = this.effect.grid.xUnit;
   }
 
   public submit() {
@@ -140,10 +140,13 @@ export class EffectSettingsComponent implements OnInit {
     this.document.body.classList.add('disable-scroll-body');
     const file = this.fileService.getAllFileData();
     if (this.updateMode) {
-      this.effect = file.activeEffect;
+      if (file.activeEffect) {
+        this.effect = file.activeEffect;
+        this.initialUnits = this.effect.grid.xUnit;
+        this.prevUnits = this.effect.grid.xUnit;
+      }
       console.log(this.effect);
-      this.initialUnits = this.effect.grid.units;
-      this.prevUnits = this.effect.grid.units.name;
+
     } else {
       if (this.electronService.isElectronApp) {
         this.electronService.ipcRenderer.send('getNumberOfNewFiles');

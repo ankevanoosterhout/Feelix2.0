@@ -1,6 +1,6 @@
 import { Configuration } from './configuration.model';
 import { Collection } from './collection.model';
-import { Effect } from './effect.model';
+import { Details, Effect } from './effect.model';
 
 export class Dates {
   created = new Date().getTime();
@@ -22,6 +22,9 @@ export class File {
   collections: Array<Collection> = [];
   effects: Array<Effect> = [];
   activeEffect: Effect = null;
+  activeCollection: Collection = null;
+  activeCollectionEffect: Details = null;
+
 
   constructor(name: string, id: string, status: boolean) {
     this.name = name;

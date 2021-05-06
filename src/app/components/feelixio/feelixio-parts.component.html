@@ -487,10 +487,10 @@
             <div class="column right">
               <ul>
                 <li [ngClass]="{ connected: microcontroller.connected }">
-                  <div class="span-text" id="position_{{ microcontroller.serialPort.path }}" [ngClass]="{ disconnected: !microcontroller.connected }">
-                    {{ microcontroller.motor.position.current }} ppr</div>
-                  <div class="span-text" id="speed_{{ microcontroller.serialPort.path }}" [ngClass]="{ disconnected: !microcontroller.connected }">
-                    {{ microcontroller.motor.speed }} rpm</div>
+                  <!-- <div class="span-text" id="position_{{ microcontroller.serialPort.path }}" [ngClass]="{ disconnected: !microcontroller.connected }">
+                    {{ microcontroller.motor.state.position.current }} ppr</div> -->
+                  <!-- <div class="span-text" id="speed_{{ microcontroller.serialPort.path }}" [ngClass]="{ disconnected: !microcontroller.connected }">
+                    {{ microcontroller.motor.state.speed }} rpm</div> -->
 
                   <div class="button serialConnection" (click)="this.deleteMicrocontroller(microcontroller)"><img src="./assets/icons/buttons/bin.svg"></div>
                   <div class="button serialConnection" (click)="this.connectToMicrocontroller(microcontroller, !microcontroller.connected)" *ngIf="microcontroller.connected"><img src="./assets/icons/align/link.svg"></div>
@@ -644,11 +644,11 @@
                 <p class="sub">{{ microcontroller.type }}</p>
               </div>
             </div>
-            <div class="overlayEffect" id="overlayEffect-{{ microcontroller.id }}-{{ microcontroller.motor.id }}"></div>
+            <!-- <div class="overlayEffect" id="overlayEffect-{{ microcontroller.id }}-{{ microcontroller.motor.id }}"></div>
             <div class="dragOverlayEffect" id="dragOverlayEffect-{{ microcontroller.id }}-{{ microcontroller.motor.id }}"
               draggable="true" (dragstart)="dragstartMotor(microcontroller.motor.id, microcontroller)"
               (dragend)="dragendLib(microcontroller.id + '-' + microcontroller.motor.id)"
-              (mouseup)="dragendLib(microcontroller.id + '-' + microcontroller.motor.id)"></div>
+              (mouseup)="dragendLib(microcontroller.id + '-' + microcontroller.motor.id)"></div> -->
           </li>
         </ul>
       </li>

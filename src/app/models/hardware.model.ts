@@ -47,30 +47,43 @@ export class Rotation {
   translation = new Translation();
 }
 
-export class Motor {
-  id = 0;
-  encoder = new Unit();
+export class PID {
+  p: number = null;
+  i: number = null;
+  d: number = null;
+}
+
+export class Config {
+  polepairs: number = 7;
+  motionControl: string = 'position';
+  supplyVoltage: number = 12;
+  inlineCurrentSensing = false;
+  encoder = 'AS5047';
   calibration = new Calibration();
-  position = new Position();
   rotation = new Rotation();
   transmission = 1;
-  file: any = null;
+  frequency = 200;
+}
+
+export class State {
   speed = 0;
   direction = 1;
-  quality = new Quality();
-  detailsVisible = false;
-  translatedData: any = null;
-  translatedDataTime: any = null;
-  effectList: any = null;
-  Xscale: any = null;
-  frequency = 200;
+  position = new Position();
   sleep = false;
+}
+
+export class Motor {
+  id = 0;
+  type: string = 'BLDC Motor';
+  config = new Config();
+  state = new State();
+  pid = new PID();
 
   constructor(id: number) {
     this.id = id;
-
   }
 }
+
 
 export class OtherDevices {
   serialPort: any = null;
@@ -92,7 +105,7 @@ export class MicroController {
   serialPort: any = null;
   vendor: string = null;
   type: string = null;
-  motor = new Motor(1);
+  motors = [ new Motor(1) ];
   storageSpace: number = null;
   connected = false;
   selected = false;

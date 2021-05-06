@@ -140,19 +140,6 @@ export class ToolbarInsetComponent implements OnInit {
       this.selectTool(tool.id);
     });
 
-    this.electronService.ipcRenderer.on('update', (event: Event, item: any) => {
-      if (item.mode === 'servo' || (item.type === 'steps' && item.mode === 'default')) {
-        this.toolService.disable('thick');
-        this.electronService.ipcRenderer.send('updateToolbarSize', 'small');
-        if (this.selectedTool === 5) { this.selectTool(4); }
-      } else {
-        this.electronService.ipcRenderer.send('updateToolbarSize', 'large');
-        this.toolService.enable('thick');
-      }
-
-      this.toolList = this.toolService.getTools();
-    });
-
     this.electronService.ipcRenderer.on('attachToolbar', (event: Event) => {
       this.attachToolbar();
     });

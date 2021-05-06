@@ -1,17 +1,15 @@
 import { SliderDrawplane } from './drawing-plane-config.model';
-import { Effect } from './effect.model';
-import { MicroController } from './hardware.model';
+import { Details, Effect } from './effect.model';
+import { MicroController, Unit } from './hardware.model';
 
 export class Rotation {
   start = 0;
   end = 360;
+  units = new Unit('degrees', 360);
   linear = false;
   loop = false;
 }
 
-export class GeneralInfo {
-  rotation = new Rotation();
-}
 
 // export class Layer {
 //   id = 0;
@@ -54,18 +52,32 @@ export class Config {
   xAxisSmallThicks: any = null;
   slider = new SliderDrawplane();
   svg: any = null;
+
+}
+
+export class Layer {
+  name: string = null;
+  visible = true;
+  locked = false;
+
+  constructor(name: string) {
+    this.name = name;
+  }
 }
 
 export class Collection {
   id: string = null;
   name: string = 'Sequence-1';
-  general = new GeneralInfo();
-  effects: Array<Effect> = [];
+  effects: Array<Details> = [];
   microcontroller: MicroController = null;
+  motorID = 1;
   rotation = new Rotation();
   config = new Config();
+  visualizationType = 'torque';
+  layers = [ new Layer('CW'), new Layer('CCW') ]
 
-  constructor(id: string) {
+  constructor(id: string, name: string) {
     this.id = id;
+    this.name = name;
   }
 }

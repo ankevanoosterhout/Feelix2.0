@@ -11,10 +11,7 @@ export class Range {
   max: number = null;
 }
 
-export class Repeat {
-  instances = 1;
-  index = 0;
-}
+
 
 export class Unit {
   name: string = null;
@@ -55,7 +52,7 @@ export class Details {
   position = new BeginEnd();
   direction = 'any';
   mirror: string = null;
-  repeat = new Repeat();
+  // repeat = new Repeat();
   linked: string = null;
   linkedMirror = null;
   parent: Array<string> = [];

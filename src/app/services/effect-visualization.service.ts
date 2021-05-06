@@ -1,6 +1,10 @@
 import { Injectable } from '@angular/core';
 import * as d3 from 'd3';
-import { ElectronService } from 'ngx-electron';
+import { Subject } from 'rxjs';
+import { Collection, Layer } from '../models/collection.model';
+import { Details, Effect, Size } from '../models/effect.model';
+import { Path } from '../models/node.model';
+import { NodeService } from './node.service';
 
 
 
@@ -9,206 +13,210 @@ export class EffectVisualizationService {
 
   public verticalDivision = 30;
 
-  constructor(private electronService: ElectronService) { }
+  setActiveEffect: Subject<any> = new Subject();
+  updateCollection: Subject<any> = new Subject();
 
+  constructor(private nodeService: NodeService) { }
 
+  public setActiveCollectionEffect(data: { effect: Details, collection: Collection }) {
+    this.setActiveEffect.next(data);
+  }
 
-  drawLinearScaleModel(effect: any) {
-    d3.selectAll('.SVG').remove();
-
-    if (effect && (effect.slug === 1 || effect.slug === 3)) {
-
-      const width = 100;
-      const height = 60;
-      const margin = 25;
-
-      const svg = d3.select('#linearSVG')
-        .append('svg')
-        .attr('id', 'SVG-' + effect.id)
-        .attr('class', 'SVG')
-        .attr('width', width + (2 * margin))
-        .attr('height', height + (2 * margin));
-
-      const container = svg.append('rect')
-        .attr('width', width + (2 * margin))
-        .attr('height', height + (2 * margin))
-        .attr('x', 0)
-        .attr('y', 0)
-        .attr('fill', '#3a3a3a');
-
-      const graph = svg.append('g')
-        .attr('class', 'graph')
-        .attr('transform', 'translate(' + [ margin, margin ] + ')');
-
-      for (let i = 0; i < 3; i++) {
-        this.drawBlock(graph, 'horizontal-' + i, effect.id, 0, (i * (height / 2)), width, 0.5, '#999');
-        this.drawBlock(graph, 'vertical-' + i, effect.id, (i * (width / 2)), 0, 0.5, height, '#999');
-      }
-
-
-      const line = graph.append('line')
-          .attr('class', 'obj-' + effect.id)
-          .attr('id', 'line-' + effect.id)
-          .attr('x1', 0)
-          .attr('y1', (100 - effect.details.parameter.value.start2) * 0.6)
-          .attr('x2', width)
-          .attr('y2', (100 - effect.details.parameter.value.end2) * 0.6)
-          .style('stroke', '#fff')
-          .style('stroke-width', 2)
-          .style('stroke-linecap', 'round');
-
-      for (let p = 0; p < 2; p++) {
-
-        const changePosition = d3
-          .drag()
-          .on('drag', () => {
-            let pos = d3.event.y;
-
-            if (pos < 0) { pos = 0; } else if (pos > height) { pos = height; }
-
-            if (p === 0) { effect.details.parameter.value.start2 = Math.round((height - pos) / 0.6);
-            } else { effect.details.parameter.value.end2 = Math.round((height - pos) / 0.6); }
-
-            d3.select('#value-' + effect.id + '-' + p)
-              .text(() => p === 0 ? effect.details.parameter.value.start2 : effect.details.parameter.value.end2);
-
-            d3.select('#speedCircle-' + effect.id + '-' + p)
-              .attr('cy', pos);
-
-            if (p === 0) {
-              d3.select('#line-' + effect.id)
-                .attr('y1', pos);
-            } else {
-              d3.select('#line-' + effect.id)
-                .attr('y2', pos);
-            }
-          })
-          .on('end', () => {
-            this.electronService.ipcRenderer.send('updateHapticEffect', effect);
-          });
-
-        const speedCircle = graph.append('circle')
-          .attr('class', 'obj-' + effect.id)
-          .attr('id', 'speedCircle-' + effect.id + '-' + p)
-          .attr('r', 3.5)
-          .attr('cx', () => p === 0 ? 0 : width)
-          .attr('cy', () => p === 0 ?
-            (100 - effect.details.parameter.value.start2) * 0.6 : (100 - effect.details.parameter.value.end2) * 0.6)
-          .style('stroke', '#1c1c1c')
-          .style('fill', '#f2662d')
-          .style('stroke-width', .75)
-          .call(changePosition);
-
-        const label = svg.append('text')
-          .attr('id', 'label-' + effect.id + '-' + p)
-          .text(() => p === 0 ? effect.details.parameter.value.unitOptions2[0].name : effect.details.parameter.value.unitOptions[0].name )
-          .attr('x', () => p === 0 ? (height / 2 + margin) * -1 : width / 2 + margin)
-          .attr('y', () => p === 0 ? 10 : height + margin + 15)
-          .attr('text-anchor', 'middle')
-          .style('fill', '#ccc')
-          .style('font-weight', 'bold')
-          .style('font-family', 'Open Sans, Arial, sans-serif')
-          .style('font-size', '10px')
-          .attr('transform', () => p === 0 ? 'rotate(-90)' : 'rotate(0)');
-
-        const value = svg.append('text')
-          .attr('id', 'value-' + effect.id + '-' + p)
-          .text(() => p === 0 ? effect.details.parameter.value.start2 : effect.details.parameter.value.end2 )
-          .attr('x', () => p === 0 ? margin : width + margin)
-          .attr('y', 15)
-          .attr('text-anchor', 'middle')
-          .style('fill', '#ccc')
-          .style('font-weight', 'bold')
-          .style('font-family', 'Open Sans, Arial, sans-serif')
-          .style('font-size', '10px');
-      }
-    }
+  public updateCollectionData(collection: Collection) {
+    this.updateCollection.next(collection);
   }
 
 
-
-  drawEffect(libEffect: any, type = 'position') {
+  drawEffect(effect: Effect, type = 'position', viewSettings = 'large-thumbnails') {
 
     const height = 55;
+    let windowDivisionWidth = (window.innerWidth * this.verticalDivision / 100);
+    if (windowDivisionWidth < 280) { windowDivisionWidth = 280; }
+    const width = viewSettings !== 'small-thumbnails' ? windowDivisionWidth - 86 : (windowDivisionWidth / 2) - 70;
 
-    d3.select('#svgID-' + libEffect.id).remove();
+    d3.select('#svgID-' + effect.id).remove();
 
-    const svg = d3.select('#effectSVG-' + libEffect.id)
+    const svg = d3.select('#effectSVG-' + effect.id)
       .append('svg')
-      .attr('id', 'svgID-' + libEffect.id)
-      .attr('width', (window.innerWidth * this.verticalDivision / 100) - 90 + 1.6)
+      .attr('id', 'svgID-' + effect.id)
+      .attr('width', width)
       .attr('height', height);
 
     const container = svg.append('rect')
-      .attr('width', (window.innerWidth * this.verticalDivision / 100) - 90)
+      .attr('width', width)
       .attr('height', height)
       .attr('x', 0)
       .attr('y', 0)
-      .attr('fill', '#2c2c2c')
-      .attr('stroke', '#111')
+      .attr('fill', '#1c1c1c')
+      .attr('stroke', '#2c2c2c')
       .attr('stroke-width', 0.5);
 
-    const nodes = svg.append('g')
-      .attr('class', 'nodes effect' + libEffect.id)
-      .attr('transform', 'translate(0, 3)');
+    if (effect.type === 'torque') {
+      const middleLine = svg.append('rect')
+      .attr('width', width)
+      .attr('height', 1)
+      .attr('x', 0)
+      .attr('y', height / 2 - 0.5)
+      .attr('fill', '#3a3a3a');
+    }
 
-    this.drawEffectData(nodes, libEffect, height, type);
+    if (effect.paths && effect.paths.length > 0) {
+
+      const nodes = svg.append('g')
+        .attr('class', 'nodes effect' + effect.id)
+        .attr('transform', 'translate(14, 2)');
+
+      this.drawEffectData(nodes, effect, height - 4, type, ['#f2662d', '#9bbef5', '#ed1a75'], width - 28);
+    }
 
   }
 
-  drawEffectData(nodes: any, libEffect: any, height: number, type = 'position',
-                 colors = ['#f2662d', '#9bbef5', '#ed1a75'], feelixio = false) {
 
-    let width = (window.innerWidth * this.verticalDivision / 100) - 120;
+  drawCollectionEffect(svg: any, collection: Collection, collEffect: Details, effect: Effect, height: number, offset: number, activeCollEffect: Details) {
 
-    if (libEffect && libEffect.paths.length > 0 && libEffect.paths[0].nodes.length > 0) {
+    d3.selectAll('.coll-effect-' + collEffect.id).remove();
 
+    const multiply = (collection.rotation.units.PR / effect.grid.xUnit.PR);
+
+    const width = collection.config.newXscale(collEffect.position.x + collEffect.position.width) -
+      collection.config.newXscale(collEffect.position.x);
+
+    const xPos = collection.config.newXscale(collEffect.position.x);
+
+    if (effect.paths && effect.paths.length > 0) {
+
+      const dragCollectionEffect = d3.drag()
+      .on('start', () => {
+        if (activeCollEffect !== null) {
+          d3.select('#coll-effect-' + collection.id + '-' + activeCollEffect.id).style('opacity', 0.3);
+        }
+        d3.select('#coll-effect-' + collection.id + '-' + collEffect.id).style('opacity', 0.6);
+        this.setActiveCollectionEffect({ effect: collEffect, collection: collection });
+      })
+      .on('drag', () => {
+        collEffect.position.x += (collection.config.newXscale.invert(d3.event.x) - collection.config.newXscale.invert(d3.event.x - d3.event.dx));
+        this.drawCollectionEffect(svg, collection, collEffect, effect, height, offset, activeCollEffect);
+      })
+      .on('end', () => {
+        effect = null;
+        this.updateCollectionData(collection);
+      });
+
+      const rect = svg.append('rect')
+        .attr('id', 'coll-effect-' + collection.id + '-' + collEffect.id)
+        .attr('class', 'coll-effect-' + collEffect.id)
+        .attr('x', xPos)
+        .attr('y', offset)
+        .attr('width', collection.config.newXscale(collEffect.position.x + collEffect.position.width) - collection.config.newXscale(collEffect.position.x))
+        .attr('height', height)
+        .style('fill', '#9bbef5')
+        .style('opacity', activeCollEffect !== null && activeCollEffect.id === collEffect.id ? 0.6 : 0.3)
+        .style('shape-rendering', 'crispEdges')
+        .attr('pointer-events', this.checkIfLayersIsLocked(collEffect.direction, collection.layers) ? 'none': 'auto')
+        .attr('cursor', this.checkIfLayersIsLocked(collEffect.direction, collection.layers) ? 'not-allowed': 'default')
+        .call(dragCollectionEffect);
+
+      const clipPath = svg.append('clipPath')
+        .attr('id', 'clip-' + collEffect.id + '-' + effect.id)
+        .attr('class', 'coll-effect-' + collEffect.id)
+        .append('svg:rect')
+        .attr('width', width)
+        .attr('height', height);
+
+      const nodes = svg.append('g')
+        .attr('class', 'nodes coll-effect-' + collEffect.id)
+        .attr('id', 'coll-effect-group-' + collEffect.id + '-' + effect.id)
+        .attr('clip-path', 'url(#clip-' + collEffect.id + '-' + effect.id +')')
+        .attr('transform', 'translate('+ [xPos, offset] + ')');
+
+      this.drawEffectData(nodes, effect, height, 'position', ['#fff', '#fff', '#fff'], width, collEffect.flip, multiply);
+    }
+
+  }
+
+  checkIfLayersIsLocked(effectDirection: string, layers: Layer[]) {
+    if (effectDirection === 'any' && (layers[0].locked || layers[1].locked)) {
+      return true;
+    } else if (effectDirection === 'CW' && layers[0].locked) {
+      return true;
+    } else if (effectDirection === 'CCW' && layers[1].locked) {
+      return true;
+    }
+    return false;
+  }
+
+
+  drawEffectData(nodes: any, effect: any, height: number, type = 'position',
+                 colors = ['#f2662d', '#9bbef5', '#ed1a75'], width = (window.innerWidth * this.verticalDivision / 100) - 120, reflect = { x: false, y: false }, multiply = 1) {
+
+    if (effect.size) {
       const xScale = d3.scaleLinear()
-        .domain([ libEffect.paths[0].box.left - (libEffect.paths[0].box.width * 0.15),
-          libEffect.paths[0].box.right + (libEffect.paths[0].box.width * 0.15) ])
-        .range([3, width - 3]);
+          .domain([ effect.size.x * multiply, (effect.size.x + effect.size.width) * multiply ])
+          .range([0, width]);
 
-      const domain = type === 'torque' ? [100, -100] : [libEffect.range.max, libEffect.range.min];
+      const domain = effect.type === 'torque' ? [100, -100] : [100, 0];
+
       const yScale = d3.scaleLinear()
         .domain(domain)
-        .range([6, height - 6]);
+        .range([0, height]);
 
-      const paths = this.returnPathAsString(libEffect.paths[0], xScale, yScale, 'pos');
 
-      if (type === 'position') {
-        const planes = this.returnPlaneAsString(libEffect.paths[0], xScale, yScale);
+      for (const path of effect.paths) {
+        if (path.nodes.length > 0) {
 
-        nodes.selectAll('path.plane_' + libEffect.id)
-          .data(planes)
-          .enter()
-          .append('path')
-          .attr('d', (d: { svgPath: string }) => d.svgPath)
-          .attr('fill', colors[2])
-          .style('opacity', 0.3);
-      }
+          const effectPath = this.mirrorPath(JSON.parse(JSON.stringify(path)), effect.size, reflect);
 
-      nodes.selectAll('path.path_' + libEffect.id)
-        .data(paths)
-        .enter()
-        .append('path')
-        .attr('d', (d: { svgPath: string }) => d.svgPath)
-        .attr('stroke', () => type === 'position' ? colors[0] : colors[1])
-        .attr('stroke-width', () => 1.4)
-        .attr('fill', 'transparent');
+          const paths = this.returnPathAsString(effectPath, xScale, yScale, 'pos', multiply);
 
-      if (feelixio) {
-        nodes.append('rect')
-          .attr('id', 'cursor_' + libEffect.id)
-          .attr('x', 15)
-          .attr('y', 0)
-          .attr('width', 1.5)
-          .attr('height', height)
-          .style('fill', '#FF0036');
+          if (type === 'position') {
+            const planes = this.returnPlaneAsString(effectPath, xScale, yScale, multiply);
 
-        return xScale;
+            nodes.selectAll('path.plane_' + path.id)
+              .data(planes)
+              .enter()
+              .append('path')
+              .attr('d', (d: { svgPath: string }) => d.svgPath)
+              .attr('fill', colors[2])
+              .attr('class', 'plane_' + path.id)
+              .style('opacity', 0.3)
+              .attr('pointer-events', 'none');
+          }
+
+          nodes.selectAll('path.path_' + path.id)
+            .data(paths)
+            .enter()
+            .append('path')
+            .attr('d', (d: { svgPath: string }) => d.svgPath)
+            .attr('stroke', () => type === 'position' ? colors[0] : colors[1])
+            .attr('stroke-width', () => 1.4)
+            .attr('class', 'path_' + path.id)
+            .attr('fill', 'transparent')
+            .attr('pointer-events', 'none');
+
+        }
       }
     }
   }
+
+
+  mirrorPath(path: Path, size: Size, reflect = { x: false, y: false }) {
+
+    let newPath = path;
+
+    if (reflect.x || reflect.y) {
+
+      const mirrorLine = {
+        x: (size.width / 2) + size.x,
+        y: (size.height / 2) + (size.y - size.height),
+      };
+
+      newPath = this.nodeService.mirrorPath(path, mirrorLine, reflect.x, reflect.y);
+    }
+
+    return newPath;
+  }
+
+
 
 
   updateCursor(effectID: string, units: any, position: number, xScale: any, width: number) {
@@ -220,9 +228,10 @@ export class EffectVisualizationService {
 
 
 
-  returnPathAsString(path: any, scaleX: any, scaleY: any, type = 'pos'): Array<object> {
+  returnPathAsString(path: any, scaleX: any, scaleY: any, type = 'pos', multiply = 1): Array<object> {
     const nodes = path.nodes;
     const numberOfNodes = path.nodes.filter(n => n.type === 'node');
+
 
     if (numberOfNodes.length > 1) {
       const pathStrArray = [];
@@ -234,19 +243,19 @@ export class EffectVisualizationService {
 
         if (node.type === 'node') {
           if (type === 'pos') {
-            pathStr += ' ' + scaleX(node.pos.x);
+            pathStr += ' ' + scaleX(node.pos.x * multiply);
             pathStr += ' ' + scaleY(node.pos.y);
           } else {
-            pathStr += ' ' + scaleX(node.angle.x);
+            pathStr += ' ' + scaleX(node.angle.x * multiply);
             pathStr += ' ' + scaleY(node.angle.y);
           }
           idStr += node.id + '&&';
           if (n > 0) {
             pathStrArray.push( { id: idStr, svgPath: pathStr, parent: path.id } );
             if (type === 'pos') {
-              pathStr = 'M ' + scaleX(node.pos.x) + ' ' + scaleY(node.pos.y);
+              pathStr = 'M ' + scaleX(node.pos.x * multiply) + ' ' + scaleY(node.pos.y);
             } else {
-              pathStr = 'M ' + scaleX(node.angle.x) + ' ' + scaleY(node.angle.y);
+              pathStr = 'M ' + scaleX(node.angle.x * multiply) + ' ' + scaleY(node.angle.y);
             }
             idStr = node.id + '&&';
           }
@@ -255,19 +264,19 @@ export class EffectVisualizationService {
 
           if (type === 'pos') {
             if (nodes[index + 1].type === 'cp') {
-              pathStr += ' C ' + scaleX(node.pos.x) + ' ' + scaleY(node.pos.y);
+              pathStr += ' C ' + scaleX(node.pos.x * multiply) + ' ' + scaleY(node.pos.y);
             } else if (nodes[index - 1].type === 'node' && nodes[index + 1].type === 'node') {
-              pathStr += ' Q ' + scaleX(node.pos.x) + ' ' + scaleY(node.pos.y);
+              pathStr += ' Q ' + scaleX(node.pos.x * multiply) + ' ' + scaleY(node.pos.y);
             } else {
-              pathStr += ' ' + scaleX(node.pos.x) + ' ' + scaleY(node.pos.y);
+              pathStr += ' ' + scaleX(node.pos.x * multiply) + ' ' + scaleY(node.pos.y);
             }
           } else {
             if (nodes[index + 1].type === 'cp') {
-              pathStr += ' C ' + scaleX(node.angle.x) + ' ' + scaleY(node.angle.y);
+              pathStr += ' C ' + scaleX(node.angle.x * multiply) + ' ' + scaleY(node.angle.y);
             } else if (nodes[index - 1].type === 'node' && nodes[index + 1].type === 'node') {
-              pathStr += ' Q ' + scaleX(node.angle.x) + ' ' + scaleY(node.angle.y);
+              pathStr += ' Q ' + scaleX(node.angle.x * multiply) + ' ' + scaleY(node.angle.y);
             } else {
-              pathStr += ' ' + scaleX(node.angle.x) + ' ' + scaleY(node.angle.y);
+              pathStr += ' ' + scaleX(node.angle.x * multiply) + ' ' + scaleY(node.angle.y);
             }
           }
         }
@@ -276,7 +285,7 @@ export class EffectVisualizationService {
     }
   }
 
-  returnPlaneAsString(path: any, scaleX: any, scaleY: any): Array<object> {
+  returnPlaneAsString(path: any, scaleX: any, scaleY: any, multiply = 1): Array<object> {
     const nodes = path.nodes;
     const numberOfNodes = path.nodes.filter(n => n.type === 'node');
 
@@ -302,19 +311,19 @@ export class EffectVisualizationService {
 
       for (const el of pathSegments) {
 
-        pathStr += scaleX(el[0].pos.x) + ' ' + scaleY(el[0].pos.y);
+        pathStr += scaleX(el[0].pos.x * multiply) + ' ' + scaleY(el[0].pos.y);
 
         if (el.length === 3) { pathStr += ' Q'; } else if (el.length === 4) { pathStr += ' C'; }
 
         for (let i = 1; i < el.length; i++) {
-          pathStr += ' ' + scaleX(el[i].pos.x) + ' ' + scaleY(el[i].pos.y);
+          pathStr += ' ' + scaleX(el[i].pos.x * multiply) + ' ' + scaleY(el[i].pos.y);
         }
-        pathStr += ' L ' + scaleX(el[el.length - 1].angle.x) + ' ' + scaleY(el[el.length - 1].angle.y);
+        pathStr += ' L ' + scaleX(el[el.length - 1].angle.x * multiply) + ' ' + scaleY(el[el.length - 1].angle.y);
 
         if (el.length === 3) { pathStr += ' Q'; } else if (el.length === 4) { pathStr += ' C'; }
 
         for (let i = el.length - 2; i >= 0; i--) {
-          pathStr += ' ' + scaleX(el[i].angle.x) + ' ' + scaleY(el[i].angle.y);
+          pathStr += ' ' + scaleX(el[i].angle.x * multiply) + ' ' + scaleY(el[i].angle.y);
         }
         pathStr += ' Z';
 

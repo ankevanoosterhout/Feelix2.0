@@ -107,18 +107,19 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
     this.electronService.ipcRenderer.on('transform', (event: Event, data: any) => {
       this.historyService.addToHistory();
       this.nodeService.translateSelectedPaths(data);
-      this.drawingService.drawFileData();
+      this.drawFileData();
     });
 
     this.electronService.ipcRenderer.on('grid:toggle', (event: Event, visible: boolean) => {
       this.file.activeEffect.grid.visible = visible;
       if (!visible) { this.file.activeEffect.grid.snap = false; }
-      this.fileService.update(this.file);
+      console.log(this.file.activeEffect.grid);
+      this.fileService.updateEffect(this.file.activeEffect);
     });
 
     this.electronService.ipcRenderer.on('grid:snap', (event: Event, snap: boolean) => {
       this.file.activeEffect.grid.snap = snap;
-      this.fileService.update(this.file);
+      this.fileService.updateEffect(this.file.activeEffect);
     });
 
     this.electronService.ipcRenderer.on('reflect:horizontal', (event: Event, snap: boolean) => {
@@ -136,24 +137,10 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
     //   this.showExportWindow('', data, microcontrollers);
     // });
 
-    this.electronService.ipcRenderer.on('addHapticEffect', (event: Event, data: any) => {
-      // data.interface.layer = 0;
-      this.config.tmpEffect = data;
-    });
-
-    this.electronService.ipcRenderer.on('addHapticLibEffect', (event: Event, data: any) => {
-      // data.effect.interface.layer = 0;
-      this.config.tmpEffect = data.effect;
-    });
-
-
-    this.electronService.ipcRenderer.on('updateHapticEffect', (event: Event, data: any) => {
-      this.fileService.updateHapticEffect(data, true);
-    });
 
     this.electronService.ipcRenderer.on('saveToEffectLibrary', (event: Event, effect: any) => {
-      const pathEl = this.nodeService.getPath(effect.path);
-      this.effectLibraryService.addEffect(effect, pathEl, this.file.activeEffect.grid.units, 'default');
+      effect.path = this.nodeService.getAll();
+      this.effectLibraryService.addEffect(effect);
     });
 
     this.electronService.ipcRenderer.on('undo', (event: Event) => {
@@ -188,11 +175,14 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
 
   ngOnInit(): void {
     this.file = this.fileService.getActiveFile();
-    console.log(this.file);
     this.file.configuration.rendered = false;
     this.setFilesInServices();
-    this.nodeService.loadFile(this.file.activeEffect.paths);
-    this.nodeService.setGridLayer(this.file.activeEffect.grid);
+    if (this.file.activeEffect) {
+      this.nodeService.loadFile(this.file.activeEffect.paths);
+      this.nodeService.setGridLayer(this.file.activeEffect.grid);
+    } else {
+      this.nodeService.reset();
+    }
     this.drawingService.redraw();
     this.motorControlService.updateViewSettings(this.file);
 
@@ -202,14 +192,26 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
       if (newFile._id !== this.file._id) {
         this.dataService.deselectAll();
         newFileData = true;
-        this.nodeService.loadFile(newFile.activeEffect.paths);
+        if (newFile.activeEffect) {
+          this.nodeService.loadFile(newFile.activeEffect.paths);
+        } else {
+          this.nodeService.reset();
+        }
+      }
+      if (newFile.activeEffect && this.file.activeEffect) {
+        if (newFile.activeEffect.id !== this.file.activeEffect.id) {
+          this.nodeService.loadFile(newFile.activeEffect.paths);
+        }
       }
       this.file = newFile;
       this.setFilesInServices();
-      this.nodeService.setGridLayer(this.file.activeEffect.grid);
+      if (this.file.activeEffect) {
+        this.nodeService.setGridLayer(this.file.activeEffect.grid);
+      }
       this.drawingService.updateResize(this.file.configuration.horizontalScreenDivision, 'horizontal');
       this.drawingService.updateResize(this.file.configuration.verticalScreenDivision, 'vertical');
       this.motorControlService.updateViewSettings(this.file);
+      this.drawingService.redraw();
 
       if (newFileData) {
         if (this.electronService.isElectronApp) {
@@ -230,27 +232,22 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
 
 
   ngAfterViewInit(): void {
-
-    if (this.electronService.isElectronApp) {
-      this.electronService.ipcRenderer.send('updateMenu', {
-        visible: this.file.activeEffect.grid.visible,
-        snap: this.file.activeEffect.grid.snap,
-        lock: this.file.activeEffect.grid.lockGuides,
-        type: this.file.activeEffect.type });
+    if (this.file.activeEffect !== null) {
+      if (this.electronService.isElectronApp) {
+        this.electronService.ipcRenderer.send('updateMenu', {
+          visible: this.file.activeEffect.grid.visible,
+          snap: this.file.activeEffect.grid.snap,
+          lock: this.file.activeEffect.grid.lockGuides,
+          type: this.file.activeEffect.type });
+      }
     }
   }
 
 
   reloadFileData(data: any) {
     if (data.file) {
-      if (data.file.mode === 'default') {
+      if (data.file.activeEffect) {
         this.nodeService.loadFile(data.file.activeEffect.paths);
-      } else {
-        const activeTab = data.file.moduleTabs.filter(t => t.selected)[0];
-        const effect = data.file.effects.filter(e => e.id === activeTab.el)[0];
-        if (effect) {
-          this.nodeService.loadFile(effect.nodes);
-        }
       }
       this.fileService.update(data.file);
     } else {
@@ -286,7 +283,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
         y: this.nodeService.scale.scaleY.invert(e.clientY - this.config.margin.top - this.config.margin.offsetTop)
       };
 
-      if (this.config.rulerVisible) { this.drawingService.rulerFunctions(e); }
+      if (this.config.rulerVisible && this.file.activeEffect) { this.drawingService.rulerFunctions(e); }
 
       if (this.config.newNode !== null && this.config.cursor.slug === 'pen') {
         if (Math.abs(this.config.newNode.pos.x - coords.x) > 0.5 || Math.abs(this.config.newNode.pos.y - coords.y) > 0.5) {
@@ -330,7 +327,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
     if (!this.config.zoomable) {
       this.config.mouseDown = { x: e.clientX, y: e.clientY };
 
-      if (e.clientY > 45 && e.clientX > this.config.rulerWidth && e.clientY < window.innerHeight - 45 && this.nodeService.scale.scaleX !== null) {
+      if (e.clientY > this.config.margin.offsetTop + 65 && e.clientX > this.config.margin.left && e.clientY < window.innerHeight - 45 && this.nodeService.scale.scaleX !== null) {
 
         const coords = {
           x: this.nodeService.scale.scaleX.invert(e.clientX - this.config.margin.left),
@@ -355,9 +352,6 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
               const path = this.nodeService.getPath(this.nodeService.selectedPaths[0]);
               if (path.nodes.length > 1) {
                 const bboxSize = this.bboxService.getBBox(path);
-                if (bboxSize !== null) {
-                  this.fileService.updatePathEffect(bboxSize.path);
-                }
               }
               this.drawFileData();
               this.dataService.selectElement(this.config.newNode.id, coords.x, coords.y, null, null);
@@ -384,12 +378,14 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
         x: this.nodeService.scale.scaleX.invert(e.clientX - this.config.margin.left),
         y: this.nodeService.scale.scaleY.invert(e.clientY - this.config.margin.top - this.config.margin.offsetTop)
       };
+
       if (this.config.newGuide) {
         this.config.newGuide = false;
         this.config.svg.selectAll('.guide.new').remove();
         this.config.mouseDown = { x: null, y: null };
 
-        if (e.clientY - this.config.margin.offsetTop < this.config.svgDy && e.clientY > this.config.margin.offsetTop) {
+        if (e.clientY - this.config.margin.offsetTop < this.config.svgDy - 22 && e.clientY > this.config.margin.offsetTop + 65 + this.config.rulerWidth
+           && e.clientX < this.config.svgDx - this.config.rulerWidth) {
 
           const obj = {
             id: uuid(),
@@ -403,7 +399,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
       } else if (this.config.cursor.slug === 'sel' || this.config.cursor.slug === 'dsel' || this.config.cursor.slug === 'anchor' ||
                 this.config.cursor.slug === 'thick' || this.config.cursor.slug === 'drag') {
 
-        if (e.clientY > this.config.margin.offsetTop) {
+        if (e.clientY > this.config.margin.offsetTop + 65) {
           if (!d3.select('#selectionBox').empty() && this.config.activeSelection) {
             const selectionBoxSize = this.config.svg.select('#selectionBox').node().getBoundingClientRect();
             if (selectionBoxSize.width > 2 && selectionBoxSize.height > 2 &&
@@ -470,7 +466,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
     if (!this.config.zoomable) {
       const key = e.key;
       if (key === ' ') {
-        if (this.config.activeInput === null) {
+        if (this.config.activeInput === null && !this.nodeService.inputFieldsActive) {
           this.drawingService.deselectAllElements();
           this.config.svg.call(this.config.zoom);
           this.document.getElementById('field-inset').style.cursor = 'url(./assets/icons/tools/cursor-move.png), none';
@@ -580,6 +576,10 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
       if (!this.nodeService.inputFieldsActive && this.config.activeInput === null) {
         this.historyService.addToHistory();
 
+        if (this.file.activeCollectionEffect !== null) {
+          this.motorControlService.deleteCollectionEffect(this.file.activeCollectionEffect.id);
+          this.file.activeCollectionEffect = null;
+        }
         const activeSelection = this.dataService.activeSelection();
         if (activeSelection) { this.fileService.deleteGuides(activeSelection); }
 
@@ -668,7 +668,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
       let path = this.nodeService.getPath(this.nodeService.selectedPaths[0]);
       const bboxSize = this.bboxService.getBBox(path);
       if (bboxSize !== null) {
-        this.fileService.updatePathEffect(bboxSize.path);
+        this.fileService.updateActiveEffectData(this.file);
         path = bboxSize.path;
       }
       this.nodeService.deselectAll();
@@ -683,25 +683,33 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
 
   drawFileData() {
 
+
     if (this.file.configuration.horizontalScreenDivision < (100 / window.innerHeight) * (window.innerHeight - 50)) {
       this.config.svg.selectAll('.planeSVG, .cpSVG, .pathSVG, .nodesSVG, .bbox, .gridSVG, .forceNodeSVG').remove();
 
+      if (this.file.activeEffect) {
+        if (this.file.activeEffect.grid.visible) {
+          this.drawingService.drawGrid(this.file.activeEffect.grid.settings);
+        }
 
-      if (this.file.activeEffect.grid.visible) {
-        this.drawingService.drawGrid(this.file.activeEffect.grid.settings);
+        if (this.config.rulerVisible) {
+          this.drawingService.drawAllGuides(this.file.activeEffect.grid.guides);
+        }
+
+        this.drawElements.redraw();
+
+        if (this.nodeService.selectedPaths.length > 0 && this.nodeService.selectedNodes.length === 0 && this.config.cursor.slug === 'sel') {
+          this.bboxService.drawBoundingBox();
+        }
+        d3.selectAll('.cpSVG, .nodesSVG').raise();
       }
+    }
 
-      if (this.config.rulerVisible) {
-        this.drawingService.drawAllGuides(this.file.activeEffect.grid.guides);
-      }
-
-      this.drawElements.redraw();
-
-      if (this.nodeService.selectedPaths.length > 0 && this.nodeService.selectedNodes.length === 0 && this.config.cursor.slug === 'sel') {
-        this.bboxService.drawBoundingBox();
-      }
-      d3.selectAll('.cpSVG, .nodesSVG').raise();
+    if (this.file.configuration.libraryViewSettings !== 'list') {
+      this.drawingService.drawEffects();
     }
   }
+
+
 
 }

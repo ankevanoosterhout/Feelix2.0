@@ -122,12 +122,9 @@ export class DrawElementsService {
                 y: this.nodeService.scale.scaleY.invert(coords.y) - this.nodeService.scale.scaleY.invert(dragStart.y)
               };
               this.nodeService.moveAllSelectedNodes(translate, d3.event.sourceEvent.shiftKey);
-              this.redrawElements();
-            } else {
-              for (const pathEl of this.nodeService.selectedPaths) {
-                const box = this.bboxService.getBBox(this.nodeService.getPath(pathEl));
-              }
+              // this.redrawElements();
             }
+            this.bboxService.getBBoxSelectedPaths();
           }
         });
 
@@ -139,7 +136,11 @@ export class DrawElementsService {
         .attr('id', (d: { id: string; parent: string }) => 'id_' + d.id + '_' + d.parent)
         .attr('class', (d: { parent: string; }) => 'path_' + d.parent + '_' + type)
         .attr('stroke', () =>  type === 'pos' ? this.file.activeEffect.colors[0].hash : this.file.activeEffect.colors[1].hash)
-        .attr('stroke-width', () => type === 'pos' ? 0.8 : 0.3)
+        .attr('stroke-width', () => {
+          if (type === 'angle') { return 0.3; }
+          else if (this.file.activeEffect.rotation === 'dependent') { return 2.5; }
+          else { return 0.8; }
+        })
         .attr('fill', 'transparent')
         .attr('pointer-events', (d: any) =>
           !this.config.zoomable && !this.nodeService.getPath(d.parent).lock ? 'auto' : 'none')
@@ -155,8 +156,7 @@ export class DrawElementsService {
           }
         })
         .on('mousemove', (d: any) => {
-          if ((this.config.cursor.slug === 'pen' && d3.event.shiftKey) || this.config.cursor.slug === 'thick' ||
-              this.config.cursor.slug === 'scis') {
+          if ((this.config.cursor.slug === 'pen' && d3.event.shiftKey) || this.config.cursor.slug === 'thick' || this.config.cursor.slug === 'scis') {
 
             const mouse = {
               x: this.nodeService.scale.scaleX.invert(d3.event.x - this.config.margin.left),
@@ -300,7 +300,9 @@ export class DrawElementsService {
 
         } else if (this.config.cursor.slug === 'scis') {
           const newPaths = this.nodeService.splitPathInTwo(d.id, d.path);
-          for (const newPath of newPaths) { this.bboxService.getBBox(newPath); }
+
+          for (const newPath of newPaths) {
+            this.bboxService.getBBox(newPath); }
           this.redrawElements();
 
         } else if (this.config.cursor.slug === 'thick') {
@@ -369,7 +371,9 @@ export class DrawElementsService {
         if (this.config.cursor.slug === 'dsel') {
           d3.select('#id_' + d.id + '_' + d.path)
             .style('fill', () => this.nodeService.selectedNodes.indexOf(d.id) > -1 ? this.file.activeEffect.colors[0].hash : 'white');
-          const box = this.bboxService.getBBox(this.nodeService.getPath(d.path));
+
+          this.bboxService.getBBoxSelectedPaths();
+
         } else if (this.config.cursor.slug === 'thick') {
           for (const cp of this.config.newControlPoints) {
             this.nodeService.updateCP(cp);
@@ -461,6 +465,7 @@ export class DrawElementsService {
       .style('stroke', (d: { id: string; path: string; }) =>
         this.nodeService.selectedPaths.indexOf(d.path) > -1 ? this.file.activeEffect.colors[0].hash : 'transparent')
       .style('stroke-width', (d: { id: string; path: string; }) => this.nodeService.selectedPaths.indexOf(d.path) > -1 ? 0.5 : 6)
+      .style('shape-rendering', 'crispEdges')
       .on('mouseenter', (d: any) => {
         if (this.config.cursor.slug === 'pen' && this.nodeService.selectedNodes.indexOf(d.id) < 0) {
           endNode = this.nodeService.checkIfNodeIsAtTheEndOfArray(d);
@@ -711,7 +716,7 @@ export class DrawElementsService {
 
   drawSelectionBox(coords: { x: number; y: number }) {
     if (this.config.selectionStartPoint !== null && this.config.activeSelection) {
-      this.config.svg.select('#selectionBox, .cpSVG').remove();
+      this.config.svg.selectAll('#selectionBox, .cpSVG').remove();
 
       let xStart = this.config.selectionStartPoint.x;
       let yStart = this.config.selectionStartPoint.y;
@@ -730,11 +735,12 @@ export class DrawElementsService {
           .attr('y', yStart)
           .attr('width', Math.abs(selectionWidth))
           .attr('height', Math.abs(selectionHeight))
-          .attr('stroke', 'black')
-          .attr('stroke-dasharray', '4, 2')
-          .attr('stroke-width', 0.2)
-          .attr('stroke-linecap', 'square')
-          .attr('fill', 'transparent');
+          .attr('stroke', '#444')
+          .attr('stroke-dasharray', '4, 4')
+          .attr('stroke-width', 0.3)
+          // .attr('stroke-linecap', 'square')
+          .attr('fill', 'transparent')
+          .attr('shape-rendering', 'crispEdges');
      }
   }
 

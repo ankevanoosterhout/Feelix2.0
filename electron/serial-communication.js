@@ -22,7 +22,9 @@ function listSerialPorts(callback) {
       let vendor = 'unknown';
       if (item.vendorId !== undefined && item.productId !== undefined) {
         if (item.vendorId === '16C0' && item.productId === '0483') {
-          vendor = 'Teensy 3.2';
+          vendor = 'Teensy';
+        } else if ((item.vendorId === '2341' || item.vendorId === '2A03') && item.productId === '003D') {
+          vendor = 'Arduino DUE';
         }
       }
       portsList.push({ serialPort: item, vendor: vendor });

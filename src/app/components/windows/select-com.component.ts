@@ -74,16 +74,14 @@ export class SelectComComponent implements OnInit {
   microControllers = [];
   controllers = [
     'Arduino DUE',
-    'Teensy 3.2',
-    'Teensy 3.5',
-    'Teensy 3.6',
+    'Teensy',
     'STM32',
   ];
 
   type = 'motor';
 
   selectedPort: any = null;
-  selectedController = 'Teensy 3.2';
+  selectedController = 'Teensy';
   // tslint:disable-next-line: variable-name
   constructor(@Inject(DOCUMENT) private document: Document, private electronService: ElectronService,
               private hardwareService: HardwareService, private router: Router) {

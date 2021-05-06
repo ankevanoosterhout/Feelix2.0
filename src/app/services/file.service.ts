@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { File } from '../models/file.model';
-import { Effect } from '../models/effect.model';
+import { Details, Effect } from '../models/effect.model';
 import { v4 as uuid } from 'uuid';
 import { LocalStorageService } from 'ngx-webstorage';
 import { Subject } from 'rxjs';
@@ -77,7 +77,7 @@ export class FileService {
 
   createDefault(name: string) {
     const defaultFile = new File(name, uuid(), true);
-    const collection = new Collection(uuid());
+    const collection = new Collection(uuid(), 'Collection-' + (defaultFile.collections.length + 1));
     const defaultEffect = new Effect(uuid());
     defaultFile.collections.push(collection);
     defaultFile.effects.push(defaultEffect);
@@ -108,7 +108,7 @@ export class FileService {
   addCollection() {
     const selectedFile = this.files.filter(f => f.isActive)[0];
     if (selectedFile) {
-      const collection = new Collection(uuid());
+      const collection = new Collection(uuid(), 'Collection-' + (selectedFile.collections.length + 1));
       selectedFile.collections.push(collection);
       this.store();
     }
@@ -117,8 +117,20 @@ export class FileService {
   updateCollection(collection: Collection) {
     const activeFile = this.files.filter(f => f.isActive)[0];
     if (activeFile) {
-      activeFile.collections.filter(c => c.id === collection.id)[0] = collection;
+      activeFile.collections.filter(c => c.id === collection.id)[0] = JSON.parse(JSON.stringify(collection));
       this.store();
+    }
+  }
+
+  updateCollectionEffect(collection: Collection, collEffect: Details) {
+    const activeFile = this.files.filter(f => f.isActive)[0];
+    if (activeFile) {
+      activeFile.activeCollectionEffect = collEffect;
+      activeFile.activeCollection = activeFile.collections.filter(c => c.id === collection.id)[0];
+      if (activeFile.activeCollection) {
+        activeFile.activeCollection.effects.filter(e => e.id === collEffect.id)[0] = JSON.parse(JSON.stringify(collEffect));
+        this.store();
+      }
     }
   }
 
@@ -136,18 +148,28 @@ export class FileService {
     const activeFile = this.files.filter(f => f.isActive)[0];
     if (activeFile) {
       activeFile.effects.push(effect);
+      activeFile.activeEffect = null;
+      this.nodeService.reset();
+
       const tab = new OpenTab(effect.id, effect.name);
       const tabIndex = activeFile.configuration.openTabs.indexOf(tab);
       if (tabIndex === -1) {
         activeFile.configuration.openTabs.push(tab);
       }
-      this.setEffectActive(effect);
+      for (const tab of activeFile.configuration.openTabs) {
+        tab.isActive = tab.id === effect.id ? true : false;
+      }
+      this.sortEffects(activeFile.configuration.sortType);
+      activeFile.activeEffect = effect;
+      this.nodeService.reset();
+      this.store();
     }
   }
 
   openEffect(effectID: string) {
     const activeFile = this.files.filter(f => f.isActive)[0];
-    if (activeFile) {
+    if (activeFile && activeFile.effects.length > 0) {
+
       const effect = activeFile.effects.filter(e => e.id === effectID)[0];
       const tab = activeFile.configuration.openTabs.filter(t => t.id === effectID)[0];
       if (!tab) {
@@ -161,28 +183,52 @@ export class FileService {
   closeEffectTab(effectID: string) {
     const activeFile = this.files.filter(f => f.isActive)[0];
     if (activeFile) {
-      const tab = activeFile.configuration.openTabs.filter(t => t.id === effectID)[0];
-      if (tab) {
-        const tabIndex = activeFile.configuration.openTabs.indexOf(tab);
+      const openTab = activeFile.configuration.openTabs.filter(t => t.id === effectID)[0];
+      if (openTab) {
+        const tabActive = openTab.isActive;
+        const tabIndex = activeFile.configuration.openTabs.indexOf(openTab);
         activeFile.configuration.openTabs.splice(tabIndex, 1);
-        this.store();
+        if (tabActive) {
+          this.setAnyEffectActive();
+        } else {
+          this.store();
+        }
       }
     }
   }
 
-  setEffectActive(effect: Effect) {
+  updateActiveEffectData(file: File) {
+    if (file.activeEffect !== null) {
+      file.activeEffect.paths = this.nodeService.getAll();
+      file.activeEffect.size = this.getPathEffectSize(file.activeEffect);
+      for (const collection of file.collections) {
+        const multiply = collection.rotation.units.PR / file.activeEffect.grid.xUnit.PR;
+        for (const collEffect of collection.effects) {
+          if (collEffect.effectID === file.activeEffect.id) {
+            collEffect.position.width = file.activeEffect.size.width * multiply;
+            collEffect.position.height = file.activeEffect.size.height;
+          }
+        }
+      }
+      let effect = file.effects.filter(e => e.id === file.activeEffect.id)[0];
+      if (effect) {
+        effect = JSON.parse(JSON.stringify(file.activeEffect));
+      }
+      effect.date.modified = new Date().getTime();
+    }
+  }
 
+  setEffectActive(effect: Effect) {
     const activeFile = this.files.filter(f => f.isActive)[0];
 
     if (activeFile) {
-      activeFile.effects.filter(e => e.id === activeFile.activeEffect.id)[0] = JSON.parse(JSON.stringify(activeFile.activeEffect));
-      activeFile.effects.filter(e => e.id === activeFile.activeEffect.id)[0].paths = this.nodeService.getAll();
+      this.updateActiveEffectData(activeFile);
 
       for (const tab of activeFile.configuration.openTabs) {
         tab.isActive = tab.id === effect.id ? true : false;
       }
       activeFile.activeEffect = effect;
-      this.nodeService.loadFile(effect.paths);
+      this.nodeService.loadFile(activeFile.activeEffect.paths);
       this.store();
     }
   }
@@ -190,26 +236,107 @@ export class FileService {
   setAnyEffectActive() {
     const activeFile = this.files.filter(f => f.isActive)[0];
     if (activeFile) {
-      if (activeFile.effects.length === 0) {
-        const newEffect = new Effect(uuid());
-        this.addEffect(newEffect);
-      } else if (activeFile.configuration.openTabs.length > 0) {
+      if (activeFile.configuration.openTabs.length > 0) {
         const activeTab = activeFile.configuration.openTabs.filter(t => t.isActive)[0];
         if (activeTab) {
           this.setEffectActive(activeFile.effects.filter(e => e.id === activeTab.id)[0]);
         } else {
-          this.setEffectActive(activeFile.effects[0]);
+          const tab = activeFile.configuration.openTabs[activeFile.configuration.openTabs.length - 1];
+          const effect = activeFile.effects.filter(e => e.id === tab.id)[0];
+          if (effect) {
+            this.setEffectActive(effect);
+          }
         }
+      } else {
+        this.updateActiveEffectData(activeFile);
+        this.nodeService.reset();
+        activeFile.activeEffect = null;
+        this.store();
       }
     }
   }
 
   updateEffect(effect: Effect) {
-   const selectedFile = this.files.filter(f => f.isActive)[0];
-   if (selectedFile) {
-      effect.paths = this.nodeService.getAll();
-      selectedFile.effects.filter(e => e.id === effect.id)[0] = effect;
-      this.store();
+   if (effect) {
+    const activeFile = this.files.filter(f => f.isActive)[0];
+    if (activeFile) {
+        this.updateActiveEffectData(activeFile);
+        this.store();
+      }
+    }
+  }
+
+  getPathEffectSize(effect: any) {
+    if (effect && effect.paths.length > 0) {
+      let minX = effect.paths[0].box.left;
+      let maxX = effect.paths[0].box.right;
+      let minY = effect.paths[0].box.bottom;
+      let maxY = effect.paths[0].box.top;
+      for (const path of effect.paths) {
+        if (path.box.left < minX) {
+          minX = path.box.left;
+        }
+        if (path.box.right > maxX) {
+          maxX = path.box.right;
+        }
+        if (path.box.top > maxY) {
+          maxY = path.box.top;
+        }
+        if (path.box.bottom < minY) {
+          minY = path.box.bottom;
+        }
+      }
+      return { x: minX, y: maxY, width: maxX - minX, height: maxY - minY };
+    }
+    return { x: 0, y: 0, width: 0, height: 0 };
+  }
+
+  sortEffects(sortType: string) {
+    const activeFile = this.files.filter(f => f.isActive)[0];
+    activeFile.configuration.sortType = sortType;
+    if (activeFile.configuration.sortType === 'name') {
+      activeFile.effects.sort((a,b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0));
+    } else if (activeFile.configuration.sortType === 'type') {
+      activeFile.effects.sort((a,b) => (a.type > b.type) ? 1 : ((b.type > a.type) ? -1 : 0));
+    } else if (activeFile.configuration.sortType === 'date-created') {
+      activeFile.effects.sort((a,b) => (a.date.created > b.date.created) ? 1 : ((b.date.created > a.date.created) ? -1 : 0));
+    } else if (activeFile.configuration.sortType === 'date-modified') {
+      activeFile.effects.sort((a,b) => (a.date.modified > b.date.modified) ? 1 : ((b.date.modified > a.date.modified) ? -1 : 0));
+    }
+    if (activeFile.configuration.sortDirection === 'last-first') {
+      activeFile.effects.reverse();
+    }
+  }
+
+  deleteEffect(effectID: string) {
+    const activeFile = this.files.filter(f => f.isActive)[0];
+    if (activeFile) {
+      const effect = activeFile.effects.filter(e => e.id === effectID)[0];
+      if (effect) {
+        for (const collection of activeFile.collections) {
+          for (let i = collection.effects.length - 1; i >= 0; i-- ) {
+            if (collection.effects[i].effectID === effectID) {
+              collection.effects.splice(i, 1);
+            }
+          }
+        }
+        const effectIndex = activeFile.effects.indexOf(effect);
+        activeFile.effects.splice(effectIndex, 1);
+        const openTab = activeFile.configuration.openTabs.filter(t => t.id === effectID)[0];
+        if (openTab) {
+          if (openTab.isActive) {
+            activeFile.activeEffect = null;
+            this.nodeService.reset();
+          }
+          const tabIndex = activeFile.configuration.openTabs.indexOf(openTab);
+          activeFile.configuration.openTabs.splice(tabIndex, 1);
+        }
+        if (activeFile.activeEffect === null) {
+          this.setAnyEffectActive();
+        } else {
+          this.store();
+        }
+      }
     }
   }
 
@@ -226,7 +353,7 @@ export class FileService {
   updateActiveFile() {
     const activeFile = this.files.filter(f => f.isActive)[0];
     if (activeFile) {
-      activeFile.nodes = this.nodeService.getAll();
+      this.updateActiveEffectData(activeFile);
       activeFile.date.changed = true;
       this.store();
     }
@@ -236,8 +363,8 @@ export class FileService {
     const originalFile = this.files.filter(f => f._id === file._id)[0];
     const index = this.files.indexOf(originalFile, 0);
     if (index > -1) {
-      // file.nodes = this.nodeService.getAll();
-      this.files[index] = file;
+      this.files[index] = JSON.parse(JSON.stringify(file));
+      this.updateActiveEffectData(this.files[index]);
       this.files[index].date.changed = changes;
       this.store();
     }
@@ -284,7 +411,7 @@ export class FileService {
   getAllFileData(): File {
     const currentactiveFile = this.files.filter(f => f.isActive)[0];
     if (currentactiveFile) {
-      currentactiveFile.nodes = this.nodeService.getAll();
+      this.updateActiveEffectData(currentactiveFile);
     }
     this.store();
     return currentactiveFile;
@@ -294,7 +421,7 @@ export class FileService {
     const selectedFile = this.files.filter(f => f._id === id)[0];
     if (selectedFile) {
       if (selectedFile.isActive) {
-        selectedFile.nodes = this.nodeService.getAll();
+        this.updateActiveEffectData(selectedFile);
       }
       this.store();
       return selectedFile;
@@ -306,12 +433,21 @@ export class FileService {
     const currentactiveFile = this.files.filter(f => f.isActive)[0];
     if (currentactiveFile) {
       currentactiveFile.isActive = false;
-      currentactiveFile.activeEffect.paths = this.nodeService.getAll();
+      if (currentactiveFile.activeEffect !== null) {
+        currentactiveFile.activeEffect.paths = this.nodeService.getAll();
+        currentactiveFile.activeEffect.size = this.getPathEffectSize(currentactiveFile.activeEffect);
+        let effect = currentactiveFile.effects.filter(e => e.id === currentactiveFile.activeEffect.id)[0];
+        if (effect) {
+          effect = JSON.stringify(currentactiveFile.activeEffect);
+        }
+      }
     }
     // activate new file
     const newactiveFile = this.files.filter(f => f._id === file._id)[0];
     newactiveFile.isActive = true;
-    this.nodeService.loadFile(newactiveFile.activeEffect.paths);
+    if (newactiveFile.activeEffect !== null) {
+      this.nodeService.loadFile(newactiveFile.activeEffect.paths);
+    }
     this.store();
   }
 
@@ -320,16 +456,27 @@ export class FileService {
     if (!currentactiveFile) {
       const newactiveFile = this.files[this.files.length - 1];
       newactiveFile.isActive = true;
-      this.nodeService.loadFile(newactiveFile.activeEffect.paths);
+      if (newactiveFile.activeEffect) {
+        this.nodeService.loadFile(newactiveFile.activeEffect.paths);
+      } else {
+        this.nodeService.reset();
+      }
       this.store();
     } else {
-      this.nodeService.loadFile(currentactiveFile.activeEffect.paths);
+      if (currentactiveFile.activeEffect !== null) {
+        this.nodeService.loadFile(currentactiveFile.activeEffect.paths);
+      } else {
+        this.nodeService.reset();
+      }
     }
   }
 
 
   save(file: File, close = false) {
     // file.nodes = this.nodeService.getAll();
+    if (file.isActive) {
+      this.updateActiveEffectData(file);
+    }
     this.store();
     if (file.path) {
       fetch(file.path).then((res) => {
@@ -379,11 +526,12 @@ export class FileService {
 
   deleteGuides(guides: Array<string>) {
     for (const guide of guides) {
-      const gEl = this.files.filter(f => f.isActive)[0].grid.guides.filter(g => g.id === guide)[0];
+      const activeFile = this.files.filter(f => f.isActive)[0];
+      const gEl = activeFile.activeEffect.grid.guides.filter(g => g.id === guide)[0];
       if (gEl) {
-        const index = this.files.filter(f => f.isActive)[0].grid.guides.indexOf(gEl);
+        const index = activeFile.activeEffect.grid.guides.indexOf(gEl);
         if (index > -1) {
-          this.files.filter(f => f.isActive)[0].grid.guides.splice(index, 1);
+          activeFile.activeEffect.grid.guides.splice(index, 1);
         }
       }
     }
@@ -419,120 +567,20 @@ export class FileService {
     this.store();
   }
 
-  updateStepDetail(id: string, forcePos: number) {
-    this.files.filter(f => f.isActive)[0].stepDetails.filter(s => s.id === id)[0].forcePos = forcePos;
-    this.store();
-  }
 
-  updatePathEffect(path: any) {
+
+  updateUnits(oldUnits: any, newUnits: any) {
     const activeFile = this.files.filter(f => f.isActive)[0];
-    let effect = activeFile.effects.filter(e => e.path === path.id)[0];
-    // if (effect === undefined) {
-    //   const nrOfPathEffects = activeFile.effects.filter(e => e.slug === 5).length + 1;
-    //   effect = new Effect(uuid(), 'effect-' + nrOfPathEffects, '../../src/assets/icons/effects/path.svg',
-    //     5, activeFile.layers[activeFile.selectedLayer].colors, activeFile.grid.units);
-    //   effect.path = path.id;
-    //   effect.details.position = { start: path.box.left, end: path.box.right };
-    //   effect.interface.layer = path.layer;
-    //   this.files.filter(f => f.isActive)[0].effects.push(effect);
-    // } else {
-    //   effect.details.position = { start: path.box.left, end: path.box.right };
-    // }
-    this.store();
-  }
-
-  updateStepDetailDirection(id: string, direction: any, index: number, shift = false) {
-    if (shift) {
-      const selectedStep = this.files.filter(f => f.isActive)[0].stepDetails.filter(s => s.id === id)[0];
-      for (const step of this.files.filter(f => f.isActive)[0].stepDetails.filter(s => s.layer === selectedStep.layer)) {
-        step.direction[index] = direction[index];
-      }
-    } else {
-      this.files.filter(f => f.isActive)[0].stepDetails.filter(s => s.id === id)[0].direction[index] = direction[index];
+    if (activeFile) {
+      activeFile.activeEffect.paths = this.nodeService.updateUnits(oldUnits.PR, newUnits.PR);
+      this.nodeService.loadFile(activeFile.activeEffect.paths);
+      console.log(activeFile.activeEffect);
     }
+    activeFile.activeEffect.range.end = activeFile.activeEffect.range.end * (newUnits.PR / activeFile.activeEffect.grid.xUnit.PR);
+    activeFile.activeEffect.range.start = activeFile.activeEffect.range.start * (newUnits.PR / activeFile.activeEffect.grid.xUnit.PR);
+    activeFile.activeEffect.grid.xUnit = newUnits;
+
     this.store();
-  }
-
-  updateDuration(duration: number) {
-    this.files.filter(f => f.isActive)[0].duration = duration;
-    this.store();
-  }
-
-  addModuleToLibrary(effect: any) {
-    const activeFile = this.files.filter(f => f.isActive)[0];
-    if (activeFile.effects.indexOf(effect) === -1) {
-      activeFile.effects.push(effect);
-      this.nodeService.reset();
-      this.store();
-    }
-  }
-
-  addModule(module: any, xpos: number) {
-    const activeFile = this.files.filter(f => f.isActive)[0];
-    let total = 0;
-    if (activeFile.frames.length > 0) {
-      for (const motion of activeFile.frames) {
-        if (motion.position < xpos) {
-          total += motion.duration;
-        } else {
-          motion.position += module.duration;
-        }
-      }
-    }
-    module.position = total;
-    activeFile.frames.push(module);
-    this.store();
-    return activeFile.frames;
-  }
-
-  selectModuleFromLibrary(moduleId: string) {
-    const activeFile = this.files.filter(f => f.isActive)[0];
-    const module = activeFile.effects.filter(m => m.id === moduleId)[0];
-    if (module !== undefined) {
-      this.nodeService.loadFile(module.nodes);
-    }
-    return module;
-  }
-
-  saveTimeEffectLibrary(module: any) {
-    const activeFile = this.files.filter(f => f.isActive)[0];
-    let timeEffectsModule = activeFile.effects.filter(m => m.id === module.id)[0];
-    if (timeEffectsModule && module) {
-      timeEffectsModule = module;
-      timeEffectsModule.nodes = this.nodeService.getAll();
-      // this.nodeService.reset();
-      this.store();
-    }
-  }
-
-  removeEffectFromLibrary(effect: any) {
-    const activeFile = this.files.filter(f => f.isActive)[0];
-    const index = activeFile.effects.indexOf(effect);
-    activeFile.effects.splice(index, 1);
-    this.store();
-  }
-
-  updateHapticEffect(effect: any, window = false) {
-    const activeFile = this.files.filter(f => f.isActive)[0];
-    const lbrEffect = activeFile.effects.filter(e => e.id === effect.id)[0];
-    if (lbrEffect) {
-      if (window) {
-        effect.details.position.start = lbrEffect.details.position.start;
-        effect.details.position.end = lbrEffect.details.position.end;
-      }
-      const indexOld = activeFile.effects.indexOf(lbrEffect);
-      activeFile.effects.splice(indexOld, 1);
-      activeFile.effects.splice(indexOld, 0, effect);
-      this.store();
-    }
-  }
-
-
-  updateUnits(oldUnits: any, newUnits: any, file: any) {
-    file.nodes = this.nodeService.updateUnits(oldUnits.PR, newUnits.PR);
-    file.effects = this.nodeService.updateUnitsEffects(oldUnits.PR, newUnits.PR, file.effects);
-    this.nodeService.loadFile(file.activeEffect.paths);
-    this.update(file);
   }
 
 }
