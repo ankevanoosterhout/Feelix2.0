@@ -8,6 +8,7 @@ import { DrawingService } from 'src/app/services/drawing.service';
 import { CollectionService } from 'src/app/services/collection.service';
 import { FileService } from 'src/app/services/file.service';
 import { Effect } from 'src/app/models/effect.model';
+import { v4 as uuid } from 'uuid';
 
 @Component({
     selector: 'app-effects',
@@ -90,6 +91,11 @@ export class EffectsComponent implements OnInit, AfterViewInit {
         this.drawFileEffects();
       } else if (this.activeTab === 1) {
         this.drawLibraryEffects();
+      } else if (this.activeTab === 2) {
+        console.log(this.drawingService.file.activeCollectionEffect);
+        // if (this.drawingService.file.activeCollectionEffect) {
+        //   this.effect = this.drawingService.file.effects.filter(e => e.id === this.drawingService.file.activeCollectionEffect.effectID)[0];
+        // }
       }
     });
 
@@ -159,7 +165,7 @@ export class EffectsComponent implements OnInit, AfterViewInit {
     for (const effect of effects) {
       const div = this.document.getElementById('effectSVG-' + effect.id);
       if (div) {
-        this.effectVisualizationService.drawEffect(effect, 'position', this.drawingService.file.configuration.libraryViewSettings);
+        this.effectVisualizationService.drawEffect(effect, this.drawingService.file.configuration.colors, this.drawingService.file.configuration.libraryViewSettings);
       }
     }
   }
@@ -168,7 +174,7 @@ export class EffectsComponent implements OnInit, AfterViewInit {
     for (const libEffect of libEffects) {
       const div = this.document.getElementById('effectSVG-' + libEffect.effect.id);
       if (div) {
-        this.effectVisualizationService.drawEffect(libEffect.effect, 'position', this.drawingService.file.configuration.libraryViewSettings);
+        this.effectVisualizationService.drawEffect(libEffect.effect, this.drawingService.file.configuration.colors, this.drawingService.file.configuration.libraryViewSettings);
       }
     }
   }
@@ -196,14 +202,24 @@ export class EffectsComponent implements OnInit, AfterViewInit {
     this.fileService.updateCollectionEffect(this.drawingService.file.activeCollection, this.drawingService.file.activeCollectionEffect);
   }
 
-  updateEffect(effect: any) {
-    let fileEffect = this.drawingService.file.effects.filter(e => e.id === effect.id)[0];
+
+  updateLibEffectName(effect: any) {
+    let fileEffect = this.effectLibraryService.getEffect(effect.id);
     if (fileEffect) {
-      fileEffect = effect;
+      fileEffect.effect.name = effect.name;
       const openTab = this.drawingService.file.configuration.openTabs.filter(t => t.id === effect.id)[0];
       if (openTab) { openTab.name = effect.name; }
     }
     this.sortItemsEffectList();
+  }
+
+  updateEffectName(effect: any) {
+    let fileEffect = this.drawingService.file.effects.filter(e => e.id === effect.id)[0];
+    if (fileEffect) {
+      fileEffect.name = effect.name;
+      const openTab = this.drawingService.file.configuration.openTabs.filter(t => t.id === effect.id)[0];
+      if (openTab) { openTab.name = effect.name; }
+    }
   }
 
   repeatEffect(effect: any) {
@@ -215,6 +231,12 @@ export class EffectsComponent implements OnInit, AfterViewInit {
   }
 
   deleteEffectItem(effectID: string) {
+    for (const collection of this.drawingService.file.collections) {
+      if (collection.effects.filter(e => e.effectID === effectID).length > 0) {
+        this.drawingService.showMessageDialog({ msg: 'This effect is currently in use, are you sure you want to delete it?', type: 'verification', action: 'deleteEffect', d: effectID});
+        return;
+      }
+    }
     this.fileService.deleteEffect(effectID);
   }
 
@@ -225,7 +247,15 @@ export class EffectsComponent implements OnInit, AfterViewInit {
 
   editLibraryEffectItem(libEffectID: string) {
     const item = this.effectLibraryService.getEffect(libEffectID);
-    console.log(item);
+
+    if (item) {
+      const copyItem = JSON.parse(JSON.stringify(item));
+      copyItem.effect.name += '-copy';
+      copyItem.effect.id = uuid();
+      copyItem.effect.date.created = new Date().getTime();
+      copyItem.effect.date.modified = copyItem.effect.date.created;
+      this.fileService.addEffect(copyItem.effect);
+    }
   }
 
   compareSlug(unit1: any, unit2: any) {
@@ -267,12 +297,12 @@ export class EffectsComponent implements OnInit, AfterViewInit {
       this.updateEffectHeight(parseFloat(value));
       this.drawingService.file.activeCollectionEffect.scale.y = parseFloat(value);
     } else if (id === 'scale') {
-      this.updateEffectWidth(parseFloat(value));
+      this.updateEffectWidth(parseFloat(value));-
       this.updateEffectHeight(parseFloat(value));
       this.drawingService.file.activeCollectionEffect.scale.x = parseFloat(value);
       this.drawingService.file.activeCollectionEffect.scale.y = parseFloat(value);
     }
-    (this.document.getElementById(id) as HTMLInputElement).value = parseFloat(value).toFixed(3);
+    (this.document.getElementById(id) as HTMLInputElement).value = parseFloat(value).toFixed(2);
     this.updateCollectionEffect();
   }
 

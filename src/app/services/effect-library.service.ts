@@ -41,8 +41,14 @@ export class EffectLibraryService {
       const libraryEffect = this.effectLibrary.filter(l => l.effect.id === effect.id)[0];
       if (libraryEffect) {
         const index = this.effectLibrary.indexOf(libraryEffect);
+        effect.date.modified = new Date().getTime();
         this.effectLibrary[index].effect = effect;
       } else {
+        effect.date.created = new Date().getTime();
+        effect.date.modified = effect.date.created;
+        effect.id = uuid();
+        effect.name += '-lib';
+        effect.storedIn = 'library';
         const newLibraryEffect = new LibraryEffect(uuid(), effect);
         this.effectLibrary.unshift(newLibraryEffect);
       }
@@ -50,22 +56,6 @@ export class EffectLibraryService {
       this.store();
     }
   }
-
-  // addTimeEffect(effect: any, units: any) {
-  //   if (effect) {
-  //     const libraryEffect = this.effectLibrary.filter(l => l.effect.id === effect.id)[0];
-  //     if (libraryEffect) {
-  //       const index = this.effectLibrary.indexOf(libraryEffect);
-  //       this.effectLibrary[index].effect = effect;
-  //       this.effectLibrary[index].effect.paths = effect.nodes[0];
-  //     } else {
-  //       const newLibraryEffect = new LibraryEffect(uuid(), effect, units);
-  //       newLibraryEffect.paths = effect.nodes[0];
-  //       this.effectLibrary.unshift(newLibraryEffect);
-  //     }
-  //     this.store();
-  //   }
-  // }
 
   deleteEffect(id: string) {
     const libEffect = this.effectLibrary.filter(l => l.effect.id === id || l.id === id)[0];

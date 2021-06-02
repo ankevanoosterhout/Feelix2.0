@@ -16,8 +16,8 @@ import { SelectComComponent } from './components/windows/select-com.component';
 import { InfoPageComponent } from './pages/info-page.component';
 import { FeelixioPageComponent } from './pages/feelixio-page.component';
 import { MotorControlComponent } from './components/interface-elements/motor-control/motor-control.component';
-import { MotorControlToolbarInset } from './components/interface-elements/toolbars/motor-control-toolbar-inset.component';
-import { MotorControlToolbar } from './components/interface-elements/toolbars/motor-control-toolbar.component';
+import { MotorControlToolbarInsetComponent } from './components/interface-elements/toolbars/motor-control-toolbar-inset.component';
+import { MotorControlToolbarComponent } from './components/interface-elements/toolbars/motor-control-toolbar.component';
 import { MotorSettingsComponent } from './components/windows/settings/motor-settings.component';
 import { EffectListComponent } from './components/file/effect-list.component';
 
@@ -42,8 +42,8 @@ const routes: Routes = [
     { path: 'info', component: InfoPageComponent },
     { path: 'feelixio-page', component: FeelixioPageComponent },
     { path: 'motor-control-component', component: MotorControlComponent },
-    { path: 'motor-control-toolbar-inset', component: MotorControlToolbarInset },
-    { path: 'motor-control-toolbar', component: MotorControlToolbar },
+    { path: 'motor-control-toolbar-inset', component: MotorControlToolbarInsetComponent },
+    { path: 'motor-control-toolbar', component: MotorControlToolbarComponent },
     { path: 'motor-settings', component: MotorSettingsComponent }
   ];
 

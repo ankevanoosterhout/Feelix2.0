@@ -135,7 +135,7 @@ export class DrawElementsService {
         .attr('d', (d: { svgPath: string }) => d.svgPath)
         .attr('id', (d: { id: string; parent: string }) => 'id_' + d.id + '_' + d.parent)
         .attr('class', (d: { parent: string; }) => 'path_' + d.parent + '_' + type)
-        .attr('stroke', () =>  type === 'pos' ? this.file.activeEffect.colors[0].hash : this.file.activeEffect.colors[1].hash)
+        .attr('stroke', () =>  type === 'pos' ? this.getEffectColor() : this.file.activeEffect.colors[1].hash)
         .attr('stroke-width', () => {
           if (type === 'angle') { return 0.3; }
           else if (this.file.activeEffect.rotation === 'dependent') { return 2.5; }
@@ -150,7 +150,7 @@ export class DrawElementsService {
             if (this.nodeService.selectedNodes.length === 0) {
               this.config.nodesSVG.selectAll('.n_' + d.parent)
                 .style('fill', 'white')
-                .style('stroke', this.file.activeEffect.colors[0].hash)
+                .style('stroke', this.getEffectColor())
                 .style('stroke-width', 0.5);
             }
           }
@@ -370,7 +370,7 @@ export class DrawElementsService {
       .on('end', (d: any) => {
         if (this.config.cursor.slug === 'dsel') {
           d3.select('#id_' + d.id + '_' + d.path)
-            .style('fill', () => this.nodeService.selectedNodes.indexOf(d.id) > -1 ? this.file.activeEffect.colors[0].hash : 'white');
+            .style('fill', () => this.nodeService.selectedNodes.indexOf(d.id) > -1 ? this.getEffectColor() : 'white');
 
           this.bboxService.getBBoxSelectedPaths();
 
@@ -458,12 +458,12 @@ export class DrawElementsService {
           !this.config.zoomable && !this.nodeService.getPath(d.path).lock ? 'auto' : 'none')
       .style('fill', (d: { id: string; path: string; }) => {
         if (this.nodeService.selectedNodes.indexOf(d.id) > -1) {
-          return this.file.activeEffect.colors[0].hash;
+          return this.getEffectColor();
         }
         return this.nodeService.selectedPaths.indexOf(d.path) > -1 ? 'white' : 'transparent';
       })
       .style('stroke', (d: { id: string; path: string; }) =>
-        this.nodeService.selectedPaths.indexOf(d.path) > -1 ? this.file.activeEffect.colors[0].hash : 'transparent')
+        this.nodeService.selectedPaths.indexOf(d.path) > -1 ? this.getEffectColor() : 'transparent')
       .style('stroke-width', (d: { id: string; path: string; }) => this.nodeService.selectedPaths.indexOf(d.path) > -1 ? 0.5 : 6)
       .style('shape-rendering', 'crispEdges')
       .on('mouseenter', (d: any) => {
@@ -492,16 +492,16 @@ export class DrawElementsService {
 
           this.config.nodesSVG.selectAll('.n_' + d.path)
             .style('fill', 'white')
-            .style('stroke', this.file.activeEffect.colors[0].hash)
+            .style('stroke', this.getEffectColor())
             .style('stroke-width', 0.5);
 
           d3.select('#id_' + d.id + '_' + d.path)
             .attr('width', 7).attr('height', 7)
             .attr('x', this.nodeService.scale.scaleX(d.pos.x) - 3.5)
             .attr('y', this.nodeService.scale.scaleY(d.pos.y) - 3.5)
-            .style('stroke', this.file.activeEffect.colors[0].hash)
+            .style('stroke', this.getEffectColor())
             .style('stroke-width', 0.5)
-            .style('fill', () => this.nodeService.selectedNodes.indexOf(d.id) < 0 ? 'white' : this.file.activeEffect.colors[0].hash);
+            .style('fill', () => this.nodeService.selectedNodes.indexOf(d.id) < 0 ? 'white' : this.getEffectColor());
 
           this.config.nodesSVG.selectAll('#id_nf_' + d.id + '_' + d.path).style('fill', this.file.activeEffect.colors[1].hash);
         }
@@ -520,14 +520,14 @@ export class DrawElementsService {
             .attr('width', 3.5).attr('height', 3.5)
             .attr('x', this.nodeService.scale.scaleX(d.pos.x) - 1.75)
             .attr('y', this.nodeService.scale.scaleY(d.pos.y) - 1.75)
-            .style('fill', this.file.activeEffect.colors[0].hash)
-            .style('stroke', this.file.activeEffect.colors[0].hash)
+            .style('fill', this.getEffectColor())
+            .style('stroke', this.getEffectColor())
             .style('stroke-width', 0.5);
 
           if (this.nodeService.selectedPaths.indexOf(d.path) > -1 && this.nodeService.selectedNodes.indexOf(d.id) < 0) {
             d3.select('#id_' + d.id + '_' + d.path)
               .style('fill', 'white')
-              .style('stroke', this.file.activeEffect.colors[0].hash);
+              .style('stroke', this.getEffectColor());
           } else if (this.nodeService.selectedPaths.indexOf(d.path) < 0) {
             d3.select('#id_' + d.id  + '_' + d.path)
               .style('fill', 'transparent').style('stroke', 'transparent').style('stroke-width', 0.5);
@@ -537,6 +537,10 @@ export class DrawElementsService {
         }
       })
       .call(dragNode);
+  }
+
+  getEffectColor() {
+    return this.file.configuration.colors.filter(c => c.type === this.file.activeEffect.type)[0].hash;
   }
 
 
@@ -594,7 +598,8 @@ export class DrawElementsService {
         }
       })
       .on('end', (d: any) => {
-        const box = this.bboxService.getBBox(this.nodeService.getPath(d.cp.path));
+        // const box = this.bboxService.getBBox(this.nodeService.getPath(d.cp.path));
+        this.bboxService.getBBoxSelectedPaths();
       });
 
 
@@ -622,7 +627,7 @@ export class DrawElementsService {
         .attr('x2', (d: any) => type === 'pos' ? this.nodeService.scale.scaleX(d.cp.pos.x) : this.nodeService.scale.scaleX(d.cp.angle.x))
         .attr('y2', (d: any) => type === 'pos' ? this.nodeService.scale.scaleY(d.cp.pos.y) : this.nodeService.scale.scaleY(d.cp.angle.y))
         .attr('transform', 'translate(0, ' + this.config.margin.top + ')')
-        .style('stroke', () => type === 'pos' ? this.file.activeEffect.colors[0].hash : this.file.activeEffect.colors[1].hash)
+        .style('stroke', () => type === 'pos' ? this.getEffectColor() : this.file.activeEffect.colors[1].hash)
         .style('stroke-width', 0.5);
 
       this.config.cpSVG.selectAll('circle.cp')
@@ -635,7 +640,7 @@ export class DrawElementsService {
         .attr('cx', (d: any) => type === 'pos' ? this.nodeService.scale.scaleX(d.cp.pos.x) : this.nodeService.scale.scaleX(d.cp.angle.x))
         .attr('cy', (d: any) => type === 'pos' ? this.nodeService.scale.scaleY(d.cp.pos.y) : this.nodeService.scale.scaleY(d.cp.angle.y))
         .attr('transform', 'translate(0, ' + this.config.margin.top + ')')
-        .style('fill', () => type === 'pos' ? this.file.activeEffect.colors[0].hash : this.file.activeEffect.colors[1].hash)
+        .style('fill', () => type === 'pos' ? this.getEffectColor() : this.file.activeEffect.colors[1].hash)
         .style('stroke', 'transparent')
         .style('stroke-width', 5)
         .attr('pointer-events', (d: any) => !this.config.zoomable &&
@@ -687,7 +692,7 @@ export class DrawElementsService {
         const cursorConn = this.config.svg.append('path')
           .attr('d', pathConn)
           .attr('class', 'cursorConnection')
-          .attr('stroke', this.file.activeEffect.colors[0].hash)
+          .attr('stroke', this.getEffectColor())
           .attr('transform', 'translate(0, ' + this.config.margin.top + ')')
           .attr('stroke-width', 0.2)
           .attr('fill', 'none');
@@ -705,7 +710,7 @@ export class DrawElementsService {
       const cursorConn = this.config.svg.append('path')
         .attr('d', pathConn)
         .attr('class', 'cursorConnectionClose')
-        .attr('stroke', this.file.activeEffect.colors[0].hash)
+        .attr('stroke', this.getEffectColor())
         .attr('transform', 'translate(0, ' + this.config.margin.top + ')')
         .attr('stroke-width', 0.4)
         .attr('fill', 'none');

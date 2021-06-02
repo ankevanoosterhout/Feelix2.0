@@ -378,65 +378,67 @@ export class BBoxService {
 
   align(direction: string) {
     this.config.svg.selectAll('#bbox').remove();
-    const allSelectedPaths = this.nodeService.getAllSelectedPaths();
-
-    if (direction === 'left' || direction === 'center' || direction === 'right') {
-      allSelectedPaths.sort((a, b) => a.box.left - b.box.left );
-    }
-    const numberOfPaths = allSelectedPaths.length;
-    const dimensions = { xMin: allSelectedPaths[0].box.left, xMax: allSelectedPaths[0].box.right,
-                       yMin: allSelectedPaths[0].box.top, yMax: allSelectedPaths[0].box.bottom };
-
-    for (const path of allSelectedPaths) {
-      dimensions.xMin = dimensions.xMin < path.box.left ? dimensions.xMin : path.box.left;
-      dimensions.xMax = dimensions.xMax > path.box.right ? dimensions.xMax : path.box.right;
-      dimensions.yMax = dimensions.yMax > path.box.top ? dimensions.yMax : path.box.top;
-      dimensions.yMin = dimensions.yMin < path.box.bottom ? dimensions.yMin : path.box.bottom;
-    }
-
-    let reference: number;
-
-    if (direction === 'left') {
-      dimensions.xMax -= allSelectedPaths[allSelectedPaths.length - 1].box.width;
-    } else if (direction === 'right') {
-      dimensions.xMin += allSelectedPaths[0].box.width;
-    } else if (direction === 'center') {
-      dimensions.xMin += (allSelectedPaths[0].box.width / 2);
-      dimensions.xMax -= (allSelectedPaths[allSelectedPaths.length - 1].box.width / 2);
-    } else if (direction === 'top') {
-      reference = dimensions.yMax;
-    } else if (direction === 'bottom') { reference = dimensions.yMin;
-    } else if (direction === 'middle') { reference = ((dimensions.yMax - dimensions.yMin) / 2) + dimensions.yMin; }
-
-    const divisions = (dimensions.xMax - dimensions.xMin) / (numberOfPaths - 1);
-    let n = 0;
-
-    for (const path of allSelectedPaths) {
-
-      const translate = {
-        horizontal: 0,
-        vertical: 0,
-        width: 0,
-        height: 0
-      };
-
-      if (direction === 'bottom') { translate.vertical = reference - path.box.bottom;
-      } else if (direction === 'top') { translate.vertical = reference - path.box.top;
-      } else if (direction === 'middle') { translate.vertical = reference - (path.box.bottom + (path.box.height / 2)); }
-
-      if (n > 0 && n < allSelectedPaths.length - 1) {
-        if (direction === 'left') { translate.horizontal = dimensions.xMin + (n * divisions) - path.box.left; }
-        if (direction === 'right') { translate.horizontal = dimensions.xMin + (n * divisions) - path.box.right; }
-        if (direction === 'center') {
-          translate.horizontal = dimensions.xMin + (n * divisions) - (path.box.left + (path.box.width / 2)); }
+      const allSelectedPaths = this.nodeService.getAllSelectedPaths();
+      if (allSelectedPaths.length > 1) {
+      if (direction === 'left' || direction === 'center' || direction === 'right') {
+        allSelectedPaths.sort((a, b) => a.box.left - b.box.left );
       }
-      if (translate.horizontal !== 0 || translate.vertical !== 0) {
-        this.nodeService.translatePath(path.id, translate);
+      const numberOfPaths = allSelectedPaths.length;
+
+      const dimensions = { xMin: allSelectedPaths[0].box.left, xMax: allSelectedPaths[0].box.right,
+                        yMin: allSelectedPaths[0].box.top, yMax: allSelectedPaths[0].box.bottom };
+
+      for (const path of allSelectedPaths) {
+        dimensions.xMin = dimensions.xMin < path.box.left ? dimensions.xMin : path.box.left;
+        dimensions.xMax = dimensions.xMax > path.box.right ? dimensions.xMax : path.box.right;
+        dimensions.yMax = dimensions.yMax > path.box.top ? dimensions.yMax : path.box.top;
+        dimensions.yMin = dimensions.yMin < path.box.bottom ? dimensions.yMin : path.box.bottom;
       }
-      n++;
+
+      let reference: number;
+
+      if (direction === 'left') {
+        dimensions.xMax -= allSelectedPaths[allSelectedPaths.length - 1].box.width;
+      } else if (direction === 'right') {
+        dimensions.xMin += allSelectedPaths[0].box.width;
+      } else if (direction === 'center') {
+        dimensions.xMin += (allSelectedPaths[0].box.width / 2);
+        dimensions.xMax -= (allSelectedPaths[allSelectedPaths.length - 1].box.width / 2);
+      } else if (direction === 'top') {
+        reference = dimensions.yMax;
+      } else if (direction === 'bottom') { reference = dimensions.yMin;
+      } else if (direction === 'middle') { reference = ((dimensions.yMax - dimensions.yMin) / 2) + dimensions.yMin; }
+
+      const divisions = (dimensions.xMax - dimensions.xMin) / (numberOfPaths - 1);
+      let n = 0;
+
+      for (const path of allSelectedPaths) {
+
+        const translate = {
+          horizontal: 0,
+          vertical: 0,
+          width: 0,
+          height: 0
+        };
+
+        if (direction === 'bottom') { translate.vertical = reference - path.box.bottom;
+        } else if (direction === 'top') { translate.vertical = reference - path.box.top;
+        } else if (direction === 'middle') { translate.vertical = reference - (path.box.bottom + (path.box.height / 2)); }
+
+        if (n > 0 && n < allSelectedPaths.length - 1) {
+          if (direction === 'left') { translate.horizontal = dimensions.xMin + (n * divisions) - path.box.left; }
+          if (direction === 'right') { translate.horizontal = dimensions.xMin + (n * divisions) - path.box.right; }
+          if (direction === 'center') {
+            translate.horizontal = dimensions.xMin + (n * divisions) - (path.box.left + (path.box.width / 2)); }
+        }
+        if (translate.horizontal !== 0 || translate.vertical !== 0) {
+          this.nodeService.translatePath(path.id, translate);
+        }
+        n++;
+      }
+      this.getBBoxSelectedPaths();
+      this.drawBoundingBox();
     }
-    this.drawingService.drawFileData();
-    this.drawBoundingBox();
 
   }
 

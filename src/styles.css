@@ -695,3 +695,18 @@ button.disabled:focus {
   display:inline-block;
   width: auto;
 }
+
+.question-mark {
+  display:inline-block;
+  font-size: 10px;
+  font-family: Arial, Helvetica, sans-serif;
+  width: 13px;
+  height: 13px;
+  line-height: 13px;
+  text-align: center;
+  vertical-align: baseline;
+  border-radius: 13px;
+  border: 1px solid #777;
+  color: #777;
+  margin-right: 5px;
+}

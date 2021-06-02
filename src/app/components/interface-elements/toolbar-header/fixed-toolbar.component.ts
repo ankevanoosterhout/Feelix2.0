@@ -24,6 +24,7 @@ import { Unit } from 'src/app/models/effect.model';
       </div>
 
       <div class="form-row" *ngIf="this.drawingService.file.activeEffect" title="select effect visualization type">
+        <input type="color" id="color-picker" name="color-picker" [(ngModel)]="this.dataService.color" (change)="updateColor()">
         <label class="select"></label>
         <select class="form-control" id="select" (change)="this.updateEffectType()" [(ngModel)]="this.drawingService.file.activeEffect.type" name="type">
             <option *ngFor="let type of typeOptions" [ngValue]="type">{{ type }}</option>
@@ -54,7 +55,7 @@ import { Unit } from 'src/app/models/effect.model';
       </div>
 
       <ul>
-        <li id="align-buttons" *ngIf="this.drawingService.config.svgDx > 900">
+        <li id="align-buttons" *ngIf="this.drawingService.config.svgDx > 1225">
           <div>
             <ul class="align" id="distribute">
                 <li *ngFor="let item of distribute" (click)="selectItem(item.value);">
@@ -68,7 +69,7 @@ import { Unit } from 'src/app/models/effect.model';
         </li>
 
         <li id="reference-point" class="scaling-options" [ngClass]="{ active: toolbar.boxSelection }"
-          *ngIf="this.drawingService.config.svgDx > 600">
+          *ngIf="this.drawingService.config.svgDx > 1050">
             <div class="bg-line"></div>
             <div class="row">
                 <div *ngFor="let point of referencePoints" class="point"
@@ -146,7 +147,6 @@ export class FixedToolbarComponent implements OnInit {
   typeOptions = ['torque','position','velocity'];
   rotationOptions = ['independent', 'dependent'];
 
-
   yAxisOptions = [ new Unit('voltage (%)', 100), new Unit('current (%)', 100) ];
 
   referencePoints = [
@@ -205,7 +205,7 @@ export class FixedToolbarComponent implements OnInit {
   ];
 
   // tslint:disable-next-line: variable-name
-  constructor(@Inject(DOCUMENT) private document: Document, private dataService: DataService, private bezierService: BezierService,
+  constructor(@Inject(DOCUMENT) private document: Document, public dataService: DataService, private bezierService: BezierService,
               public drawingService: DrawingService, private electronService: ElectronService, public effectLibraryService: EffectLibraryService) {
 
     // this.electronService.ipcRenderer.on('updateButtonState', (event: Event, data: any) => {
@@ -215,6 +215,16 @@ export class FixedToolbarComponent implements OnInit {
     // });
 
     this.innerHeight = window.innerHeight;
+
+    this.electronService.ipcRenderer.on('saveEffectToLibrary', (event: Event, lock: boolean) => {
+      this.saveEffectToLibrary();
+    });
+
+    this.electronService.ipcRenderer.on('exportEffect', (event: Event, lock: boolean) => {
+      if (this.drawingService.file.activeEffect) {
+        this.exportEffect(this.drawingService.file.activeEffect.id);
+      }
+    });
   }
 
 
@@ -284,7 +294,9 @@ export class FixedToolbarComponent implements OnInit {
     } else if (this.drawingService.config.editBounds.yMin >= 0 && this.drawingService.file.activeEffect.type === 'torque') {
       this.drawingService.scaleActiveEffectFromTorqueToPosition(2, 100);
     }
+    this.dataService.color = this.drawingService.file.configuration.colors.filter(c => c.type === this.drawingService.file.activeEffect.type)[0].hash;
     this.drawingService.saveFile(this.drawingService.file);
+
   }
 
   public toggleDrawPlane() {
@@ -295,6 +307,9 @@ export class FixedToolbarComponent implements OnInit {
     this.dataService.dataObservable.subscribe(data => {
       this.toolbar = data;
     });
+    if (this.drawingService.file.activeEffect) {
+      this.dataService.color = this.drawingService.file.configuration.colors.filter(c => c.type === this.drawingService.file.activeEffect.type)[0].hash;
+    }
   }
 
 
@@ -348,19 +363,24 @@ export class FixedToolbarComponent implements OnInit {
     this.document.getElementById('h-value').blur();
   }
 
+  updateColor() {
+    this.drawingService.file.configuration.colors.filter(c => c.type === this.drawingService.file.activeEffect.type)[0].hash = this.dataService.color;
+    this.drawingService.saveFile(this.drawingService.file);
+  }
+
   getPercentage(oldVal: number, newVal: number) {
     return newVal / oldVal;
   }
 
   createNewEffect() {
-    this.document.getElementById('field-inset').style.cursor = 'wait';
-    this.drawingService.saveEffect();
+    // this.document.getElementById('field-inset').style.cursor = 'wait';
+    // this.drawingService.saveEffect();
     this.electronService.ipcRenderer.send('effectSettings', 'effect-settings');
   }
 
   openEffectSettings() {
-    this.document.getElementById('field-inset').style.cursor = 'wait';
-    this.drawingService.saveEffect();
+    // this.document.getElementById('field-inset').style.cursor = 'wait';
+    // this.drawingService.saveEffect();
     this.electronService.ipcRenderer.send('effectSettings', 'effect-update-settings');
   }
 

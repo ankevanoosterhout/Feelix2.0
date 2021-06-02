@@ -37,6 +37,7 @@
     "electron-browser-storage": "^1.0.6",
     "file-saver": "^2.0.2",
     "file-system": "^2.2.2",
+    "ngx-color-picker": "^7.5.0",
     "ngx-electron": "^2.2.0",
     "ngx-filesaver": "^8.1.0",
     "ngx-fs": "0.0.1",

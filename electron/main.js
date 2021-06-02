@@ -65,18 +65,18 @@ const mainMenuTemplate = [
           openFileDialog('feelix', 'loadFile', 'loadFileLocation');
         }
       },
-      {
-        label: 'Open Feelix IO',
-        accelerator: process.platform == 'darwin' ? 'Command+F' : 'Ctrl+F',
-        click() {
-          if (FeelixioWindow === null) {
-            createVisualProgrammingWindow();
-          } else {
-            FeelixioWindow.focus();
-          }
-          mainWindow.blur();
-        }
-      },
+      // {
+      //   label: 'Open Feelix IO',
+      //   accelerator: process.platform == 'darwin' ? 'Command+F' : 'Ctrl+F',
+      //   click() {
+      //     if (FeelixioWindow === null) {
+      //       createVisualProgrammingWindow();
+      //     } else {
+      //       FeelixioWindow.focus();
+      //     }
+      //     mainWindow.blur();
+      //   }
+      // },
       {
         label: 'Save',
         accelerator: process.platform == 'darwin' ? 'Command+S' : 'Ctrl+S',
@@ -93,25 +93,14 @@ const mainMenuTemplate = [
       },
       {
         label: 'Example files',
-        submenu: [
-          {
-            label: 'Position-based',
-            submenu: []
-          },
-          {
-            label: 'Time-based',
-            submenu: []
-          }
-        ]
+        submenu: []
       },
       {
         label: 'Quit',
         accelerator: process.platform === 'darwin' ? 'Command+Q' : 'Ctrl+Q',
         click() {
-          for (const playW of playWindows) {
-            playW.window.webContents.send('disconnectAll');
-          }
-          app.quit();
+          mainWindow.webContents.send('saveData');
+          setTimeout(() => app.quit(), 100);
         }
       }
     ]
@@ -126,13 +115,28 @@ const mainMenuTemplate = [
         }
       },
       {
-        label: 'Save Effect',
+        label: 'Save to Effect Library',
         click() {
+          mainWindow.webContents.send('saveEffectToLibrary');
         }
       },
       {
-        label: 'Save to Effect Library',
+        label: 'Effect Settings',
         click() {
+          mainWindow.webContents.send('saveData');
+          createEffectSettingWindow("effect-update-settings");
+        }
+      },
+      {
+        label: 'Export Effect',
+        click() {
+          mainWindow.webContents.send('exportEffect');
+        }
+      },
+      {
+        label: 'Clear effect library',
+        click() {
+          mainWindow.webContents.send('clearCache');
         }
       }
     ]
@@ -188,47 +192,18 @@ const mainMenuTemplate = [
           }
         ]
       }
-      // {
-      //   label: 'Effects',
-      //   enabled: true,
-      //   submenu: [
-      //     {
-      //       label: 'Zig Zag',
-      //       enabled: false,
-      //       click() {
-      //         if (!zigzagWindow) { createZiGZaG(); }
-      //       }
-      //     },
-      //   ]
-
-      // }
     ]
   },
   {
     label: 'View',
     submenu: [
-      // {
-      //   label: 'Show toolbar',
-      //   type: 'checkbox',
-      //   checked: true,
-      //   accelerator: process.platform == 'darwin' ? 'Command+T' : 'Ctrl+T',
-      //   click() {
-      //     if (toolbars.filter(t => t.type === 'edit').length === 0) {
-      //       createToolbar('/toolbar', 321, 'edit');
-      //       mainMenu.items[2].submenu.items[0].checked = true;
-      //     } else {
-      //       toolbars.filter(t => t.type === 'edit')[0].toolbar.close();
-      //       mainMenu.items[2].submenu.items[0].checked = false;
-      //     }
-      //   }
-      // },
       {
         label: 'Show rulers',
         accelerator: process.platform == 'darwin' ? 'Command+R' : 'Ctrl+R',
         visible: false,
         click() {
-          mainMenu.items[3].submenu.items[1].visible = false;
-          mainMenu.items[3].submenu.items[2].visible = true;
+          mainMenu.items[3].submenu.items[0].visible = false;
+          mainMenu.items[3].submenu.items[1].visible = true;
           mainWindow.webContents.send('rulers:toggle', true);
         }
       },
@@ -237,8 +212,8 @@ const mainMenuTemplate = [
         accelerator: process.platform == 'darwin' ? 'Command+Alt+R' : 'Ctrl+Alt+R',
         visible: true,
         click() {
-          mainMenu.items[3].submenu.items[1].visible = true;
-          mainMenu.items[3].submenu.items[2].visible = false;
+          mainMenu.items[3].submenu.items[0].visible = true;
+          mainMenu.items[3].submenu.items[1].visible = false;
           mainWindow.webContents.send('rulers:toggle', false);
         }
       },
@@ -247,6 +222,7 @@ const mainMenuTemplate = [
         submenu: [
           {
             label: 'Show grid',
+            accelerator: process.platform == 'darwin' ? 'Command+G' : 'Ctrl+G',
             visible: true,
             click() {
               mainMenu.items[3].submenu.items[2].submenu.items[0].visible = false;
@@ -257,6 +233,7 @@ const mainMenuTemplate = [
           },
           {
             label: 'Hide grid',
+            accelerator: process.platform == 'darwin' ? 'Command+Alt+G' : 'Ctrl+Alt+G',
             visible: false,
             click() {
               mainMenu.items[3].submenu.items[2].submenu.items[0].visible = true;
@@ -272,14 +249,10 @@ const mainMenuTemplate = [
             checked: false,
             enabled: false,
             click() {
-              if (gridSnap) {
-                mainMenu.items[3].submenu.items[2].submenu.items[2].checked = false;
-                mainWindow.webContents.send('grid:snap', false);
-                gridSnap = false;
-              } else if (!gridSnap) {
-                mainMenu.items[3].submenu.items[2].submenu.items[2].checked = true;
-                mainWindow.webContents.send('grid:snap', true);
-                gridSnap = true;
+              if (mainMenu.items[3].submenu.items[2].submenu.items[2].enabled) {
+                gridSnap = !gridSnap;
+                mainMenu.items[3].submenu.items[2].submenu.items[2].checked = gridSnap;
+                mainWindow.webContents.send('grid:snap', gridSnap);
               }
             }
           },
@@ -318,72 +291,34 @@ const mainMenuTemplate = [
             type: 'checkbox',
             checked: false,
             click() {
-              guidesLock = guidesLock === false ? true : false;
+              guidesLock = !guidesLock;
               mainMenu.items[2].submenu.items[4].submenu.items[2].checked = guidesLock;
               mainWindow.webContents.send('lockGuides', guidesLock);
             }
           }
         ]
       },
+    ]
+  },
+  {
+    label: 'Hardware',
+    submenu: [
       {
-        label: 'Window',
-        submenu: [
-          {
-            label: 'Layer window',
-            type: 'checkbox',
-            checked: false,
-            accelerator: process.platform == 'darwin' ? 'Command+L' : 'Ctrl+L',
-            click() {}
-          },
-          {
-            label: 'Effect window',
-            type: 'checkbox',
-            enabled: true,
-            checked: false,
-            accelerator: process.platform == 'darwin' ? 'Command+E' : 'Ctrl+E',
-            click() {
-              if (effectWindow !== null) {
-                effectWindow.close();
-              } else {
-                effectDetails = null;
-                createEffectWindow();
-              }
-            }
-          }
-        ]
+        label: 'Microcontroller settings',
+        accelerator: process.platform == 'darwin' ? 'Command+M' : 'Ctrl+M',
+        click() {
+          createMotorSettingsWindow();
+        }
+      },
+      {
+        label: 'Reset microcontroller data',
+        click() {
+          serialPort.closeAllSerialPorts();
+          mainWindow.webContents.send('resetCOMList');
+        }
       }
     ]
   },
-  // {
-  //   label: 'Play',
-  //   submenu: [
-  //     {
-  //       label: 'Connect to Microcontroller',
-  //       click() { serialPort.listSerialPorts(createConnectToCOM); }
-  //     },
-  //     {
-  //       label: 'Reset',
-  //       submenu: [
-  //         {
-  //           label: 'Reset COMPort list',
-  //           click() {
-  //             serialPort.closeAllSerialPorts();
-  //             mainWindow.webContents.send('resetCOMList');
-  //           }
-  //         },
-  //         {
-  //           label: 'Clear effect library',
-  //           click() {
-  //             mainWindow.webContents.send('clearCache');
-  //             if (effectWindow) {
-  //               effectWindow.webContents.send('updateEffectsFromLibrary');
-  //             }
-  //           }
-  //         }
-  //       ]
-  //     }
-    // ]
-  // },
   {
     label: 'Help',
     submenu: [
@@ -396,8 +331,12 @@ const mainMenuTemplate = [
         }
       },
       {
-        label: 'Online help',
+        label: 'Online help Feelix',
         click() { shell.openExternal('https://docs.feelix.xyz/'); }
+      },
+      {
+        label: 'SimpleFOC support',
+        click() { shell.openExternal('https://simplefoc.com/'); }
       },
       {
         label: 'Open development tools',
@@ -638,6 +577,8 @@ function createWindow() {
     if (data !== 'false') { createInfoWindow(); }
   });
 
+  mainWindow.webContents.openDevTools();
+
   mainWindow.webContents.on('did-finish-load', function() {
     displayStatus('Ready', 'main');
   });
@@ -687,7 +628,6 @@ function drawTemporaryWindow(width, height, title, resizable, hash, details = nu
     }
     mainWindow.webContents.send('resetCursor');
   })
-  // tmpWindow.webContents.openDevTools();
 
   tmpWindow.on('close', function () {
     tmpWindow = null
@@ -958,7 +898,7 @@ function createEffectSettingWindow(filepath) {
   drawTemporaryWindow(400, 370, 'Effect Settings', false, filepath);
 }
 
-function createMotorSettingsWindow(data) {
+function createMotorSettingsWindow() {
   drawTemporaryWindow(520, 450, 'Microcontroller settings', false, 'motor-settings');
 }
 
@@ -1072,8 +1012,8 @@ ipcMain.on('closeTmpWindow', function () {
   tmpWindow.close();
 })
 
-ipcMain.on('effectSettings', function(e, url) {
-  createEffectSettingWindow(url);
+ipcMain.on('effectSettings', function(e, filepath) {
+  createEffectSettingWindow(filepath);
 })
 
 ipcMain.on('export', function (e, data) {
@@ -1159,8 +1099,13 @@ ipcMain.on('playEffect', function(e, data) {
 })
 
 ipcMain.on('motorSettings', function (e, data) {
-  createMotorSettingsWindow(data);
+  createMotorSettingsWindow();
 });
+
+ipcMain.on('changeViewSettings', function(e, data) {
+  mainWindow.webContents.send('changeViewSettings');
+});
+
 
 
 ipcMain.on('saveLogFile', function(e, data) {

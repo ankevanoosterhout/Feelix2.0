@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import * as d3 from 'd3';
 import { Subject } from 'rxjs';
 import { Collection, Layer } from '../models/collection.model';
+import { effectTypeColor } from '../models/configuration.model';
 import { Details, Effect, Size } from '../models/effect.model';
 import { Path } from '../models/node.model';
 import { NodeService } from './node.service';
@@ -27,11 +28,11 @@ export class EffectVisualizationService {
   }
 
 
-  drawEffect(effect: Effect, type = 'position', viewSettings = 'large-thumbnails') {
+  drawEffect(effect: Effect, colors: Array<effectTypeColor>, viewSettings = 'large-thumbnails') {
 
     const height = 55;
     let windowDivisionWidth = (window.innerWidth * this.verticalDivision / 100);
-    if (windowDivisionWidth < 280) { windowDivisionWidth = 280; }
+    if (windowDivisionWidth < 300) { windowDivisionWidth = 300; }
     const width = viewSettings !== 'small-thumbnails' ? windowDivisionWidth - 86 : (windowDivisionWidth / 2) - 70;
 
     d3.select('#svgID-' + effect.id).remove();
@@ -66,13 +67,13 @@ export class EffectVisualizationService {
         .attr('class', 'nodes effect' + effect.id)
         .attr('transform', 'translate(14, 2)');
 
-      this.drawEffectData(nodes, effect, height - 4, type, ['#f2662d', '#9bbef5', '#ed1a75'], width - 28);
+      this.drawEffectData(nodes, effect, height - 4, colors, width - 28);
     }
 
   }
 
 
-  drawCollectionEffect(svg: any, collection: Collection, collEffect: Details, effect: Effect, height: number, offset: number, activeCollEffect: Details) {
+  drawCollectionEffect(svg: any, collection: Collection, collEffect: Details, effect: Effect, height: number, offset: number, activeCollEffect: Details, colors: Array<effectTypeColor>, tmp = false) {
 
     d3.selectAll('.coll-effect-' + collEffect.id).remove();
 
@@ -81,38 +82,44 @@ export class EffectVisualizationService {
     const width = collection.config.newXscale(collEffect.position.x + collEffect.position.width) -
       collection.config.newXscale(collEffect.position.x);
 
+    const heightEffect = collection.config.newYscale(collEffect.position.bottom * (collEffect.scale.y / 100)) - collection.config.newYscale(collEffect.position.top * (collEffect.scale.y / 100));
+      // effect.type === 'torque' ?
+      //       (this.height - 39) * (((100-collectionEffect.scale.y)/100) / 2) - ((this.height - 39) * (collectionEffect.position.y / 100) / 2) :
+      //       (this.height - 39) * ((100-collectionEffect.scale.y)/100) - ((this.height - 39) * (collectionEffect.position.y / 100))
     const xPos = collection.config.newXscale(collEffect.position.x);
 
     if (effect.paths && effect.paths.length > 0) {
 
       const dragCollectionEffect = d3.drag()
       .on('start', () => {
-        if (activeCollEffect !== null) {
+        if (activeCollEffect) {
           d3.select('#coll-effect-' + collection.id + '-' + activeCollEffect.id).style('opacity', 0.3);
         }
-        d3.select('#coll-effect-' + collection.id + '-' + collEffect.id).style('opacity', 0.6);
         this.setActiveCollectionEffect({ effect: collEffect, collection: collection });
+        activeCollEffect = collEffect;
+        d3.select('#coll-effect-' + collection.id + '-' + collEffect.id).style('opacity', 0.6);
       })
       .on('drag', () => {
         collEffect.position.x += (collection.config.newXscale.invert(d3.event.x) - collection.config.newXscale.invert(d3.event.x - d3.event.dx));
-        this.drawCollectionEffect(svg, collection, collEffect, effect, height, offset, activeCollEffect);
+        this.drawCollectionEffect(svg, collection, collEffect, effect, height, offset, activeCollEffect, colors);
       })
       .on('end', () => {
-        effect = null;
         this.updateCollectionData(collection);
       });
+
+
 
       const rect = svg.append('rect')
         .attr('id', 'coll-effect-' + collection.id + '-' + collEffect.id)
         .attr('class', 'coll-effect-' + collEffect.id)
         .attr('x', xPos)
-        .attr('y', offset)
-        .attr('width', collection.config.newXscale(collEffect.position.x + collEffect.position.width) - collection.config.newXscale(collEffect.position.x))
-        .attr('height', height)
-        .style('fill', '#9bbef5')
+        .attr('y', collection.config.newYscale(collEffect.position.top * (collEffect.scale.y / 100)))
+        .attr('width', width)
+        .attr('height', heightEffect)
+        .style('fill', colors.filter(c => c.type === effect.type)[0].hash)
         .style('opacity', activeCollEffect !== null && activeCollEffect.id === collEffect.id ? 0.6 : 0.3)
         .style('shape-rendering', 'crispEdges')
-        .attr('pointer-events', this.checkIfLayersIsLocked(collEffect.direction, collection.layers) ? 'none': 'auto')
+        .attr('pointer-events', tmp || this.checkIfLayersIsLocked(collEffect.direction, collection.layers) ? 'none': 'auto')
         .attr('cursor', this.checkIfLayersIsLocked(collEffect.direction, collection.layers) ? 'not-allowed': 'default')
         .call(dragCollectionEffect);
 
@@ -129,7 +136,7 @@ export class EffectVisualizationService {
         .attr('clip-path', 'url(#clip-' + collEffect.id + '-' + effect.id +')')
         .attr('transform', 'translate('+ [xPos, offset] + ')');
 
-      this.drawEffectData(nodes, effect, height, 'position', ['#fff', '#fff', '#fff'], width, collEffect.flip, multiply);
+      this.drawEffectData(nodes, effect, height, colors, width, collEffect.flip, multiply);
     }
 
   }
@@ -146,8 +153,7 @@ export class EffectVisualizationService {
   }
 
 
-  drawEffectData(nodes: any, effect: any, height: number, type = 'position',
-                 colors = ['#f2662d', '#9bbef5', '#ed1a75'], width = (window.innerWidth * this.verticalDivision / 100) - 120, reflect = { x: false, y: false }, multiply = 1) {
+  drawEffectData(nodes: any, effect: any, height: number, colors: Array<effectTypeColor>, width = (window.innerWidth * this.verticalDivision / 100) - 120, reflect = { x: false, y: false }, multiply = 1) {
 
     if (effect.size) {
       const xScale = d3.scaleLinear()
@@ -162,37 +168,40 @@ export class EffectVisualizationService {
 
 
       for (const path of effect.paths) {
-        if (path.nodes.length > 0) {
+        if (path.nodes.length > 1) {
 
           const effectPath = this.mirrorPath(JSON.parse(JSON.stringify(path)), effect.size, reflect);
 
           const paths = this.returnPathAsString(effectPath, xScale, yScale, 'pos', multiply);
 
-          if (type === 'position') {
+          if (effect.type === 'position') {
             const planes = this.returnPlaneAsString(effectPath, xScale, yScale, multiply);
 
-            nodes.selectAll('path.plane_' + path.id)
-              .data(planes)
+            if (planes) {
+              nodes.selectAll('path.plane_' + path.id)
+                .data(planes)
+                .enter()
+                .append('path')
+                .attr('d', (d: { svgPath: string }) => d.svgPath)
+                .attr('fill', colors.filter(c => c.type === effect.type)[0].hash)
+                .attr('class', 'plane_' + path.id)
+                .style('opacity', 0.3)
+                .attr('pointer-events', 'none');
+            }
+          }
+
+          if (paths) {
+            nodes.selectAll('path.path_' + path.id)
+              .data(paths)
               .enter()
               .append('path')
               .attr('d', (d: { svgPath: string }) => d.svgPath)
-              .attr('fill', colors[2])
-              .attr('class', 'plane_' + path.id)
-              .style('opacity', 0.3)
+              .attr('stroke', () => colors.filter(c => c.type === effect.type)[0].hash)
+              .attr('stroke-width', () => 1.4)
+              .attr('class', 'path_' + path.id)
+              .attr('fill', 'transparent')
               .attr('pointer-events', 'none');
           }
-
-          nodes.selectAll('path.path_' + path.id)
-            .data(paths)
-            .enter()
-            .append('path')
-            .attr('d', (d: { svgPath: string }) => d.svgPath)
-            .attr('stroke', () => type === 'position' ? colors[0] : colors[1])
-            .attr('stroke-width', () => 1.4)
-            .attr('class', 'path_' + path.id)
-            .attr('fill', 'transparent')
-            .attr('pointer-events', 'none');
-
         }
       }
     }

@@ -227,6 +227,25 @@ input#effect-name {
   text-align: left;
 }
 
+input[type="color"] {
+	-webkit-appearance: none;
+	border: 1px solid #1c1c1c;
+  border-radius: 0;
+	width: 18px;
+	height: 16px;
+  background: #4a4a4a;
+  vertical-align: top;
+  margin: 2px;
+  padding: 1px;
+}
+input[type="color"]::-webkit-color-swatch-wrapper {
+	padding: 2px;
+  background: #4a4a4a;
+}
+input[type="color"]::-webkit-color-swatch {
+	border: 1px solid #1c1c1c;
+}
+
 select {
   -webkit-appearance:none;
   display: inline-block;

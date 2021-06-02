@@ -9,7 +9,8 @@ import { Cursor } from '../models/tool.model';
 import { Subject } from 'rxjs';
 import { FileService } from './file.service';
 import { EffectVisualizationService } from './effect-visualization.service';
-import { Effect, Unit } from '../models/effect.model';
+import { Details, Effect } from '../models/effect.model';
+import { Collection } from '../models/collection.model';
 
 
 
@@ -30,6 +31,11 @@ export class DrawingService {
               private dataService: DataService, private fileService: FileService, private effectVisualizationService: EffectVisualizationService) {
 
     this.config = new DrawingPlaneConfig();
+
+    this.effectVisualizationService.setActiveEffect.subscribe(res => {
+      this.setActiveCollectionEffect(res);
+    });
+
   }
 
   createPlane() {
@@ -419,7 +425,7 @@ export class DrawingService {
 
       this.config.svg.selectAll('.forceNode').style('fill', 'transparent');
     }
-    if (this.file.activeCollectionEffect !== null) {
+    if (this.file.activeCollectionEffect !== null && this.file.activeCollection) {
       const collection = this.file.collections.filter(c => c.id === this.file.activeCollection.id)[0];
       if (collection) {
         collection.config.svg.selectAll('#coll-effect-' + this.file.activeCollectionEffect.id).style('opacity', 0.3);
@@ -534,6 +540,7 @@ export class DrawingService {
 
   setTmpEffect(effect: Effect) {
     this.config.tmpEffect = effect;
+    this.deselectAllElements();
   }
 
 
@@ -580,7 +587,7 @@ export class DrawingService {
     this.drawFile.next();
   }
 
-  public showMessageDialog( data: { msg: string, type: string }) {
+  public showMessageDialog( data: { msg: string, type: string, action: string, d: any }) {
     this.showMessage.next(data);
   }
 
@@ -1001,6 +1008,11 @@ export class DrawingService {
     this.nodeService.selectAll();
     this.nodeService.scalePath(this.nodeService.selectedPaths, 1, scaleFactor, 0, offset);
     this.nodeService.deselectAll();
+  }
+
+  setActiveCollectionEffect(details: { effect: Details, collection: Collection }) {
+    this.file.activeCollectionEffect = details.effect;
+    this.file.activeCollection = details.collection;
   }
 
 

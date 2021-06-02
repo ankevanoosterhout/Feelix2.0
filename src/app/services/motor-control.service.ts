@@ -37,9 +37,6 @@ export class MotorControlService {
     this.toolList.filter(t => t.name === 'display')[0].icon =
       this.file.configuration.collectionDisplay === 'small' ? './assets/icons/buttons/large-display.svg' : './assets/icons/buttons/small-display.svg';
 
-    this.effectVisualizationService.setActiveEffect.subscribe(res => {
-      this.setActiveCollectionEffect(res);
-    });
 
     this.effectVisualizationService.updateCollection.subscribe(res => {
       this.updateCollection(res);
@@ -63,13 +60,18 @@ export class MotorControlService {
     file.configuration.collectionDisplay === 'small' ?
       this.document.getElementById('motor-list').classList.add('small') : this.document.getElementById('motor-list').classList.remove('small');
     this.updateHeight();
-    setTimeout(() => {
-      this.drawCollections(file.collections);
-    }, 100);
 
+
+    // setTimeout(() => {
+      this.drawCollections(file.collections);
+    // }, 50);
   }
 
-
+  changeViewSettings() {
+    this.file.configuration.collectionDisplay = this.file.configuration.collectionDisplay === 'small' ? 'large' : 'small';
+    this.updateViewSettings(this.file);
+    // this.drawCollections();
+  }
 
   addCollection() {
     this.fileService.addCollection();
@@ -87,19 +89,16 @@ export class MotorControlService {
     this.fileService.update(file);
   }
 
-  changeViewSettings() {
-    this.file.configuration.collectionDisplay = this.file.configuration.collectionDisplay === 'small' ? 'large' : 'small';
-    this.updateViewSettings(this.file);
-  }
-
   onResize() {
     this.resetWidth();
+    this.document.getElementById('motor-control').style.width = (window.innerWidth * this.file.configuration.verticalScreenDivision / 100) + 'px';
+    this.document.getElementById('library').style.width = ((window.innerWidth * (100 - this.file.configuration.verticalScreenDivision) / 100) - 1) + 'px';
+
     for (const collection of this.file.collections) {
       this.getSliderPosition(collection);
     }
-    this.document.getElementById('motor-control').style.width = (window.innerWidth * this.file.configuration.verticalScreenDivision / 100) + 'px';
-    this.document.getElementById('library').style.width = ((window.innerWidth * (100 - this.file.configuration.verticalScreenDivision) / 100) - 1) + 'px';
     this.drawCollections();
+
   }
 
   resetWidth() {
@@ -114,9 +113,6 @@ export class MotorControlService {
 
   drawCollection(collection: Collection) {
 
-    if (this.file.configuration.collectionDisplay === 'small') {
-      collection.config.scale = new Scale('100%', 100);
-    }
 
     d3.select('#cID-' + collection.id).remove();
 
@@ -126,6 +122,14 @@ export class MotorControlService {
       .attr('class', 'collection')
       .attr('width', this.width)
       .attr('height', () => this.file.configuration.collectionDisplay === 'small' ? this.height - 35 : this.height);
+
+    if (this.file.configuration.collectionDisplay === 'small') {
+      collection.config.scale = new Scale('75%', 75);
+    } else if (collection.config.scale.graphD3 && collection.config.scale.graphD3.k) {
+      collection.config.scale = new Scale((collection.config.scale.graphD3.k * 100) + '%', (collection.config.scale.graphD3.k * 100));
+    } else {
+      collection.config.scale = new Scale('100%', 100);
+    }
 
     this.setScale(collection);
 
@@ -145,7 +149,39 @@ export class MotorControlService {
       .attr('x', 0)
       .attr('y', 0)
       .attr('transform', () => this.file.configuration.collectionDisplay === 'small' ? 'translate(0, 0)' : 'translate(0, 26)')
-      .attr('fill', '#1c1c1c');
+      .attr('fill', () => collection.rotation.loop ? '#1c1c1c' : '#2c2c2c');
+
+    if (!collection.rotation.loop) {
+
+      const innerContainer = collection.config.svg.append('rect')
+        .attr('id', 'colE' + collection.id)
+        .attr('class', 'inner-container collection')
+        .attr('width', collection.config.newXscale(collection.rotation.end) - collection.config.newXscale(collection.rotation.start))
+        .attr('height', this.height - 39)
+        .attr('clip-path', 'url(#clipCollection)')
+        .attr('x', collection.config.xScale(collection.rotation.start))
+        .attr('y', 0)
+        .attr('transform', () => this.file.configuration.collectionDisplay === 'small' ? 'translate(0, 0)' : 'translate(0, 26)')
+        .attr('fill', '#1c1c1c');
+
+    } else {
+      const lineData = [collection.rotation.start, collection.rotation.end];
+
+      const lines = collection.config.svg.selectAll('line.range-line')
+        .data(lineData)
+        .enter()
+        .append('line')
+        .attr('class', 'range-line')
+        .attr('x1', (d) => collection.config.newXscale(d))
+        .attr('x2', (d) => collection.config.newXscale(d))
+        .attr('y1', 0)
+        .attr('y2', this.height - 39)
+        .attr('transform', () => this.file.configuration.collectionDisplay === 'small' ? 'translate(0, 0)' : 'translate(0, 26)')
+        .attr('shape-rendering', 'crispEdges')
+        .attr('stroke', '#999')
+        .attr('stroke-width', 0.5)
+        .attr('fill', 'none');
+    }
 
 
     if (this.file.configuration.collectionDisplay !== 'small') {
@@ -176,13 +212,24 @@ export class MotorControlService {
       //   this.drawStartPosition(collection);
       // }
     }
+
+    // if (this.file.configuration.collectionDisplay === 'small') {
+      const range = (collection.rotation.end - collection.rotation.start) / 2;
+      const offset = (range - (range * (collection.config.scale.value / 100)));
+      const offsetValue = collection.config.newXscale(offset);
+      collection.config.scale.graphD3 = d3.zoomIdentity.translate(offsetValue, 0).scale(collection.config.scale.value / 100);
+      collection.config.svg.call(collection.config.zoom.transform, collection.config.scale.graphD3);
+      this.scaleContent(collection);
+    // }
   }
 
 
   drawCollections(collections: Array<Collection> = this.file.collections) {
     this.resetWidth();
 
+
     for (const collection of collections) {
+
       this.drawCollection(collection);
     }
   }
@@ -233,33 +280,37 @@ export class MotorControlService {
 
     d3.select('#coll-effect-svg-' + collection.id).remove();
 
+    const offset = this.file.configuration.collectionDisplay === 'small' ? 0 : 26;
+
+    const effectSVG = collection.config.svg.append('g')
+      .attr('id', 'coll-effect-svg-' + collection.id)
+      .attr('clip-path', 'url(#clipCollection)')
+      .attr('transform', 'translate('+ [0, offset] + ')');
+
     for (const collectionEffect of collection.effects) {
       if (this.checkVisibility(collectionEffect.direction, collection.layers)) {
 
         const effect = this.file.effects.filter(e => e.id === collectionEffect.effectID)[0];
         if (effect && effect.paths.length > 0 && effect.type === collection.visualizationType) {
 
-          const offset = this.file.configuration.collectionDisplay === 'small' ? 0 : 26;
-
-          const effectSVG = collection.config.svg.append('g')
-            .attr('id', 'coll-effect-svg-' + collection.id)
-            .attr('clip-path', 'url(#clipCollection)')
-            .attr('transform', 'translate('+ [0, offset] + ')');
 
           this.effectVisualizationService.drawCollectionEffect(effectSVG, collection, collectionEffect, effect, ((this.height - 39) * (collectionEffect.scale.y/100)),
             (effect.type === 'torque' ?
             (this.height - 39) * (((100-collectionEffect.scale.y)/100) / 2) - ((this.height - 39) * (collectionEffect.position.y / 100) / 2) :
             (this.height - 39) * ((100-collectionEffect.scale.y)/100) - ((this.height - 39) * (collectionEffect.position.y / 100))),
-            this.file.activeCollectionEffect);
+            this.file.activeCollectionEffect, this.file.configuration.colors);
+
+          // this.effectVisualizationService.drawCollectionEffect(effectSVG, collection, collectionEffect, effect, ((this.height - 39) * (collectionEffect.scale.y/100)),
+          //   (effect.type === 'torque' ?
+          //   (this.height - 39) * (((100-collectionEffect.scale.y)/100) / 2) - ((this.height - 39) * (collectionEffect.position.y / 100) / 2) :
+          //   (this.height - 39) * ((100-collectionEffect.scale.y)/100) - ((this.height - 39) * (collectionEffect.position.y / 100))),
+          //   this.file.activeCollectionEffect, this.file.configuration.colors);
         }
       }
     }
   }
 
-  setActiveCollectionEffect(details: { effect: Details, collection: Collection }) {
-    this.file.activeCollectionEffect = details.effect;
-    this.file.activeCollection = details.collection;
-  }
+
 
   checkIfLayersIsLocked(effectDirection: string, layers: Layer[]) {
     if (effectDirection === 'any' && (layers[0].locked || layers[1].locked)) {
@@ -285,12 +336,16 @@ export class MotorControlService {
   }
 
   translateCollection(collection: Collection) {
-    // const transform = d3.zoomTransform(collection.config.svg.node());
+    if (!collection.config.scale.graphD3) {
+      collection.config.scale.graphD3 = d3.zoomTransform(collection.config.svg.node());
+    }
+    const scale = collection.config.scale.graphD3.k;
     let offset =
-        ((-collection.config.slider.inner.min) / collection.config.slider.outer.max) *
-        (collection.config.slider.outer.max * collection.config.scale.graphD3.k);
+        (((-collection.config.slider.inner.min) / collection.config.slider.outer.max) *
+        (collection.config.slider.outer.max * scale)) + (collection.config.slider.outer.max * 0.25);
 
-    collection.config.scale.graphD3 = d3.zoomIdentity.translate(offset, 0).scale(collection.config.scale.graphD3.k);
+    // console.log(offset);
+    collection.config.scale.graphD3 = d3.zoomIdentity.translate(offset, 0).scale(scale);
     collection.config.svg.call(collection.config.zoom.transform, collection.config.scale.graphD3);
     this.scaleContent(collection);
   }
@@ -354,7 +409,7 @@ export class MotorControlService {
   updateScale(collection: Collection) {
     const scale = collection.config.scale.value / 100;
     const oldSlideWidth = collection.config.slider.inner.max - collection.config.slider.inner.min;
-    let sliderWidth = collection.config.slider.outer.max / scale;
+    let sliderWidth = collection.config.slider.outer.max / scale * 0.5;
     const sliderWidthDifferenceMeasuredFromCenter = (oldSlideWidth - sliderWidth) / 2;
     collection.config.slider.inner.min += sliderWidthDifferenceMeasuredFromCenter;
     collection.config.slider.inner.max -= sliderWidthDifferenceMeasuredFromCenter;
@@ -370,7 +425,7 @@ export class MotorControlService {
     this.scaleContent(collection);
 
     d3.select('.sliderHandle-' + collection.id)
-      .attr('x', collection.config.slider.inner.min + 5)
+      .attr('x', collection.config.slider.inner.min)
       .attr('width', collection.config.slider.inner.max - collection.config.slider.inner.min);
   }
 
@@ -395,25 +450,30 @@ export class MotorControlService {
 
   setScale(collection: Collection) {
 
+    // const range = collection.rotation.end - collection.rotation.start;
+    const scale = collection.config.scale.value / 100;
+
     collection.config.yScale = d3
       .scaleLinear()
-      .domain([100, -100])
-      .range([26, this.height - 39]);
+      .domain([100, (collection.visualizationType === 'torque' ? -100 : 0)])
+      .range([0, this.height - 39]);
 
     collection.config.xScale = d3
       .scaleLinear()
       .domain([collection.rotation.start, collection.rotation.end])
       .range([0, this.width - 1]);
 
+    this.setZoomCollection(collection);
+
     if (collection.config.scale.graphD3 === null) {
       collection.config.newXscale = collection.config.xScale;
       collection.config.newYscale = collection.config.yScale;
     } else {
-      collection.config.scale.graphD3 = d3.zoomIdentity.translate(collection.config.scale.graphD3.x, 0).scale(collection.config.scale.graphD3.k);
+      collection.config.scale.graphD3 = d3.zoomIdentity.translate(collection.config.scale.graphD3.x, 0).scale((scale === null || scale === undefined ? collection.config.scale.graphD3.k : scale));
       collection.config.newXscale = collection.config.scale.graphD3.rescaleX(collection.config.xScale);
+      collection.config.newYscale = collection.config.yScale;
     }
     this.getSliderPosition(collection);
-    this.setZoomCollection(collection);
   }
 
 
@@ -423,6 +483,15 @@ export class MotorControlService {
     collection.config.newXscale = collection.config.scale.graphD3.rescaleX(collection.config.xScale);
     collection.config.xAxisThicks.call(collection.config.xAxis.scale(collection.config.newXscale));
     collection.config.xAxisSmallThicks.call(collection.config.xAxisSmall.scale(collection.config.newXscale));
+
+    if (collection.rotation.loop) {
+      collection.config.svg.selectAll('.range-line').attr('x1', (d) => collection.config.newXscale(d)).attr('x2', (d) => collection.config.newXscale(d));
+    } else {
+      collection.config.svg.selectAll('.inner-container')
+        .attr('x', collection.config.newXscale(collection.rotation.start))
+        .attr('width', collection.config.newXscale(collection.rotation.end) - collection.config.newXscale(collection.rotation.start));
+    }
+
 
     this.drawCollectionEffects(collection);
   }
@@ -434,26 +503,30 @@ export class MotorControlService {
       .scaleExtent([0.01, Infinity])
       .translateExtent([[0, (this.file.configuration.collectionDisplay === 'small' ? 0 : 26)], [this.width, this.height - 39]])
       .on('zoom', () => {
-        const transform = d3.event.transform
+        // const transform = d3.event.transform
       });
   }
 
   getSliderPosition(collection: Collection) {
+
     let scale = collection.config.scale.value / 100;
 
     collection.config.slider.outer.max = this.width;
     collection.config.slider.outer.min = 0;
 
-    const planeWidth = collection.config.slider.outer.max * scale;
-    let scaleOffset = ((planeWidth/2) / planeWidth) * collection.config.slider.outer.max * -1;
+    const planeWidth = collection.config.slider.outer.max * scale * 2;
+    let scaleOffset = (planeWidth - this.width) / 2 * -1;
 
     if (collection.config.scale.graphD3 !== null) {
       // scale = collection.config.scale.graphD3.k;
       scaleOffset = collection.config.scale.graphD3.x;
     }
 
+    let sliderWidth = collection.config.slider.outer.max / scale * 0.5;
+
     collection.config.slider.inner.min = ((scaleOffset * -1) / planeWidth) * collection.config.slider.outer.max;
-    let sliderWidth = collection.config.slider.outer.max / scale;
+
+    // offset = ((scaleOffset - (this.config.chartDx * 0.5 * scale)) * -1) / planeWidth * width;
 
     if (sliderWidth < 20) { sliderWidth = 20; }
     if (sliderWidth >= collection.config.slider.outer.max) { sliderWidth = collection.config.slider.outer.max; collection.config.slider.inner.min = 0; }
@@ -474,10 +547,14 @@ export class MotorControlService {
 
   updateOffset(collection: Collection) {
     let offset =
-        ((-collection.config.slider.inner.min) / collection.config.slider.outer.max) *
-        (collection.config.slider.outer.max * (collection.config.scale.value / 100));
+        (((-collection.config.slider.inner.min) / collection.config.slider.outer.max) *
+        (collection.config.slider.outer.max * (collection.config.scale.value / 100))) +
+        (collection.config.slider.outer.max * 0.25);
+
     collection.config.scale.graphD3 = d3.zoomIdentity.translate(offset, 0).scale(collection.config.scale.value / 100);
-    collection.config.svg.call(collection.config.zoom.transform, collection.config.scale.graphD3);
+    if (collection.config.zoom) {
+      collection.config.svg.call(collection.config.zoom.transform, collection.config.scale.graphD3);
+    }
   }
 
 
@@ -486,30 +563,39 @@ export class MotorControlService {
     return this.drawingService.config.tmpEffect;
   }
 
-  drawTmpEffect(effectDetails: Details, collection: Collection, effectUnits: Unit) {
-    this.file.activeCollectionEffect = null;
+  drawTmpEffect(effectDetails: Details, collection: Collection, tmpEffect: Effect) {
 
-    const multiply = collection.rotation.units.PR / effectUnits.PR;
+    d3.select('#tmp-effect-svg').remove();
 
-    d3.selectAll('.tmpEffect').remove();
+    const offset = this.file.configuration.collectionDisplay === 'small' ? 0 : 26;
 
-    collection.config.svg.append('rect')
-      .attr('class', 'tmpEffect')
-      .attr('x', collection.config.newXscale(effectDetails.position.x * multiply))
-      .attr('y', 0)
-      .attr('width', collection.config.newXscale((effectDetails.position.x + effectDetails.position.width) * multiply) -
-        collection.config.newXscale(effectDetails.position.x * multiply))
-      .attr('height', this.height - 39)
+    const tmpEffectSVG = collection.config.svg.append('g')
+      .attr('id', 'tmp-effect-svg')
       .attr('clip-path', 'url(#clipCollection)')
-      .attr('transform', () => this.file.configuration.collectionDisplay === 'small' ? 'translate(0, 0)' : 'translate(0, 26)')
-      .attr('pointer-events', 'none')
-      .style('fill', '#9bbef5')
-      .style('opacity', 0.6)
-      .style('shape-rendering', 'crispEdges')
+      .attr('transform', 'translate('+ [0, offset] + ')');
+
+    this.effectVisualizationService.drawCollectionEffect(tmpEffectSVG, collection, effectDetails, this.drawingService.config.tmpEffect, ((this.height - 39) * (effectDetails.scale.y/100)),
+        (tmpEffect.type === 'torque' ?
+        (this.height - 39) * (((100-effectDetails.scale.y)/100) / 2) - ((this.height - 39) * (effectDetails.position.y / 100) / 2) :
+        (this.height - 39) * ((100-effectDetails.scale.y)/100) - ((this.height - 39) * (effectDetails.position.y / 100))), effectDetails, this.file.configuration.colors, true);
+
+    // collection.config.svg.append('rect')
+    //   .attr('class', 'tmpEffect')
+    //   .attr('x', collection.config.newXscale(effectDetails.position.x * multiply))
+    //   .attr('y', 0)
+    //   .attr('width', collection.config.newXscale((effectDetails.position.x + effectDetails.position.width) * multiply) -
+    //     collection.config.newXscale(effectDetails.position.x * multiply))
+    //   .attr('height', this.height - 39)
+    //   .attr('clip-path', 'url(#clipCollection)')
+    //   .attr('transform', () => this.file.configuration.collectionDisplay === 'small' ? 'translate(0, 0)' : 'translate(0, 26)')
+    //   .attr('pointer-events', 'none')
+    //   .style('fill', '#9bbef5')
+    //   .style('opacity', 0.6)
+    //   .style('shape-rendering', 'crispEdges')
   }
 
   deleteTmpEffect() {
-    d3.selectAll('.tmpEffect').remove();
+    d3.select('#tmp-effect-svg').remove();
   }
 
   deleteCollectionEffect(id: string) {

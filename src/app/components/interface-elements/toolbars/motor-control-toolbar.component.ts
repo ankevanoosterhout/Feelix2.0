@@ -130,7 +130,7 @@ import { MotorControlService } from 'src/app/services/motor-control.service';
 
     `]
 })
-export class MotorControlToolbar implements OnInit {
+export class MotorControlToolbarComponent implements OnInit {
 
   selectedTool: number;
   public config: DrawingPlaneConfig;
@@ -143,6 +143,7 @@ export class MotorControlToolbar implements OnInit {
 
     this.electronService.ipcRenderer.on('attachMotorControlToolbar', (event: Event) => {
       this.attachToolbar();
+      this.motorControlService.drawCollections();
     })
   }
 
@@ -150,11 +151,11 @@ export class MotorControlToolbar implements OnInit {
     if (id === 0) {
       this.motorControlService.addCollection();
     } else if (id === 1) {
-      this.electronService.ipcRenderer.send('listSerialPorts');
+      this.electronService.ipcRenderer.send('uploadAll');
     } else if (id === 2) {
       this.electronService.ipcRenderer.send('motorSettings');
     } else if (id === 3) {
-      // this.motorControlService.changeViewSettings();
+      this.electronService.ipcRenderer.send('changeViewSettings');
     }
   }
 
@@ -166,7 +167,7 @@ export class MotorControlToolbar implements OnInit {
 
   ngOnInit(): void {
     this.document.body.classList.add('disable-scroll-body');
-    this.selectTool(3);
+    // this.selectTool(3);
    }
 
 }

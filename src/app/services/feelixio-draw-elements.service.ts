@@ -149,11 +149,11 @@ export class FeelixioDrawElementsService {
     if (comp.effect.type === 'ease') {
       comp.xScale = this.effectVisualizationService.drawNodePathModule(nodes, comp.effect, 100, comp.size.height - 10);
     } else if (comp.effect.type === 'normal') {
-      comp.xScale = this.effectVisualizationService.drawEffectData(nodes, comp.effect, comp.size.height, 'position',
-        ['#fff', '#fff', 'rgba(255,255,255,0.5)']);
+      // comp.xScale = this.effectVisualizationService.drawEffectData(nodes, comp.effect, comp.size.height, 'position',
+      //   ['#fff', '#fff', 'rgba(255,255,255,0.5)']);
     } else if (comp.effect.type === 'motion') {
-      comp.xScale =
-        this.effectVisualizationService.drawEffectData(nodes, comp.effect, comp.size.height, 'time', ['#fff', '#fff', '#fff']);
+      // comp.xScale =
+        // this.effectVisualizationService.drawEffectData(nodes, comp.effect, comp.size.height, 'time', ['#fff', '#fff', '#fff']);
     }
 
 

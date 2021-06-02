@@ -17,6 +17,7 @@ import { DialogComponent } from 'src/app/components/windows/dialog.component';
 import { ExportDialogComponent } from 'src/app/components/windows/export-dialog.component';
 import { EffectLibraryService } from 'src/app/services/effect-library.service';
 import { MotorControlService } from 'src/app/services/motor-control.service';
+import { HardwareService } from 'src/app/services/hardware.service';
 
 @Component({
   selector: 'app-drawing-plane',
@@ -38,7 +39,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
               public nodeService: NodeService, private fileService: FileService, private dataService: DataService,
               private drawingService: DrawingService, private drawElements: DrawElementsService, private bboxService: BBoxService,
               private historyService: HistoryService, private effectLibraryService: EffectLibraryService, public dialog: MatDialog,
-              private motorControlService: MotorControlService) {
+              private motorControlService: MotorControlService, private hardwareService: HardwareService) {
 
     this.config = this.drawingService.config;
 
@@ -47,7 +48,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
     });
 
     this.drawingService.showMessage.subscribe(res => {
-      this.showMessage(res.msg, res.type);
+      this.showMessage(res.msg, res.type, res.action, res.d);
     });
 
     this.drawingService.align.subscribe(res => {
@@ -78,7 +79,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
     });
 
     this.electronService.ipcRenderer.on('showMessage', (event: Event, data: any) => {
-      this.showMessage(data, 'msg');
+      this.showMessage(data, 'msg', 'message');
     });
 
 
@@ -106,8 +107,13 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
 
     this.electronService.ipcRenderer.on('transform', (event: Event, data: any) => {
       this.historyService.addToHistory();
+      console.log(data.horizontal, data.vertical);
       this.nodeService.translateSelectedPaths(data);
       this.drawFileData();
+
+      if (data.tmp === false) {
+        this.fileService.updateActiveEffectData(this.file);
+      }
     });
 
     this.electronService.ipcRenderer.on('grid:toggle', (event: Event, visible: boolean) => {
@@ -155,7 +161,11 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
 
 
     this.electronService.ipcRenderer.on('clearCache', (event: Event) => {
-      this.effectLibraryService.clear();
+      this.showMessage('Are you sure you want to clear all effects from the library?', 'verification', 'clearCache');
+    });
+
+    this.electronService.ipcRenderer.on('resetCOMList', (event: Event) => {
+      this.showMessage('Are you sure you want to clear all microcontroller data?', 'verification', 'resetCOMList');
     });
 
 
@@ -170,6 +180,21 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
       }
     });
 
+    this.electronService.ipcRenderer.on('changeViewSettings', (event: Event, data: any) => {
+      this.motorControlService.changeViewSettings();
+    });
+
+    this.electronService.ipcRenderer.on('saveData', () => {
+      if (this.file.activeEffect) {
+        this.fileService.updateActiveEffectData(this.file);
+      }
+    })
+
+    this.electronService.ipcRenderer.on('requestObjectSize', () => {
+
+    })
+
+
   }
 
 
@@ -183,47 +208,49 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
     } else {
       this.nodeService.reset();
     }
-    this.drawingService.redraw();
+    this.drawingService.updateResize(this.file.configuration.horizontalScreenDivision, 'horizontal');
+    this.drawingService.updateResize(this.file.configuration.verticalScreenDivision, 'vertical');
     this.motorControlService.updateViewSettings(this.file);
+    this.drawingService.redraw();
 
     this.fileService.fileObservable.subscribe(files => {
       const newFile = files.filter(f => f.isActive)[0];
-      let newFileData = false;
       if (newFile._id !== this.file._id) {
-        this.dataService.deselectAll();
-        newFileData = true;
-        if (newFile.activeEffect) {
-          this.nodeService.loadFile(newFile.activeEffect.paths);
-        } else {
-          this.nodeService.reset();
-        }
+        this.drawingService.updateResize(newFile.configuration.horizontalScreenDivision, 'horizontal');
+        this.drawingService.updateResize(newFile.configuration.verticalScreenDivision, 'vertical');
+        this.motorControlService.updateViewSettings(newFile);
       }
-      if (newFile.activeEffect && this.file.activeEffect) {
-        if (newFile.activeEffect.id !== this.file.activeEffect.id) {
-          this.nodeService.loadFile(newFile.activeEffect.paths);
+      if (newFile.activeEffect) {
+        if ((this.file.activeEffect && newFile.activeEffect.id !== this.file.activeEffect.id) || this.file.activeEffect === null) {
+          this.loadEffectData(newFile);
         }
+      } else {
+        this.nodeService.reset();
       }
       this.file = newFile;
       this.setFilesInServices();
-      if (this.file.activeEffect) {
-        this.nodeService.setGridLayer(this.file.activeEffect.grid);
-      }
-      this.drawingService.updateResize(this.file.configuration.horizontalScreenDivision, 'horizontal');
-      this.drawingService.updateResize(this.file.configuration.verticalScreenDivision, 'vertical');
-      this.motorControlService.updateViewSettings(this.file);
-      this.drawingService.redraw();
 
-      if (newFileData) {
-        if (this.electronService.isElectronApp) {
-          this.electronService.ipcRenderer.send('updateMenu', {
-            visible: this.file.activeEffect.grid.visible,
-            snap: this.file.activeEffect.grid.snap,
-            lock: this.file.activeEffect.grid.lockGuides
-          });
-        }
-      }
+      this.drawingService.redraw();
+      setTimeout(() => {
+        this.motorControlService.drawCollections(this.file.collections);
+      }, 100);
     });
   }
+
+  loadEffectData(newFile: File) {
+    this.dataService.deselectAll();
+    this.nodeService.loadFile(newFile.activeEffect.paths);
+    if (this.electronService.isElectronApp) {
+      this.electronService.ipcRenderer.send('updateMenu', {
+        visible: newFile.activeEffect.grid.visible,
+        snap: newFile.activeEffect.grid.snap,
+        lock: newFile.activeEffect.grid.lockGuides
+      });
+    }
+    this.dataService.setColor(this.file.configuration.colors.filter(c => c.type === this.file.activeEffect.type)[0].hash);
+    this.nodeService.setGridLayer(newFile.activeEffect.grid);
+  }
+
 
   ngOnChanges(): void {
     this.drawingService.setEditBounds();
@@ -393,7 +420,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
             coords
           };
           this.file.activeEffect.grid.guides.push(obj);
-          this.fileService.update(this.file);
+          this.fileService.updateEffect(this.file.activeEffect);
         }
 
       } else if (this.config.cursor.slug === 'sel' || this.config.cursor.slug === 'dsel' || this.config.cursor.slug === 'anchor' ||
@@ -439,7 +466,10 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
         this.smoothenBrushPath();
         this.historyService.addToHistory();
       }
-      this.config.newNode = null;
+      if (this.config.newNode) {
+        this.config.newNode = null;
+        this.bboxService.getBBoxSelectedPaths();
+      }
       this.config.activeSelection = false;
       this.config.svg.select('#selectionBox').remove();
     }
@@ -498,9 +528,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
             if (this.config.cursor.slug === 'sel') {
               this.bboxService.drawBoundingBox();
             }
-            for (const item of this.nodeService.selectedPaths) {
-              const boxEl = this.bboxService.getBBox(this.nodeService.getPath(item));
-            }
+            this.bboxService.getBBoxSelectedPaths();
 
             if (this.nodeService.selectedNodes.length === 1) {
               const selectedNode = this.nodeService.getNodeByID(this.nodeService.selectedNodes[0]);
@@ -588,11 +616,12 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
         if (nrSelectedNodes > 0 || this.nodeService.selectedPaths.length > 0) {
           this.nodeService.deleteSelected();
           if (nrSelectedNodes > 0) {
-            for (const path of this.nodeService.selectedPaths) {
-              const pathel = this.nodeService.getPath(path);
-              const box = this.bboxService.getBBox(pathel);
-              if (box !== null) { pathel.box = box.path.box; }
-            }
+            this.bboxService.getBBoxSelectedPaths();
+            // for (const path of this.nodeService.selectedPaths) {
+            //   const pathel = this.nodeService.getPath(path);
+            //   const box = this.bboxService.getBBox(pathel);
+            //   if (box !== null) { pathel.box = box.path.box; }
+            // }
           }
         }
 
@@ -613,11 +642,11 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
     }
   }
 
-  showMessage(msg: string, type: string) {
+  showMessage(msg: string, type: string, action: string, data: any = null) {
     let btns = [];
-    if (type === 'motionService') {
-      btns = ['ok', 'cancel'];
-    } else {
+    if (type === 'verification') {
+      btns = ['yes', 'cancel'];
+    } else if (type === 'message') {
       btns = ['ok'];
     }
     // if (file.date.changed) {
@@ -631,7 +660,14 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
 
     dialogConfig.afterClosed().subscribe(
         data => {
-          if (data === 'ok') {
+          if (data === 'yes') {
+            if (action === 'clearCache') {
+              this.effectLibraryService.clear();
+            } else if (action === 'resetCOMList') {
+              this.hardwareService.clearList();
+            } else if (action === 'deleteEffect') {
+              this.fileService.deleteEffect(data);
+            }
           } else {
             return false;
           }

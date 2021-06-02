@@ -45,8 +45,8 @@ import { EaseFunctionLibraryService } from './services/ease-function-library.ser
 import { VariableService } from './services/variable.service';
 import { MotorSettingsComponent } from './components/windows/settings/motor-settings.component';
 import { MotorControlComponent } from './components/interface-elements/motor-control/motor-control.component';
-import { MotorControlToolbarInset } from './components/interface-elements/toolbars/motor-control-toolbar-inset.component';
-import { MotorControlToolbar } from './components/interface-elements/toolbars/motor-control-toolbar.component';
+import { MotorControlToolbarInsetComponent } from './components/interface-elements/toolbars/motor-control-toolbar-inset.component';
+import { MotorControlToolbarComponent } from './components/interface-elements/toolbars/motor-control-toolbar.component';
 import { UploadService } from './services/upload.service';
 import { HistoryService } from './services/history.service';
 import { FeelixioComponent } from './components/feelixio/feelixio.component';
@@ -62,9 +62,6 @@ import { RenderInfoComponent } from './components/interface-elements/toolbar-hea
 import { FeelixioRenderService } from './services/feelixio-render.service';
 import { FeelixioValidationService } from './services/feelixio-validation.service';
 import { ExportDialogComponent } from './components/windows/export-dialog.component';
-
-
-
 
 @NgModule({
   declarations: [
@@ -92,8 +89,8 @@ import { ExportDialogComponent } from './components/windows/export-dialog.compon
     StatusbarComponent,
     MotorSettingsComponent,
     MotorControlComponent,
-    MotorControlToolbarInset,
-    MotorControlToolbar,
+    MotorControlToolbarInsetComponent,
+    MotorControlToolbarComponent,
     FeelixioComponent,
     FeelixioPartsComponent,
     FeelixioPageComponent,
@@ -133,14 +130,14 @@ import { ExportDialogComponent } from './components/windows/export-dialog.compon
     FeelixioRenderService,
     FeelixioValidationService,
     MotorControlService,
-    CollectionService
+    CollectionService,
   ],
   bootstrap: [
     AppComponent
   ],
   entryComponents: [
     DialogComponent,
-    ExportDialogComponent
+    ExportDialogComponent,
   ]
 })
 export class AppModule { }

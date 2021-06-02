@@ -7,7 +7,11 @@
 }
 
 .inline {
-  display: inline-block;
+  display: inline-block !important;
+}
+
+.no-margin {
+  margin:0!important;
 }
 
 ul {
@@ -178,7 +182,7 @@ ul.motorlist {
   top:43px;
   height: calc(100% - 43px);
   width: 100%;
-  min-width: 250px;
+  min-width: 270px;
   left:0;
   list-style-type:none;
   margin: 0;
@@ -239,7 +243,7 @@ ul.motorlist {
 }
 
 .innerContent-details {
-  padding: 25px 16px;
+  padding: 25px 8px 25px 16px;
   width: 100%;
   box-sizing: border-box;
 }
@@ -708,8 +712,15 @@ input.settings {
   margin-top: 1px;
 }
 
+input.motor-settings {
+  color: #00AEEF;
+  vertical-align: top;
+  margin-top: 4px;
+}
+
 input[type=number] {
-  max-width: 45px;
+  max-width: 40px;
+  text-align: right;
 }
 
 input[type=text] {
@@ -718,6 +729,10 @@ input[type=text] {
 
 input[type=range] {
   max-width: 250px;
+}
+
+input:disabled {
+  color: #999;
 }
 
 .unitSymbol {
@@ -737,7 +752,19 @@ input.large {
 
 .units {
   color: #00AEEF;
-  margin-left: 10px;
+  position: relative;
+  display: inline-block;
+  font-size: 11px;
+  vertical-align: top;
+  margin-top: 2px;
+  width: 19px;
+}
+
+.units.motor-settings {
+  margin-top: 5px;
+}
+.units.disabled {
+  color: #999;
 }
 
 input:focus {
@@ -753,8 +780,8 @@ input:focus .units {
 }
 
 input.small, input.small:focus {
-  width: 25px;
-  max-width: 30px;
+  width: 40px;
+  max-width: 40px;
 }
 
 input[type=number].settings:focus {
@@ -896,6 +923,11 @@ select.playWindow {
 select.details {
   margin-top:0;
   margin-bottom: 4px;
+}
+
+select:focus {
+  outline: none;
+  border: 1px solid #df9b08;
 }
 
 .sortbutton-row .sortDropdown select {
@@ -1069,7 +1101,7 @@ label.select.playWindowSmall:after {
 
 button {
   min-width: 0;
-  margin-left: 60px;
+  margin-left: 45px;
   border: 1px solid #1c1c1c;
   background: #2c2c2c;
 }
@@ -1232,6 +1264,11 @@ button:active {
   background: #4a4a4a;
 }
 
+
+.dropdown-buttons li.disabled {
+  opacity: 0.4;
+}
+
 .dropdown-buttons li img {
   position:absolute;
   width: 88%;
@@ -1312,7 +1349,7 @@ input.html-slider {
 }
 
 .html-slider::-webkit-slider-runnable-track {
-  z-index: 10;
+  z-index: 100;
 }
 
 .html-slider::-webkit-slider-thumb {

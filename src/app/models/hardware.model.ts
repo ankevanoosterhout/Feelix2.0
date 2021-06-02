@@ -1,4 +1,6 @@
 
+import { Encoder, MagneticSensor } from './position-sensors.model';
+
 export class Unit {
   name = '4096PPR';
   PR = 4096;
@@ -26,7 +28,6 @@ export class Position {
   current = 0;
 }
 
-
 export class Radial {
   value = 4096;
   unit = new Unit('PPR', 4096);
@@ -48,22 +49,28 @@ export class Rotation {
 }
 
 export class PID {
-  p: number = null;
-  i: number = null;
-  d: number = null;
+  p: number = 0.2;
+  i: number = 20;
+  d: number = 0.001;
 }
+
 
 export class Config {
   polepairs: number = 7;
   motionControl: string = 'position';
   supplyVoltage: number = 12;
+  voltageLimit: number = null;
+  velocityLimit: number = null;
   inlineCurrentSensing = false;
-  encoder = 'AS5047';
+  positionSensorType: string = 'Magnetic sensor';
+  positionSensor: any = new MagneticSensor();
   calibration = new Calibration();
   rotation = new Rotation();
   transmission = 1;
-  frequency = 200;
+  frequency = 50000;
 }
+
+
 
 export class State {
   speed = 0;
@@ -73,14 +80,15 @@ export class State {
 }
 
 export class Motor {
-  id = 0;
+  id: string = null;
   type: string = 'BLDC Motor';
   config = new Config();
   state = new State();
   pid = new PID();
 
   constructor(id: number) {
-    this.id = id;
+    const charArray = [ 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U'];
+    this.id = charArray[id];
   }
 }
 
@@ -105,9 +113,10 @@ export class MicroController {
   serialPort: any = null;
   vendor: string = null;
   type: string = null;
-  motors = [ new Motor(1) ];
+  motors = [ new Motor(0) ];
   storageSpace: number = null;
   connected = false;
+  playing = false;
   selected = false;
   lastDataSend: number = null;
   updateSpeed = 20;

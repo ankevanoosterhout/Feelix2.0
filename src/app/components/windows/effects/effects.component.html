@@ -35,7 +35,7 @@
         <li class="blockContent {{ this.drawingService.file.configuration.libraryViewSettings }}" *ngFor="let item of this.drawingService.file.effects">
           <div class="rowDetails">
             <div class="title {{ this.drawingService.file.configuration.libraryViewSettings }}">
-              <input type="text" class="form-control" id="name-{{ item.id }}" [(ngModel)]="item.name" name="name-{{ item.id }}" (change)="updateEffect(item)">
+              <input type="text" class="form-control" id="name-{{ item.id }}" [(ngModel)]="item.name" name="name-{{ item.id }}" (change)="updateEffectName(item)">
             </div>
             <div class="buttonsPlayWindow {{ this.drawingService.file.configuration.libraryViewSettings }}"
                  *ngIf="this.drawingService.file.configuration.libraryViewSettings === 'list'">
@@ -70,7 +70,7 @@
         <li class="blockContent {{ this.drawingService.file.configuration.libraryViewSettings }}" *ngFor="let item of this.effectLibraryService.effectLibrary">
           <div class="rowDetails">
             <div class="title {{ this.drawingService.file.configuration.libraryViewSettings }}">
-              <input type="text" class="form-control" id="name-{{ item.id }}" [(ngModel)]="item.effect.name" name="name-{{ item.id }}" (change)="updateEffect(item)">
+              <input type="text" class="form-control" id="name-{{ item.id }}" [(ngModel)]="item.effect.name" name="name-{{ item.id }}" (change)="updateLibEffectName(item.effect)">
             </div>
             <div class="buttonsPlayWindow {{ this.drawingService.file.configuration.libraryViewSettings }}"
                  *ngIf="this.drawingService.file.configuration.libraryViewSettings === 'list'">
@@ -95,24 +95,24 @@
           </div>
           <div class="overlayEffect" id="overlayEffect-{{ item.id }}"></div>
           <div class="dragOverlayEffect" id="dragOverlayEffect-{{ item.id }}" draggable="true"
-              (mousedown)="dragstart(item)" (dragend)="dragend(item)" (mouseup)="dragend(item)"></div>
+              (mousedown)="dragstart(item.effect)" (dragend)="dragend(item.effect)" (mouseup)="dragend(item.effect)"></div>
         </li>
       </div>
 
       <!-- details tab -->
 
-      <div class="innerContent-details" id="inner" *ngIf="activeTab === 2 && this.drawingService.file.activeCollectionEffect !== null">
+      <div class="innerContent-details" id="inner" *ngIf="activeTab === 2 && this.drawingService.file.activeCollectionEffect">
         <div class="form-group details">
           <div class="row">
             <label class="labelRow" for="name">Name</label>
             <input type="text" class="settings" id="col-effect-name" [(ngModel)]="this.drawingService.file.activeCollectionEffect.name" name="col-effect-name"
-              (change)="updateEffect(this.drawingService.file.activeEffect)">
+              (change)="updateCollectionEffect(this.drawingService.file.activeCollectionEffect)">
           </div>
-          <div class="row">
+          <div class="row" *ngIf="this.effect">
             <label class="labelRow" for="name">Instance of</label>
             <input type="text" class="settings" id="effect-name" [(ngModel)]="this.effect.name" name="effect-name" disabled>
           </div>
-          <div class="row">
+          <div class="row" *ngIf="this.drawingService.file.activeCollection">
             <label class="labelRow" for="name">Collection</label>
             <input type="text" class="settings" id="collection-name" [(ngModel)]="this.drawingService.file.activeCollection.name" name="collection-name" disabled>
           </div>
@@ -126,30 +126,36 @@
           <div class="opencloseArrow" [ngClass]="{ open: positionVisible }" (click)="positionVisible = !positionVisible"><div></div></div>
           <label class="labelRow start nextToArrow">Position</label>
           <div class="row-inline" *ngIf="!positionVisible">
-            <input type="number" class="settings" id="position-x" value="{{ this.drawingService.file.activeCollectionEffect.position.x | number:'1.2-3' }}"
+            <input type="number" class="settings" id="position-x" value="{{ this.drawingService.file.activeCollectionEffect.position.x | number:'1.2-2' }}"
             (focusout)="hideCompleteValue('position-x')" (focus)="showCompleteValue('position-x')" (change)="updateValue('position-x')" name="position-x">
-            <input type="number" class="settings" id="position-y" value="{{ this.drawingService.file.activeCollectionEffect.position.y | number:'1.2-3' }}"
+            <span class="units" *ngIf="this.drawingService.file.activeCollection.rotation.units.name === 'degrees'">&deg;</span>
+            <span class="units" *ngIf="this.drawingService.file.activeCollection.rotation.units.name === 'radians'">rad</span>
+            <input type="number" class="settings" id="position-y" value="{{ this.drawingService.file.activeCollectionEffect.position.y | number:'1.2-2' }}"
             (focusout)="hideCompleteValue('position-y')" (focus)="showCompleteValue('position-y')" (change)="updateValue('position-y')" name="position-y">
           </div>
           <div class="row" *ngIf="positionVisible">
             <div class="row">
               <label class="label" for="name">X</label>
-              <input type="number" class="settings" id="position-x" value="{{ this.drawingService.file.activeCollectionEffect.position.x | number:'1.2-3' }}"
+              <input type="number" class="settings" id="position-x" value="{{ this.drawingService.file.activeCollectionEffect.position.x | number:'1.2-2' }}"
                (focusout)="hideCompleteValue('position-x')" (focus)="showCompleteValue('position-x')" (change)="updateValue('position-x')" name="position-x">
+              <span class="units" *ngIf="this.drawingService.file.activeCollection.rotation.units.name === 'degrees'">&deg;</span>
+              <span class="units" *ngIf="this.drawingService.file.activeCollection.rotation.units.name === 'radians'">rad</span>
             </div>
             <div class="row">
               <label class="label" for="name">Y</label>
-              <input type="number" class="settings" id="position-y" value="{{ this.drawingService.file.activeCollectionEffect.position.y | number:'1.2-3' }}"
+              <input type="number" class="settings" id="position-y" value="{{ this.drawingService.file.activeCollectionEffect.position.y | number:'1.2-2' }}"
               (focusout)="hideCompleteValue('position-y')"  (focus)="showCompleteValue('position-y')" (change)="updateValue('position-y')" name="position-y">
             </div>
             <div class="row">
               <label class="label" for="name">Width</label>
-              <input type="number" class="settings" id="position-width" value="{{ this.drawingService.file.activeCollectionEffect.position.width | number:'1.2-3' }}"
+              <input type="number" class="settings" id="position-width" value="{{ this.drawingService.file.activeCollectionEffect.position.width | number:'1.2-2' }}"
                (focusout)="hideCompleteValue('position-width')" (focus)="showCompleteValue('position-width')" (change)="updateValue('position-width')" name="position-width">
+              <span class="units" *ngIf="this.drawingService.file.activeCollection.rotation.units.name === 'degrees'">&deg;</span>
+              <span class="units" *ngIf="this.drawingService.file.activeCollection.rotation.units.name === 'radians'">rad</span>
             </div>
             <div class="row">
               <label class="label" for="name">Height</label>
-              <input type="number" class="settings" id="position-height" value="{{ this.drawingService.file.activeCollectionEffect.position.height | number:'1.2-3' }}"
+              <input type="number" class="settings" id="position-height" value="{{ this.drawingService.file.activeCollectionEffect.position.height | number:'1.2-2' }}"
               (focusout)="hideCompleteValue('position-height')" (focus)="showCompleteValue('position-height')" (change)="updateValue('position-height')" name="position-height">
             </div>
           </div>
@@ -161,30 +167,37 @@
           <div class="opencloseArrow" [ngClass]="{ open: transformVisible }" (click)="transformVisible = !transformVisible"><div></div></div>
           <label class="labelRow start nextToArrow">Transform</label>
           <div class="row-inline" *ngIf="!transformVisible && this.drawingService.file.activeCollectionEffect.scale.uniform">
-            <input type="number" class="settings" id="scale" value="{{ this.drawingService.file.activeCollectionEffect.scale.x | number:'1.2-3' }}"
+            <input type="number" class="settings" id="scale" value="{{ this.drawingService.file.activeCollectionEffect.scale.x | number:'1.2-2' }}"
               (focusout)="hideCompleteValue('scale')" (focus)="showCompleteValue('scale')" (change)="updateValue('scale')" name="scale">
+            <span class="units">%</span>
           </div>
           <div class="row-inline" *ngIf="!transformVisible && !this.drawingService.file.activeCollectionEffect.scale.uniform">
-            <input type="number" class="settings" id="scale-x" value="{{ this.drawingService.file.activeCollectionEffect.scale.x | number:'1.2-3' }}"
+            <input type="number" class="settings" id="scale-x" value="{{ this.drawingService.file.activeCollectionEffect.scale.x | number:'1.2-2' }}"
                (focusout)="hideCompleteValue('scale-x')" (focus)="showCompleteValue('scale-x')" (change)="updateValue('scale-x')" name="scale-x">
-            <input type="number" class="settings" id="scale-y" value="{{ this.drawingService.file.activeCollectionEffect.scale.y | number:'1.2-3' }}"
+            <span class="units">%</span>
+            <input type="number" class="settings" id="scale-y" value="{{ this.drawingService.file.activeCollectionEffect.scale.y | number:'1.2-2' }}"
               (focusout)="hideCompleteValue('scale-y')"  (focus)="showCompleteValue('scale-y')" (change)="updateValue('scale-y')" name="scale-y">
+            <span class="units">%</span>
           </div>
+
           <div *ngIf="transformVisible">
             <div class="row" *ngIf="this.drawingService.file.activeCollectionEffect.scale.uniform">
               <label class="label" for="name">Scale</label>
-              <input type="number" class="settings" id="scale" value="{{ this.drawingService.file.activeCollectionEffect.scale.x | number:'1.2-3' }}"
+              <input type="number" class="settings" id="scale" value="{{ this.drawingService.file.activeCollectionEffect.scale.x | number:'1.2-2' }}"
                 (focusout)="hideCompleteValue('scale')" (focus)="showCompleteValue('scale')" (change)="updateValue('scale')" name="scale">
+              <span class="units">%</span>
             </div>
             <div class="row" *ngIf="!this.drawingService.file.activeCollectionEffect.scale.uniform">
               <label class="label" for="name">Scale width</label>
-              <input type="number" class="settings" id="scale-x" value="{{ this.drawingService.file.activeCollectionEffect.scale.x | number:'1.2-3' }}"
+              <input type="number" class="settings" id="scale-x" value="{{ this.drawingService.file.activeCollectionEffect.scale.x | number:'1.2-2' }}"
                (focusout)="hideCompleteValue('scale-x')" (focus)="showCompleteValue('scale-x')" (change)="updateValue('scale-x')" name="scale-x">
+              <span class="units">%</span>
             </div>
             <div class="row" *ngIf="!this.drawingService.file.activeCollectionEffect.scale.uniform">
               <label class="label" for="name">Scale height</label>
-              <input type="number" class="settings" id="scale-y" value="{{ this.drawingService.file.activeCollectionEffect.scale.y | number:'1.2-3' }}"
+              <input type="number" class="settings" id="scale-y" value="{{ this.drawingService.file.activeCollectionEffect.scale.y | number:'1.2-2' }}"
               (focusout)="hideCompleteValue('scale-y')"  (focus)="showCompleteValue('scale-y')" (change)="updateValue('scale-y')" name="scale-y">
+              <span class="units">%</span>
             </div>
 
             <div class="row">

@@ -66,7 +66,7 @@ export class Range {
 export class XY {
   x: any = null;
   y: any = null;
-  uniform = true;
+  uniform = false;
 
   constructor(x: any, y: any) {
     this.x = x;
@@ -79,6 +79,8 @@ export class Size {
   y: number = null;
   width: number = null;
   height: number = null;
+  top: number = null;
+  bottom: number = null;
 
   constructor(x: number, y: number, width: number, height: number) {
     this.x = x;
@@ -120,6 +122,7 @@ export class Effect {
   colors: Array<Color> = [];
   range = new Range();
   size = new Size(0,0,0,0);
+  storedIn = 'file';
 
   constructor(id: string) {
     this.id = id;

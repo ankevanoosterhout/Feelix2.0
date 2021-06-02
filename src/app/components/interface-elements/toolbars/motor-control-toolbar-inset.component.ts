@@ -118,7 +118,7 @@ import { HardwareService } from 'src/app/services/hardware.service';
 
     `]
 })
-export class MotorControlToolbarInset implements OnInit {
+export class MotorControlToolbarInsetComponent implements OnInit {
 
   selectedTool: number;
 
@@ -140,10 +140,9 @@ export class MotorControlToolbarInset implements OnInit {
     if (id === 0) {
       this.motorControlService.addCollection();
     } else if (id === 1) {
-      this.electronService.ipcRenderer.send('listSerialPorts');
+      this.electronService.ipcRenderer.send('uploadAll');
     } else if (id === 2) {
-      const hardware = this.hardwareService.getAllMicroControllers();
-      this.electronService.ipcRenderer.send('motorSettings', hardware);
+      this.electronService.ipcRenderer.send('motorSettings');
     } else if (id === 3) {
       this.motorControlService.changeViewSettings();
     }
@@ -154,6 +153,7 @@ export class MotorControlToolbarInset implements OnInit {
     this.electronService.ipcRenderer.send('showToolbarMotor');
     this.document.getElementById('toolbar-motor-control').classList.add('hide');
     this.document.getElementById('motor-control-section').classList.add('wide');
+    this.motorControlService.drawCollections();
   }
 
   attachToolbar() {
@@ -165,7 +165,7 @@ export class MotorControlToolbarInset implements OnInit {
 
   ngOnInit(): void {
     this.document.body.classList.add('disable-scroll-body');
-    this.selectTool(3);
+    // this.selectTool(3);
    }
 
 }

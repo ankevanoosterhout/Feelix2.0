@@ -6,6 +6,7 @@ import { UploadService } from 'src/app/services/upload.service';
 import { Router } from '@angular/router';
 import { DOCUMENT } from '@angular/common';
 import { MicroController, Motor, Unit } from 'src/app/models/hardware.model';
+import { MagneticSensor, Encoder } from 'src/app/models/position-sensors.model';
 
 
 @Component({
@@ -47,6 +48,7 @@ export class MotorSettingsComponent implements OnInit {
   public controllerOptions = [
     { name: 'Arduino DUE' },
     { name: 'Teensy' },
+    { name: 'ESP32' },
     { name: 'STM32' }
   ];
 
@@ -70,10 +72,22 @@ export class MotorSettingsComponent implements OnInit {
   ];
 
   public encoderTypes = [
-    { name: 'AS5047' },
+    { name: 'Magnetic sensor' },
+    { name: 'Encoder' }
+  ];
+
+  public magneticSensorType = [
     { name: 'AS5048A' },
+    { name: 'AS5047' },
+    { name: 'AS5147' },
     { name: 'AS5600' }
-  ]
+  ];
+
+  public communicationType = [
+    { name: 'SPI' },
+    { name: 'I2C' },
+    { name: 'PWM' }
+  ];
 
   constructor(@Inject(DOCUMENT) private document: Document, private electronService: ElectronService, private uploadService: UploadService,
               private hardwareService: HardwareService, private fileService: FileService, private router: Router ) {
@@ -106,7 +120,11 @@ export class MotorSettingsComponent implements OnInit {
   }
 
   deleteMicrocontroller(microcontroller: any) {
-    this.hardwareService.deleteMicroController(microcontroller.serialPort.path);
+    const port = microcontroller.serialPort.path;
+    if (this.selectedMicrocontroller.id === microcontroller.id) {
+      this.selectedMicrocontroller = null;
+    }
+    this.hardwareService.deleteMicroController(port);
   }
 
   updateMicrocontroller(microcontroller: any) {
@@ -129,8 +147,20 @@ export class MotorSettingsComponent implements OnInit {
     this.electronService.ipcRenderer.send('listSerialPorts');
   }
 
-  getNumberOfPolePairs(motorId: number) {
+  getNumberOfPolePairs(motor_id: string) {
 
+  }
+
+  createPositionSensor(motor_id: string) {
+    const motor = this.selectedMicrocontroller.motors.filter(m => m.id === motor_id)[0];
+    if (motor) {
+      if (motor.config.positionSensorType === 'Magnetic sensor') {
+        motor.config.positionSensor = new MagneticSensor();
+      } else if (motor.config.positionSensorType === 'Encoder') {
+        motor.config.positionSensor = new Encoder();
+      }
+      this.updateMicrocontroller(this.selectMicrocontroller);
+    }
   }
 
   addNewMicrocontroller() {
@@ -145,7 +175,7 @@ export class MotorSettingsComponent implements OnInit {
       const diff = parseInt(nr) - microControllerLength;
       if (diff > 0) {
         for (let n = 0; n < diff; n++) {
-          const newMotor = new Motor((microControllerLength + n + 1));
+          const newMotor = new Motor((microControllerLength + n));
           this.selectedMicrocontroller.motors.push(newMotor);
         }
       } else if (diff < 0) {

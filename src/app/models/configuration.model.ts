@@ -18,6 +18,16 @@ export class OpenTab {
   }
 }
 
+export class effectTypeColor {
+  type: string;
+  hash: string;
+
+  constructor(type: string, hash: string) {
+    this.type = type;
+    this.hash = hash;
+  }
+}
+
 export class Configuration {
   activeEffect: any = null;
   horizontalScreenDivision = 35;
@@ -28,4 +38,8 @@ export class Configuration {
   libraryViewSettings = 'large-thumbnails';
   sortType = 'date-modified';
   sortDirection = 'first-last';
+  colors: Array<effectTypeColor> =
+    [ new effectTypeColor('torque', '#0f4d9d'),
+      new effectTypeColor('velocity', '#ed1a75'),
+      new effectTypeColor('position', '#d94313') ];
 }

@@ -225,7 +225,7 @@ export class FeelixioPartsComponent implements OnInit, AfterViewInit {
     for (const item of data) {
       const div = this.document.getElementById('effectSVG-' + item.id);
       if (div) {
-        this.effectVisualizationService.drawEffect(item, type);
+        // this.effectVisualizationService.drawEffect(item, type);
       }
     }
   }

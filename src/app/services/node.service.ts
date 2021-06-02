@@ -1141,11 +1141,12 @@ export class NodeService {
         translate.horizontal *= -1;
         translate.vertical *= -1;
       }
-    } else if (translate.preview && translate.type === 'preview') {
+    } else if (!translate.preview && translate.type === 'preview') {
       translate.horizontal *= -1;
       translate.vertical *= -1;
     }
     for (const path of this.selectedPaths) {
+      console.log(translate);
       this.translatePath(path, translate);
     }
   }

@@ -7,6 +7,7 @@ import { DrawingPlaneConfig } from '../models/drawing-plane-config.model';
 export class DataService {
 
   toolbar = new Toolbar();
+  color: string;
   public dataObservable = new Subject<Toolbar>();
   public config: DrawingPlaneConfig;
 
@@ -22,6 +23,10 @@ export class DataService {
 
   get(): Toolbar {
     return this.toolbar;
+  }
+
+  setColor(color: string) {
+    this.color = color;
   }
 
   updateReferencePoint(point: any) {

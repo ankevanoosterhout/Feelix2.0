@@ -85,7 +85,7 @@ export class FileService {
     const effectTab = new OpenTab(defaultEffect.id, defaultEffect.name);
     effectTab.isActive = true;
     defaultFile.configuration.openTabs.push(effectTab);
-    this.setEffectActive(defaultFile.activeEffect);
+    this.nodeService.reset();
     this.add(defaultFile);
   }
 
@@ -147,9 +147,13 @@ export class FileService {
   addEffect(effect: Effect) {
     const activeFile = this.files.filter(f => f.isActive)[0];
     if (activeFile) {
+      if (activeFile.activeEffect) {
+        this.updateActiveEffectData(activeFile);
+      }
+
       activeFile.effects.push(effect);
       activeFile.activeEffect = null;
-      this.nodeService.reset();
+      // this.nodeService.reset();
 
       const tab = new OpenTab(effect.id, effect.name);
       const tabIndex = activeFile.configuration.openTabs.indexOf(tab);
@@ -161,7 +165,7 @@ export class FileService {
       }
       this.sortEffects(activeFile.configuration.sortType);
       activeFile.activeEffect = effect;
-      this.nodeService.reset();
+      this.nodeService.loadFile(activeFile.activeEffect.paths);
       this.store();
     }
   }
@@ -205,7 +209,9 @@ export class FileService {
         const multiply = collection.rotation.units.PR / file.activeEffect.grid.xUnit.PR;
         for (const collEffect of collection.effects) {
           if (collEffect.effectID === file.activeEffect.id) {
-            collEffect.position.width = file.activeEffect.size.width * multiply;
+            const newWidth = file.activeEffect.size.width * multiply;
+            collEffect.scale.x = newWidth * collEffect.scale.x / collEffect.position.width;
+            collEffect.scale.uniform = false;
             collEffect.position.height = file.activeEffect.size.height;
           }
         }
@@ -213,8 +219,8 @@ export class FileService {
       let effect = file.effects.filter(e => e.id === file.activeEffect.id)[0];
       if (effect) {
         effect = JSON.parse(JSON.stringify(file.activeEffect));
+        effect.date.modified = new Date().getTime();
       }
-      effect.date.modified = new Date().getTime();
     }
   }
 
@@ -286,9 +292,9 @@ export class FileService {
           minY = path.box.bottom;
         }
       }
-      return { x: minX, y: maxY, width: maxX - minX, height: maxY - minY };
+      return { x: minX, y: maxY, width: maxX - minX, height: maxY - minY, top: maxY, bottom: minY };
     }
-    return { x: 0, y: 0, width: 0, height: 0 };
+    return { x: 0, y: 0, width: 0, height: 0, top:0, bottom: 0 };
   }
 
   sortEffects(sortType: string) {

@@ -19,13 +19,12 @@ import { File } from 'src/app/models/file.model';
           <div class="form-row">
               <label>Vertical</label>
               <input type="number" id="vertical" [(ngModel)]="parameters.vertical" name="vertical">
-              <span class="span-text">{{ units.name }}</span>
+              <span class="span-text">%</span>
           </div>
       </div>
       <label class="checkbox-container preview">Preview
-          <input type="checkbox" id="preview" name="preview"
-          [(ngModel)]="parameters.preview"
-          (change)="preview();" [checked]="parameters.preview">
+          <input type="checkbox" id="preview" name="preview" [(ngModel)]="parameters.preview"
+          (change)="preview()">
           <span class="checkmark checkbox"></span>
       </label>
       <div class="form-row buttons side">
@@ -56,7 +55,7 @@ export class TransformComponent implements OnInit {
   submit(type: string) {
     this.parameters.type = type;
     this.parameters.tmp = false;
-    if (!this.parameters.preview && type === 'move' || type === 'copy') {
+    if (!this.parameters.preview && (type === 'move' || type === 'copy')) {
       this.electronService.ipcRenderer.send('transform', this.parameters);
     } else {
       this.electronService.ipcRenderer.send('closeTransformWindow');
@@ -85,6 +84,5 @@ export class TransformComponent implements OnInit {
     if (this.file.activeEffect) {
       this.units = this.file.activeEffect.grid.xUnit;
     }
-    // this.units = this.file.grid.units;
   }
 }

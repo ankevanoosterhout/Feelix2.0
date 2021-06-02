@@ -71,7 +71,7 @@ ul {
   position: relative;
   top:0;
   left:0;
-  width: calc(100% - 6px);
+  width: calc(100% - 7px);
   height: 26px;
   margin: 0;
   padding: 2px 1px;
@@ -129,6 +129,24 @@ ul {
 
 .draggable-area-collection:active {
   cursor: grabbing;
+}
+
+.stop-square {
+  display:inline-block;
+  position: absolute;
+  margin: 7px;
+  background: #ccc;
+}
+
+.play-arrow {
+  width: 0;
+  height: 0;
+  margin: 4px 6px;
+  display:inline-block;
+  position: absolute;
+  border-left: 9px solid #ccc;
+  border-bottom: 5px solid transparent;
+  border-top: 5px solid transparent;
 }
 
 .PID-control {
@@ -248,7 +266,7 @@ ul {
 #buttonsMotorControl .dropdown-buttons {
   list-style-type: none;
   position: relative;
-  left: 30px;
+  left: 15px;
   height: 20px;
   vertical-align: top;
   display: inline-block;
@@ -275,9 +293,20 @@ ul {
 
 #buttonsMotorControl .dropdown-buttons li img {
   position:absolute;
-  width: 80%;
-  height: 80%;
-  padding: 10%;
+  width: 76%;
+  height: 76%;
+  padding: 12%;
+}
+
+#buttonsMotorControl .dropdown-buttons li:active, #buttonsMotorControl  .dropdown-buttons li.active {
+  opacity: 1;
+  border: 1px solid  #df9b08;
+}
+
+
+#buttonsMotorControl .dropdown-buttons li.disabled, #buttonsMotorControl .dropdown-buttons li.disabled:hover  {
+  opacity: 0.3;
+  background: #3a3a3a;
 }
 
 #buttonsMotorControl, #rangeValues, #coll-layers-row, #visualizationType  {
@@ -287,7 +316,7 @@ ul {
   display: inline-block;
 }
 #buttonsMotorControl {
-   margin-right: 25px;
+   margin-right: 0;
 }
 
 #rangeValues, #coll-layers-row {
@@ -295,13 +324,17 @@ ul {
   color: #ccc;
   margin-left: 20px;
   vertical-align: top;
-  margin-top: -1px;
+  margin-top: -2px;
 }
 
 #coll-layers-row label {
   position:relative;
   vertical-align: middle;
   margin-top: -2px;
+}
+
+#rangeValues {
+  margin-right: -8px;
 }
 
 #visualizationType {
@@ -330,8 +363,9 @@ input {
   color: #999;
 }
 
-input:focus {
+input:focus, select:focus {
   outline: none;
+  border: 1px solid #df9b08;
 }
 
 
@@ -380,9 +414,13 @@ select {
   color:#ccc;
 }
 
-select#comport {
+select#comport, select#unitsDropdown {
   width: 70px;
   padding: 3px 5px;
+}
+
+select#unitsDropdown {
+  margin: -1px 0 0 5px;
 }
 
 select#motorID {
@@ -392,7 +430,7 @@ select#motorID {
 select#visualizationType {
   width: 55px;
   padding: 3px 5px;
-  margin-left: 5px;
+  margin-left: 15px;
   margin-top: -3px;
 }
 
