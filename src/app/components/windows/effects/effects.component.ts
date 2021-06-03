@@ -92,7 +92,7 @@ export class EffectsComponent implements OnInit, AfterViewInit {
       } else if (this.activeTab === 1) {
         this.drawLibraryEffects();
       } else if (this.activeTab === 2) {
-        console.log(this.drawingService.file.activeCollectionEffect);
+        // console.log(this.drawingService.file.activeCollectionEffect);
         // if (this.drawingService.file.activeCollectionEffect) {
         //   this.effect = this.drawingService.file.effects.filter(e => e.id === this.drawingService.file.activeCollectionEffect.effectID)[0];
         // }
@@ -269,55 +269,66 @@ export class EffectsComponent implements OnInit, AfterViewInit {
 
 
   updateValue(id: string) {
-    let value = (this.document.getElementById(id) as HTMLInputElement).value;
-    if (id === 'position-x') {
-      this.drawingService.file.activeCollectionEffect.position.x = parseFloat(value);
-    } else if (id === 'position-y') {
-      this.drawingService.file.activeCollectionEffect.position.y = parseFloat(value);
-    } else if (id === 'position-width') {
-      if (parseFloat(value) > 0) {
-        const newXscale = this.updateScale(this.drawingService.file.activeCollectionEffect.position.width, parseFloat(value), this.drawingService.file.activeCollectionEffect.scale.x);
-        this.drawingService.file.activeCollectionEffect.position.width = parseFloat(value);
-        this.drawingService.file.activeCollectionEffect.scale.x = newXscale;
-      } else {
-        value = this.drawingService.file.activeCollectionEffect.position.width.toString();
+    let valueStr = (this.document.getElementById(id) as HTMLInputElement).value;
+    if (valueStr) {
+      let value = parseFloat(valueStr);
+      if (id === 'position-x') {
+        this.drawingService.file.activeCollectionEffect.position.x = value;
+      } else if (id === 'position-y') {
+        this.drawingService.file.activeCollectionEffect.position.y = value;
+      } else if (id === 'position-width') {
+        if (value > 0) {
+          const newXscale = this.updateScale(this.drawingService.file.activeCollectionEffect.position.width, value, this.drawingService.file.activeCollectionEffect.scale.x);
+          this.drawingService.file.activeCollectionEffect.position.width = value;
+          this.drawingService.file.activeCollectionEffect.scale.x = newXscale;
+        }
+      } else if (id === 'position-height') {
+        if (value > 0) {
+          const newYscale = this.updateScale(this.drawingService.file.activeCollectionEffect.position.height, value, this.drawingService.file.activeCollectionEffect.scale.y);
+          this.drawingService.file.activeCollectionEffect.position.height = value;
+          this.drawingService.file.activeCollectionEffect.scale.y = newYscale;
+        }
+      } else if (id === 'scale-x') {
+        this.updateEffectWidth(value);
+      } else if (id === 'scale-y') {
+        this.updateEffectHeight(value);
+
+      } else if (id === 'scale') {
+        this.updateEffectWidth(value);
+        this.updateEffectHeight(value);
       }
-    } else if (id === 'position-height') {
-      if (parseFloat(value) > 0) {
-        const newYscale = this.updateScale(this.drawingService.file.activeCollectionEffect.position.height, parseFloat(value), this.drawingService.file.activeCollectionEffect.scale.y);
-        this.drawingService.file.activeCollectionEffect.position.height = parseFloat(value);
-        this.drawingService.file.activeCollectionEffect.scale.y = newYscale;
-      } else {
-        value = this.drawingService.file.activeCollectionEffect.position.height.toString();
-      }
-    } else if (id === 'scale-x') {
-      this.updateEffectWidth(parseFloat(value));
-      this.drawingService.file.activeCollectionEffect.scale.x = parseFloat(value);
-    } else if (id === 'scale-y') {
-      this.updateEffectHeight(parseFloat(value));
-      this.drawingService.file.activeCollectionEffect.scale.y = parseFloat(value);
-    } else if (id === 'scale') {
-      this.updateEffectWidth(parseFloat(value));-
-      this.updateEffectHeight(parseFloat(value));
-      this.drawingService.file.activeCollectionEffect.scale.x = parseFloat(value);
-      this.drawingService.file.activeCollectionEffect.scale.y = parseFloat(value);
+      (this.document.getElementById(id) as HTMLInputElement).value = value.toFixed(2);
     }
-    (this.document.getElementById(id) as HTMLInputElement).value = parseFloat(value).toFixed(2);
     this.updateCollectionEffect();
   }
 
   updateEffectWidth(value: number) {
-    const newWidth = this.updateScale(this.drawingService.file.activeCollectionEffect.scale.x, value, this.drawingService.file.activeCollectionEffect.position.width);
-    this.drawingService.file.activeCollectionEffect.position.width = newWidth;
+    if (value > 0) {
+      const newWidth = this.updateScale(this.drawingService.file.activeCollectionEffect.scale.x, value, this.drawingService.file.activeCollectionEffect.position.width);
+      this.drawingService.file.activeCollectionEffect.position.width = newWidth;
+      this.drawingService.file.activeCollectionEffect.scale.x = value;
+    }
   }
 
   updateEffectHeight(value: number) {
-    const newHeight = this.updateScale(this.drawingService.file.activeCollectionEffect.scale.y, value, this.drawingService.file.activeCollectionEffect.position.height);
-    this.drawingService.file.activeCollectionEffect.position.height = newHeight;
+    if (value > 0) {
+      const newHeight = this.updateScale(this.drawingService.file.activeCollectionEffect.scale.y, value, this.drawingService.file.activeCollectionEffect.position.height);
+      this.drawingService.file.activeCollectionEffect.position.height = newHeight;
+      this.drawingService.file.activeCollectionEffect.scale.y = value;
+    }
   }
 
   updateScale(old1: number, new1:number, old2:number) {
     return (old2 / old1) * new1;
+  }
+
+  updateUniformResize() {
+    if (this.drawingService.file.activeCollectionEffect.scale.uniform) {
+      if (this.drawingService.file.activeCollectionEffect.scale.x !== this.drawingService.file.activeCollectionEffect.scale.y) {
+        this.updateEffectHeight(this.drawingService.file.activeCollectionEffect.scale.x);
+      }
+    }
+    this.updateCollectionEffect();
   }
 
   showCompleteValue(id: string) {

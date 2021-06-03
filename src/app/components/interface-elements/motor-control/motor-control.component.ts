@@ -166,10 +166,13 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
         const collection = this.getCollectionFromClassName(id);
         if (collection && tmpEffect) {
           const multiply = collection.rotation.units.PR / tmpEffect.grid.xUnit.PR;
-          console.log(multiply);
           const effectDetails = new Details(uuid(), tmpEffect.id, tmpEffect.name + '-' + collection.name);
           effectDetails.position.width = tmpEffect.size.width * multiply;
           effectDetails.position.x = collection.config.newXscale.invert(e.offsetX) - (effectDetails.position.width / 2);
+          effectDetails.position.height = tmpEffect.size.height;
+          effectDetails.position.y = 0;
+          effectDetails.position.top = tmpEffect.size.top;
+          effectDetails.position.bottom = tmpEffect.size.bottom;
 
           this.motorControlService.drawTmpEffect(effectDetails, collection, tmpEffect);
         }
@@ -212,8 +215,6 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
             effectDetails.position.y = 0;
             effectDetails.position.top = tmpEffect.size.top;
             effectDetails.position.bottom = tmpEffect.size.bottom;
-            console.log(tmpEffect.size);
-            console.log(effectDetails.position);
 
             collection.effects.push(effectDetails);
             this.motorControlService.drawCollection(collection);

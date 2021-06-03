@@ -73,7 +73,7 @@ export class EffectVisualizationService {
   }
 
 
-  drawCollectionEffect(svg: any, collection: Collection, collEffect: Details, effect: Effect, height: number, offset: number, activeCollEffect: Details, colors: Array<effectTypeColor>, tmp = false) {
+  drawCollectionEffect(svg: any, collection: Collection, collEffect: Details, effect: Effect, pixHeight: number, activeCollEffect: Details, colors: Array<effectTypeColor>, tmp = false) {
 
     d3.selectAll('.coll-effect-' + collEffect.id).remove();
 
@@ -82,11 +82,22 @@ export class EffectVisualizationService {
     const width = collection.config.newXscale(collEffect.position.x + collEffect.position.width) -
       collection.config.newXscale(collEffect.position.x);
 
-    const heightEffect = collection.config.newYscale(collEffect.position.bottom * (collEffect.scale.y / 100)) - collection.config.newYscale(collEffect.position.top * (collEffect.scale.y / 100));
+    const domainSize = effect.type === 'torque' ? 200 : 100;
+
+    const heightEffect = (collection.config.newYscale(collEffect.position.bottom) - collection.config.newYscale(collEffect.position.top)) * (collEffect.scale.y / 100);
       // effect.type === 'torque' ?
       //       (this.height - 39) * (((100-collectionEffect.scale.y)/100) / 2) - ((this.height - 39) * (collectionEffect.position.y / 100) / 2) :
       //       (this.height - 39) * ((100-collectionEffect.scale.y)/100) - ((this.height - 39) * (collectionEffect.position.y / 100))
     const xPos = collection.config.newXscale(collEffect.position.x);
+    const yPos = collection.config.newYscale(collEffect.position.top * (collEffect.scale.y / 100)) - (pixHeight * (collEffect.position.y / domainSize));
+
+
+    const offset = effect.type === 'torque' ? pixHeight * (((100-collEffect.scale.y)/100) / 2) - (pixHeight * (collEffect.position.y / 100) / 2) :
+    //                 // collection.config.newYscale(collEffect.position.top * (collEffect.scale.y / 100)) - (pixHeight * (collEffect.position.y / domainSize)) :
+                    pixHeight * ((100-collEffect.scale.y)/100) - (pixHeight * (collEffect.position.y / 100));
+
+    const height = pixHeight * (collEffect.scale.y/100);
+
 
     if (effect.paths && effect.paths.length > 0) {
 
@@ -101,42 +112,55 @@ export class EffectVisualizationService {
       })
       .on('drag', () => {
         collEffect.position.x += (collection.config.newXscale.invert(d3.event.x) - collection.config.newXscale.invert(d3.event.x - d3.event.dx));
-        this.drawCollectionEffect(svg, collection, collEffect, effect, height, offset, activeCollEffect, colors);
+        this.drawCollectionEffect(svg, collection, collEffect, effect, pixHeight, activeCollEffect, colors);
       })
       .on('end', () => {
         this.updateCollectionData(collection);
       });
 
-
-
       const rect = svg.append('rect')
         .attr('id', 'coll-effect-' + collection.id + '-' + collEffect.id)
         .attr('class', 'coll-effect-' + collEffect.id)
         .attr('x', xPos)
-        .attr('y', collection.config.newYscale(collEffect.position.top * (collEffect.scale.y / 100)))
+        .attr('y', () => effect.type === collection.visualizationType ? yPos : 0)
         .attr('width', width)
-        .attr('height', heightEffect)
+        .attr('height', () => effect.type === collection.visualizationType ? heightEffect : pixHeight)
         .style('fill', colors.filter(c => c.type === effect.type)[0].hash)
-        .style('opacity', activeCollEffect !== null && activeCollEffect.id === collEffect.id ? 0.6 : 0.3)
+        .style('opacity', activeCollEffect !== null && activeCollEffect.id === collEffect.id ? 0.6 : 0.2)
         .style('shape-rendering', 'crispEdges')
         .attr('pointer-events', tmp || this.checkIfLayersIsLocked(collEffect.direction, collection.layers) ? 'none': 'auto')
         .attr('cursor', this.checkIfLayersIsLocked(collEffect.direction, collection.layers) ? 'not-allowed': 'default')
         .call(dragCollectionEffect);
 
-      const clipPath = svg.append('clipPath')
-        .attr('id', 'clip-' + collEffect.id + '-' + effect.id)
+      if (effect.type === collection.visualizationType) {
+
+        const clipPath = svg.append('clipPath')
+          .attr('id', 'clip-' + collEffect.id + '-' + effect.id)
+          .attr('class', 'coll-effect-' + collEffect.id)
+          .append('svg:rect')
+          .attr('width', width)
+          .attr('height', height);
+
+        const nodes = svg.append('g')
+          .attr('class', 'nodes coll-effect-' + collEffect.id)
+          .attr('id', 'coll-effect-group-' + collEffect.id + '-' + effect.id)
+          .attr('clip-path', 'url(#clip-' + collEffect.id + '-' + effect.id +')')
+          .attr('transform', 'translate('+ [xPos, offset] + ')');
+
+        this.drawEffectData(nodes, effect, height, colors, width, collEffect.flip, multiply);
+      }
+
+      const text = svg.append('text')
         .attr('class', 'coll-effect-' + collEffect.id)
-        .append('svg:rect')
-        .attr('width', width)
-        .attr('height', height);
-
-      const nodes = svg.append('g')
-        .attr('class', 'nodes coll-effect-' + collEffect.id)
-        .attr('id', 'coll-effect-group-' + collEffect.id + '-' + effect.id)
-        .attr('clip-path', 'url(#clip-' + collEffect.id + '-' + effect.id +')')
-        .attr('transform', 'translate('+ [xPos, offset] + ')');
-
-      this.drawEffectData(nodes, effect, height, colors, width, collEffect.flip, multiply);
+        .attr('x', xPos + width - 5)
+        .attr('y', () => effect.type === collection.visualizationType ? yPos + 12 : 12)
+        .attr('text-anchor', 'end')
+        .text(() => effect.name)
+        .style('fill', '#eee')
+        .attr('cursor', 'default')
+        .style('opacity', activeCollEffect !== null && activeCollEffect.id === collEffect.id ? 0.5 : 0.3)
+        .style('font-family', 'Open Sans, Arial, sans-serif')
+        .style('font-size', '9px');
     }
 
   }

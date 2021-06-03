@@ -248,6 +248,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
       });
     }
     this.dataService.setColor(this.file.configuration.colors.filter(c => c.type === this.file.activeEffect.type)[0].hash);
+    (this.document.getElementById('color-picker') as HTMLInputElement).value = this.dataService.color;
     this.nodeService.setGridLayer(newFile.activeEffect.grid);
   }
 

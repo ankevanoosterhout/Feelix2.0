@@ -135,26 +135,26 @@
           </div>
           <div class="row" *ngIf="positionVisible">
             <div class="row">
-              <label class="label" for="name">X</label>
+              <label class="label" for="name"><div class="question-mark" title="Start angle effect measured from left">?</div>X</label>
               <input type="number" class="settings" id="position-x" value="{{ this.drawingService.file.activeCollectionEffect.position.x | number:'1.2-2' }}"
                (focusout)="hideCompleteValue('position-x')" (focus)="showCompleteValue('position-x')" (change)="updateValue('position-x')" name="position-x">
               <span class="units" *ngIf="this.drawingService.file.activeCollection.rotation.units.name === 'degrees'">&deg;</span>
               <span class="units" *ngIf="this.drawingService.file.activeCollection.rotation.units.name === 'radians'">rad</span>
             </div>
             <div class="row">
-              <label class="label" for="name">Y</label>
+              <label class="label" for="name"><div class="question-mark" title="Vertical translation on the Y axis in relation to the original position of the effect">?</div>Y</label>
               <input type="number" class="settings" id="position-y" value="{{ this.drawingService.file.activeCollectionEffect.position.y | number:'1.2-2' }}"
               (focusout)="hideCompleteValue('position-y')"  (focus)="showCompleteValue('position-y')" (change)="updateValue('position-y')" name="position-y">
             </div>
             <div class="row">
-              <label class="label" for="name">Width</label>
+              <label class="label" for="name"><div class="question-mark" title="Effect angle (width)">?</div>Width</label>
               <input type="number" class="settings" id="position-width" value="{{ this.drawingService.file.activeCollectionEffect.position.width | number:'1.2-2' }}"
                (focusout)="hideCompleteValue('position-width')" (focus)="showCompleteValue('position-width')" (change)="updateValue('position-width')" name="position-width">
               <span class="units" *ngIf="this.drawingService.file.activeCollection.rotation.units.name === 'degrees'">&deg;</span>
               <span class="units" *ngIf="this.drawingService.file.activeCollection.rotation.units.name === 'radians'">rad</span>
             </div>
             <div class="row">
-              <label class="label" for="name">Height</label>
+              <label class="label" for="name"><div class="question-mark" title="Effect insensity (height)">?</div>Height</label>
               <input type="number" class="settings" id="position-height" value="{{ this.drawingService.file.activeCollectionEffect.position.height | number:'1.2-2' }}"
               (focusout)="hideCompleteValue('position-height')" (focus)="showCompleteValue('position-height')" (change)="updateValue('position-height')" name="position-height">
             </div>
@@ -188,13 +188,13 @@
               <span class="units">%</span>
             </div>
             <div class="row" *ngIf="!this.drawingService.file.activeCollectionEffect.scale.uniform">
-              <label class="label" for="name">Scale width</label>
+              <label class="label" for="name"><div class="question-mark" title="Scale width of effect in % of the original effect width">?</div>Scale width</label>
               <input type="number" class="settings" id="scale-x" value="{{ this.drawingService.file.activeCollectionEffect.scale.x | number:'1.2-2' }}"
                (focusout)="hideCompleteValue('scale-x')" (focus)="showCompleteValue('scale-x')" (change)="updateValue('scale-x')" name="scale-x">
               <span class="units">%</span>
             </div>
             <div class="row" *ngIf="!this.drawingService.file.activeCollectionEffect.scale.uniform">
-              <label class="label" for="name">Scale height</label>
+              <label class="label" for="name"><div class="question-mark" title="Scale height of effect in % of the original effect height">?</div>Scale height</label>
               <input type="number" class="settings" id="scale-y" value="{{ this.drawingService.file.activeCollectionEffect.scale.y | number:'1.2-2' }}"
               (focusout)="hideCompleteValue('scale-y')"  (focus)="showCompleteValue('scale-y')" (change)="updateValue('scale-y')" name="scale-y">
               <span class="units">%</span>
@@ -204,7 +204,7 @@
               <label class="radio-container details">uniform
                 <input type="checkbox" class="type" id="uniform" name="uniform"
                 [(ngModel)]="this.drawingService.file.activeCollectionEffect.scale.uniform" [checked]="this.drawingService.file.activeCollectionEffect.scale.uniform"
-                (change)="updateCollectionEffect()">
+                (change)="updateUniformResize()">
                 <span class="checkmark radio"></span>
               </label>
             </div>
@@ -218,13 +218,13 @@
           <label class="labelRow start nextToArrow">Rotation</label>
           <div *ngIf="detailsVisible">
             <div class="row">
-              <label class="label select">Direction</label>
+              <label class="label select"><div class="question-mark" title="Rotational direction in which the effect can be experienced">?</div>Direction</label>
               <select class="details" id="select-controller-type" [(ngModel)]="this.drawingService.file.activeCollectionEffect.direction" name="direction">
                 <option *ngFor="let type of directionOptions" [ngValue]="type.name">{{ type.name }}</option>
               </select>
             </div>
             <div class="row">
-              <label class="radio-container details">Every rotation
+              <label class="radio-container details">Every rotation <div class="question-mark" title="Experience effect once at its indicated position or repeat the effect every rotation at its indicated position">?</div>
                 <input type="checkbox" class="type" id="infinite" name="infinite"
                 [(ngModel)]="this.drawingService.file.activeCollectionEffect.infinite" [checked]="this.drawingService.file.activeCollectionEffect.infinite"
                 (change)="updateCollectionEffect()">
@@ -241,14 +241,14 @@
           <label class="labelRow start nextToArrow">Reflect</label>
           <div *ngIf="reflectVisible">
             <div class="row">
-              <label class="radio-container details">x axis
+              <label class="radio-container details"><div class="question-mark" title="Reflect effect horizontally">?</div>x axis
                 <input type="checkbox" class="type" id="reflect-x" name="reflect-x"
                 [(ngModel)]="this.drawingService.file.activeCollectionEffect.flip.x" (change)="updateCollectionEffect()">
                 <span class="checkmark radio"></span>
               </label>
             </div>
             <div class="row">
-              <label class="radio-container details">y axis
+              <label class="radio-container details"><div class="question-mark" title="Reflect effect vertically">?</div>y axis
                 <input type="checkbox" class="type" id="reflect-y" name="reflect-y"
                 [(ngModel)]="this.drawingService.file.activeCollectionEffect.flip.y" (change)="updateCollectionEffect()">
                 <span class="checkmark radio"></span>
@@ -264,7 +264,7 @@
           <label class="labelRow start nextToArrow">Repeat</label>
           <div *ngIf="repeatVisible">
             <div class="row">
-              <label class="label">Instances</label>
+              <label class="label"><div class="question-mark" title="Repeat the effect N times">?</div>N</label>
               <input type="number" class="settings" id="repeat-instances" [(ngModel)]="this.drawingService.file.activeCollectionEffect.repeat.instances" name="repeat-instances">
             </div>
           </div>

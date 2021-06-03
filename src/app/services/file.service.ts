@@ -202,6 +202,7 @@ export class FileService {
   }
 
   updateActiveEffectData(file: File) {
+    console.log(file.activeEffect.paths);
     if (file.activeEffect !== null) {
       file.activeEffect.paths = this.nodeService.getAll();
       file.activeEffect.size = this.getPathEffectSize(file.activeEffect);
@@ -210,9 +211,11 @@ export class FileService {
         for (const collEffect of collection.effects) {
           if (collEffect.effectID === file.activeEffect.id) {
             const newWidth = file.activeEffect.size.width * multiply;
-            collEffect.scale.x = newWidth * collEffect.scale.x / collEffect.position.width;
-            collEffect.scale.uniform = false;
-            collEffect.position.height = file.activeEffect.size.height;
+            collEffect.position.width = newWidth * (collEffect.scale.x/100);
+            // collEffect.scale.uniform = false;
+            collEffect.position.height = file.activeEffect.size.height * (collEffect.scale.y/100);
+            collEffect.position.top = file.activeEffect.size.top;
+            collEffect.position.bottom = file.activeEffect.size.bottom;
           }
         }
       }
@@ -236,6 +239,7 @@ export class FileService {
       activeFile.activeEffect = effect;
       this.nodeService.loadFile(activeFile.activeEffect.paths);
       this.store();
+      console.log(activeFile.activeEffect.name);
     }
   }
 

@@ -53,13 +53,13 @@
             </ul>
           </div>
 
-          <div id="visualizationType" class="form-row left" title="visualization type"  *ngIf="this.motorControlService.file.configuration.collectionDisplay === 'large' && this.motorControlService.width > 900">
+          <div id="visualizationType" class="form-row left" title="visualization type"  *ngIf="this.motorControlService.file.configuration.collectionDisplay === 'large' && this.motorControlService.width > 500">
             <select class="form-control" id="visualizationType" [(ngModel)]="collection.visualizationType" (change)="this.motorControlService.drawCollection(collection)" name="visualizationType">
                 <option *ngFor="let type of visualizationTypes" [ngValue]="type.name">{{ type.name }}</option>
             </select>
           </div>
 
-          <div class="form-row left" *ngIf="this.motorControlService.width > 900">
+          <div class="form-row left" *ngIf="this.motorControlService.width > 500">
             <div id="coll-layers-row" *ngFor="let layer of collection.layers">
               <ul id="coll-layers">
                 <li id="visible" [ngClass]="{ active: layer.visible }" (click)="toggleVisibility(collection, layer)"><img src="./assets/icons/layers/visible-icon.svg" title="toggle visibility {{ layer.name }} layer"></li>

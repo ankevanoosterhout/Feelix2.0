@@ -291,20 +291,10 @@ export class MotorControlService {
       if (this.checkVisibility(collectionEffect.direction, collection.layers)) {
 
         const effect = this.file.effects.filter(e => e.id === collectionEffect.effectID)[0];
-        if (effect && effect.paths.length > 0 && effect.type === collection.visualizationType) {
+        if (effect && effect.paths.length > 0) {
 
-
-          this.effectVisualizationService.drawCollectionEffect(effectSVG, collection, collectionEffect, effect, ((this.height - 39) * (collectionEffect.scale.y/100)),
-            (effect.type === 'torque' ?
-            (this.height - 39) * (((100-collectionEffect.scale.y)/100) / 2) - ((this.height - 39) * (collectionEffect.position.y / 100) / 2) :
-            (this.height - 39) * ((100-collectionEffect.scale.y)/100) - ((this.height - 39) * (collectionEffect.position.y / 100))),
+          this.effectVisualizationService.drawCollectionEffect(effectSVG, collection, collectionEffect, effect, (this.height - 39),
             this.file.activeCollectionEffect, this.file.configuration.colors);
-
-          // this.effectVisualizationService.drawCollectionEffect(effectSVG, collection, collectionEffect, effect, ((this.height - 39) * (collectionEffect.scale.y/100)),
-          //   (effect.type === 'torque' ?
-          //   (this.height - 39) * (((100-collectionEffect.scale.y)/100) / 2) - ((this.height - 39) * (collectionEffect.position.y / 100) / 2) :
-          //   (this.height - 39) * ((100-collectionEffect.scale.y)/100) - ((this.height - 39) * (collectionEffect.position.y / 100))),
-          //   this.file.activeCollectionEffect, this.file.configuration.colors);
         }
       }
     }
@@ -481,8 +471,10 @@ export class MotorControlService {
 
   scaleContent(collection: Collection) {
     collection.config.newXscale = collection.config.scale.graphD3.rescaleX(collection.config.xScale);
-    collection.config.xAxisThicks.call(collection.config.xAxis.scale(collection.config.newXscale));
-    collection.config.xAxisSmallThicks.call(collection.config.xAxisSmall.scale(collection.config.newXscale));
+    if (this.file.configuration.collectionDisplay === 'large') {
+      collection.config.xAxisThicks.call(collection.config.xAxis.scale(collection.config.newXscale));
+      collection.config.xAxisSmallThicks.call(collection.config.xAxisSmall.scale(collection.config.newXscale));
+    }
 
     if (collection.rotation.loop) {
       collection.config.svg.selectAll('.range-line').attr('x1', (d) => collection.config.newXscale(d)).attr('x2', (d) => collection.config.newXscale(d));
@@ -574,10 +566,14 @@ export class MotorControlService {
       .attr('clip-path', 'url(#clipCollection)')
       .attr('transform', 'translate('+ [0, offset] + ')');
 
-    this.effectVisualizationService.drawCollectionEffect(tmpEffectSVG, collection, effectDetails, this.drawingService.config.tmpEffect, ((this.height - 39) * (effectDetails.scale.y/100)),
-        (tmpEffect.type === 'torque' ?
-        (this.height - 39) * (((100-effectDetails.scale.y)/100) / 2) - ((this.height - 39) * (effectDetails.position.y / 100) / 2) :
-        (this.height - 39) * ((100-effectDetails.scale.y)/100) - ((this.height - 39) * (effectDetails.position.y / 100))), effectDetails, this.file.configuration.colors, true);
+      if (tmpEffect && tmpEffect.paths.length > 0) {
+
+        this.effectVisualizationService.drawCollectionEffect(tmpEffectSVG, collection, effectDetails, tmpEffect, (this.height - 39),
+        effectDetails, this.file.configuration.colors, true);
+      }
+
+    // this.effectVisualizationService.drawCollectionEffect(tmpEffectSVG, collection, effectDetails, this.drawingService.config.tmpEffect,
+    //   (this.height - 39), effectDetails, this.file.configuration.colors, true);
 
     // collection.config.svg.append('rect')
     //   .attr('class', 'tmpEffect')

@@ -25,7 +25,7 @@ import { Unit } from 'src/app/models/effect.model';
 
       <div class="form-row" *ngIf="this.drawingService.file.activeEffect" title="select effect visualization type">
         <input type="color" id="color-picker" name="color-picker" [(ngModel)]="this.dataService.color" (change)="updateColor()">
-        <label class="select"></label>
+        <label class="select color-picker"></label>
         <select class="form-control" id="select" (change)="this.updateEffectType()" [(ngModel)]="this.drawingService.file.activeEffect.type" name="type">
             <option *ngFor="let type of typeOptions" [ngValue]="type">{{ type }}</option>
         </select>

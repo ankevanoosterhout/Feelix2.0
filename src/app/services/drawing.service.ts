@@ -350,9 +350,8 @@ export class DrawingService {
       .attr('y', this.config.svgDy - 22)
       .attr('height', 22)
       .attr('width', this.config.svgDx - this.config.margin.left)
-      .style('fill', '#3a3a3a')
-      .on('mouseover', this.document.getElementById('field-inset').style.cursor = 'default')
-      .on('mouseleave', this.document.getElementById('field-inset').style.cursor = this.config.cursor.cursor);
+      .attr('cursor', 'default')
+      .style('fill', '#3a3a3a');
 
     const innerRoundedRect = this.config.svg.append('rect')
       .attr('class', 'innerRoundRectSlider')
@@ -362,34 +361,32 @@ export class DrawingService {
       .attr('y', this.config.svgDy - 17)
       .attr('width', this.config.sliderDrawplane.inner.max - this.config.sliderDrawplane.inner.min + 12)
       .attr('height', 10)
+      .attr('cursor', 'default')
       .style('fill', '#999')
-      .on('mouseover', () => this.document.getElementById('field-inset').style.cursor = 'default')
-      .on('mouseleave', () => this.document.getElementById('field-inset').style.cursor = this.config.cursor.cursor)
       .call(dragContent);
 
     const arrows = [
-      { name: 'sider-arrow-left', direction: -1, },
-      { name: 'sider-arrow-right', direction: 1 }
+      { name: 'sider-arrow-left', direction: -1, x: 12, r: 270  },
+      { name: 'sider-arrow-right', direction: 1, x: (this.config.chartDx - 48 + this.config.rulerWidth), r: 90 }
     ];
+
+    const triangle = d3.symbol()
+      .type(d3.symbolTriangle)
+      .size(25);
 
     const sliderArrows = this.config.svg.selectAll('path.sliderArrow')
       .data(arrows)
       .enter()
       .append('path')
       .attr('class', 'sliderArrow')
-      .attr('d', (d: { direction: number }) => {
-        return d.direction === -1 ?
-          'M 10 ' + (this.config.svgDy - 12) + ' L 15 ' +
-          (this.config.svgDy - 17) + ' L 15 ' + (this.config.svgDy - 7) + ' Z' :
-          'M ' + (this.config.chartDx - 50 + this.config.rulerWidth) + ' ' + (this.config.svgDy - 12) + ' L ' + (this.config.chartDx - 55 + this.config.rulerWidth) + ' ' +
-          (this.config.svgDy - 17) + ' L ' + (this.config.chartDx - 55 + this.config.rulerWidth) + ' ' + (this.config.svgDy - 7) + ' Z';
-      })
+      .attr('transform', (d: { x: number, r: number }) =>
+       'translate(' + d.x + ',' + (this.config.svgDy - 12) + '), rotate(' + d.r + ')')
+      .attr('d', triangle)
       .style('fill', '#999')
       .style('stroke', 'transparent')
       .style('stroke-width', 3)
-      .on('mousedown', (d: { direction: number }) => this.clickToMove(d.direction))
-      .on('mouseover', this.document.getElementById('field-inset').style.cursor = 'default')
-      .on('mouseleave', this.document.getElementById('field-inset').style.cursor = this.config.cursor.cursor);
+      .attr('cursor', 'default')
+      .on('mousedown', (d: { direction: number }) => this.clickToMove(d.direction));
 
     const scalePercentage = this.config.svg.append('text')
       .attr('class', 'scalePercentage')
@@ -405,6 +402,7 @@ export class DrawingService {
         }
       })
       .style('fill', '#ccc')
+      .attr('cursor', 'default')
       .style('font-family', 'Open Sans, Arial, sans-serif')
       .style('font-size', '10px');
   }
@@ -535,6 +533,7 @@ export class DrawingService {
 
 
   saveEffect() {
+    console.log(this.file.activeEffect);
     this.fileService.updateEffect(this.file.activeEffect);
   }
 
@@ -756,7 +755,7 @@ export class DrawingService {
         this.config.svg.selectAll('.cursorPos').remove();
       }
 
-      if (x > this.config.margin.left && yValue > 64) {
+      if (x > this.config.margin.left && yValue > 64 && y < window.innerHeight - 60) {
 
         const posXaxis = this.config.svg.append('rect')
             .attr('class', 'cursorPos')
@@ -781,7 +780,7 @@ export class DrawingService {
 
   rulerFunctions(e: MouseEvent) {
 
-    this.drawCursorPosition(e.clientX, e.clientY);
+    // this.drawCursorPosition(e.clientX, e.clientY);
 
     if (this.config.mouseDown.y !== null && this.config.mouseDown.x !== null) {
 

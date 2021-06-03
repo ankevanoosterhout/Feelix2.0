@@ -280,6 +280,10 @@ label.select:after {
   border-right:4px solid transparent;
   pointer-events: none;
 }
+
+label.color-picker:after {
+  left: 110px;
+}
 label.select.axes:after {
   left: 93px;
 }
