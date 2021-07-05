@@ -12,6 +12,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { DialogComponent } from 'src/app/components/windows/dialog.component';
 import { FeelixioValidationService } from 'src/app/services/feelixio-validation.service';
 import { FeelixioRenderService } from 'src/app/services/feelixio-render.service';
+import { CloneService } from 'src/app/services/clone.service';
 
 @Component({
     selector: 'app-feelixio',
@@ -27,7 +28,7 @@ export class FeelixioComponent implements OnInit, AfterViewInit {
   constructor(@Inject(DOCUMENT) private document: Document, private electronService: ElectronService,
               private feelixioDrawService: FeelixioDrawService, private feelixioFileService: FeelixioFileService,
               private feelixioDrawElementService: FeelixioDrawElementsService, private validationService: FeelixioValidationService,
-              private feelixioRenderService: FeelixioRenderService, public dialog: MatDialog) {
+              private feelixioRenderService: FeelixioRenderService, public dialog: MatDialog, private cloneService: CloneService) {
 
     this.config = this.feelixioDrawService.config;
 
@@ -195,7 +196,7 @@ export class FeelixioComponent implements OnInit, AfterViewInit {
             this.feelixioFile.effects.push(newObject);
 
           } else if (this.config.tmpEffect instanceof ComponentObject) {
-            newObject = JSON.parse(JSON.stringify(this.config.tmpEffect));
+            newObject = this.cloneService.deepClone(this.config.tmpEffect);
             for (const input of newObject.parameters.input) {
               input.id = uuid();
             }

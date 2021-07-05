@@ -93,8 +93,8 @@
               </div>
             </div>
           </div>
-          <div class="overlayEffect" id="overlayEffect-{{ item.id }}"></div>
-          <div class="dragOverlayEffect" id="dragOverlayEffect-{{ item.id }}" draggable="true"
+          <div class="overlayEffect" id="overlayEffect-{{ item.effect.id }}"></div>
+          <div class="dragOverlayEffect" id="dragOverlayEffect-{{ item.effect.id }}" draggable="true"
               (mousedown)="dragstart(item.effect)" (dragend)="dragend(item.effect)" (mouseup)="dragend(item.effect)"></div>
         </li>
       </div>
@@ -106,7 +106,7 @@
           <div class="row">
             <label class="labelRow" for="name">Name</label>
             <input type="text" class="settings" id="col-effect-name" [(ngModel)]="this.drawingService.file.activeCollectionEffect.name" name="col-effect-name"
-              (change)="updateCollectionEffect(this.drawingService.file.activeCollectionEffect)">
+              (change)="updateCollectionEffect()">
           </div>
           <div class="row" *ngIf="this.effect">
             <label class="labelRow" for="name">Instance of</label>
@@ -224,7 +224,7 @@
               </select>
             </div>
             <div class="row">
-              <label class="radio-container details">Every rotation <div class="question-mark" title="Experience effect once at its indicated position or repeat the effect every rotation at its indicated position">?</div>
+              <label class="radio-container details">Every rotation <div class="question-mark inline" title="Experience effect once at its indicated position or repeat the effect every rotation at its indicated position">?</div>
                 <input type="checkbox" class="type" id="infinite" name="infinite"
                 [(ngModel)]="this.drawingService.file.activeCollectionEffect.infinite" [checked]="this.drawingService.file.activeCollectionEffect.infinite"
                 (change)="updateCollectionEffect()">
@@ -241,16 +241,16 @@
           <label class="labelRow start nextToArrow">Reflect</label>
           <div *ngIf="reflectVisible">
             <div class="row">
-              <label class="radio-container details"><div class="question-mark" title="Reflect effect horizontally">?</div>x axis
-                <input type="checkbox" class="type" id="reflect-x" name="reflect-x"
-                [(ngModel)]="this.drawingService.file.activeCollectionEffect.flip.x" (change)="updateCollectionEffect()">
+              <label class="radio-container details">horizontal<div class="question-mark inline" title="Reflect effect horizontally">?</div>
+                <input type="checkbox" class="type" id="reflect-y" name="reflect-y"
+                [(ngModel)]="this.drawingService.file.activeCollectionEffect.flip.y" (change)="updateCollectionEffect()">
                 <span class="checkmark radio"></span>
               </label>
             </div>
             <div class="row">
-              <label class="radio-container details"><div class="question-mark" title="Reflect effect vertically">?</div>y axis
-                <input type="checkbox" class="type" id="reflect-y" name="reflect-y"
-                [(ngModel)]="this.drawingService.file.activeCollectionEffect.flip.y" (change)="updateCollectionEffect()">
+              <label class="radio-container details">vertical<div class="question-mark inline" title="Reflect effect vertically">?</div>
+                <input type="checkbox" class="type" id="reflect-x" name="reflect-x"
+                [(ngModel)]="this.drawingService.file.activeCollectionEffect.flip.x" (change)="updateCollectionEffect()">
                 <span class="checkmark radio"></span>
               </label>
             </div>
@@ -264,8 +264,17 @@
           <label class="labelRow start nextToArrow">Repeat</label>
           <div *ngIf="repeatVisible">
             <div class="row">
-              <label class="label"><div class="question-mark" title="Repeat the effect N times">?</div>N</label>
-              <input type="number" class="settings" id="repeat-instances" [(ngModel)]="this.drawingService.file.activeCollectionEffect.repeat.instances" name="repeat-instances">
+              <label class="label"><div class="question-mark" title="Repeat the effect N times">?</div>Instances</label>
+              <input type="number" class="settings" id="repeat-instances" [(ngModel)]="this.drawingService.file.activeCollectionEffect.repeat.instances" name="repeat-instances"
+              (change)="updateEffectRepeat()" (focus)="showCompleteValue()" (focusout)="hideCompleteValue()">
+              <span class="units">N</span>
+            </div>
+            <div class="row" *ngFor="let item of this.drawingService.file.activeCollectionEffect.repeat.repeatInstances; let i = index" [attr.data-index]="i">
+              <label class="label" for="name"><div class="question-mark" title="Start angle effect measured from left for instance">?</div>X n{{ i + 2 }}</label>
+              <input type="number" class="settings" id="r-{{ item.id }}" value="{{ item.x | number:'1.2-2' }}" name="r-{{ item.id }}" (change)="updateRepeatInstanceXValue(item.id)"
+               (focusout)="hideCompleteValue()" (focus)="showCompleteValue()">
+              <span class="units" *ngIf="this.drawingService.file.activeCollection.rotation.units.name === 'degrees'">&deg;</span>
+              <span class="units" *ngIf="this.drawingService.file.activeCollection.rotation.units.name === 'radians'">rad</span>
             </div>
           </div>
         </div>

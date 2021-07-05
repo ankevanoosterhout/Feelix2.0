@@ -2,13 +2,14 @@ import { Injectable } from '@angular/core';
 import { Node } from '../models/node.model';
 import { NodeService } from '../services/node.service';
 import { v4 as uuid } from 'uuid';
+import { CloneService } from './clone.service';
 
 
 @Injectable()
 export class BezierService {
 
 
-  constructor(private nodeService: NodeService) {}
+  constructor(private nodeService: NodeService, private cloneService: CloneService) {}
 
 
   evalLBez(nodes: Array<Node>, t: number, axis: string, type: string) {
@@ -622,8 +623,8 @@ export class BezierService {
         if (el.nodes.filter(n => n.type === 'cp').length > 0) {
           const normal = this.normal(0.5, el.nodes);
           // console.log(normal);
-          const copy = JSON.stringify(el.nodes);
-          const points = this.splitPath(JSON.parse(copy), pathId, { x: normal.cX, y: normal.cY });
+          const copy = this.cloneService.deepClone(el.nodes);
+          const points = this.splitPath(copy, pathId, { x: normal.cX, y: normal.cY });
           // console.log(points.nodes);
           const newPoints = points.nodes.filter(n => n.id === id && n.type === 'cp')[0];
           cpPoints.push(newPoints);
@@ -897,6 +898,6 @@ export class BezierService {
     }
   }
 
- 
+
 
 }

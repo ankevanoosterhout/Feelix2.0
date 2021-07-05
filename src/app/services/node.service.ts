@@ -5,6 +5,7 @@ import { Path } from '../models/node.model';
 import { Scale } from '../models/node.model';
 import { v4 as uuid } from 'uuid';
 import { Subject } from 'rxjs';
+import { CloneService } from './clone.service';
 
 
 @Injectable()
@@ -25,6 +26,8 @@ export class NodeService {
   public scale = new Scale();
   public grid: any;
   public inputFieldsActive = false;
+
+  constructor(private cloneService: CloneService) {}
 
 
   addNode(id: string, path: string, type: string, pos: Coords, angle: Coords) {
@@ -545,7 +548,7 @@ export class NodeService {
   splitPathAtNode(node: Node, path: Path) {
     const index = path.nodes.indexOf(node);
     if (index > -1) {
-      const copyPath = JSON.parse(JSON.stringify(path));
+      const copyPath = this.cloneService.deepClone(path);
       const array = [
         copyPath.nodes.slice(0, index).filter(n => n.id !== node.id),
         copyPath.nodes.slice(index, path.nodes.length).filter(n => n.id !== node.id)
@@ -597,7 +600,7 @@ export class NodeService {
           }
         }
         const nodePath = new Path(newID);
-        nodePath.nodes = JSON.parse(JSON.stringify(arr));
+        nodePath.nodes = this.cloneService.deepClone(arr);
         newPaths.push(nodePath);
         this.paths.push(nodePath);
         this.selectedPaths.push(nodePath.id);
@@ -1062,15 +1065,14 @@ export class NodeService {
           n.angle.x = ((old.ax - offsetX) * scaleX) + offsetX;
           n.angle.y = ((old.ay - offsetY) * scaleY) + offsetY;
         }
-        // if (updateBox) {
-          const oldBox = { left: pathEl.box.left, right: pathEl.box.right, top: pathEl.box.top, bottom: pathEl.box.bottom };
-          pathEl.box.left = ((oldBox.left - offsetX) * scaleX) + offsetX;
-          pathEl.box.right = ((oldBox.right - offsetX) * scaleX) + offsetX;
-          pathEl.box.top = ((oldBox.top - offsetY) * scaleY) + offsetY;
-          pathEl.box.bottom = ((oldBox.right - offsetY) * scaleY) + offsetY;
-          pathEl.box.width = pathEl.box.right - pathEl.box.left;
-          pathEl.box.height = pathEl.box.bottom - pathEl.box.top;
-        // }
+        const oldBox = { left: pathEl.box.left, right: pathEl.box.right, top: pathEl.box.top, bottom: pathEl.box.bottom };
+        pathEl.box.left = ((oldBox.left - offsetX) * scaleX) + offsetX;
+        pathEl.box.right = ((oldBox.right - offsetX) * scaleX) + offsetX;
+        pathEl.box.top = ((oldBox.top - offsetY) * scaleY) + offsetY;
+        pathEl.box.bottom = ((oldBox.bottom - offsetY) * scaleY) + offsetY;
+        pathEl.box.width = pathEl.box.right - pathEl.box.left;
+        pathEl.box.height = pathEl.box.bottom - pathEl.box.top;
+
       }
     }
   }
@@ -1169,8 +1171,9 @@ export class NodeService {
   }
 
 
-  mirrorPath(path: Path, mirrorLine: any, reflectX: boolean, reflectY: boolean) {
+  mirrorPath(copypath: Path, mirrorLine: any, reflectX: boolean, reflectY: boolean) {
     // console.log(path, direction);
+    let path = this.cloneService.deepClone(copypath);
     for (const node of path.nodes) {
       const old = { x: node.pos.x, y: node.pos.y, ax: node.angle.x, ay: node.angle.y };
       if (reflectY) {
@@ -1194,7 +1197,7 @@ export class NodeService {
       path.nodes.reverse();
     }
     // console.log(path);
-    return JSON.parse(JSON.stringify(path));
+    return path;
   }
 
 
@@ -1486,7 +1489,7 @@ export class NodeService {
 
         totalDuration += item.details.duration;
         effect.rangeX.end = effect.rangeX.start + totalDuration;
-        const copyPath = JSON.parse(JSON.stringify(item.nodes[0]));
+        const copyPath = this.cloneService.deepClone(item.nodes[0]);
 
         effect.rangeY.min = item.details.range.min < effect.rangeY.min ? item.details.range.min : effect.rangeY.min;
         effect.rangeY.max = item.details.range.max > effect.rangeY.max ? item.details.range.max : effect.rangeY.max;

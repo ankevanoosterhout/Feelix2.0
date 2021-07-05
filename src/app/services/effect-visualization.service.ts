@@ -3,8 +3,9 @@ import * as d3 from 'd3';
 import { Subject } from 'rxjs';
 import { Collection, Layer } from '../models/collection.model';
 import { effectTypeColor } from '../models/configuration.model';
-import { Details, Effect, Size } from '../models/effect.model';
+import { Details, Effect, RepeatInstance, Size } from '../models/effect.model';
 import { Path } from '../models/node.model';
+import { CloneService } from './clone.service';
 import { NodeService } from './node.service';
 
 
@@ -15,16 +16,16 @@ export class EffectVisualizationService {
   public verticalDivision = 30;
 
   setActiveEffect: Subject<any> = new Subject();
-  updateCollection: Subject<any> = new Subject();
+  updateCollectionEffect: Subject<any> = new Subject();
 
-  constructor(private nodeService: NodeService) { }
+  constructor(private nodeService: NodeService, private cloneService: CloneService) { }
 
   public setActiveCollectionEffect(data: { effect: Details, collection: Collection }) {
     this.setActiveEffect.next(data);
   }
 
-  public updateCollectionData(collection: Collection) {
-    this.updateCollection.next(collection);
+  public updateCollectionData(collectionData: any) {
+    this.updateCollectionEffect.next(collectionData);
   }
 
 
@@ -77,59 +78,61 @@ export class EffectVisualizationService {
 
     d3.selectAll('.coll-effect-' + collEffect.id).remove();
 
-    const multiply = (collection.rotation.units.PR / effect.grid.xUnit.PR);
-
-    const width = collection.config.newXscale(collEffect.position.x + collEffect.position.width) -
-      collection.config.newXscale(collEffect.position.x);
-
-    const domainSize = effect.type === 'torque' ? 200 : 100;
-
-    const heightEffect = (collection.config.newYscale(collEffect.position.bottom) - collection.config.newYscale(collEffect.position.top)) * (collEffect.scale.y / 100);
-      // effect.type === 'torque' ?
-      //       (this.height - 39) * (((100-collectionEffect.scale.y)/100) / 2) - ((this.height - 39) * (collectionEffect.position.y / 100) / 2) :
-      //       (this.height - 39) * ((100-collectionEffect.scale.y)/100) - ((this.height - 39) * (collectionEffect.position.y / 100))
-    const xPos = collection.config.newXscale(collEffect.position.x);
-    const yPos = collection.config.newYscale(collEffect.position.top * (collEffect.scale.y / 100)) - (pixHeight * (collEffect.position.y / domainSize));
-
-
-    const offset = effect.type === 'torque' ? pixHeight * (((100-collEffect.scale.y)/100) / 2) - (pixHeight * (collEffect.position.y / 100) / 2) :
-    //                 // collection.config.newYscale(collEffect.position.top * (collEffect.scale.y / 100)) - (pixHeight * (collEffect.position.y / domainSize)) :
-                    pixHeight * ((100-collEffect.scale.y)/100) - (pixHeight * (collEffect.position.y / 100));
-
-    const height = pixHeight * (collEffect.scale.y/100);
-
-
     if (effect.paths && effect.paths.length > 0) {
 
-      const dragCollectionEffect = d3.drag()
-      .on('start', () => {
-        if (activeCollEffect) {
-          d3.select('#coll-effect-' + collection.id + '-' + activeCollEffect.id).style('opacity', 0.3);
-        }
-        this.setActiveCollectionEffect({ effect: collEffect, collection: collection });
-        activeCollEffect = collEffect;
-        d3.select('#coll-effect-' + collection.id + '-' + collEffect.id).style('opacity', 0.6);
-      })
-      .on('drag', () => {
-        collEffect.position.x += (collection.config.newXscale.invert(d3.event.x) - collection.config.newXscale.invert(d3.event.x - d3.event.dx));
-        this.drawCollectionEffect(svg, collection, collEffect, effect, pixHeight, activeCollEffect, colors);
-      })
-      .on('end', () => {
-        this.updateCollectionData(collection);
-      });
+      const multiply = (collection.rotation.units.PR / effect.grid.xUnit.PR);
 
-      const rect = svg.append('rect')
-        .attr('id', 'coll-effect-' + collection.id + '-' + collEffect.id)
-        .attr('class', 'coll-effect-' + collEffect.id)
-        .attr('x', xPos)
+      const width = collection.config.newXscale(collEffect.position.x + collEffect.position.width) - collection.config.newXscale(collEffect.position.x);
+      const domainSize = effect.type === 'torque' ? 200 : 100;
+
+      const heightEffect = (collection.config.newYscale(collEffect.position.bottom) - collection.config.newYscale(collEffect.position.top)) * (collEffect.scale.y / 100);
+      const yPos = collection.config.newYscale(collEffect.position.top * (collEffect.scale.y / 100)) - (pixHeight * (collEffect.position.y / domainSize));
+
+      const offset = effect.type === 'torque' ? pixHeight * (((100-collEffect.scale.y)/100) / 2) - (pixHeight * (collEffect.position.y / 100) / 2) :
+                      pixHeight * ((100-collEffect.scale.y)/100) - (pixHeight * (collEffect.position.y / 100));
+
+      const height = pixHeight * (collEffect.scale.y/100);
+      const layerLocked = this.checkIfLayersIsLocked(collEffect.direction, collection.layers);
+
+      const effectData = [ new RepeatInstance(collEffect.id, collEffect.position.x) ];
+      const data = effectData.concat(collEffect.repeat.repeatInstances);
+
+      const dragCollectionEffect = d3.drag()
+        .on('start', () => {
+          if (activeCollEffect) {
+            d3.selectAll('#coll-effect-' + collection.id + '-' + activeCollEffect.id).style('opacity', 0.3);
+          }
+          this.setActiveCollectionEffect({ effect: collEffect, collection: collection });
+          activeCollEffect = collEffect;
+          d3.selectAll('#coll-effect-' + collection.id + '-' + collEffect.id).style('opacity', 0.6);
+        })
+        .on('drag', (d, i) => {
+          if (i === 0) {
+            collEffect.position.x += (collection.config.newXscale.invert(d3.event.x) - collection.config.newXscale.invert(d3.event.x - d3.event.dx));
+          } else {
+            collEffect.repeat.repeatInstances[i - 1].x += (collection.config.newXscale.invert(d3.event.x) - collection.config.newXscale.invert(d3.event.x - d3.event.dx));
+          }
+          this.drawCollectionEffect(svg, collection, collEffect, effect, pixHeight, activeCollEffect, colors);
+        })
+        .on('end', () => {
+          this.updateCollectionData({ collection: collection, collEffect: collEffect });
+        });
+
+      const rect = svg.selectAll('rect.coll-effect-' + collEffect.id)
+        .data(data)
+        .enter()
+        .append('rect')
+        .attr('id', (d) => 'coll-effect-' + collection.id + '-' + d.id)
+        .attr('class', (d) => 'coll-effect-' + collEffect.id)
+        .attr('x', (d) => collection.config.newXscale(d.x))
         .attr('y', () => effect.type === collection.visualizationType ? yPos : 0)
         .attr('width', width)
         .attr('height', () => effect.type === collection.visualizationType ? heightEffect : pixHeight)
         .style('fill', colors.filter(c => c.type === effect.type)[0].hash)
         .style('opacity', activeCollEffect !== null && activeCollEffect.id === collEffect.id ? 0.6 : 0.2)
         .style('shape-rendering', 'crispEdges')
-        .attr('pointer-events', tmp || this.checkIfLayersIsLocked(collEffect.direction, collection.layers) ? 'none': 'auto')
-        .attr('cursor', this.checkIfLayersIsLocked(collEffect.direction, collection.layers) ? 'not-allowed': 'default')
+        .attr('pointer-events', tmp || layerLocked ? 'none': 'auto')
+        .attr('cursor', layerLocked ? 'not-allowed': 'default')
         .call(dragCollectionEffect);
 
       if (effect.type === collection.visualizationType) {
@@ -145,24 +148,35 @@ export class EffectVisualizationService {
           .attr('class', 'nodes coll-effect-' + collEffect.id)
           .attr('id', 'coll-effect-group-' + collEffect.id + '-' + effect.id)
           .attr('clip-path', 'url(#clip-' + collEffect.id + '-' + effect.id +')')
-          .attr('transform', 'translate('+ [xPos, offset] + ')');
+          .attr('transform', 'translate('+ [collection.config.newXscale(collEffect.position.x), offset] + ')');
 
         this.drawEffectData(nodes, effect, height, colors, width, collEffect.flip, multiply);
+
+        for(const instance of collEffect.repeat.repeatInstances) {
+          const nodes = svg.append('g')
+          .attr('class', 'nodes coll-effect-' + collEffect.id)
+          .attr('id', 'coll-effect-group-' + collEffect.id + '-' + effect.id + '-' + instance.id)
+          .attr('transform', 'translate('+ [collection.config.newXscale(instance.x), offset] + ')');
+
+          this.drawEffectData(nodes, effect, height, colors, width, collEffect.flip, multiply);
+        }
       }
 
-      const text = svg.append('text')
+      const text = svg.selectAll('text.coll-effect-' + collEffect.id)
+        .data(data)
+        .enter()
+        .append('text')
         .attr('class', 'coll-effect-' + collEffect.id)
-        .attr('x', xPos + width - 5)
+        .attr('x', (d) => collection.config.newXscale(d.x) + width - 5)
         .attr('y', () => effect.type === collection.visualizationType ? yPos + 12 : 12)
         .attr('text-anchor', 'end')
-        .text(() => effect.name)
-        .style('fill', '#eee')
+        .text((d, i) => i > 0 ? effect.name + ' n' + (i+ 1) : effect.name)
+        .style('fill', '#fff')
         .attr('cursor', 'default')
-        .style('opacity', activeCollEffect !== null && activeCollEffect.id === collEffect.id ? 0.5 : 0.3)
+        .style('opacity', activeCollEffect !== null && activeCollEffect.id === collEffect.id ? 0.6 : 0.3)
         .style('font-family', 'Open Sans, Arial, sans-serif')
         .style('font-size', '9px');
     }
-
   }
 
   checkIfLayersIsLocked(effectDirection: string, layers: Layer[]) {
@@ -194,7 +208,7 @@ export class EffectVisualizationService {
       for (const path of effect.paths) {
         if (path.nodes.length > 1) {
 
-          const effectPath = this.mirrorPath(JSON.parse(JSON.stringify(path)), effect.size, reflect);
+          const effectPath = this.mirrorPath(this.cloneService.deepClone(path), effect.size, reflect);
 
           const paths = this.returnPathAsString(effectPath, xScale, yScale, 'pos', multiply);
 
@@ -221,7 +235,7 @@ export class EffectVisualizationService {
               .append('path')
               .attr('d', (d: { svgPath: string }) => d.svgPath)
               .attr('stroke', () => colors.filter(c => c.type === effect.type)[0].hash)
-              .attr('stroke-width', () => 1.4)
+              .attr('stroke-width', () => effect.rotation === 'dependent' ? 2.2 : 1)
               .attr('class', 'path_' + path.id)
               .attr('fill', 'transparent')
               .attr('pointer-events', 'none');

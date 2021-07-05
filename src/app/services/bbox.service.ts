@@ -6,7 +6,6 @@ import { DrawingService } from './drawing.service';
 import { BezierService } from './bezier.service';
 import { DOCUMENT } from '@angular/common';
 import { DataService } from './data.service';
-import { HistoryService } from './history.service';
 
 
 
@@ -15,8 +14,7 @@ export class BBoxService {
   public config: DrawingPlaneConfig;
 
   constructor(@Inject(DOCUMENT) private document: Document, public dataService: DataService,
-              public nodeService: NodeService, private bezierService: BezierService, public drawingService: DrawingService,
-              private historyService: HistoryService) {
+              public nodeService: NodeService, private bezierService: BezierService, public drawingService: DrawingService) {
 
                 this.config = this.drawingService.config;
               }
@@ -71,7 +69,7 @@ export class BBoxService {
       const dragBBox = d3.drag()
         .on('start', () => {
           if (!this.config.zoomable) {
-            this.historyService.addToHistory();
+
 
             this.config.containerBox = this.config.svg.select('.innerContainer').node().getBoundingClientRect();
             this.config.startPosBox = this.config.svg.select('#bbox').node().getBoundingClientRect();
@@ -216,7 +214,7 @@ export class BBoxService {
 
     const dragResize = d3.drag()
       .on('start', () => {
-          this.historyService.addToHistory();
+
           d3.selectAll('.nodesSVG').remove();
           this.config.boxRef = this.config.svg.selectAll('#boxOutline').node().getBBox();
       })

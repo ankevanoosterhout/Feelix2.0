@@ -6,13 +6,145 @@ import { NodeService } from './node.service';
 import { EffectObject } from '../models/feelixio-file.model';
 import { EffectUploadModel, Linear } from '../models/effect-upload.model';
 import { v4 as uuid } from 'uuid';
+import { Collection } from '../models/collection.model';
+import { Details, Effect } from '../models/effect.model';
+import { CloneService } from './clone.service';
 
 @Injectable()
 export class UploadService {
 
 
-  constructor(private bezierService: BezierService, private nodeService: NodeService) {}
+  constructor(private bezierService: BezierService, private nodeService: NodeService, private cloneService: CloneService) {}
 
+  renderCollection(collection: Collection, effectList: Array<Effect>) {
+    let dataList = [];
+
+    for (const collEffect of collection.effects) {
+      const effectData = effectList.filter(e => e.id === collEffect.effectID)[0];
+      dataList.push(this.translateEffectData(collEffect, effectData));
+    }
+    return dataList;
+  }
+
+  translateEffectData(collEffect: Details, effectData: Effect) {
+    console.log(collEffect, effectData);
+    let copyEffectList = this.cloneService.deepClone(effectData);
+    const multiply = 1;
+
+    for (const path of copyEffectList.paths) {
+      if (effectData.type === 'torque') {
+        return this.translateTorqueEffectData(path, multiply);
+      }
+      else if (effectData.type === 'position') {
+        return this.translatePositionEffectData(path, multiply);
+      }
+      else if (effectData.type === 'velocity') {
+        return this.translateVelocityEffectData(path, multiply);
+      }
+    }
+  }
+
+  translateTorqueEffectData(path: Path, multiply: number, quality = 4) {
+    let translatedData = [];
+
+    let i = 0;
+    let index = 0;
+    const nodes = path.nodes.filter(n => n.type === 'node');
+    for (const node of nodes) {
+
+      if (i < nodes.length - 1) {
+        const pathSegment = this.nodeService.getNodesOfPath(node.id + '&&' + nodes[i + 1].id, path);
+        const range = this.bezierService.getCurveLength(pathSegment);
+        const coords = this.bezierService.getAllCoordinates(range[0], (1 / (range[0])), pathSegment, multiply, 'force');
+
+        const start = Math.round(pathSegment[0].pos.x * multiply);
+        const end = Math.round(pathSegment[pathSegment.length - 1].pos.x * multiply);
+
+        for (let m = start; m <= end; m += quality) {
+          let yValue = this.bezierService.closestY(m, coords);
+          if (yValue > 255) { yValue = 255; }
+          if (yValue < 0) { yValue = 0; }
+
+          const inList = translatedData.filter(d => d.x === m)[0];
+          if (inList) {
+            const inListIndex = translatedData.indexOf(inList);
+            translatedData.splice(inListIndex, 1);
+          }
+          const coordinates = {
+            i: index,
+            x: m,
+            y: yValue
+          };
+          translatedData.push(coordinates);
+
+          index++;
+        }
+      }
+      i++;
+    }
+    return translatedData;
+  }
+
+  translatePositionEffectData(path: Path, multiply: number, quality = 4) {
+    let translatedData = [];
+
+    if (path.nodes[0].pos.x > path.nodes[path.nodes.length - 1].pos.x) {
+      path.nodes.reverse();
+    }
+
+    let i = 0;
+    let index = 0;
+    const nodes = path.nodes.filter(n => n.type === 'node');
+    for (const node of nodes) {
+
+      if (i < nodes.length - 1) {
+        const pathSegment = this.nodeService.getNodesOfPath(node.id + '&&' + nodes[i + 1].id, path);
+        const range = this.bezierService.getCurveLength(pathSegment);
+        const coords = this.bezierService.getAllCoordinates(range[0], (1 / (range[0])), pathSegment, multiply, 'force');
+        let coordsForce = coords;
+        if (range[0] !== range[1]) {
+          coordsForce = this.bezierService.getAllCoordinates(range[1], (1 / (range[1])), pathSegment, multiply, 'angle');
+        }
+
+        const start = Math.round(pathSegment[0].pos.x * multiply);
+        const end = Math.round(pathSegment[pathSegment.length - 1].pos.x * multiply);
+        for (let m = start; m <= end; m += quality) {
+          let yValue = this.bezierService.closestY(m, coords);
+          if (yValue > 255) { yValue = 255; }
+          if (yValue < 0) { yValue = 0; }
+          let xOffset = m;
+          if (range[0] !== range[1]) {
+            xOffset = this.bezierService.closestForce(yValue, coordsForce);
+          }
+
+          const inList = translatedData.filter(d => d.x === m)[0];
+          if (inList) {
+            const inListIndex = translatedData.indexOf(inList);
+            translatedData.splice(inListIndex, 1);
+          }
+          const coordinates = {
+            i: index,
+            x: m,
+            o: Math.round(xOffset),
+            d: Math.round(xOffset) - m,
+            y: yValue
+          };
+          translatedData.push(coordinates);
+
+          index++;
+        }
+      }
+      i++;
+    }
+
+    return translatedData;
+  }
+
+  translateVelocityEffectData(path: Path, multiply: number) {
+    let translatedData = [];
+
+    return translatedData;
+  }
 
   getMultiplyFactor(effectUnits: any, motor: Motor, PR = null) {
     // let conversion = 1;
@@ -181,13 +313,10 @@ export class UploadService {
           if (yValue > 255) { yValue = 255; }
           if (yValue < 0) { yValue = 0; }
           let xOffset = m;
-          if (fileType === 'default') {
-            if (range[0] !== range[1]) {
-              xOffset = this.bezierService.closestForce(yValue, coordsForce);
-            }
-          } else {
-            xOffset = this.getForceStepOffset({ x: m, y: yValue }, multiply, stepDetails);
+          if (range[0] !== range[1]) {
+            xOffset = this.bezierService.closestForce(yValue, coordsForce);
           }
+
           const inList = translatedData.filter(d => d.x === m)[0];
           if (inList) {
             const inListIndex = translatedData.indexOf(inList);
@@ -210,29 +339,6 @@ export class UploadService {
     return translatedData;
   }
 
-  getForceStepOffset(coords: any, multiply: number, stepDetails: any) {
-
-    let xOffset: number;
-    for (const step of stepDetails) {
-      if (coords.x >= step.x[0] * multiply && coords.x < step.x[1] * multiply) {
-        // console.log(m, coordinates[m].x, step.x[0] * multiply, step.x[1] * multiply);
-        if (coords.x <= step.forcePos * multiply) {
-          if (step.direction[0] === '<') {
-            xOffset = step.x[0] * multiply;
-          } else if (step.direction[0] === '>') {
-            xOffset = step.forcePos * multiply;
-          }
-        } else if (coords.x > step.forcePos * multiply) {
-          if (step.direction[1] === '<') {
-            xOffset = step.forcePos * multiply;
-          } else if (step.direction[1] === '>') {
-            xOffset = step.x[1] * multiply;
-          }
-        }
-        return Math.round(xOffset);
-      }
-    }
-  }
 
   translateTimeBasedData(nodes: any, multiplyX: number, multiplyY: number) {
     const nodeList = [];

@@ -7,7 +7,6 @@ import { File } from '../models/file.model';
 import { BBoxService } from './bbox.service';
 import { DataService } from './data.service';
 import { BezierService } from './bezier.service';
-import { HistoryService } from './history.service';
 
 
 @Injectable()
@@ -17,8 +16,7 @@ export class DrawElementsService {
   public config: DrawingPlaneConfig;
 
   constructor(@Inject(DOCUMENT) private document: Document, private bezierService: BezierService,
-              public nodeService: NodeService, private bboxService: BBoxService, private dataService: DataService,
-              public historyService: HistoryService) {
+              public nodeService: NodeService, private bboxService: BBoxService, private dataService: DataService) {
               this.config = this.bboxService.config;
   }
 
@@ -45,7 +43,7 @@ export class DrawElementsService {
       const dragPath = d3
         .drag()
         .on('start', (d: any) => {
-          this.historyService.addToHistory();
+
           if (this.config.cursor.slug === 'sel' || this.config.cursor.slug === 'dsel' || this.config.cursor.slug === 'anchor' ||
               (!d3.event.sourceEvent.shiftKey && this.config.cursor.slug === 'thick')) {
 
@@ -237,7 +235,7 @@ export class DrawElementsService {
       .drag()
       .on('start', (d: any) => {
 
-        this.historyService.addToHistory();
+
 
         if ((this.config.cursor.slug === 'dsel') || (this.config.cursor.slug === 'anchor' && !d3.event.sourceEvent.altKey)) {
 
@@ -389,7 +387,7 @@ export class DrawElementsService {
 
     const dragForceNode = d3.drag()
       .on('start', (d: any) => {
-        this.historyService.addToHistory();
+
       })
       .on('drag', (d: any) => {
         if (this.config.cursor.slug === 'thick') {
@@ -557,7 +555,6 @@ export class DrawElementsService {
 
     const dragCP = d3
       .drag()
-      .on('start', (d: any) => { if (!this.config.zoomable)  { this.historyService.addToHistory(); } })
       .on('drag', (d: any) => {
 
         if ((this.config.cursor.slug === 'dsel' && type === 'pos') || (this.config.cursor.slug === 'thick' && type === 'angle') ||
@@ -779,5 +776,6 @@ export class DrawElementsService {
     }
     d3.selectAll('.cpSVG').raise();
     d3.selectAll('.nodesSVG').raise();
+
   }
 }

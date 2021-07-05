@@ -28,6 +28,8 @@ export class Rotation {
 //     this.visible = visible;
 //   }
 // }
+
+
 export class Scale {
   text: string = null;
   value: number = null;
@@ -70,7 +72,7 @@ export class Collection {
   name: string = 'Sequence-1';
   effects: Array<Details> = [];
   microcontroller: MicroController = null;
-  motorID = 1;
+  motorID: string = 'A';
   rotation = new Rotation();
   config = new Config();
   visualizationType = 'torque';

@@ -11,9 +11,18 @@ export class Color {
   }
 }
 
+export class RepeatInstance {
+  id: string = null;
+  x: number = null;
+  constructor(id: string, x: number) {
+    this.id = id;
+    this.x = x;
+  }
+}
+
 export class Repeat {
   instances = 1;
-  index = 0;
+  repeatInstances: Array<RepeatInstance> = [];
 }
 
 export class GridSettings {

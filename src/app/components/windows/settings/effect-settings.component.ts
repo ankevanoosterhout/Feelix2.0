@@ -145,8 +145,6 @@ export class EffectSettingsComponent implements OnInit {
         this.initialUnits = this.effect.grid.xUnit;
         this.prevUnits = this.effect.grid.xUnit;
       }
-      console.log(this.effect);
-
     } else {
       if (this.electronService.isElectronApp) {
         this.electronService.ipcRenderer.send('getNumberOfNewFiles');

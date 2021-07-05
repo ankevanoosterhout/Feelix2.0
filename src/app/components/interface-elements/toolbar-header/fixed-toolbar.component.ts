@@ -55,7 +55,7 @@ import { Unit } from 'src/app/models/effect.model';
       </div>
 
       <ul>
-        <li id="align-buttons" *ngIf="this.drawingService.config.svgDx > 1225">
+        <li id="align-buttons" *ngIf="this.drawingService.config.svgDx > 1200">
           <div>
             <ul class="align" id="distribute">
                 <li *ngFor="let item of distribute" (click)="selectItem(item.value);">
@@ -307,6 +307,7 @@ export class FixedToolbarComponent implements OnInit {
     this.dataService.dataObservable.subscribe(data => {
       this.toolbar = data;
     });
+
     if (this.drawingService.file.activeEffect) {
       this.dataService.color = this.drawingService.file.configuration.colors.filter(c => c.type === this.drawingService.file.activeEffect.type)[0].hash;
     }

@@ -160,7 +160,6 @@ export class MotorControlToolbarInsetComponent implements OnInit {
     this.config.motorControlToolbarOffset = 45;
     this.document.getElementById('toolbar-motor-control').classList.remove('hide');
     this.document.getElementById('motor-control-section').classList.remove('wide');
-
   }
 
   ngOnInit(): void {

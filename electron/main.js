@@ -496,7 +496,7 @@ function saveFileWidthDialog(file, overwrite, newId, ext) {
       if (filePath != null) {
         let fileName = filePath.replace(/^.*[\\\/]/, '');
         let extension = fileName.split(".");
-        if (extension[extension.length - 1] === 'feelix' || extension[extension.length - 1] === 'feelixio' ) {
+        if (extension[extension.length - 1] === 'feelix' || extension[extension.length - 1] === 'feelixio') {
           fileName = fileName.slice(0, -5);
         }
 
@@ -628,6 +628,8 @@ function drawTemporaryWindow(width, height, title, resizable, hash, details = nu
     }
     mainWindow.webContents.send('resetCursor');
   })
+
+  // tmpWindow.webContents.openDevTools();
 
   tmpWindow.on('close', function () {
     tmpWindow = null
@@ -895,7 +897,7 @@ function createFileSettingWindow(filepath) {
 }
 
 function createEffectSettingWindow(filepath) {
-  drawTemporaryWindow(400, 370, 'Effect Settings', false, filepath);
+  drawTemporaryWindow(400, 370, 'Effect Settings', true, filepath);
 }
 
 function createMotorSettingsWindow() {

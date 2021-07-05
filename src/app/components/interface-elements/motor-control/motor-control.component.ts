@@ -6,6 +6,8 @@ import { MicroController } from 'src/app/models/hardware.model';
 import { HardwareService } from 'src/app/services/hardware.service';
 import { MotorControlService } from 'src/app/services/motor-control.service';
 import { DOCUMENT } from '@angular/common';
+import { CloneService } from 'src/app/services/clone.service';
+import { UploadService } from 'src/app/services/upload.service';
 
 @Component({
     selector: 'app-motor-control',
@@ -47,7 +49,9 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
     { name: 'radians', PR: 2*Math.PI }
   ];
 
-  constructor(@Inject(DOCUMENT) private document: Document, public motorControlService: MotorControlService, public hardwareService: HardwareService) {
+  constructor(@Inject(DOCUMENT) private document: Document, public motorControlService: MotorControlService, public hardwareService: HardwareService,
+              private cloneService: CloneService, private uploadService: UploadService) {
+
     this.microcontrollers = this.hardwareService.getAllMicroControllers();
   }
 
@@ -61,7 +65,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
           microcontrollerCollection = microcontroller;
         }
       }
-      this.motorControlService.drawCollections();
+      // this.motorControlService.drawCollections();
     });
   }
 
@@ -84,7 +88,12 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
     this.motorControlService.saveCollection(collection);
   }
 
-  upload(collectionID: string) {}
+  upload(collection: Collection) {
+    const convertedData = this.uploadService.renderCollection(collection, this.motorControlService.file.effects);
+    console.log(convertedData);
+  }
+
+  play(collectionID: string) {}
 
   loop(collectionID: string) {
     const collection = this.motorControlService.file.collections.filter(c => c.id === collectionID)[0];
@@ -93,10 +102,11 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
       collection.rotation.start = 0;
       collection.rotation.end = 360 * (collection.rotation.units.PR / 360);
     }
+    this.motorControlService.drawCollection(collection);
     this.motorControlService.updateCollection(collection);
   }
 
-  play(collectionID: string) {}
+
 
   delete(collection: Collection) {
     this.motorControlService.deleteCollection(collection);
@@ -115,6 +125,9 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
     for (const effect of collection.effects) {
       effect.position.x *= multiply;
       effect.position.width *= multiply;
+      for (const instance of effect.repeat.repeatInstances) {
+        instance.x *= multiply;
+      }
     }
     this.motorControlService.updateCollection(collection);
   }
@@ -190,10 +203,10 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
     this.motorControlService.config.tmpEffect = null;
   }
 
-  public resetDraggingListItemVariable() {
-    this.draggingListItem = null;
-    this.deselectAllRowItemsDrop();
-  }
+  // public resetDraggingListItemVariable() {
+  //   this.draggingListItem = null;
+  //   this.deselectAllRowItemsDrop();
+  // }
 
 
   public drop(e: any, el: any) {
@@ -217,7 +230,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
             effectDetails.position.bottom = tmpEffect.size.bottom;
 
             collection.effects.push(effectDetails);
-            this.motorControlService.drawCollection(collection);
+            this.motorControlService.drawCollectionEffects(collection);
           }
         }
       }
@@ -226,75 +239,21 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
     }
   }
 
-  public dragListItem(e: any) {
-    if (!this.motorControlService.getTmpEffect()) {
-      const draggableItemID = e.target.id.substring(4);
-      const collectionItem = this.motorControlService.file.collections.filter(c => c.id === draggableItemID)[0];
-      if (collectionItem) {
-        const collectionItemIndex = this.motorControlService.file.collections.indexOf(collectionItem);
-        if (collectionItemIndex > -1) {
-          this.draggingListItem = collectionItem;
-        }
-      }
+  moveCollection(id: string, direction: number) {
+    const collectionObject = this.motorControlService.file.collections.filter(c => c.id === id)[0];
+    if (collectionObject) {
+      const index = this.motorControlService.file.collections.indexOf(collectionObject);
+      const collectionCopy = this.cloneService.deepClone(collectionObject);
+      let newIndex = direction < 0 ? index - 1 : index + 1;
+      if (newIndex < 0) { newIndex = this.motorControlService.file.collections.length - 1; }
+      if (newIndex >= this.motorControlService.file.collections.length) { newIndex = 0; }
+      this.motorControlService.file.collections.splice(index, 1);
+      this.motorControlService.file.collections.splice(newIndex, 0, collectionCopy);
+
+      setTimeout(() => {
+        this.motorControlService.drawCollections(this.motorControlService.file.collections);
+      }, 50);
     }
   }
 
-  public allowDropListItem(e: any, el: any) {
-    e.preventDefault();
-    if (this.draggingListItem !== null && !this.motorControlService.getTmpEffect()) {
-      let className = e.target.classList[0];
-      if (e.target.id !== null && (className === 'motor-control-rows' || className === 'column-visualization' || className === 'row' || className === 'collection')) {
-        const targetID = e.target.id.substring(4);
-        const collectionItem = this.motorControlService.file.collections.filter(c => c.id === targetID)[0];
-        if (collectionItem) {
-          this.deselectAllRowItemsDrop(collectionItem.id);
-        }
-      }
-    }
-  }
-
-  public dragendListItem(e: any) {
-    e.preventDefault();
-    if (this.draggingListItem !== null && !this.motorControlService.getTmpEffect()) {
-      this.deselectAllRowItemsDrop();
-    }
-  }
-
-  public reorderList(e: any, el: any) {
-    e.preventDefault();
-    if (this.draggingListItem !== null && !this.motorControlService.getTmpEffect()) {
-      let className = e.target.classList[0];
-
-      if (e.target.id !== null && (className === 'motor-control-rows' || className === 'column-visualization' || className === 'row' || className === 'collection')) {
-        const targetID = e.target.id.substring(4);
-        const collectionItem = this.motorControlService.file.collections.filter(c => c.id === targetID)[0];
-        const dragItem = this.motorControlService.file.collections.filter(c => c.id === this.draggingListItem.id)[0];
-
-        if (collectionItem && dragItem && collectionItem.id !== dragItem.id) {
-          this.deselectAllRowItemsDrop();
-          const dragItemIndex = this.motorControlService.file.collections.indexOf(this.draggingListItem);
-          if (dragItemIndex > -1) {
-            this.motorControlService.file.collections.splice(dragItemIndex, 1);
-            const collectionIndex = this.motorControlService.file.collections.indexOf(collectionItem);
-            if (collectionIndex > -1) {
-              this.motorControlService.file.collections.splice(collectionIndex, 0, this.draggingListItem);
-              this.motorControlService.saveFile(this.motorControlService.file);
-            }
-          }
-        }
-      }
-      this.draggingListItem = null;
-    }
-  }
-
-  deselectAllRowItemsDrop(id = null) {
-    const rowElements = (this.document.getElementsByClassName('motor-control-rows') as HTMLCollection);
-    Array.prototype.filter.call(rowElements, (row: HTMLElement) => {
-      if (row.id.substring(4) === id) {
-        row.classList.add('active');
-      } else if (row.classList.contains('active')) {
-        row.classList.remove('active')
-      }
-    });
-  }
 }

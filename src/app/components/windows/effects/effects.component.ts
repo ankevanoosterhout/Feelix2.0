@@ -5,10 +5,10 @@ import { VariableService } from '../../../services/variable.service';
 import { EffectLibraryService } from 'src/app/services/effect-library.service';
 import { EffectVisualizationService } from 'src/app/services/effect-visualization.service';
 import { DrawingService } from 'src/app/services/drawing.service';
-import { CollectionService } from 'src/app/services/collection.service';
 import { FileService } from 'src/app/services/file.service';
-import { Effect } from 'src/app/models/effect.model';
+import { Effect, RepeatInstance } from 'src/app/models/effect.model';
 import { v4 as uuid } from 'uuid';
+import { CloneService } from 'src/app/services/clone.service';
 
 @Component({
     selector: 'app-effects',
@@ -83,7 +83,7 @@ export class EffectsComponent implements OnInit, AfterViewInit {
   constructor(@Inject(DOCUMENT) private document: Document, private electronService: ElectronService,
               private variableService: VariableService, public effectLibraryService: EffectLibraryService,
               private effectVisualizationService: EffectVisualizationService, public drawingService: DrawingService,
-              private fileService: FileService, private collectionService: CollectionService) {
+              private fileService: FileService, private cloneService: CloneService) {
 
 
     this.drawingService.drawEffectsInLibrary.subscribe(res => {
@@ -185,6 +185,7 @@ export class EffectsComponent implements OnInit, AfterViewInit {
   }
 
   drawFileEffects() {
+    // console.log(this.drawingService.file.effects);
     setTimeout(() => { this.drawEffects(this.drawingService.file.effects); }, 150);
   }
 
@@ -199,7 +200,9 @@ export class EffectsComponent implements OnInit, AfterViewInit {
   }
 
   updateCollectionEffect() {
-    this.fileService.updateCollectionEffect(this.drawingService.file.activeCollection, this.drawingService.file.activeCollectionEffect);
+    this.fileService.updateCollectionEffect(
+      this.drawingService.file.activeCollection,
+      this.drawingService.file.activeCollectionEffect);
   }
 
 
@@ -249,7 +252,7 @@ export class EffectsComponent implements OnInit, AfterViewInit {
     const item = this.effectLibraryService.getEffect(libEffectID);
 
     if (item) {
-      const copyItem = JSON.parse(JSON.stringify(item));
+      const copyItem = this.cloneService.deepClone(item);
       copyItem.effect.name += '-copy';
       copyItem.effect.id = uuid();
       copyItem.effect.date.created = new Date().getTime();
@@ -331,7 +334,7 @@ export class EffectsComponent implements OnInit, AfterViewInit {
     this.updateCollectionEffect();
   }
 
-  showCompleteValue(id: string) {
+  showCompleteValue(id = null) {
     if (id === 'position-x') {
       (this.document.getElementById(id) as HTMLInputElement).value = this.drawingService.file.activeCollectionEffect.position.x.toString();
     } else if (id === 'position-y') {
@@ -348,13 +351,46 @@ export class EffectsComponent implements OnInit, AfterViewInit {
     this.drawingService.setInputFieldsActive(true);
   }
 
-  hideCompleteValue(id: string) {
-    let value = (this.document.getElementById(id) as HTMLInputElement).value;
-    let decimals = this.countDecimals(parseFloat(value));
-    if (decimals > 3) { decimals = 3; }
-    if (decimals < 2) { decimals = 2; }
-    (this.document.getElementById(id) as HTMLInputElement).value = parseFloat(value).toFixed(decimals);
+  hideCompleteValue(id = null) {
+    if (id) {
+      let value = (this.document.getElementById(id) as HTMLInputElement).value;
+      let decimals = this.countDecimals(parseFloat(value));
+      if (decimals > 3) { decimals = 3; }
+      if (decimals < 2) { decimals = 2; }
+      (this.document.getElementById(id) as HTMLInputElement).value = parseFloat(value).toFixed(decimals);
+      }
     this.drawingService.setInputFieldsActive(false);
+  }
+
+  updateEffectRepeat() {
+    const newN = this.drawingService.file.activeCollectionEffect.repeat.instances;
+    const oldN = this.drawingService.file.activeCollectionEffect.repeat.repeatInstances.length + 1;
+    if (newN > 0) {
+      const difference = newN - oldN;
+      if (difference > 0) {
+        for (let i = oldN; i < difference + oldN; i++) {
+          const position = this.drawingService.file.activeCollectionEffect.position.x + (this.drawingService.file.activeCollectionEffect.position.width * i);
+          const newInstance = new RepeatInstance(uuid(), position);
+          this.drawingService.file.activeCollectionEffect.repeat.repeatInstances.push(newInstance);
+        }
+      } else if (difference < 0) {
+        for (let b = difference; b < 0; b++) {
+          if (this.drawingService.file.activeCollectionEffect.repeat.repeatInstances.length > 0) {
+            this.drawingService.file.activeCollectionEffect.repeat.repeatInstances.pop();
+          }
+        }
+      }
+    } else {
+      this.drawingService.file.activeCollectionEffect.repeat.instances = oldN;
+    }
+    this.updateCollectionEffect();
+  }
+
+  updateRepeatInstanceXValue(id: string) {
+    const value = (this.document.getElementById('r-' + id) as HTMLInputElement).value;
+    this.drawingService.file.activeCollectionEffect.repeat.repeatInstances.filter(r => r.id === id)[0].x = parseFloat(value);
+    console.log(this.drawingService.file.activeCollectionEffect.repeat.repeatInstances);
+    this.updateCollectionEffect();
   }
 
   countDecimals(value: number) {

@@ -1,5 +1,6 @@
 import { AfterViewInit, Component, HostListener } from '@angular/core';
 import { DrawingService } from '../services/drawing.service';
+import { MotorControlService } from '../services/motor-control.service';
 
 @Component({
     selector: 'app-main-page',
@@ -112,10 +113,8 @@ export class MainPageComponent implements AfterViewInit {
     page = 'main';
     updateHorizontalScreenDivision = false;
     updateVerticalScreenDivision = false;
-    horizontalDivision: number;
-    verticalDivision: number;
 
-    constructor(public drawingService: DrawingService) {}
+    constructor(public drawingService: DrawingService, private motorControlService: MotorControlService) {}
 
     @HostListener('document:mousemove', ['$event'])
     onMouseMove(e: MouseEvent) {
@@ -130,7 +129,7 @@ export class MainPageComponent implements AfterViewInit {
     @HostListener('document:mouseup', ['$event'])
     onMouseUp(e: MouseEvent) {
       if (this.updateHorizontalScreenDivision || this.updateVerticalScreenDivision) {
-        this.drawingService.saveFile(this.drawingService.file);
+        // this.drawingService.saveFile(this.drawingService.file);
         this.updateHorizontalScreenDivision = false;
         this.updateVerticalScreenDivision = false;
       }
@@ -142,6 +141,7 @@ export class MainPageComponent implements AfterViewInit {
         let fullHeight = window.innerHeight - 40;
         let division = 100 / (fullHeight / yValue);
         this.drawingService.updateResize(division, 'horizontal');
+        this.motorControlService.onResize();
         this.drawingService.redraw();
       }
     }
@@ -150,6 +150,7 @@ export class MainPageComponent implements AfterViewInit {
       if (coord <= window.innerWidth - 18) {
         let division = 100 / (window.innerWidth / coord);
         this.drawingService.updateResize(division, 'vertical');
+        this.motorControlService.onResize();
         this.drawingService.redraw();
       }
     }

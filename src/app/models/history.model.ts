@@ -1,33 +1,30 @@
-import { Path } from './node.model';
-
-export class HistoryElement {
-  nodes: Array<Path> = [];
+export class HistoryEffects {
+  id: string = null;
   effects: Array<any> = [];
-  timeEffects: Array<any> = [];
-  frames: any = null;
-  moduleTabs: Array<any> = [];
-  layers = [];
-  guides = [];
+  index = 0;
 
-  constructor(nodes: Array<Path>) {
-    this.nodes = nodes;
+  constructor(id: string) {
+    this.id = id;
   }
 }
 
-export class HistoryList {
-  fileId: string = null;
-  list: Array<HistoryElement> = [];
-  index = 0;
 
-  constructor(fileId: string, list: Array<HistoryElement>) {
+
+export class HistoryListElement {
+  fileId: string = null;
+  list: Array<HistoryEffects> = [];
+
+  constructor(fileId: string, list: Array<HistoryEffects>) {
     this.fileId = fileId;
     this.list = list;
   }
 }
 
+
 export class HistoryConfig {
-  history: Array<HistoryList> = [];
+  history: Array<HistoryListElement> = [];
 
   constructor() {}
 }
+
 

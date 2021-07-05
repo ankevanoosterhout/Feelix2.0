@@ -18,6 +18,8 @@ import { ExportDialogComponent } from 'src/app/components/windows/export-dialog.
 import { EffectLibraryService } from 'src/app/services/effect-library.service';
 import { MotorControlService } from 'src/app/services/motor-control.service';
 import { HardwareService } from 'src/app/services/hardware.service';
+import { CloneService } from 'src/app/services/clone.service';
+import { effectTypeColor } from 'src/app/models/configuration.model';
 
 @Component({
   selector: 'app-drawing-plane',
@@ -38,8 +40,8 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
   constructor(@Inject(DOCUMENT) private document: Document, private electronService: ElectronService,
               public nodeService: NodeService, private fileService: FileService, private dataService: DataService,
               private drawingService: DrawingService, private drawElements: DrawElementsService, private bboxService: BBoxService,
-              private historyService: HistoryService, private effectLibraryService: EffectLibraryService, public dialog: MatDialog,
-              private motorControlService: MotorControlService, private hardwareService: HardwareService) {
+              private effectLibraryService: EffectLibraryService, public dialog: MatDialog, private cloneService: CloneService,
+              private motorControlService: MotorControlService, private hardwareService: HardwareService, private historyService: HistoryService) {
 
     this.config = this.drawingService.config;
 
@@ -53,6 +55,10 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
 
     this.drawingService.align.subscribe(res => {
       this.alignSelectedItems(res);
+    });
+
+    this.historyService.reloadFileData.subscribe(res => {
+      this.reloadFileData(res);
     });
 
 
@@ -106,8 +112,8 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
     });
 
     this.electronService.ipcRenderer.on('transform', (event: Event, data: any) => {
-      this.historyService.addToHistory();
-      console.log(data.horizontal, data.vertical);
+
+      // console.log(data.horizontal, data.vertical);
       this.nodeService.translateSelectedPaths(data);
       this.drawFileData();
 
@@ -119,7 +125,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
     this.electronService.ipcRenderer.on('grid:toggle', (event: Event, visible: boolean) => {
       this.file.activeEffect.grid.visible = visible;
       if (!visible) { this.file.activeEffect.grid.snap = false; }
-      console.log(this.file.activeEffect.grid);
+      // console.log(this.file.activeEffect.grid);
       this.fileService.updateEffect(this.file.activeEffect);
     });
 
@@ -129,12 +135,12 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
     });
 
     this.electronService.ipcRenderer.on('reflect:horizontal', (event: Event, snap: boolean) => {
-      this.historyService.addToHistory();
+
       this.bboxService.mirrorPath('horizontal');
     });
 
     this.electronService.ipcRenderer.on('reflect:vertical', (event: Event, snap: boolean) => {
-      this.historyService.addToHistory();
+
       this.bboxService.mirrorPath('vertical');
     });
 
@@ -148,17 +154,6 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
       effect.path = this.nodeService.getAll();
       this.effectLibraryService.addEffect(effect);
     });
-
-    this.electronService.ipcRenderer.on('undo', (event: Event) => {
-      const data = this.historyService.undo();
-      this.reloadFileData(data);
-    });
-
-    this.electronService.ipcRenderer.on('redo', (event: Event) => {
-      const data = this.historyService.redo();
-      this.reloadFileData(data);
-    });
-
 
     this.electronService.ipcRenderer.on('clearCache', (event: Event) => {
       this.showMessage('Are you sure you want to clear all effects from the library?', 'verification', 'clearCache');
@@ -202,8 +197,10 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
     this.file = this.fileService.getActiveFile();
     this.file.configuration.rendered = false;
     this.setFilesInServices();
+    // console.log(this.file.activeEffect);
     if (this.file.activeEffect) {
       this.nodeService.loadFile(this.file.activeEffect.paths);
+      this.dataService.setColor(this.file.configuration.colors.filter(c => c.type === this.file.activeEffect.type)[0].hash);
       this.nodeService.setGridLayer(this.file.activeEffect.grid);
     } else {
       this.nodeService.reset();
@@ -215,25 +212,30 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
 
     this.fileService.fileObservable.subscribe(files => {
       const newFile = files.filter(f => f.isActive)[0];
-      if (newFile._id !== this.file._id) {
-        this.drawingService.updateResize(newFile.configuration.horizontalScreenDivision, 'horizontal');
-        this.drawingService.updateResize(newFile.configuration.verticalScreenDivision, 'vertical');
-        this.motorControlService.updateViewSettings(newFile);
-      }
+      const differentFile = newFile._id !== this.file._id ? true : false;
+
       if (newFile.activeEffect) {
-        if ((this.file.activeEffect && newFile.activeEffect.id !== this.file.activeEffect.id) || this.file.activeEffect === null) {
+        if ((this.file.activeEffect !== null && newFile.activeEffect.id !== this.file.activeEffect.id) || this.file.activeEffect === null) {
           this.loadEffectData(newFile);
         }
+        this.dataService.setColor(newFile.configuration.colors.filter(c => c.type === newFile.activeEffect.type)[0].hash);
       } else {
         this.nodeService.reset();
       }
       this.file = newFile;
       this.setFilesInServices();
 
+      if (differentFile) {
+        this.drawingService.updateResize(newFile.configuration.horizontalScreenDivision, 'horizontal');
+        this.drawingService.updateResize(newFile.configuration.verticalScreenDivision, 'vertical');
+        this.motorControlService.updateViewSettings(newFile);
+      } else {
+        setTimeout(() => {
+          this.motorControlService.updateCollections(newFile.collections);
+        }, 50);
+      }
       this.drawingService.redraw();
-      setTimeout(() => {
-        this.motorControlService.drawCollections(this.file.collections);
-      }, 100);
+
     });
   }
 
@@ -247,8 +249,6 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
         lock: newFile.activeEffect.grid.lockGuides
       });
     }
-    this.dataService.setColor(this.file.configuration.colors.filter(c => c.type === this.file.activeEffect.type)[0].hash);
-    (this.document.getElementById('color-picker') as HTMLInputElement).value = this.dataService.color;
     this.nodeService.setGridLayer(newFile.activeEffect.grid);
   }
 
@@ -273,19 +273,28 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
 
 
   reloadFileData(data: any) {
-    if (data.file) {
+    if (data && data.file) {
+      this.file = this.cloneService.deepClone(data.file);
       if (data.file.activeEffect) {
-        this.nodeService.loadFile(data.file.activeEffect.paths);
+        this.nodeService.loadFile(this.file.activeEffect.paths);
+        this.fileService.updateEffect(this.file.activeEffect, false);
       }
-      this.fileService.update(data.file);
-    } else {
-      if (data.index) { data.index = false; }
+      if (data.file.activeCollection) {
+        this.fileService.updateCollection(this.file.activeCollection);
+        if (data.file.activeCollectionEffect) {
+          this.fileService.updateCollectionEffect(this.file.activeCollection, this.file.activeCollectionEffect);
+        }
+      }
+
+    } else if (data) {
+      console.log(data.type, data.enable);
+      // this.electronService.ipcRenderer.send(data.type, data.enable);
     }
   }
 
 
   alignSelectedItems(direction: string) {
-    this.historyService.addToHistory();
+
     this.bboxService.align(direction);
   }
 
@@ -370,7 +379,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
               (coords.y > this.config.editBounds.yMin && coords.y < this.config.editBounds.yMax)) {
 
             if (this.config.cursor.slug === 'pen') {
-              this.historyService.addToHistory();
+
               this.electronService.ipcRenderer.send('disable', { type: 0, enabled: true });
             }
 
@@ -465,7 +474,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
 
       } else if (this.config.cursor.slug === 'brush') {
         this.smoothenBrushPath();
-        this.historyService.addToHistory();
+
       }
       if (this.config.newNode) {
         this.config.newNode = null;
@@ -507,7 +516,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
       } else if (key === 'ArrowUp' || key === 'ArrowDown' || key === 'ArrowLeft' || key === 'ArrowRight' ) {
         if (!this.nodeService.inputFieldsActive && this.config.activeInput === null) {
           if (this.nodeService.selectedPaths.length > 0 || this.nodeService.selectedNodes.length > 0) {
-            this.historyService.addToHistory();
+
 
             let inc = { x: 1, y: 1 };
             if (this.file.activeEffect.grid.snap && this.file.activeEffect.grid.visible) {
@@ -555,7 +564,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
 
         if (!this.config.clipboard.empty) {
           this.config.clipboard.empty = true;
-          this.historyService.addToHistory();
+
           // this.electronService.ipcRenderer.send('disable', { type: 0, enabled: true });
           this.nodeService.pasteSelected(this.config.cursor.slug, { x: 0, y: 0 }, e.shiftKey);
           const paths = this.nodeService.getAll();
@@ -603,7 +612,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
     } else if (key === 'Delete' || key === 'Backspace') {
 
       if (!this.nodeService.inputFieldsActive && this.config.activeInput === null) {
-        this.historyService.addToHistory();
+
 
         if (this.file.activeCollectionEffect !== null) {
           this.motorControlService.deleteCollectionEffect(this.file.activeCollectionEffect.id);
@@ -743,6 +752,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
     }
 
     if (this.file.configuration.libraryViewSettings !== 'list') {
+
       this.drawingService.drawEffects();
     }
   }

@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { Toolbar } from '../models/data.model';
 import { Subject } from 'rxjs';
 import { DrawingPlaneConfig } from '../models/drawing-plane-config.model';
+import { Color } from '../models/colors.model';
 
 @Injectable()
 export class DataService {
@@ -9,6 +10,7 @@ export class DataService {
   toolbar = new Toolbar();
   color: string;
   public dataObservable = new Subject<Toolbar>();
+  // public colorObservable = new Subject<any>();
   public config: DrawingPlaneConfig;
 
   box: { left: number; top: number; width: number; height: number };
@@ -27,6 +29,7 @@ export class DataService {
 
   setColor(color: string) {
     this.color = color;
+    // this.colorObservable.next(this.color);
   }
 
   updateReferencePoint(point: any) {

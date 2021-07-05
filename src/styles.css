@@ -11,6 +11,10 @@ html, body {
 
 /* general window style */
 
+.no-pointer-events {
+  pointer-events: none;
+}
+
 .disable-scroll-body {
   overflow-x:hidden!important;
   overflow-y:hidden!important;
@@ -709,4 +713,11 @@ button.disabled:focus {
   border: 1px solid #777;
   color: #777;
   margin-right: 5px;
+}
+
+.question-mark.inline {
+  vertical-align: top;
+  top:0;
+  margin-top: -5px;
+  margin-left: 10px;
 }

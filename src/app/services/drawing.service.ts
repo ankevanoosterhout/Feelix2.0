@@ -24,7 +24,7 @@ export class DrawingService {
   drawFile: Subject<any> = new Subject();
   showMessage: Subject<any> = new Subject();
   align: Subject<any> = new Subject();
-
+  updateResizeMotorControlSection: Subject<any> = new Subject();
   drawEffectsInLibrary: Subject<any> = new Subject();
 
   constructor(@Inject(DOCUMENT) private document: Document, public nodeService: NodeService,
@@ -73,7 +73,7 @@ export class DrawingService {
       .attr('width', this.config.svgDx)
       .attr('height', this.config.svgDy);
 
-    if (this.file.activeEffect !== null) {
+    if (this.file.configuration.openTabs.length > 0) {
 
       const innerContainer = this.config.svg.append('rect')
         .attr('width', this.nodeService.scale.scaleX(this.config.editBounds.xMax) -
@@ -149,6 +149,7 @@ export class DrawingService {
   public resetVariables() {
     this.config.svgDx = window.innerWidth;
     this.config.svgDy = window.innerHeight * (100 - this.file.configuration.horizontalScreenDivision)/100 - 18;
+    if (this.config.svgDy < 250) { this.config.svgDy = 250; }
     this.config.margin = {
       top: this.config.svgDy * 0.18 + 64, //45
       right: this.config.rulerWidth,
@@ -160,7 +161,7 @@ export class DrawingService {
     this.config.chartDx = this.config.svgDx - this.config.margin.left - this.config.margin.right;
     this.config.chartDy = this.config.svgDy - this.config.margin.bottom - this.config.margin.top;
     this.getSliderDrawplanePosition();
-    this.setZoom();
+    // this.setZoom();
 
   }
 
@@ -465,7 +466,8 @@ export class DrawingService {
       }
     }
     this.updateResize(division, 'vertical');
-    this.fileService.update(this.file);
+    this.updateResizeMotorControlSection.next();
+    // this.fileService.update(this.file);
   }
 
   toggleDrawPlane() {
@@ -482,7 +484,8 @@ export class DrawingService {
       division = (100 / window.innerHeight) * (window.innerHeight - 38);
     }
     this.updateResize(division, 'horizontal');
-    this.fileService.update(this.file);
+    this.updateResizeMotorControlSection.next();
+    // this.fileService.update(this.file);
   }
 
   setDivToScreenDivision() {
@@ -515,6 +518,8 @@ export class DrawingService {
         }
       }
       this.config.svgDy = window.innerHeight * (100 - this.file.configuration.horizontalScreenDivision)/100 - 20;
+      if (this.config.svgDy < 250) { this.config.svgDy = 250; }
+
     } else if (orientation === 'vertical') {
       this.document.getElementById('motor-control').style.width = (window.innerWidth * division / 100) + 'px';
       this.document.getElementById('library').style.width = ((window.innerWidth * (100-division) / 100) - 1) + 'px';
@@ -533,7 +538,6 @@ export class DrawingService {
 
 
   saveEffect() {
-    console.log(this.file.activeEffect);
     this.fileService.updateEffect(this.file.activeEffect);
   }
 
@@ -780,7 +784,7 @@ export class DrawingService {
 
   rulerFunctions(e: MouseEvent) {
 
-    // this.drawCursorPosition(e.clientX, e.clientY);
+    this.drawCursorPosition(e.clientX, e.clientY);
 
     if (this.config.mouseDown.y !== null && this.config.mouseDown.x !== null) {
 

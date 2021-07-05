@@ -62,6 +62,7 @@ import { RenderInfoComponent } from './components/interface-elements/toolbar-hea
 import { FeelixioRenderService } from './services/feelixio-render.service';
 import { FeelixioValidationService } from './services/feelixio-validation.service';
 import { ExportDialogComponent } from './components/windows/export-dialog.component';
+import { CloneService } from './services/clone.service';
 
 @NgModule({
   declarations: [
@@ -131,6 +132,7 @@ import { ExportDialogComponent } from './components/windows/export-dialog.compon
     FeelixioValidationService,
     MotorControlService,
     CollectionService,
+    CloneService
   ],
   bootstrap: [
     AppComponent

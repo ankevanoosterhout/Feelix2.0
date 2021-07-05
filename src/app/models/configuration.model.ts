@@ -29,7 +29,6 @@ export class effectTypeColor {
 }
 
 export class Configuration {
-  activeEffect: any = null;
   horizontalScreenDivision = 35;
   verticalScreenDivision = 70;
   collectionDisplay = 'large';
