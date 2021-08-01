@@ -8,6 +8,7 @@ import { MotorControlService } from 'src/app/services/motor-control.service';
 import { DOCUMENT } from '@angular/common';
 import { CloneService } from 'src/app/services/clone.service';
 import { UploadService } from 'src/app/services/upload.service';
+import { ElectronService } from 'ngx-electron';
 
 @Component({
     selector: 'app-motor-control',
@@ -50,7 +51,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
   ];
 
   constructor(@Inject(DOCUMENT) private document: Document, public motorControlService: MotorControlService, public hardwareService: HardwareService,
-              private cloneService: CloneService, private uploadService: UploadService) {
+              private cloneService: CloneService, private uploadService: UploadService, private electronService: ElectronService) {
 
     this.microcontrollers = this.hardwareService.getAllMicroControllers();
   }
@@ -88,9 +89,27 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
     this.motorControlService.saveCollection(collection);
   }
 
+  render(collection: Collection) {
+    if (collection.effectDataList.length > 0) {
+      collection.effectDataList = [];
+      collection.overlappingData = [];
+      collection.renderedData = [];
+    } else {
+      this.uploadService.renderCollection(collection, this.motorControlService.file.effects);
+    }
+    this.motorControlService.updateCollection(collection);
+  }
+
   upload(collection: Collection) {
-    const convertedData = this.uploadService.renderCollection(collection, this.motorControlService.file.effects);
-    console.log(convertedData);
+    if (collection.effectDataList.length > 0) {
+      const microcontroller = this.hardwareService.getMicroControllerByCOM(collection.microcontroller.serialPort.path);
+      const uploadModel = this.uploadService.createUploadModel(collection, microcontroller);
+      console.log(uploadModel, microcontroller);
+
+      this.electronService.ipcRenderer.send('upload', uploadModel);
+    } else {
+      this.render(collection);
+    }
   }
 
   play(collectionID: string) {}
@@ -177,17 +196,20 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
       if (tmpEffect && tmpEffect.paths.length > 0) {
 
         const collection = this.getCollectionFromClassName(id);
-        if (collection && tmpEffect) {
-          const multiply = collection.rotation.units.PR / tmpEffect.grid.xUnit.PR;
-          const effectDetails = new Details(uuid(), tmpEffect.id, tmpEffect.name + '-' + collection.name);
-          effectDetails.position.width = tmpEffect.size.width * multiply;
-          effectDetails.position.x = collection.config.newXscale.invert(e.offsetX) - (effectDetails.position.width / 2);
-          effectDetails.position.height = tmpEffect.size.height;
-          effectDetails.position.y = 0;
-          effectDetails.position.top = tmpEffect.size.top;
-          effectDetails.position.bottom = tmpEffect.size.bottom;
+        const dropEffect = tmpEffect.storedIn === 'library' && this.motorControlService.file.effects.filter(e => e.id === tmpEffect.id).length > 0 ?
+          this.motorControlService.file.effects.filter(e => e.id === tmpEffect.id)[0] : tmpEffect;
 
-          this.motorControlService.drawTmpEffect(effectDetails, collection, tmpEffect);
+        if (collection && tmpEffect) {
+          const multiply = collection.rotation.units.PR / dropEffect.grid.xUnit.PR;
+          const effectDetails = new Details(uuid(), dropEffect.id, dropEffect.name + '-' + collection.name);
+          effectDetails.position.width = dropEffect.size.width * multiply;
+          effectDetails.position.x = collection.config.newXscale.invert(e.offsetX) - (effectDetails.position.width / 2);
+          effectDetails.position.height = dropEffect.size.height;
+          effectDetails.position.y = 0;
+          effectDetails.position.top = dropEffect.size.top;
+          effectDetails.position.bottom = dropEffect.size.bottom;
+
+          this.motorControlService.drawTmpEffect(effectDetails, collection, dropEffect);
         }
       }
     }
@@ -196,17 +218,11 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
   public removeTmpEffect(e: any, el: any) {
     e.preventDefault();
     this.motorControlService.deleteTmpEffect();
-
   }
 
   public resetTmpEffect() {
     this.motorControlService.config.tmpEffect = null;
   }
-
-  // public resetDraggingListItemVariable() {
-  //   this.draggingListItem = null;
-  //   this.deselectAllRowItemsDrop();
-  // }
 
 
   public drop(e: any, el: any) {
@@ -218,18 +234,32 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
 
         if (id) {
           const collection = this.getCollectionFromClassName(id);
-          const multiply = collection.rotation.units.PR / tmpEffect.grid.xUnit.PR;
+          const dropEffect = tmpEffect.storedIn === 'library' && this.motorControlService.file.effects.filter(e => e.id === tmpEffect.id).length > 0 ?
+            this.motorControlService.file.effects.filter(e => e.id === tmpEffect.id)[0] : tmpEffect;
+
+          const multiply = collection.rotation.units.PR / dropEffect.grid.xUnit.PR;
 
           if (collection && tmpEffect) {
-            const effectDetails = new Details(uuid(), tmpEffect.id, tmpEffect.name + '-' + collection.name);
-            effectDetails.position.width = tmpEffect.size.width * multiply;
+            const effectDetails = new Details(uuid(), dropEffect.id, dropEffect.name + '-' + collection.name);
+            effectDetails.position.width = dropEffect.size.width * multiply;
             effectDetails.position.x = collection.config.newXscale.invert(e.offsetX) - (effectDetails.position.width / 2);
-            effectDetails.position.height = tmpEffect.size.height;
+            effectDetails.position.height = dropEffect.size.height;
             effectDetails.position.y = 0;
-            effectDetails.position.top = tmpEffect.size.top;
-            effectDetails.position.bottom = tmpEffect.size.bottom;
+            effectDetails.position.top = dropEffect.size.top;
+            effectDetails.position.bottom = dropEffect.size.bottom;
 
             collection.effects.push(effectDetails);
+
+            if (tmpEffect.storedIn === 'library' && this.motorControlService.file.effects.filter(e => e.id === tmpEffect.id).length === 0) {
+              const copyTmpEffect = this.cloneService.deepClone(tmpEffect);
+              copyTmpEffect.storedIn = 'file';
+              copyTmpEffect.date.modified = new Date().getTime();
+              copyTmpEffect.id === uuid();
+              const instances = this.motorControlService.file.effects.filter(e => e.name.includes(copyTmpEffect.name + '-copy') && e.date.created === copyTmpEffect.date.created).length;
+              copyTmpEffect.name += instances > 0 ? '-copy-' + instances : '-copy';
+
+              this.motorControlService.file.effects.push(copyTmpEffect);
+            }
             this.motorControlService.drawCollectionEffects(collection);
           }
         }

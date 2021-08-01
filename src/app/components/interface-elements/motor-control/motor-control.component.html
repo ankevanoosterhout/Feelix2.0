@@ -28,7 +28,8 @@
 
           <div id="buttonsMotorControl" *ngIf="this.motorControlService.width > 350 && collection.microcontroller">
             <ul class="dropdown-buttons">
-              <li id="upload" (click)="upload(collection)"><img src="./assets/icons/buttons/upload.svg" title="upload"></li>
+              <li id="render" [ngClass]="{ active: collection.effectDataList.length > 0 }" (click)="render(collection)" title="render"><img src="./assets/icons/buttons/refresh.svg" title="render"></li>
+              <li id="upload" (click)="upload(collection)" title="upload"><img src="./assets/icons/buttons/upload.svg" title="upload"></li>
               <li id="play"  [ngClass]="{ disabled: !collection.microcontroller.connected, active: collection.microcontroller.playing }" (click)="play(collection.id)">
                 <span *ngIf="!collection.microcontroller.playing" title="run"><div class="play-arrow"></div></span>
                 <span *ngIf="collection.microcontroller.playing" title="stop"><div class="stop-square"></div></span>

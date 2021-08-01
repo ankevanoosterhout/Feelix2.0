@@ -2,7 +2,6 @@ import { Component, OnInit, Inject, AfterViewInit } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { EffectLibraryService } from 'src/app/services/effect-library.service';
 import { EffectVisualizationService } from 'src/app/services/effect-visualization.service';
-import { VariableService } from 'src/app/services/variable.service';
 import { EaseFunctionLibraryService } from 'src/app/services/ease-function-library.service';
 import { HardwareService } from 'src/app/services/hardware.service';
 import { FeelixioConfig } from 'src/app/models/feelixio-config.model';
@@ -31,12 +30,11 @@ export class FeelixioPartsComponent implements OnInit, AfterViewInit {
   registeredDevices: Array<ConnectedDevice> = [];
   // availablePorts = this.microcontrollers.concat(this.registeredDevices);
   selectedDevice: any = null;
-  standardEffects = this.variableService.getEffects();
   easeEffects = this.easeFunctionService.getAllEaseFunctions();
 
 
   public tabs = [
-    { id: 0, name: 'Standard', contentData: this.standardEffects.concat(this.easeEffects), selected: true, disabled: false },
+    { id: 0, name: 'Standard', contentData: this.easeEffects, selected: true, disabled: false },
     { id: 1, name: 'Position', contentData: this.effectLibraryService.getEffectsFeelixio(), selected: false, disabled: false  },
     { id: 2, name: 'Time', contentData: this.effectLibraryService.getEffectsFeelixio(), selected: false, disabled: false  },
     { id: 3, name: 'Components', contentData: this.componentService.getComponents(), selected: false, disabled: false  },
@@ -92,7 +90,7 @@ export class FeelixioPartsComponent implements OnInit, AfterViewInit {
 
   constructor(@Inject(DOCUMENT) private document: Document, private feelixioDrawElementsService: FeelixioDrawElementsService,
               private effectLibraryService: EffectLibraryService, private effectVisualizationService: EffectVisualizationService,
-              private variableService: VariableService, private easeFunctionService: EaseFunctionLibraryService,
+              private easeFunctionService: EaseFunctionLibraryService,
               public hardwareService: HardwareService, private componentService: ComponentService,
               private electronService: ElectronService, private feelixioRenderService: FeelixioRenderService) {
 

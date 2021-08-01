@@ -25,6 +25,8 @@ function listSerialPorts(callback) {
           vendor = 'Teensy';
         } else if ((item.vendorId === '2341' || item.vendorId === '2A03') && item.productId === '003D') {
           vendor = 'Arduino DUE';
+        } else if (item.vendorId === '0483' && item.productId === '5740') {
+          vendor = 'STM32';
         }
       }
       portsList.push({ serialPort: item, vendor: vendor });
@@ -96,7 +98,7 @@ function ifSerialAvailable(serialData, portlist, connect) {
           if (selectedPort.sp && !selectedPort.sp.IsOpen) { selectedPort.sp.open(); }
         } else {
           main.updateSerialProgress({ progress: 100, str: serialData.port.path + ' connect' });
-          deviceType === 'motor' ? createConnection(serialData) : addSerialPort(serialData);
+          addSerialPort(serialData);
         }
       } else {
         if (selectedPort) {
@@ -371,6 +373,20 @@ class newSerialPort {
     });
   }
 }
+
+
+function uploadData(data) {
+  // receivingPort = ports.filter(p => p.COM === data.config.)[0];
+
+  if (receivingPort) {
+    // dataSendWaitList.push(data.config.)
+  }
+}
+
+
+
+
+
 
 function uploadEffectsToMicrocontroller(effectList, motor, serialData) {
   receivingPort = ports.filter(p => p.COM === serialData.port.path)[0];
@@ -663,4 +679,4 @@ exports.playEffect = playEffect;
 exports.uploadEffectsToMicrocontroller = uploadEffectsToMicrocontroller;
 exports.updateEffectData = updateEffectData;
 exports.updateExternalDevice = updateExternalDevice;
-
+exports.uploadData = uploadData;

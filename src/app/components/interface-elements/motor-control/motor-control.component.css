@@ -494,7 +494,7 @@ ul#coll-layers li {
 }
 
 ul#coll-layers li:hover {
-  opacity: 0.8;
+  opacity: 0.3;
 }
 
 ul#coll-layers li:active {

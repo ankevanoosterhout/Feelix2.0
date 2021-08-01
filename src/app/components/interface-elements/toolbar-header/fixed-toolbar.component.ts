@@ -1,4 +1,4 @@
-import { Component, OnInit, Inject } from '@angular/core';
+import { Component, OnInit, Inject, HostListener } from '@angular/core';
 import { DataService } from 'src/app/services/data.service';
 import { Toolbar } from '../../../models/data.model';
 import { DrawingService } from 'src/app/services/drawing.service';
@@ -7,6 +7,7 @@ import { BezierService } from 'src/app/services/bezier.service';
 import { ElectronService } from 'ngx-electron';
 import { EffectLibraryService } from 'src/app/services/effect-library.service';
 import { Unit } from 'src/app/models/effect.model';
+import { CloneService } from 'src/app/services/clone.service';
 
 @Component({
   selector: 'app-fixed-toolbar',
@@ -55,7 +56,7 @@ import { Unit } from 'src/app/models/effect.model';
       </div>
 
       <ul>
-        <li id="align-buttons" *ngIf="this.drawingService.config.svgDx > 1200">
+        <li id="align-buttons" *ngIf="this.innerWidth > 1280">
           <div>
             <ul class="align" id="distribute">
                 <li *ngFor="let item of distribute" (click)="selectItem(item.value);">
@@ -68,8 +69,7 @@ import { Unit } from 'src/app/models/effect.model';
           </div>
         </li>
 
-        <li id="reference-point" class="scaling-options" [ngClass]="{ active: toolbar.boxSelection }"
-          *ngIf="this.drawingService.config.svgDx > 1050">
+        <li id="reference-point" class="scaling-options" [ngClass]="{ active: toolbar.boxSelection }" *ngIf="this.innerWidth > 1070">
             <div class="bg-line"></div>
             <div class="row">
                 <div *ngFor="let point of referencePoints" class="point"
@@ -78,7 +78,7 @@ import { Unit } from 'src/app/models/effect.model';
             </div>
         </li>
 
-        <li id="current-x" class="scaling-options" *ngIf="this.drawingService.config.svgDx > 600">
+        <li id="current-x" class="scaling-options" *ngIf="this.innerWidth > 1070">
           <label class="coordinates-label">x</label>
           <input type="number" id="x-value" name="points-x" [(ngModel)]="toolbar.points.x"
           (click)="focus()" (change)="onChange('x-value')">
@@ -86,7 +86,7 @@ import { Unit } from 'src/app/models/effect.model';
           <div class="arrow down x" id="downX" name="downX" (click)="transform('x', -1);"></div></div>
         </li>
 
-        <li id="current-y" class="scaling-options" *ngIf="this.drawingService.config.svgDx > 600">
+        <li id="current-y" class="scaling-options" *ngIf="this.innerWidth > 1070">
           <label class="coordinates-label">y</label>
           <input type="number" id="y-value" name="points-y" (change)="onChange('y-value')" [(ngModel)]="toolbar.points.y"
           (click)="focus()">
@@ -94,7 +94,7 @@ import { Unit } from 'src/app/models/effect.model';
           <div class="arrow down y" id="downY" name="downY" (click)="transform('y', -1);"></div></div>
         </li>
 
-        <li id="current-w" class="scaling-options" *ngIf="this.drawingService.config.svgDx > 600">
+        <li id="current-w" class="scaling-options" *ngIf="this.innerWidth > 1070">
           <label class="coordinates-label">w</label>
           <input type="number" id="w-value" name="points-w" (change)="onChange('w-value')" [(ngModel)]="toolbar.points.w"
           (click)="focus()">
@@ -102,14 +102,14 @@ import { Unit } from 'src/app/models/effect.model';
           <div class="arrow down w" id="downW" name="downW" (click)="transform('w', -1);"></div></div>
         </li>
 
-        <li id="link" class="scaling-options" *ngIf="this.drawingService.config.svgDx > 600">
+        <li id="link" class="scaling-options" *ngIf="this.innerWidth > 1070">
           <div class="aspectRatio active" (click)="toolbar.linked = !toolbar.linked">
             <img *ngIf="toolbar.linked" src="./assets/icons/align/link.svg" title="aspect ratio">
             <img *ngIf="!toolbar.linked" src="./assets/icons/align/unlink.svg" title="aspect ratio">
           </div>
         </li>
 
-        <li id="current-h" class="scaling-options" *ngIf="this.drawingService.config.svgDx > 600">
+        <li id="current-h" class="scaling-options" *ngIf="this.innerWidth > 1070">
           <label class="coordinates-label">h</label>
           <input type="number" id="h-value" name="points-h" (change)="onChange('h-value')" [(ngModel)]="toolbar.points.h"
           (click)="focus()">
@@ -127,6 +127,7 @@ export class FixedToolbarComponent implements OnInit {
 
   toolbar = new Toolbar();
   public innerHeight: number;
+  public innerWidth: number;
 
   loop = false;
   rendered = false;
@@ -206,7 +207,8 @@ export class FixedToolbarComponent implements OnInit {
 
   // tslint:disable-next-line: variable-name
   constructor(@Inject(DOCUMENT) private document: Document, public dataService: DataService, private bezierService: BezierService,
-              public drawingService: DrawingService, private electronService: ElectronService, public effectLibraryService: EffectLibraryService) {
+              public drawingService: DrawingService, private electronService: ElectronService, public effectLibraryService: EffectLibraryService,
+              private cloneService: CloneService) {
 
     // this.electronService.ipcRenderer.on('updateButtonState', (event: Event, data: any) => {
     //   this.loop = data.loop;
@@ -215,6 +217,7 @@ export class FixedToolbarComponent implements OnInit {
     // });
 
     this.innerHeight = window.innerHeight;
+    this.innerWidth = window.innerWidth;
 
     this.electronService.ipcRenderer.on('saveEffectToLibrary', (event: Event, lock: boolean) => {
       this.saveEffectToLibrary();
@@ -227,6 +230,12 @@ export class FixedToolbarComponent implements OnInit {
     });
   }
 
+
+  @HostListener('window:resize', ['$event'])
+  onResize(event: Event) {
+    this.innerHeight = window.innerHeight;
+    this.innerWidth = window.innerWidth;
+  }
 
 
   public transform(type: string, diff: number) {
@@ -274,8 +283,7 @@ export class FixedToolbarComponent implements OnInit {
       this.drawingService.updateGuide(this.toolbar.points, this.dataService.selection);
     }
     this.bezierService.translateElement(translate, this.toolbar.referencePoint);
-    this.drawingService.drawFileData();
-
+    this.drawingService.getBoxSizeActivePaths();
   }
 
   public selectReferencePoint(point: any) {
@@ -295,7 +303,8 @@ export class FixedToolbarComponent implements OnInit {
       this.drawingService.scaleActiveEffectFromTorqueToPosition(2, 100);
     }
     this.dataService.color = this.drawingService.file.configuration.colors.filter(c => c.type === this.drawingService.file.activeEffect.type)[0].hash;
-    this.drawingService.saveFile(this.drawingService.file);
+    this.drawingService.updateActiveEffect(this.drawingService.file);
+    this.drawingService.updateConfigActiveFile(this.drawingService.file.configuration);
 
   }
 
@@ -316,7 +325,7 @@ export class FixedToolbarComponent implements OnInit {
 
   focus() {
     this.drawingService.setInputFieldsActive(true);
-    this.pointsCopy = JSON.stringify(this.toolbar.points);
+    this.pointsCopy = this.cloneService.deepClone(this.toolbar.points);
   }
 
 
@@ -331,7 +340,7 @@ export class FixedToolbarComponent implements OnInit {
       offsetX: 0,
       offsetY: 0
     };
-    const original = JSON.parse(this.pointsCopy);
+    const original = this.pointsCopy;
     if (id === 'x-value') {
       translate.horizontal = this.toolbar.points.x - original.x;
     } else if (id === 'y-value') {
@@ -341,6 +350,7 @@ export class FixedToolbarComponent implements OnInit {
       if (this.toolbar.linked && this.toolbar.points.w !== null)  {
         translate.height = translate.width;
       }
+
     } else if (id === 'h-value') {
       translate.height = this.getPercentage(original.h, this.toolbar.points.h);
       if (this.toolbar.linked && this.toolbar.points.w !== null) {
@@ -351,9 +361,7 @@ export class FixedToolbarComponent implements OnInit {
       this.drawingService.updateGuide(this.toolbar.points, this.dataService.selection);
     }
     this.bezierService.translateElement(translate, this.toolbar.referencePoint);
-    this.drawingService.drawFileData();
-
-
+    this.drawingService.getBoxSizeActivePaths();
   }
 
   unFocusAll() {
@@ -366,7 +374,8 @@ export class FixedToolbarComponent implements OnInit {
 
   updateColor() {
     this.drawingService.file.configuration.colors.filter(c => c.type === this.drawingService.file.activeEffect.type)[0].hash = this.dataService.color;
-    this.drawingService.saveFile(this.drawingService.file);
+    // this.drawingService.saveFile(this.drawingService.file);
+    this.drawingService.updateConfigActiveFile(this.drawingService.file.configuration);
   }
 
   getPercentage(oldVal: number, newVal: number) {

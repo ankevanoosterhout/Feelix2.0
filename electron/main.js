@@ -17,7 +17,6 @@ let toolbars = [];
 let mainMenu, displays, FeelixioMenu;
 let gridSnap = false, gridVisible = false, guidesLock = false;
 let effectDetails = null;
-let layerWindowVisible = false;
 let tmpWindow = null;
 let activeWindow = null;
 let comType = 'motor';
@@ -227,7 +226,7 @@ const mainMenuTemplate = [
             click() {
               mainMenu.items[3].submenu.items[2].submenu.items[0].visible = false;
               mainMenu.items[3].submenu.items[2].submenu.items[1].visible = true;
-              mainMenu.items[3].submenu.items[2].submenu.items[2].enabled = false;
+              mainMenu.items[3].submenu.items[2].submenu.items[2].enabled = true;
               mainWindow.webContents.send('grid:toggle', true);
             }
           },
@@ -238,7 +237,7 @@ const mainMenuTemplate = [
             click() {
               mainMenu.items[3].submenu.items[2].submenu.items[0].visible = true;
               mainMenu.items[3].submenu.items[2].submenu.items[1].visible = false;
-              mainMenu.items[3].submenu.items[2].submenu.items[2].enabled = true;
+              mainMenu.items[3].submenu.items[2].submenu.items[2].enabled = false;
               mainMenu.items[3].submenu.items[2].submenu.items[2].checked = false;
               mainWindow.webContents.send('grid:toggle', false);
             }
@@ -1130,20 +1129,17 @@ ipcMain.on('saveLogFile', function(e, data) {
 
 ipcMain.on('updateMenu', function (e, item) {
 
-  // gridVisible = item.visible;
-  // gridSnap = item.snap;
-  // gridLock = item.lock;
-  // fileType = item.type;
-  // mainMenu.items[2].submenu.items[3].submenu.items[0].visible = !item.visible;
-  // mainMenu.items[2].submenu.items[3].submenu.items[1].visible = item.visible;
-  // mainMenu.items[2].submenu.items[3].submenu.items[2].checked = item.snap;
-  // mainMenu.items[2].submenu.items[3].submenu.items[2].enabled = item.visible === false ? false : true;
+  gridVisible = item.visible;
+  gridSnap = item.snap;
+  gridLock = item.lock;
+  fileType = item.type;
+  mainMenu.items[3].submenu.items[2].submenu.items[0].visible = !item.visible;
+  mainMenu.items[3].submenu.items[2].submenu.items[1].visible = item.visible;
+  mainMenu.items[3].submenu.items[2].submenu.items[2].checked = item.snap;
+  mainMenu.items[3].submenu.items[2].submenu.items[2].enabled = item.visible === false ? false : true;
 })
 
 
-ipcMain.on('updateLayers', (event, data) => {
-  mainWindow.webContents.send('updateLayers', data);
-});
 
 ipcMain.on('showMessage', (event, data) => {
   mainWindow.webContents.send('showMessage', data);
@@ -1227,6 +1223,11 @@ ipcMain.on('openFileDialogWindow', (event, windowIndex) => {
 ipcMain.on('updateMicrocontrollerDetails', (event, microcontrollerDetails) => {
   mainWindow.webContents.send('updateControllerDetails', microcontrollerDetails);
 })
+
+
+ipcMain.on('upload', (event, data) => {
+  serialPort.uploadData(data);
+});
 
 ipcMain.on('addFilesToUploadList', (event, data) => {
   serialPort.uploadEffectsToMicrocontroller(data.effects, data.motor, data.microcontroller);

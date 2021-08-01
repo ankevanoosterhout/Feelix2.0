@@ -122,6 +122,7 @@ export class HistoryService {
       const effect = historyFile.list.filter(e => e.id === id)[0];
       if (effect) {
         const index = historyFile.list.indexOf(effect);
+        console.log(index);
         if (index > -1) {
           historyFile.list.splice(index, 1);
         }

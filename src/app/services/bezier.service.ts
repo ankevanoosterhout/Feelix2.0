@@ -117,10 +117,8 @@ export class BezierService {
 
     const controlLines = [0, 0];
     for (let i = 0; i < nodes.length - 1; i++) {
-        controlLines[0] += Math.sqrt(Math.pow(Math.abs(
-          nodes[i + 1].pos.x - nodes[i].pos.x), 2) + Math.pow(Math.abs(nodes[i + 1].pos.y - nodes[i].pos.y), 2));
-        controlLines[1] += Math.sqrt(Math.pow(Math.abs(
-          nodes[i + 1].angle.x - nodes[i].angle.x), 2) + Math.pow(Math.abs(nodes[i + 1].angle.y - nodes[i].angle.y), 2));
+        controlLines[0] += Math.sqrt(Math.pow((nodes[i + 1].pos.x - nodes[i].pos.x), 2) + Math.pow((nodes[i + 1].pos.y - nodes[i].pos.y), 2));
+        controlLines[1] += Math.sqrt(Math.pow((nodes[i + 1].angle.x - nodes[i].angle.x), 2) + Math.pow((nodes[i + 1].angle.y - nodes[i].angle.y), 2));
     }
     if (nodes.length === 2) {
         return [chord[0], chord[1]];
@@ -263,7 +261,7 @@ export class BezierService {
 
   getBBoxSizePath(Path: any) {
     let nodes = [];
-    let boxSize = { id: '', left: null, top: null, right: null, bottom: null };
+    let boxSize = { id: '', left: null, top: null, right: null, bottom: null, width: null, height: null };
     const boxes = [];
 
     for (const node of Path.nodes) {
@@ -279,13 +277,15 @@ export class BezierService {
       }
     }
     if (boxes.length > 0) {
-      boxSize = { id: Path.id, left: boxes[0].left, top: boxes[0].top, right: boxes[0].right, bottom: boxes[0].bottom };
+      boxSize = { id: Path.id, left: boxes[0].left, top: boxes[0].top, right: boxes[0].right, bottom: boxes[0].bottom, width: boxes[0].width, height: boxes[0].height };
       for (const el of boxes) {
         if (el.left < boxSize.left) { boxSize.left = el.left; }
         if (el.top < boxSize.top) { boxSize.top = el.top; }
         if (el.right > boxSize.right) { boxSize.right = el.right; }
         if (el.bottom > boxSize.bottom) { boxSize.bottom = el.bottom; }
       }
+      boxSize.height = boxSize.bottom - boxSize.top;
+      boxSize.width = boxSize.right - boxSize.left;
 
       return { box: boxSize, allBoxes: boxes, path: this.nodeService.updateBoxSizePath(boxSize, Path) };
     }
@@ -734,22 +734,22 @@ export class BezierService {
   getAllCoordinates(range: number, tValue: number, n: any, multiply: number, type: string) {
     const values = [];
     for (let i = 0; i < range; i++) {
-        const t = i * tValue;
+        const t = i * (tValue);
         let coordinates: { x: number; y: number; };
         if (n.length === 4) {
             coordinates = {
                 x: this.evalCBez(n, t, 'x', type) * multiply,
-                y: this.evalCBez(n, t, 'y', type) * 2.55
+                y: this.evalCBez(n, t, 'y', type)
             };
         } else if (n.length === 3) {
             coordinates = {
                 x: this.evalQBez(n, t, 'x', type) * multiply,
-                y: this.evalQBez(n, t, 'y', type) * 2.55
+                y: this.evalQBez(n, t, 'y', type)
             };
         } else if (n.length === 2) {
             coordinates = {
                 x: this.evalLBez(n, t, 'x', type) * multiply,
-                y: this.evalLBez(n, t, 'y', type) * 2.55
+                y: this.evalLBez(n, t, 'y', type)
             };
         }
         values.push( coordinates );
@@ -759,50 +759,51 @@ export class BezierService {
 
 
   closest(num: number, arr: any) {
-    let current = Math.round(arr[0].pos.x);
+    let current = arr[0].pos.x;
     let index = 0;
-    let diff = Math.abs(num - current);
+    let diff = num - current < 0 ? current - num : num - current;
     for (let val = 1; val < arr.length; val++) {
-        const newDiff = Math.abs(num - Math.round(arr[val].pos.x));
+        const newDiff = num - arr[val].pos.x < 0 ? arr[val].pos.x - num : num - arr[val].pos.x;
         if (newDiff < diff) {
             diff = newDiff;
-            current = Math.round(arr[val].pos.x);
+            current = arr[val].pos.x;
             index = val;
         }
     }
-    return  Math.round(arr[index].pos.y);
+    return  arr[index].pos.y;
   }
 
 
   closestY(num: number, arr: any) {
     let current = Math.round(arr[0].x);
     let index = 0;
-    let diff = Math.abs(num - current);
+    let diff = num - current < 0 ? current - num : num - current;
+
     for (let val = 1; val < arr.length; val++) {
-        const newDiff = Math.abs(num - Math.round(arr[val].x));
+        const newDiff = num - arr[val].x < 0 ? Math.round(arr[val].x) - num : num - Math.round(arr[val].x);
         if (newDiff < diff) {
             diff = newDiff;
             current = Math.round(arr[val].x);
             index = val;
         }
     }
-    return  Math.round(arr[index].y);
+    return  arr[index].y;
   }
 
 
   closestForce(num: number, arr: any) {
-    let current = Math.round(arr[0].y);
+    let current = arr[0].y;
     let index = 0;
-    let diff = Math.abs(num - current);
+    let diff = num - current < 0 ? current - num : num - current;
     for (let val = 1; val < arr.length; val++) {
-        const newDiff = Math.abs(num - Math.round(arr[val].y));
+        const newDiff = num - arr[val].y < 0 ? arr[val].y - num : num - arr[val].y;
         if (newDiff < diff) {
             diff = newDiff;
-            current = Math.round(arr[val].y);
+            current = arr[val].y;
             index = val;
         }
     }
-    return  Math.round(arr[index].x);
+    return  arr[index].x;
   }
 
 
@@ -861,13 +862,13 @@ export class BezierService {
     } else if (this.nodeService.selectedPaths.length > 0) {
       for (const pathID of this.nodeService.selectedPaths) {
         const path = this.nodeService.getPath(pathID);
-        const box = path.box;
+        const box = this.cloneService.deepClone(path.box);
         if (box.left) {
           if (translate.width !== 1.0 || translate.height !== 1.0) {
-            this.nodeService.scalePath([pathID], translate.width, translate.height, translate.offsetX, translate.offsetY);
-            // this.nodeService.scalePath([pathID], translate.width, translate.height, 0, 0);
-            const bboxAfter = this.getBBoxSizePath(path);
 
+            this.nodeService.scalePath([pathID], translate.width, translate.height, translate.offsetX, translate.offsetY);
+
+            const bboxAfter = this.getBBoxSizePath(path);
             if (referencePoint.id >= 0 && referencePoint.id <= 2) {
               translate.vertical = box.top - bboxAfter.path.box.top;
             } else if (referencePoint.id >= 6 && referencePoint.id <= 8) {
@@ -897,6 +898,10 @@ export class BezierService {
       }
     }
   }
+
+
+
+
 
 
 

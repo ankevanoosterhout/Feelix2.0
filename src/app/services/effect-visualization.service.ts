@@ -4,8 +4,8 @@ import { Subject } from 'rxjs';
 import { Collection, Layer } from '../models/collection.model';
 import { effectTypeColor } from '../models/configuration.model';
 import { Details, Effect, RepeatInstance, Size } from '../models/effect.model';
-import { Path } from '../models/node.model';
 import { CloneService } from './clone.service';
+import { DataService } from './data.service';
 import { NodeService } from './node.service';
 
 
@@ -18,7 +18,7 @@ export class EffectVisualizationService {
   setActiveEffect: Subject<any> = new Subject();
   updateCollectionEffect: Subject<any> = new Subject();
 
-  constructor(private nodeService: NodeService, private cloneService: CloneService) { }
+  constructor(private nodeService: NodeService, private cloneService: CloneService, private dataService: DataService) { }
 
   public setActiveCollectionEffect(data: { effect: Details, collection: Collection }) {
     this.setActiveEffect.next(data);
@@ -70,7 +70,6 @@ export class EffectVisualizationService {
 
       this.drawEffectData(nodes, effect, height - 4, colors, width - 28);
     }
-
   }
 
 
@@ -82,7 +81,7 @@ export class EffectVisualizationService {
 
       const multiply = (collection.rotation.units.PR / effect.grid.xUnit.PR);
 
-      const width = collection.config.newXscale(collEffect.position.x + collEffect.position.width) - collection.config.newXscale(collEffect.position.x);
+      const width = effect.paths.length === 0 ? 30 : collection.config.newXscale(collEffect.position.x + collEffect.position.width) - collection.config.newXscale(collEffect.position.x);
       const domainSize = effect.type === 'torque' ? 200 : 100;
 
       const heightEffect = (collection.config.newYscale(collEffect.position.bottom) - collection.config.newYscale(collEffect.position.top)) * (collEffect.scale.y / 100);
@@ -92,30 +91,35 @@ export class EffectVisualizationService {
                       pixHeight * ((100-collEffect.scale.y)/100) - (pixHeight * (collEffect.position.y / 100));
 
       const height = pixHeight * (collEffect.scale.y/100);
-      const layerLocked = this.checkIfLayersIsLocked(collEffect.direction, collection.layers);
+      const layerLocked = collection.effectDataList.length > 0 ? true : this.checkIfLayersIsLocked(collEffect.direction, collection.layers);
 
       const effectData = [ new RepeatInstance(collEffect.id, collEffect.position.x) ];
       const data = effectData.concat(collEffect.repeat.repeatInstances);
 
       const dragCollectionEffect = d3.drag()
         .on('start', () => {
-          if (activeCollEffect) {
-            d3.selectAll('#coll-effect-' + collection.id + '-' + activeCollEffect.id).style('opacity', 0.3);
-          }
+          d3.selectAll('#coll-effect-' + collection.id).style('opacity', 0.3);
+
+          this.nodeService.deselectAll();
+          this.dataService.deselectAll();
           this.setActiveCollectionEffect({ effect: collEffect, collection: collection });
           activeCollEffect = collEffect;
           d3.selectAll('#coll-effect-' + collection.id + '-' + collEffect.id).style('opacity', 0.6);
         })
         .on('drag', (d, i) => {
-          if (i === 0) {
-            collEffect.position.x += (collection.config.newXscale.invert(d3.event.x) - collection.config.newXscale.invert(d3.event.x - d3.event.dx));
-          } else {
-            collEffect.repeat.repeatInstances[i - 1].x += (collection.config.newXscale.invert(d3.event.x) - collection.config.newXscale.invert(d3.event.x - d3.event.dx));
+          if (!layerLocked) {
+            if (i === 0) {
+              collEffect.position.x += (collection.config.newXscale.invert(d3.event.x) - collection.config.newXscale.invert(d3.event.x - d3.event.dx));
+            } else {
+              collEffect.repeat.repeatInstances[i - 1].x += (collection.config.newXscale.invert(d3.event.x) - collection.config.newXscale.invert(d3.event.x - d3.event.dx));
+            }
+            this.drawCollectionEffect(svg, collection, collEffect, effect, pixHeight, activeCollEffect, colors);
           }
-          this.drawCollectionEffect(svg, collection, collEffect, effect, pixHeight, activeCollEffect, colors);
         })
         .on('end', () => {
+          // if (!layerLocked) {
           this.updateCollectionData({ collection: collection, collEffect: collEffect });
+          // }
         });
 
       const rect = svg.selectAll('rect.coll-effect-' + collEffect.id)
@@ -123,15 +127,15 @@ export class EffectVisualizationService {
         .enter()
         .append('rect')
         .attr('id', (d) => 'coll-effect-' + collection.id + '-' + d.id)
-        .attr('class', (d) => 'coll-effect-' + collEffect.id)
+        .attr('class', 'coll-effect-' + collEffect.id)
         .attr('x', (d) => collection.config.newXscale(d.x))
         .attr('y', () => effect.type === collection.visualizationType ? yPos : 0)
-        .attr('width', width)
-        .attr('height', () => effect.type === collection.visualizationType ? heightEffect : pixHeight)
+        .attr('width', width === 0 ? 10 : width)
+        .attr('height', effect.type === collection.visualizationType && effect.paths.length > 0 ? heightEffect : pixHeight)
         .style('fill', colors.filter(c => c.type === effect.type)[0].hash)
         .style('opacity', activeCollEffect !== null && activeCollEffect.id === collEffect.id ? 0.6 : 0.2)
         .style('shape-rendering', 'crispEdges')
-        .attr('pointer-events', tmp || layerLocked ? 'none': 'auto')
+        .attr('pointer-events', tmp ? 'none': 'auto')
         .attr('cursor', layerLocked ? 'not-allowed': 'default')
         .call(dragCollectionEffect);
 
@@ -147,10 +151,12 @@ export class EffectVisualizationService {
         const nodes = svg.append('g')
           .attr('class', 'nodes coll-effect-' + collEffect.id)
           .attr('id', 'coll-effect-group-' + collEffect.id + '-' + effect.id)
-          .attr('clip-path', 'url(#clip-' + collEffect.id + '-' + effect.id +')')
+          // .attr('clip-path', 'url(#clip-' + collEffect.id + '-' + effect.id +')')
           .attr('transform', 'translate('+ [collection.config.newXscale(collEffect.position.x), offset] + ')');
 
+        // if (collection.effectDataList.length === 0) {
         this.drawEffectData(nodes, effect, height, colors, width, collEffect.flip, multiply);
+        // }
 
         for(const instance of collEffect.repeat.repeatInstances) {
           const nodes = svg.append('g')
@@ -158,7 +164,9 @@ export class EffectVisualizationService {
           .attr('id', 'coll-effect-group-' + collEffect.id + '-' + effect.id + '-' + instance.id)
           .attr('transform', 'translate('+ [collection.config.newXscale(instance.x), offset] + ')');
 
+          // if (collection.effectDataList.length === 0) {
           this.drawEffectData(nodes, effect, height, colors, width, collEffect.flip, multiply);
+          // }
         }
       }
 
@@ -178,6 +186,7 @@ export class EffectVisualizationService {
         .style('font-size', '9px');
     }
   }
+
 
   checkIfLayersIsLocked(effectDirection: string, layers: Layer[]) {
     if (effectDirection === 'any' && (layers[0].locked || layers[1].locked)) {
@@ -208,7 +217,7 @@ export class EffectVisualizationService {
       for (const path of effect.paths) {
         if (path.nodes.length > 1) {
 
-          const effectPath = this.mirrorPath(this.cloneService.deepClone(path), effect.size, reflect);
+          const effectPath = this.nodeService.mirrorPathEffect(this.cloneService.deepClone(path), effect.size, reflect);
 
           const paths = this.returnPathAsString(effectPath, xScale, yScale, 'pos', multiply);
 
@@ -246,24 +255,124 @@ export class EffectVisualizationService {
   }
 
 
-  mirrorPath(path: Path, size: Size, reflect = { x: false, y: false }) {
-
-    let newPath = path;
-
-    if (reflect.x || reflect.y) {
-
-      const mirrorLine = {
-        x: (size.width / 2) + size.x,
-        y: (size.height / 2) + (size.y - size.height),
-      };
-
-      newPath = this.nodeService.mirrorPath(path, mirrorLine, reflect.x, reflect.y);
+  checkIfXisWithinOverlap(x: number, overlappingEffects: Array<any>) {
+    for (const el of overlappingEffects) {
+      if (x >= el.position.start - 0.5 && x <= el.position.end + 0.75) {
+        return true;
+      }
     }
-
-    return newPath;
+    return false;
   }
 
 
+
+  drawRenderedCollectionData(svg: any, collection: Collection, collEffect: Details, renderedData: any, pixHeight: number, color: string) {
+
+    d3.selectAll('#grp-render-' + collection.id + '-' + collEffect.id).remove();
+
+    interface Data {
+      x: number,
+      y: number
+    }
+
+    const multiply = { x: collection.rotation.units.name === 'radians' ? (Math.PI / 180) : 1, y: collEffect.flip.y ? -100 : 100 };
+
+
+    const offset = renderedData.type === 'torque' ? pixHeight * (((100-collEffect.scale.y)/100) / 2) - (pixHeight * (collEffect.position.y / 100) / 2) :
+                      pixHeight * ((100-collEffect.scale.y)/100) - (pixHeight * (collEffect.position.y / 100));
+
+    const renderedDataCopy = this.cloneService.deepClone(renderedData.data);
+    const data = collEffect.flip.x ? renderedDataCopy.reverse() : renderedDataCopy;
+
+    const grp = svg.append('g')
+      .attr('id', 'grp-render-' + collection.id + '-' + collEffect.id);
+
+    // const line = d3.line<Data>()
+    //     .x((d: Data, i) => { return collection.config.newXscale(i * (collEffect.scale.x / 100) + (collEffect.position.x * multiply.x)); })
+    //     .y((d: Data) => { return renderedData.type === 'position' && collEffect.flip.y ?
+    //     (collection.config.newYscale(d.y * multiply.y - (100 - renderedData.size.top) + renderedData.size.bottom + 100)  * (collEffect.scale.y / 100) + offset) :
+    //     collection.config.newYscale((d.y * multiply.y )) * (collEffect.scale.y / 100) + offset; })
+    //     .curve(d3.curveMonotoneX);
+
+    // grp.append('path')
+    //   .attr('class', 'data-' + collection.id + '-' + collEffect.id)
+    //   .datum(data)
+    //   .attr('fill', 'none')
+    //   .attr('stroke', color)
+    //   .attr('stroke-width', 1.5)
+    //   .attr('d', line);
+
+
+    if (renderedData.type === 'position') {
+      grp.selectAll('line.offset-' + collection.id + '-' + collEffect.id)
+      .data(data)
+      .enter()
+      .append('line')
+      .attr('class', 'offset-' + collection.id + '-' + collEffect.id)
+      .attr('x1', (d, i) => collection.config.newXscale(i * (collEffect.scale.x / 100) + (collEffect.position.x * multiply.x)))
+      .attr('x2', (d, i) => collection.config.newXscale(d.o * (collEffect.scale.x / 100) + (collEffect.position.x * multiply.x)))
+      .attr('y1', (d) => collEffect.flip.y ?
+      (collection.config.newYscale(d.y * multiply.y - (100 - renderedData.size.top) + renderedData.size.bottom + 100)  * (collEffect.scale.y / 100) + offset) :
+      collection.config.newYscale((d.y * multiply.y )) * (collEffect.scale.y / 100) + offset)
+      .attr('y2', (d) => collEffect.flip.y ?
+      (collection.config.newYscale(d.y * multiply.y - (100 - renderedData.size.top) + renderedData.size.bottom + 100)  * (collEffect.scale.y / 100) + offset) :
+      collection.config.newYscale((d.y * multiply.y )) * (collEffect.scale.y / 100) + offset)
+      .attr('stroke', 'rgba(255,255,255,0.4)')
+      .attr('stroke-width', 1);
+
+      grp.selectAll('circle.offset-' + collection.id + '-' + collEffect.id)
+        .data(data)
+        .enter()
+        .append('circle')
+        .attr('class', 'offset-' + collection.id + '-' + collEffect.id)
+        .attr('cx', (d) => collection.config.newXscale(d.o * (collEffect.scale.x / 100) + (collEffect.position.x * multiply.x)))
+        .attr('cy', (d) => renderedData.type === 'position' && collEffect.flip.y ?
+            (collection.config.newYscale(d.y * multiply.y - (100 - renderedData.size.top) + renderedData.size.bottom + 100)  * (collEffect.scale.y / 100) + offset) :
+            collection.config.newYscale((d.y * multiply.y )) * (collEffect.scale.y / 100) + offset)
+        .attr('r', (d) => collection.config.newXscale((d.x * multiply.x) + 0.2) - collection.config.newXscale((d.x * multiply.x) - 0.2) < 2 ?
+                          collection.config.newXscale((d.x * multiply.x) + 0.2) - collection.config.newXscale((d.x * multiply.x) - 0.2) : 2)
+        .style('fill', 'rgba(255,255,255,0.4)');
+    }
+
+    grp.selectAll('circle.render-' + collection.id + '-' + collEffect.id)
+      .data(data)
+      .enter()
+      .append('circle')
+      .attr('class', 'render-' + collection.id + '-' + collEffect.id)
+      .attr('cx', (d, i) => collection.config.newXscale(i * (collEffect.scale.x / 100) + (collEffect.position.x * multiply.x)))
+      .attr('cy', (d) => renderedData.type === 'position' && collEffect.flip.y ?
+          (collection.config.newYscale(d.y * multiply.y - (100 - renderedData.size.top) + renderedData.size.bottom + 100)  * (collEffect.scale.y / 100) + offset) :
+          collection.config.newYscale((d.y * multiply.y )) * (collEffect.scale.y / 100) + offset)
+      .attr('r', (d) => collection.config.newXscale((d.x * multiply.x) + 0.2) - collection.config.newXscale((d.x * multiply.x) - 0.2) < 2 ?
+                        collection.config.newXscale((d.x * multiply.x) + 0.2) - collection.config.newXscale((d.x * multiply.x) - 0.2) : 2)
+      .style('fill', color)
+      .style('opacity', (d, i) => this.checkIfXisWithinOverlap(i * (collEffect.scale.x / 100) + (collEffect.position.x * multiply.x), collection.renderedData) ? 0 : 1);
+
+
+  }
+
+  drawOverlappingData(svg: any, collection: Collection, color: string) {
+    d3.selectAll('#grp-render-overlap-' + collection.id).remove();
+
+    const grp = svg.append('g').attr('id', 'grp-render-overlap-' + collection.id);
+    let i = 0;
+    for (const overlap of collection.renderedData) {
+
+      if ((collection.layers.filter(l => l.name === 'CW')[0].visible && overlap.direction.cw) || (collection.layers.filter(l => l.name === 'CCW')[0].visible && overlap.direction.ccw)) {
+        grp.selectAll('circle.overlap-' + collection.id + '-' + i)
+          .data(overlap.data)
+          .enter()
+          .append('circle')
+          .attr('class', 'overlap-' + collection.id + '-' + i)
+          .attr('cx', (d) => collection.config.newXscale(d.x + overlap.position.start))
+          .attr('cy', (d) => collection.config.newYscale(d.y * 100))
+          .attr('r', (d) => collection.config.newXscale(d.x + 0.2) - collection.config.newXscale(d.x - 0.2) < 2 ?
+                            collection.config.newXscale(d.x + 0.2) - collection.config.newXscale(d.x - 0.2) : 2)
+          .style('fill', color);
+      }
+      i++;
+    }
+  }
 
 
   updateCursor(effectID: string, units: any, position: number, xScale: any, width: number) {

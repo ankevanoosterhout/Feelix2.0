@@ -1,7 +1,6 @@
 import { Component, OnInit, Inject, AfterViewInit } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { ElectronService } from 'ngx-electron';
-import { VariableService } from '../../../services/variable.service';
 import { EffectLibraryService } from 'src/app/services/effect-library.service';
 import { EffectVisualizationService } from 'src/app/services/effect-visualization.service';
 import { DrawingService } from 'src/app/services/drawing.service';
@@ -28,8 +27,6 @@ export class EffectsComponent implements OnInit, AfterViewInit {
   effect: Effect = null;
 
   inLibrary = false;
-
-  standardEffects = this.variableService.getEffects();
 
   tabs = [ { id: 0, name: 'Effects', selected: true, disabled: false },
            { id: 1, name: 'Library', selected: false, disabled: false  },
@@ -80,8 +77,7 @@ export class EffectsComponent implements OnInit, AfterViewInit {
   repeatOptions = ['position', 'time'];
 
   // tslint:disable-next-line: variable-name
-  constructor(@Inject(DOCUMENT) private document: Document, private electronService: ElectronService,
-              private variableService: VariableService, public effectLibraryService: EffectLibraryService,
+  constructor(@Inject(DOCUMENT) private document: Document, private electronService: ElectronService, public effectLibraryService: EffectLibraryService,
               private effectVisualizationService: EffectVisualizationService, public drawingService: DrawingService,
               private fileService: FileService, private cloneService: CloneService) {
 
@@ -181,12 +177,12 @@ export class EffectsComponent implements OnInit, AfterViewInit {
 
   drawLibraryEffects() {
     this.effectLibraryService.getEffectsFromLocalStorage();
-    setTimeout(() => { this.drawLibEffects(this.effectLibraryService.effectLibrary); }, 150);
+    setTimeout(() => { this.drawLibEffects(this.effectLibraryService.effectLibrary); }, 100);
   }
 
   drawFileEffects() {
     // console.log(this.drawingService.file.effects);
-    setTimeout(() => { this.drawEffects(this.drawingService.file.effects); }, 150);
+    setTimeout(() => { this.drawEffects(this.drawingService.file.effects); }, 100);
   }
 
   changeQuality(effect: any) {
@@ -236,7 +232,7 @@ export class EffectsComponent implements OnInit, AfterViewInit {
   deleteEffectItem(effectID: string) {
     for (const collection of this.drawingService.file.collections) {
       if (collection.effects.filter(e => e.effectID === effectID).length > 0) {
-        this.drawingService.showMessageDialog({ msg: 'This effect is currently in use, are you sure you want to delete it?', type: 'verification', action: 'deleteEffect', d: effectID});
+        this.drawingService.showMessageDialog({ msg: 'This effect is currently in use, are you sure you want to delete it?', type: 'verification', action: 'deleteEffect', d: effectID });
         return;
       }
     }
@@ -255,8 +251,7 @@ export class EffectsComponent implements OnInit, AfterViewInit {
       const copyItem = this.cloneService.deepClone(item);
       copyItem.effect.name += '-copy';
       copyItem.effect.id = uuid();
-      copyItem.effect.date.created = new Date().getTime();
-      copyItem.effect.date.modified = copyItem.effect.date.created;
+      copyItem.effect.date.modified = new Date().getTime();
       this.fileService.addEffect(copyItem.effect);
     }
   }
@@ -267,7 +262,7 @@ export class EffectsComponent implements OnInit, AfterViewInit {
 
   display(view: string) {
     this.drawingService.file.configuration.libraryViewSettings = view;
-    this.fileService.update(this.drawingService.file);
+    this.fileService.updateConfig(this.drawingService.file.configuration);
   }
 
 
@@ -401,7 +396,6 @@ export class EffectsComponent implements OnInit, AfterViewInit {
 
   sortItemsEffectList() {
     this.fileService.sortEffects(this.drawingService.file.configuration.sortType);
-    this.fileService.update(this.drawingService.file);
   }
 
   sortItems(sortType: string) {

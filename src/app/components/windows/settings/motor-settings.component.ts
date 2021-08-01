@@ -61,8 +61,8 @@ export class MotorSettingsComponent implements OnInit {
 
 
   public motorType = [
-    { name: 'BLDC Motor' },
-    { name: 'Stepper Motor' },
+    { name: 'BLDC Motor', disabled: false },
+    { name: 'Stepper Motor', disabled: true },
   ];
 
   public motionControlTypes = [
@@ -72,8 +72,8 @@ export class MotorSettingsComponent implements OnInit {
   ];
 
   public encoderTypes = [
-    { name: 'Magnetic sensor' },
-    { name: 'Encoder' }
+    { name: 'Magnetic sensor', disabled: false },
+    { name: 'Encoder', disabled: true }
   ];
 
   public magneticSensorType = [

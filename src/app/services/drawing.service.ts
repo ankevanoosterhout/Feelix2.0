@@ -11,6 +11,7 @@ import { FileService } from './file.service';
 import { EffectVisualizationService } from './effect-visualization.service';
 import { Details, Effect } from '../models/effect.model';
 import { Collection } from '../models/collection.model';
+import { Configuration } from '../models/configuration.model';
 
 
 
@@ -26,6 +27,7 @@ export class DrawingService {
   align: Subject<any> = new Subject();
   updateResizeMotorControlSection: Subject<any> = new Subject();
   drawEffectsInLibrary: Subject<any> = new Subject();
+  getBBoxSize: Subject<any> = new Subject();
 
   constructor(@Inject(DOCUMENT) private document: Document, public nodeService: NodeService,
               private dataService: DataService, private fileService: FileService, private effectVisualizationService: EffectVisualizationService) {
@@ -424,6 +426,10 @@ export class DrawingService {
 
       this.config.svg.selectAll('.forceNode').style('fill', 'transparent');
     }
+    this.deselectCollectionEffects();
+  }
+
+  deselectCollectionEffects() {
     if (this.file.activeCollectionEffect !== null && this.file.activeCollection) {
       const collection = this.file.collections.filter(c => c.id === this.file.activeCollection.id)[0];
       if (collection) {
@@ -433,6 +439,7 @@ export class DrawingService {
       this.file.activeCollection = null;
     }
   }
+
 
   colorNodesSelectedPaths() {
     this.dataService.setBoxSelection(true);
@@ -467,7 +474,6 @@ export class DrawingService {
     }
     this.updateResize(division, 'vertical');
     this.updateResizeMotorControlSection.next();
-    // this.fileService.update(this.file);
   }
 
   toggleDrawPlane() {
@@ -485,7 +491,6 @@ export class DrawingService {
     }
     this.updateResize(division, 'horizontal');
     this.updateResizeMotorControlSection.next();
-    // this.fileService.update(this.file);
   }
 
   setDivToScreenDivision() {
@@ -509,16 +514,16 @@ export class DrawingService {
       this.document.getElementById('field-inset').style.height = ((window.innerHeight * (100-division) / 100) - 20) + 'px';
       this.file.configuration.horizontalScreenDivision = division;
       if (this.file.configuration.horizontalScreenDivision >= (100 / window.innerHeight) * (window.innerHeight - 40)) {
-        if (!this.document.getElementById('toggleDrawPlane').classList.contains('hidden')) {
-          this.document.getElementById('toggleDrawPlane').classList.add('hidden');
-        }
+        this.document.getElementById('toggleDrawPlane').classList.add('hidden');
       } else {
-        if (this.document.getElementById('toggleDrawPlane').classList.contains('hidden')) {
+        if (this.document.getElementById('toggleLibraryWindow').classList.contains('hidden')) {
           this.document.getElementById('toggleDrawPlane').classList.remove('hidden');
         }
+        this.config.svgDy = window.innerHeight * (100 - this.file.configuration.horizontalScreenDivision)/100 - 20;
+        if (this.config.svgDy < 250) { this.config.svgDy = 250; }
+        this.redraw();
       }
-      this.config.svgDy = window.innerHeight * (100 - this.file.configuration.horizontalScreenDivision)/100 - 20;
-      if (this.config.svgDy < 250) { this.config.svgDy = 250; }
+
 
     } else if (orientation === 'vertical') {
       this.document.getElementById('motor-control').style.width = (window.innerWidth * division / 100) + 'px';
@@ -606,6 +611,18 @@ export class DrawingService {
   saveFile(file: File) {
     // console.log(file);
     this.fileService.update(file);
+  }
+
+  updateActiveEffect(file: File) {
+    this.fileService.updateActiveEffectData(file);
+  }
+
+  updateConfigActiveFile(config: Configuration) {
+    this.fileService.updateConfig(config);
+  }
+
+  getBoxSizeActivePaths() {
+    this.getBBoxSize.next();
   }
 
 
@@ -1001,9 +1018,7 @@ export class DrawingService {
         .style('shape-rendering', 'crispEdges')
         .style('stroke', '#666')
         .style('stroke-width', 0.5);
-
     }
-
   }
 
 

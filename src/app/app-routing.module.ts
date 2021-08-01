@@ -4,9 +4,7 @@ import { MainPageComponent } from './pages/main-page.component';
 
 import { ToolbarComponent } from './components/interface-elements/toolbars/toolbar.component';
 import { ToolbarInsetComponent } from './components/interface-elements/toolbars/toolbar-inset.component'
-import { LayersComponent } from './components/windows/layers.component';
 import { EffectsComponent } from './components/windows/effects/effects.component';
-import { LayerOptionComponent } from './components/windows/layer-option.component';
 import { FileSettingsComponent } from './components/windows/settings/file-settings.component';
 import { EffectSettingsComponent } from './components/windows/settings/effect-settings.component';
 import { GridSettingsComponent } from './components/windows/settings/grid-settings.component';
@@ -26,8 +24,6 @@ const routes: Routes = [
     { path: '', component: MainPageComponent },
     { path: 'toolbar', component: ToolbarComponent },
     { path: 'toolbar-inset', component: ToolbarInsetComponent },
-    { path: 'layers', component: LayersComponent },
-    { path: 'layer-option', component: LayerOptionComponent },
     { path: 'effects', component: EffectsComponent },
     { path: 'file-settings', component: FileSettingsComponent },
     { path: 'file-update-settings', component: FileSettingsComponent },

@@ -671,8 +671,8 @@ export class DrawElementsService {
         .attr('id', (d: { id: string; parent: string }) => 'id_' + d.id + '_' + d.parent)
         .attr('class', (d: { parent: string; }) => 'path_' + d.parent)
         .attr('stroke-width', 1.2)
-        .attr('stroke', this.file.activeEffect.colors[1].hash)
-        .attr('fill', this.file.activeEffect.colors[1].hash)
+        .attr('stroke', this.getEffectColor())
+        .attr('fill', this.getEffectColor())
         .style('opacity', 0.3);
 
     }

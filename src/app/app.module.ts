@@ -11,9 +11,7 @@ import { ToolbarInsetComponent } from './components/interface-elements/toolbars/
 import { NgxElectronModule } from 'ngx-electron';
 import { MainPageComponent } from './pages/main-page.component';
 import { AppRoutingModule } from './app-routing.module';
-import { LayersComponent } from './components/windows/layers.component';
 import { EffectsComponent } from './components/windows/effects/effects.component';
-import { LayerOptionComponent } from './components/windows/layer-option.component';
 import { FileListComponent } from './components/file/file-list.component';
 import { FileSettingsComponent } from './components/windows/settings/file-settings.component';
 import { EffectListComponent } from './components/file/effect-list.component';
@@ -42,7 +40,6 @@ import { SelectComComponent } from './components/windows/select-com.component';
 import { HardwareService } from './services/hardware.service';
 import { StatusbarComponent } from './components/interface-elements/statusbar.component';
 import { EaseFunctionLibraryService } from './services/ease-function-library.service';
-import { VariableService } from './services/variable.service';
 import { MotorSettingsComponent } from './components/windows/settings/motor-settings.component';
 import { MotorControlComponent } from './components/interface-elements/motor-control/motor-control.component';
 import { MotorControlToolbarInsetComponent } from './components/interface-elements/toolbars/motor-control-toolbar-inset.component';
@@ -63,6 +60,7 @@ import { FeelixioRenderService } from './services/feelixio-render.service';
 import { FeelixioValidationService } from './services/feelixio-validation.service';
 import { ExportDialogComponent } from './components/windows/export-dialog.component';
 import { CloneService } from './services/clone.service';
+import { GridService } from './services/grid.service';
 
 @NgModule({
   declarations: [
@@ -73,8 +71,6 @@ import { CloneService } from './services/clone.service';
     FixedToolbarComponent,
     ToolbarComponent,
     ToolbarInsetComponent,
-    LayersComponent,
-    LayerOptionComponent,
     EffectsComponent,
     FileComponent,
     FileListComponent,
@@ -115,11 +111,11 @@ import { CloneService } from './services/clone.service';
     NodeService,
     BezierService,
     DrawingService,
+    GridService,
     BBoxService,
     DrawElementsService,
     HardwareService,
     EaseFunctionLibraryService,
-    VariableService,
     UploadService,
     HistoryService,
     EffectLibraryService,

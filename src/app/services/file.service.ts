@@ -7,7 +7,7 @@ import { Subject } from 'rxjs';
 import { FileSaverService } from 'ngx-filesaver';
 import { NodeService } from './node.service';
 import { Collection } from '../models/collection.model';
-import { OpenTab } from '../models/configuration.model';
+import { Configuration, OpenTab } from '../models/configuration.model';
 import { HistoryService } from './history.service';
 import { CloneService } from './clone.service';
 
@@ -143,6 +143,8 @@ export class FileService {
       let collectionItem = activeFile.collections.filter(c => c.id === collection.id)[0];
       if (collectionItem) {
         collectionItem.effects.filter(e => e.id === collEffect.id)[0] = this.cloneService.deepClone(collEffect);
+        // collectionItem.effects.filter(e => e.id === collEffect.id)[0].flip = this.cloneService.deepClone(collEffect.flip);
+        // collectionItem.effects.filter(e => e.id === collEffect.id)[0].scale = this.cloneService.deepClone(collEffect.scale);
         this.store();
       }
     }
@@ -180,7 +182,7 @@ export class FileService {
       activeFile.activeEffect = this.cloneService.deepClone(effect);
       this.nodeService.loadFile(activeFile.activeEffect.paths);
       this.sortEffects(activeFile.configuration.sortType);
-      this.store();
+
     }
   }
 
@@ -334,14 +336,15 @@ export class FileService {
     if (activeFile.configuration.sortDirection === 'last-first') {
       activeFile.effects.reverse();
     }
+    this.store();
   }
 
   deleteEffect(effectID: string) {
     const activeFile = this.files.filter(f => f.isActive)[0];
     if (activeFile) {
       const effect = activeFile.effects.filter(e => e.id === effectID)[0];
+
       if (effect) {
-        this.historyService.clearHistoryEffect(effectID);
 
         for (const collection of activeFile.collections) {
           for (let i = collection.effects.length - 1; i >= 0; i-- ) {
@@ -366,6 +369,8 @@ export class FileService {
         } else {
           this.store();
         }
+
+        this.historyService.clearHistoryEffect(effectID);
       }
     }
   }
@@ -390,12 +395,23 @@ export class FileService {
   }
 
   update(file: File, changes = true) {
+    console.log('update');
     const originalFile = this.files.filter(f => f._id === file._id)[0];
+    console.log(file.collections, originalFile.collections);
     const index = this.files.indexOf(originalFile, 0);
     if (index > -1) {
       this.files[index] = this.cloneService.deepClone(file);
       this.updateActiveEffectData(this.files[index]);
+      this.files[index].collections = this.cloneService.deepClone(file.collections);
       this.files[index].date.changed = changes;
+      this.store();
+    }
+  }
+
+  updateConfig(fileConfiguration: Configuration) {
+    const activeFile = this.files.filter(f => f.isActive)[0];
+    if (activeFile) {
+      activeFile.configuration = this.cloneService.deepClone(fileConfiguration);
       this.store();
     }
   }
@@ -464,11 +480,9 @@ export class FileService {
     const currentactiveFile = this.files.filter(f => f.isActive)[0];
     if (currentactiveFile) {
       currentactiveFile.isActive = false;
-      console.log(currentactiveFile.activeEffect.size, currentactiveFile.activeEffect.paths);
       if (currentactiveFile.activeEffect !== null) {
         currentactiveFile.activeEffect.paths = this.nodeService.getAll();
         currentactiveFile.activeEffect.size = this.getPathEffectSize(currentactiveFile.activeEffect);
-        console.log(currentactiveFile.activeEffect.size, currentactiveFile.activeEffect.paths);
         let effect = currentactiveFile.effects.filter(e => e.id === currentactiveFile.activeEffect.id)[0];
         if (effect) {
           effect = JSON.stringify(currentactiveFile.activeEffect);
@@ -604,16 +618,20 @@ export class FileService {
 
   updateUnits(oldUnits: any, newUnits: any) {
     const activeFile = this.files.filter(f => f.isActive)[0];
-    if (activeFile) {
+    if (activeFile && activeFile.activeEffect) {
       activeFile.activeEffect.paths = this.nodeService.updateUnits(oldUnits.PR, newUnits.PR);
       activeFile.activeEffect.size = this.getPathEffectSize(activeFile.activeEffect);
       this.nodeService.loadFile(activeFile.activeEffect.paths);
+
     }
+
     activeFile.activeEffect.range.end = activeFile.activeEffect.range.end * (newUnits.PR / activeFile.activeEffect.grid.xUnit.PR);
     activeFile.activeEffect.range.start = activeFile.activeEffect.range.start * (newUnits.PR / activeFile.activeEffect.grid.xUnit.PR);
+    activeFile.activeEffect.grid.settings.spacingX = activeFile.activeEffect.grid.settings.spacingX * (newUnits.PR / activeFile.activeEffect.grid.xUnit.PR);
     activeFile.activeEffect.grid.xUnit = newUnits;
-
     let effect = activeFile.effects.filter(e => e.id === activeFile.activeEffect.id)[0];
+
+    this.nodeService.setGridLayer(activeFile.activeEffect.grid);
 
     if (effect) {
       // activeFile.effects.filter(e => e.id === activeFile.activeEffect.id)[0] = this.cloneService.deepClone(activeFile.activeEffect);

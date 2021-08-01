@@ -76,7 +76,10 @@ export class Collection {
   rotation = new Rotation();
   config = new Config();
   visualizationType = 'torque';
-  layers = [ new Layer('CW'), new Layer('CCW') ]
+  layers = [ new Layer('CW'), new Layer('CCW') ];
+  overlappingData = [];
+  effectDataList = [];
+  renderedData = [];
 
   constructor(id: string, name: string) {
     this.id = id;

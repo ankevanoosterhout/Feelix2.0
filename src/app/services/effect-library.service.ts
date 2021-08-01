@@ -3,6 +3,7 @@ import { LibraryEffect } from '../models/effect.model';
 import { v4 as uuid } from 'uuid';
 import { LocalStorageService } from 'ngx-webstorage';
 import { Subject } from 'rxjs';
+import { CloneService } from './clone.service';
 
 @Injectable()
 export class EffectLibraryService {
@@ -12,7 +13,7 @@ export class EffectLibraryService {
   effectLibrary: Array<LibraryEffect> = [];
   showLibraryTab: Subject<any> = new Subject();
 
-  constructor(private localSt: LocalStorageService) {
+  constructor(private localSt: LocalStorageService, private cloneService: CloneService) {
     // retrieve files stored in local storage
     this.getEffectsFromLocalStorage();
 
@@ -42,10 +43,11 @@ export class EffectLibraryService {
       if (libraryEffect) {
         const index = this.effectLibrary.indexOf(libraryEffect);
         effect.date.modified = new Date().getTime();
-        this.effectLibrary[index].effect = effect;
+        effect.storedIn = 'library';
+        this.effectLibrary[index].effect = this.cloneService.deepClone(effect);
       } else {
-        effect.date.created = new Date().getTime();
-        effect.date.modified = effect.date.created;
+        effect.date.created = effect.date.created ? effect.date.created : new Date().getTime();
+        effect.date.modified = new Date().getTime();
         effect.id = uuid();
         effect.name += '-lib';
         effect.storedIn = 'library';

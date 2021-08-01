@@ -4,7 +4,7 @@ import { Tree, TreeNode } from '../models/render-tree.model';
 import { FeelixioDrawElementsService } from './feelixio-draw-elements.service';
 import { ComponentObject } from '../models/component.model';
 import { UploadService } from './upload.service';
-import { EffectUploadModel } from '../models/effect-upload.model';
+// import { EffectUploadModel } from '../models/effect-upload.model';
 import { ElectronService } from 'ngx-electron';
 import { HardwareService } from './hardware.service';
 import { MicroController } from '../models/hardware.model';
@@ -603,69 +603,69 @@ export class FeelixioRenderService {
 
 
   uploadEffectData() {
-    let treeIndex = 0;
-    let effectIndex = 0;
-    for (const tree of this.trees) {
-      const effectList: Array<EffectUploadModel> = [];
-      const microcontroller = this.hardwareService.getMicroControllerByCOM(tree.list[0].data.microcontroller.serialPort.path);
-      if (microcontroller) {
-        const effects = tree.list.filter(t => t.data.feelixio === 'effect');
-        if (treeIndex > 0 && microcontroller.serialPort.path !==
-            this.trees[treeIndex - 1].list[0].data.microcontroller.serialPort.path) {
-          effectIndex = 0;
-        }
-        for (const treeItem of effects) {
-          const effectObject = this.feelixioFile.effects.filter(e => e.id === treeItem.data.id)[0];
+    // let treeIndex = 0;
+    // let effectIndex = 0;
+    // for (const tree of this.trees) {
+    //   const effectList: Array<EffectUploadModel> = [];
+    //   const microcontroller = this.hardwareService.getMicroControllerByCOM(tree.list[0].data.microcontroller.serialPort.path);
+    //   if (microcontroller) {
+    //     const effects = tree.list.filter(t => t.data.feelixio === 'effect');
+    //     if (treeIndex > 0 && microcontroller.serialPort.path !==
+    //         this.trees[treeIndex - 1].list[0].data.microcontroller.serialPort.path) {
+    //       effectIndex = 0;
+    //     }
+    //     for (const treeItem of effects) {
+    //       const effectObject = this.feelixioFile.effects.filter(e => e.id === treeItem.data.id)[0];
 
-          if (effectObject.effect.type === 'motion' || effectObject.effect.type === 'ease') {
-            // const translatedEffect = this.uploadService.
-            //   translateSingleTimeBasedEffectData(effectObject, microcontroller.motor);
-            // if (translatedEffect) {
-            //   translatedEffect.treeIndex = treeIndex;
-            //   translatedEffect.index = effectIndex;
-            //   effectList.push(translatedEffect);
-            // }
-          } else {
-            // const translatedEffect = this.uploadService.
-            //   translateSinglePositionBasedEffectData(effectObject, microcontroller.motor);
+    //       if (effectObject.effect.type === 'motion' || effectObject.effect.type === 'ease') {
+    //         // const translatedEffect = this.uploadService.
+    //         //   translateSingleTimeBasedEffectData(effectObject, microcontroller.motor);
+    //         // if (translatedEffect) {
+    //         //   translatedEffect.treeIndex = treeIndex;
+    //         //   translatedEffect.index = effectIndex;
+    //         //   effectList.push(translatedEffect);
+    //         // }
+    //       } else {
+    //         // const translatedEffect = this.uploadService.
+    //         //   translateSinglePositionBasedEffectData(effectObject, microcontroller.motor);
 
-            // if (translatedEffect) {
-            //   translatedEffect.treeIndex = treeIndex;
-            //   translatedEffect.index = effectIndex;
-            //   effectList.push(translatedEffect);
-            // }
-          }
-          effectIndex++;
-        }
+    //         // if (translatedEffect) {
+    //         //   translatedEffect.treeIndex = treeIndex;
+    //         //   translatedEffect.index = effectIndex;
+    //         //   effectList.push(translatedEffect);
+    //         // }
+    //       }
+    //       effectIndex++;
+    //     }
 
-        if (effectList.filter(e => e.loop).length > 1) {
-          console.log('can only loop one effect at a time');
-          const loopEffects = effectList.filter(e => e.loop);
-          let i = 0;
-          for (const effectEl of loopEffects) {
-            if (i > 0) {
-              effectEl.loop = false;
-            }
-            i++;
-          }
-        }
+    //     if (effectList.filter(e => e.loop).length > 1) {
+    //       console.log('can only loop one effect at a time');
+    //       const loopEffects = effectList.filter(e => e.loop);
+    //       let i = 0;
+    //       for (const effectEl of loopEffects) {
+    //         if (i > 0) {
+    //           effectEl.loop = false;
+    //         }
+    //         i++;
+    //       }
+    //     }
 
-        // this.hardwareService.updateMotorEffectList(microcontroller.id, effectList);
-        // console.log(effectList);
+    //     // this.hardwareService.updateMotorEffectList(microcontroller.id, effectList);
+    //     // console.log(effectList);
 
-        if (this.electronService.isElectronApp) {
-          // this.electronService.ipcRenderer.send('addFilesToUploadList',
-            // { effects: effectList, motor: microcontroller.motor,
-            //   microcontroller: { port: microcontroller.serialPort, type: microcontroller.type }});
-        }
-      } else {
-        // show message
-        console.log('microcontroller undefined');
-      }
-      treeIndex++;
-    }
+    //     if (this.electronService.isElectronApp) {
+    //       // this.electronService.ipcRenderer.send('addFilesToUploadList',
+    //         // { effects: effectList, motor: microcontroller.motor,
+    //         //   microcontroller: { port: microcontroller.serialPort, type: microcontroller.type }});
+    //     }
+    //   } else {
+    //     // show message
+    //     console.log('microcontroller undefined');
+    //   }
+    //   treeIndex++;
+    // }
 
-    this.feelixioFile.config.loaded = true;
+    // this.feelixioFile.config.loaded = true;
   }
 
 

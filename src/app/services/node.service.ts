@@ -6,6 +6,7 @@ import { Scale } from '../models/node.model';
 import { v4 as uuid } from 'uuid';
 import { Subject } from 'rxjs';
 import { CloneService } from './clone.service';
+import { Size } from '../models/effect.model';
 
 
 @Injectable()
@@ -898,7 +899,7 @@ export class NodeService {
     const path = this.paths.filter(p => p.id === node.path)[0];
     if (path) {
       const occurrences = this.paths.filter(p => p.id === node.path)[0].nodes.filter(n => n.id === node.id);
-      if (this.grid.snap) {
+      if (this.grid && this.grid.snap) {
         mouse = this.calculateSnapPoint(mouse);
       }
 
@@ -1072,6 +1073,8 @@ export class NodeService {
         pathEl.box.bottom = ((oldBox.bottom - offsetY) * scaleY) + offsetY;
         pathEl.box.width = pathEl.box.right - pathEl.box.left;
         pathEl.box.height = pathEl.box.bottom - pathEl.box.top;
+        if (pathEl.box.height < 0) { pathEl.box.height *= -1; }
+        if (pathEl.box.width < 0) { pathEl.box.width *= -1; }
 
       }
     }
@@ -1170,6 +1173,24 @@ export class NodeService {
     }
   }
 
+  mirrorPathEffect(path: Path, size: Size, reflect = { x: false, y: false }) {
+
+    let newPath = path;
+
+    if (reflect.x || reflect.y) {
+
+      const mirrorLine = {
+        x: (size.width / 2) + size.x,
+        y: (size.height / 2) + (size.y - size.height),
+      };
+
+      newPath = this.mirrorPath(path, mirrorLine, reflect.x, reflect.y);
+    }
+
+    return newPath;
+  }
+
+
 
   mirrorPath(copypath: Path, mirrorLine: any, reflectX: boolean, reflectY: boolean) {
     // console.log(path, direction);
@@ -1261,7 +1282,7 @@ export class NodeService {
 
 
   calculateSnapPoint(coords: { x: number, y: number }) {
-    if (this.grid.snap && this.grid.visible) {
+    if (this.grid && this.grid.snap && this.grid.visible) {
       const precision = {
         x: this.grid.settings.spacingX / (this.grid.settings.subDivisionsX),
         y: this.grid.settings.spacingY / (this.grid.settings.subDivisionsY)
@@ -1419,21 +1440,9 @@ export class NodeService {
       const index = nodesOfPath.indexOf(node);
 
       decr = index > 0 && nodesOfPath[index - 1].pos.x !== nodesOfPath[index - 1].angle.x ? [ 0.85, 1 ] : [ 0.6, 0.85 ] ;
-      // if (index > 0) {
-      //   if (nodesOfPath[index - 1].pos.x !== nodesOfPath[index - 1].angle.x ) {
-      //     decr[1] = 1;
-      //   }
-      // } else {
-      //   decr[0] = 0.6;
-      // }
-      // if (index < nodesOfPath.length - 1) {
-      decr[0] = nodesOfPath.length - 1 && nodesOfPath[index + 1].pos.x !== nodesOfPath[index + 1].angle.x ? 1 : 0.6;
-      //   if (nodesOfPath[index + 1].pos.x !== nodesOfPath[index + 1].angle.x ) {
-      //     decr[0] = 1;
-      //   }
-      // } else {
-      //   decr[0] = 0.6;
-      // }
+
+      decr[0] = index < nodesOfPath.length - 1 && nodesOfPath[index + 1].pos.x !== nodesOfPath[index + 1].angle.x ? 1 : 0.6;
+
 
       let i = 0;
       for (const c of cp) {
@@ -1444,7 +1453,6 @@ export class NodeService {
             x: c.angle.x + (distance * decr[i]),
             y: oldVal.ya
           };
-          // console.log(decr[i]);
           this.updateCP(c);
         }
         i++;

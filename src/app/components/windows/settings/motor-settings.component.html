@@ -52,7 +52,7 @@
             <div class="form-group">
               <label class="labelRow select motorsettings inset">Type</label>
               <select class="form-control playWindow" id="select-controller-type" [(ngModel)]="motor.type" name="controller" (change)="updateMicrocontroller(selectedMicrocontroller)">
-                <option *ngFor="let type of motorType" [ngValue]="type.name">{{ type.name }}</option>
+                <option *ngFor="let type of motorType" [ngValue]="type.name" [disabled]="type.disabled === true">{{ type.name }}</option>
               </select>
             </div>
 
@@ -83,7 +83,7 @@
             <div class="form-group">
               <label class="labelRow select motorsettings inset">Position sensor</label>
               <select class="form-control playWindow" id="encoder" [(ngModel)]="motor.config.positionSensorType" name="encoder" (change)="createPositionSensor()">
-                <option *ngFor="let type of encoderTypes" [ngValue]="type.name">{{ type.name }}</option>
+                <option *ngFor="let type of encoderTypes" [ngValue]="type.name" [disabled]="type.disabled === true">{{ type.name }}</option>
               </select>
             </div>
 

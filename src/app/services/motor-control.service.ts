@@ -60,11 +60,10 @@ export class MotorControlService {
   }
 
   updateViewSettings(file: File = this.file) {
-    console.log('update settings');
     this.toolList.filter(t => t.name === 'display')[0].icon =
       file.configuration.collectionDisplay === 'small' ? './assets/icons/buttons/large-display.svg' : './assets/icons/buttons/small-display.svg';
     file.configuration.collectionDisplay === 'small' ?
-      this.document.getElementById('motor-list').classList.add('small') : this.document.getElementById('motor-list').classList.remove('small');
+      this.document.getElementById('motor-list').classList.add('small-') : this.document.getElementById('motor-list').classList.remove('small');
     this.updateHeight();
 
     setTimeout(() => {
@@ -85,10 +84,6 @@ export class MotorControlService {
 
   addCollection() {
     this.fileService.addCollection();
-    // setTimeout(() => {
-    //   this.drawCollections(this.file.collections);
-    //   this.saveFile(this.file);
-    // }, 30);
   }
 
   deleteCollection(collection: Collection) {
@@ -99,9 +94,6 @@ export class MotorControlService {
     this.fileService.updateCollection(collection);
   }
 
-  saveFile(file: File) {
-    this.fileService.update(file);
-  }
 
   onResize() {
     this.resetWidth();
@@ -221,6 +213,7 @@ export class MotorControlService {
     }
 
     this.updateOffset(collection);
+
     this.drawCollectionEffects(collection);
 
     if (collection.microcontroller) {
@@ -243,18 +236,6 @@ export class MotorControlService {
 
     for (const collection of collections) {
       this.drawCollection(collection);
-    }
-  }
-
-  updateCollections(collections: Array<Collection> = this.file.collections) {
-
-    for (const collection of collections) {
-      // console.log(collection.config.svg._parents[0], (collection.config.svg._parents[0] instanceof HTMLElement));
-      if (collection.effects.length > 0 && collection.config.svg._parents[0] instanceof HTMLElement) {
-        this.drawCollectionEffects(collection);
-      } else {
-        this.drawCollection(collection);
-      }
     }
   }
 
@@ -320,12 +301,32 @@ export class MotorControlService {
 
             this.effectVisualizationService.drawCollectionEffect(effectSVG, collection, collectionEffect, effect, (this.height - 39),
               this.file.activeCollectionEffect, this.file.configuration.colors);
+          } else {
+            this.removeCollectionsEffect(collection, collectionEffect);
           }
+
+          if (collection.effectDataList.length > 0) {
+            const effectData = collection.effectDataList.filter(e => e.id === effect.id)[0];
+            this.effectVisualizationService.drawRenderedCollectionData(effectSVG, collection, collectionEffect, effectData, (this.height - 39), 'rgba(255,255,255,1)');
+          }
+
         }
+      }
+      if (collection.renderedData.length > 0 && collection.effectDataList.length > 0) {
+        this.effectVisualizationService.drawOverlappingData(effectSVG, collection, 'rgba(255,255,255,1)');
       }
     }
   }
 
+
+  removeCollectionsEffect(collection: Collection, collectionEffect: Details) {
+    const index = collection.effects.indexOf(collectionEffect);
+    if (index > -1) {
+      collection.effects.splice(index, 1);
+      this.drawCollection(collection);
+      this.updateCollection(collection);
+    }
+  }
 
 
   checkIfLayersIsLocked(effectDirection: string, layers: Layer[]) {
@@ -617,7 +618,7 @@ export class MotorControlService {
         const effectIndex = collection.effects.indexOf(effect);
         if (effectIndex > -1) {
           collection.effects.splice(effectIndex, 1);
-          this.fileService.update(this.file);
+          this.fileService.updateCollection(collection);
           return;
         }
       }
@@ -628,5 +629,8 @@ export class MotorControlService {
     this.drawingService.deselectAllElements();
   }
 
-
+  deselectCollectionEffects() {
+    this.drawingService.deselectCollectionEffects();
+    this.drawCollections();
+  }
 }

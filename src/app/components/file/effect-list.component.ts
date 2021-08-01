@@ -5,6 +5,8 @@ import { MatDialog } from '@angular/material/dialog';
 import { DOCUMENT } from '@angular/common';
 import { v4 as uuid } from 'uuid';
 import { Effect } from 'src/app/models/effect.model';
+import { ElectronService } from 'ngx-electron';
+import { DataService } from 'src/app/services/data.service';
 
 
 @Component({
@@ -39,7 +41,8 @@ export class EffectListComponent implements OnInit {
 
   public scrollTab = false;
 
-  constructor(@Inject(DOCUMENT) private document: Document, public fileService: FileService, public dialog: MatDialog) {}
+  constructor(@Inject(DOCUMENT) private document: Document, public fileService: FileService, public dialog: MatDialog, private electronService: ElectronService,
+    private dataService: DataService) {}
 
   @Input()
   set list(list: string) {
@@ -60,6 +63,15 @@ export class EffectListComponent implements OnInit {
     const effect = this.file.effects.filter(e => e.id === tab.id)[0];
     if (effect) {
       this.fileService.setEffectActive(effect);
+      this.dataService.deselectAll();
+      if (this.electronService.isElectronApp) {
+        this.electronService.ipcRenderer.send('updateMenu', {
+          visible: effect.grid.visible,
+          snap: effect.grid.snap,
+          lock: effect.grid.lockGuides
+        });
+      }
+
     }
   }
 

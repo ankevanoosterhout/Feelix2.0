@@ -6,6 +6,7 @@ import { DrawingService } from './drawing.service';
 import { BezierService } from './bezier.service';
 import { DOCUMENT } from '@angular/common';
 import { DataService } from './data.service';
+import { Subject } from 'rxjs';
 
 
 
@@ -13,10 +14,16 @@ import { DataService } from './data.service';
 export class BBoxService {
   public config: DrawingPlaneConfig;
 
+ 
+
   constructor(@Inject(DOCUMENT) private document: Document, public dataService: DataService,
               public nodeService: NodeService, private bezierService: BezierService, public drawingService: DrawingService) {
 
                 this.config = this.drawingService.config;
+
+                this.drawingService.getBBoxSize.subscribe(res => {
+                  this.getBBoxSelectedPaths();
+                });
               }
 
   translateX = 0;
