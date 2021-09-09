@@ -166,9 +166,8 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
 
 
     this.electronService.ipcRenderer.on('updateStatus', (event: Event, data: any) => {
-      if (data.microcontroller && data.connected !== undefined && !data.connected) {
-        this.config.playing = false;
-      }
+      console.log(data);
+      this.hardwareService.updatePlay(data.microcontroller.port.path, data.connected);
     });
 
     this.electronService.ipcRenderer.on('changeViewSettings', (event: Event, data: any) => {

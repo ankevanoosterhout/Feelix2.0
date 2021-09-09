@@ -656,7 +656,7 @@ export class FeelixioRenderService {
     //     if (this.electronService.isElectronApp) {
     //       // this.electronService.ipcRenderer.send('addFilesToUploadList',
     //         // { effects: effectList, motor: microcontroller.motor,
-    //         //   microcontroller: { port: microcontroller.serialPort, type: microcontroller.type }});
+    //         //   microcontroller: { port: microcontroller.serialPort, type: microcontroller.vendor }});
     //     }
     //   } else {
     //     // show message

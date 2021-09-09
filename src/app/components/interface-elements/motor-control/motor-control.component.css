@@ -4,6 +4,8 @@ ul {
   list-style-type: none;
 }
 
+
+
 #motor-control-section {
   position: absolute;
   display: inline-block;
@@ -212,12 +214,15 @@ ul {
 .motor-info {
   float:right;
   color: #FF9100;
-  margin-left: 10px;
+  margin-left: 7px;
   margin-top: 2px;
+  width: 35px;
+  text-align: right;
 }
 
 .motor-info.posUnits {
-  margin: 0 4px 0 2px;
+  margin: 0 2px 0 4px;
+  width: auto;
 }
 
 .selectList {

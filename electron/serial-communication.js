@@ -5,12 +5,8 @@ let activePorts = [];
 let activeDevicePorts = [];
 let ports = [];
 let port;
-let registeredDevice;
-let registeredDevices = [];
-
-
-let runDataIndex = { parent: 0, child: 0 };
 let receivingPort = null;
+let progress = 0;
 
 let dataSendWaitList = [];
 
@@ -25,7 +21,7 @@ function listSerialPorts(callback) {
           vendor = 'Teensy';
         } else if ((item.vendorId === '2341' || item.vendorId === '2A03') && item.productId === '003D') {
           vendor = 'Arduino DUE';
-        } else if (item.vendorId === '0483' && item.productId === '5740') {
+        } else if (item.vendorId === '0483' && (item.productId === '5740' || item.productId === '0003')) {
           vendor = 'STM32';
         }
       }
@@ -35,10 +31,10 @@ function listSerialPorts(callback) {
   })
 };
 
-function checkIfAvailable(COM, callback, connect) {
+function checkIfAvailable(serialData, callback, connect) {
   SerialPort.list().then(ports => {
-    if (COM && ports.length > 0) {
-      callback(COM, ports, connect);
+    if (serialData && ports.length > 0) {
+      callback(serialData, ports, connect);
     }
   });
 }
@@ -53,8 +49,8 @@ function writeDataString(data, COM) {
 }
 
 
-function closeSerialPort(COM) {
-  checkIfAvailable(COM, ifSerialAvailable, false);
+function closeSerialPort(serialData) {
+  checkIfAvailable(serialData, ifSerialAvailable, false);
 }
 
 
@@ -71,23 +67,16 @@ function closeAllSerialPorts() {
 }
 
 
-function connectToSerialPort(COM) {
-  main.updateSerialProgress({ progress: 0, str: 'Trying to connect to ' + COM.port.path });
-  checkIfAvailable(COM, ifSerialAvailable, true);
+function connectToSerialPort(serialData) {
+  progress = 0;
+  main.updateSerialProgress({ progress: progress, str: 'Trying to connect to ' + serialData.port.path });
+  checkIfAvailable(serialData, ifSerialAvailable, true);
 }
 
-function addSerialPort(data) {
-  if (registeredDevices.filter(d => d.path === data.port.path).length === 0) {
-    const sp = new newSerialPort(data, registeredDevice);
-    sp.createDevicePort(data.baudrate);
-    registeredDevices.push(sp);
-  }
-}
 
 
 function ifSerialAvailable(serialData, portlist, connect) {
   if (portlist.length > 0) {
-    let deviceType = serialData.name ? 'other' : 'motor';
     main.updateAvailablePortList(portlist);
     const portAvailable = portlist.filter(p => p.path === serialData.port.path);
     let selectedPort = ports.filter(p => p.COM === serialData.port.path)[0];
@@ -97,52 +86,26 @@ function ifSerialAvailable(serialData, portlist, connect) {
         if (selectedPort) {
           if (selectedPort.sp && !selectedPort.sp.IsOpen) { selectedPort.sp.open(); }
         } else {
-          main.updateSerialProgress({ progress: 100, str: serialData.port.path + ' connect' });
-          addSerialPort(serialData);
+          updateProgress(100, (serialData.port.path + ' is connected'));
+          createConnection(serialData);
         }
       } else {
         if (selectedPort) {
           if (selectedPort.sp && selectedPort.sp.IsOpen) { selectedPort.sp.close(); }
         } else {
           const sp = new newSerialPort(serialData, port);
-          deviceType === 'motor' ? ports.push(sp) : registeredDevices.push(sp);
-          main.updateSerialProgress({ progress: 100, str: serialData.port.path + ' close' });
+          ports.push(sp);
+          updateProgress(100, (serialData.port.path + ' close'));
         }
       }
     } else {
-      main.updateSerialProgress({ progress: 0, str: serialData.port.path + ' is not available' });
+      updateProgress(0, (serialData.port.path + ' is not available'));
     }
   } else {
-    main.updateSerialProgress({ progress: 0, str: serialData.port.path + ' is not available'  });
+    updateProgress(0, (serialData.port.path + ' is not available'));
   }
 }
 
-
-
-function getUploadProgress() {
-
-  let totalItems = 0;
-  let current = runDataIndex.child;
-  let i = 0;
-  let parentIndex;
-  if (dataSendWaitList.length > 0) {
-    if (dataSendWaitList[dataSendWaitList.length - 1].type === 'runData') {
-      for (const d of dataSendWaitList[dataSendWaitList.length - 1].data) {
-        totalItems += d.data.length;
-        if (runDataIndex.parent > i) {
-          current += dataSendWaitList[dataSendWaitList.length - 1].data[i].data.length;
-        }
-        i++;
-      }
-      const progress = (100 / totalItems) * current;
-      parentIndex = runDataIndex.parent;
-      if (parentIndex >= dataSendWaitList[dataSendWaitList.length - 1].data.length) { parentIndex = dataSendWaitList[dataSendWaitList.length - 1].data.length - 1; }
-      main.updateSerialProgress({ progress: progress, str: 'Uploading in progress ' + (dataSendWaitList.length - 1) });
-    }
-  } else {
-    main.updateSerialProgress({ progress: 100, str: 'Ready'});
-  }
-}
 
 
 function createConnection(serialData) {
@@ -161,6 +124,7 @@ class newSerialPort {
       this.portData = portData;
       this.COM = portData.port.path;
       this.sp = sp;
+      this.baudrate = portData.baudrate
       this.connected = false;
   }
 
@@ -168,6 +132,7 @@ class newSerialPort {
   writeData(data) {
     this.sp.write(data, function (err) {
         if (err) { return console.log('Error: ', err.message); }
+        else {  console.log('written ', data); }
     });
   }
 
@@ -187,78 +152,13 @@ class newSerialPort {
       }
   }
 
-  createDevicePort(baudRate) {
-    if (this.connected) {
-      this.sp.close();
-    }
-    this.sp = new SerialPort(this.COM, {
-      baudRate: baudRate,
-      autoOpen: true
-    }, function (err) {
-      if (err) { return console.log('Error: ', err); }
-    });
-
-
-    let Readline = SerialPort.parsers.Readline; // make instance of Readline parser
-    let parser = new Readline(); // make a new parser to read ASCII lines
-    this.sp.pipe(parser); // pipe the serial stream to the parser
-
-
-    this.sp.on('open', (err) => {
-      if (err) {
-        main.updateSerialProgress({ progress: 0, str: 'Error opening ' + this.COM + ' ' + err });
-        this.sp.close();
-      } else {
-        main.updateSerialProgress({ progress: 100, str: this.COM + ' is connected' });
-        main.updateSerialStatus({ device: this.portData, connected: this.connected });
-        if (!activeDevicePorts.includes(this.COM)) {
-          activeDevicePorts.push(this.COM);
-        }
-        this.connected = true;
-      }
-    });
-
-    this.sp.on('close', () => {
-      dataSendWaitList = [];
-      main.updateSerialStatus({ device: this.portData, connected: this.connected });
-      main.updateSerialProgress({ progress: 0, str: 'Connection to ' + this.portData.port.path + ' - ' + this.portData.name + ' is closed' });
-      const portIndex = activeDevicePorts.indexOf(this.COM);
-      if (portIndex > -1) {
-        activeDevicePorts.splice(portIndex, 1);
-      }
-    });
-
-
-    this.sp.on('error', (error) => {
-      main.updateSerialProgress({ progress: 0, str: this.portData.port.path + ' - ' + this.portData.type + ': ' + error });
-      if (!this.connected) {
-        main.updateSerialStatus({ device: this.portData, connected: this.connected });
-      }
-    });
-
-    parser.on('data', (d) => {
-      // main.updateSerialProgress({ progress: 0, str: 'Print incoming data: ' + d });
-      if (d.charAt(0) === '*') {
-        main.updateSerialProgress({ progress: 0, str: 'Print incoming data: ' + d });
-      } else if (d.charAt(0) === 'V') {
-        const dataArray = d.substr(1).split(':');
-        const data = {
-            variableIndex: parseInt(dataArray[0]),
-            value: dataArray[1],
-            port: this.COM
-        };
-        main.updateCustomVariableFeelixIO(data);
-      }
-    });
-  }
-
   createSerialPort() {
-      if (this.connected) {
+      if (this.connected && this.sp) {
          this.sp.close();
       }
 
       this.sp = new SerialPort(this.COM, {
-          baudRate: 19200,
+          baudRate: this.baudrate,
           autoOpen: true
       }, function (err) {
           if (err) {
@@ -273,83 +173,59 @@ class newSerialPort {
 
       this.sp.on('open', (error) => {
         if (error) {
-          main.updateSerialProgress({ progress: 0, str: 'Error opening ' + this.COM + ' ' + error });
+          updateProgress(0, ('Error opening ' + this.COM + ' ' + error));
           this.sp.close();
         } else {
-          main.updateSerialProgress({ progress: 100, str: this.COM + ' has been added' });
+          updateProgress(100, (this.COM + ' has been added'));
+          this.connected = true;
+          main.updateSerialStatus({ microcontroller: this.portData, connected: this.connected });
           if (!activePorts.includes(this.COM)) {
             activePorts.push(this.COM);
           }
-          // if (!this.connected) {
-          //   this.sp.write('C', (err) => {
-          //       if (err) { return console.log(err); }
-          //   });
-          // }
         }
       });
 
       parser.on('data', (d) => {
-        // console.log(d);
+
         if (d.charAt(0) === '*') {
-          main.updateSerialProgress({ progress: 0, str: d });
-        } else if (d.charAt(0) === 'C') {
-          this.connected = true;
-          main.updateSerialProgress({ progress: 100, str: 'Connected to ' + this.portData.port.path + ' - ' + this.portData.type });
-          main.updateSerialStatus({ microcontroller: this.portData, connected: this.connected });
-
-        } else if (d.charAt(0) === 'n') { // send next
-          // send next bit if there is more data to send
-          if (dataSendWaitList.length > 0) {
-            if (dataSendWaitList[dataSendWaitList.length - 1].type === 'runData') {
-              updateRunData(dataSendWaitList[dataSendWaitList.length - 1].receivingPort, dataSendWaitList[dataSendWaitList.length - 1].data);
-            }
+          console.log('received data ', d);
+          if (dataSendWaitList.filter(d => d.port === this.COM)) {
+            uploadFromWaitList(ports.filter(p => p.COM === this.COM)[0]);
           }
+        }
 
-        } else if (d.charAt(0) === 'd' || d.charAt(0) === 'q') {
-          dataSendWaitList.pop();
-
-          // if (dataSendWaitList.length === 0 && d.charAt(0) === 'd') {
-          //   main.updateSerialProgress({ progress: 100, str: 'Uploading to ' + this.COM + ' is complete' });
-            // this.sp.write('Quit', (err) => {
-            //   if (err) { return console.log(err); }
-            // });
-          // } else {
-          uploadFromWaitList();
-          // }
-
-        } else if (d.charAt(0) === '&') {
+        else if (d.charAt(0) === 'A') {
           const dataArray = d.substr(1).split(':');
           const data = {
-              pos: parseInt(dataArray[0]),
-              speed: Math.abs(parseInt(dataArray[1])),
-              ms: Math.abs(parseInt(dataArray[2]))
+              angle: parseFloat(dataArray[0]),
+              velocity: parseFloat(dataArray[1]),
+              serialPath: this.COM
           };
-          main.sendDataToPlayWindow(data, this.COM);
+          main.visualizaMotorData(data);
 
         } else if (d.charAt(0) === 'U') {
           const dataArray = d.split(':');
           main.updateCalibrationValue(parseFloat(dataArray[1]), this.COM);
-          main.updateSerialProgress({ progress: 100, str: 'Calibration of motor at ' + this.COM + ' is complete' });
+          updateProgress(100, ('Calibration of motor at ' + this.COM + ' is complete'));
+
+        } else if (d.charAt(0) === 'S') { // receive custom variable
+
+          // const dataArray = d.split(':');
+
         } else if (d.charAt(0) === 'Z') { // receive custom variable
-
-          const dataArray = d.split(':');
-          main.updateSleepmodePlayWindow(dataArray[1], this.COM)
-
-        } else if (d.charAt(0) === 'V') { // receive custom variable
+          console.log('received data ', d);
           const dataArray = d.substr(1).split(':');
           const data = {
-              variableIndex: parseInt(dataArray[1]),
-              value: dataArray[2]
+              motorID: dataArray[0],
+              zero_electric_angle: parseFloat(dataArray[1]),
+              serialPath: this.COM
           };
-          main.updateCustomVariableFeelixIO(data);
+          main.updateZeroElectricAngle(data);
 
+        } else if (d.charAt(0) === 'M') { // receive custom variable
+          updateProgress(progress, 'Maximum data size reached');
         }
-        // else if (d.charAt(0) === 'Q') {
 
-        //   this.sp.close();
-        //   this.connected = false;
-
-        // }
     });
 
 
@@ -357,7 +233,7 @@ class newSerialPort {
         this.connected = false;
         dataSendWaitList = [];
         main.updateSerialStatus({ microcontroller: this.portData, connected: this.connected });
-        main.updateSerialProgress({ progress: 0, str: 'Connection to ' + this.portData.port.path + ' - ' + this.portData.type + ' is closed' });
+        updateProgress(0, ('Connection to ' + this.COM + ' - ' + this.portData.type + ' is closed'));
         const portIndex = activePorts.indexOf(this.COM);
         if (portIndex > -1) {
           activePorts.splice(portIndex, 1);
@@ -366,7 +242,7 @@ class newSerialPort {
 
 
     this.sp.on('error', (error) => {
-        main.updateSerialProgress({ progress: 0, str: this.portData.port.path + ' - ' + this.portData.type + ': ' + error });
+        updateProgress(0, (this.portData.path + ' - ' + this.portData.type + ': ' + error));
         if (!this.connected) {
           main.updateSerialStatus({ microcontroller: this.portData, connected: this.connected });
         }
@@ -374,200 +250,177 @@ class newSerialPort {
   }
 }
 
+function updateProgress(_progress, _str) {
+  progress = _progress;
+  main.updateSerialProgress({ progress: _progress, str: _str });
+}
 
-function uploadData(data) {
-  // receivingPort = ports.filter(p => p.COM === data.config.)[0];
 
-  if (receivingPort) {
-    // dataSendWaitList.push(data.config.)
+
+function prepareMotorData(uploadContent, motor, datalist) {
+
+  datalist.unshift('FM' + motor.id + 'I' + motor.id);
+  datalist.unshift('FM' + motor.id + 'S' + motor.config.supplyVoltage);
+  datalist.unshift('FM' + motor.id + 'P' + motor.config.polepairs);
+
+
+  if (motor.config.voltageLimit) {
+    datalist.unshift('FM' + motor.id + 'L' + motor.config.voltageLimit);
   }
+  if (motor.config.velocityLimit) {
+    datalist.unshift('FM' + motor.id + 'V' + motor.config.velocityLimit);
+  }
+  if (motor.config.calibration.value && motor.config.calibration.value !== 0.0  && motor.config.calibration.value !== -12345.0) {
+    datalist.unshift('FM' + motor.id + 'Z' + motor.config.calibration.value.toFixed(12));
+  }
+  datalist.unshift('FM' + motor.id + 'E' + motor.config.encoder.part_number);
+  datalist.unshift('FM' + motor.id + 'O' + motor.state.position.start);
+  datalist.unshift('FM' + motor.id + 'C' + motor.config.encoder.clock_speed);
+  datalist.unshift('FM' + motor.id + 'D' + (motor.config.encoder.direction == 'CW' ? 1 : -1));
+  datalist.unshift('FM' + motor.id + 'T' + uploadContent.config.updateSpeed);
+  // datalist.unshift('FM' + motor.id + 'B' + uploadContent.baudRate);
+
+  return datalist;
 }
 
 
 
 
+function prepareEffectData(uploadContent, motor, datalist) {
 
+  let i = 0;
 
-function uploadEffectsToMicrocontroller(effectList, motor, serialData) {
-  receivingPort = ports.filter(p => p.COM === serialData.port.path)[0];
+  datalist.unshift('FM' + motor.id + 'F' + uploadContent.effects.length);
 
-  if (receivingPort) {
-    let generalDataStr = 'M;' + motor.encoder.PR + ';' + motor.frequency + ';' + motor.position.start + ';' + motor.calibration.xStartPos + ';' + effectList.length;
+  for (const effect of uploadContent.effects) {
+    datalist.unshift('FE' + i + effect.position.identifier + ':' + effect.position.value[0] + ':' + effect.position.value[1]);
+    datalist.unshift('FE' + i + effect.direction.identifier + ':' + effect.direction.value[0] + ':' + effect.direction.value[1]);
+    datalist.unshift('FE' + i + effect.scale.identifier + ':' + effect.scale.value[0] + ':' + effect.scale.value[1]);
+    datalist.unshift('FE' + i + effect.angle.identifier + ':' + effect.angle.value);
+    datalist.unshift('FE' + i + effect.vis_type.identifier + ':' + effect.vis_type.value);
+    datalist.unshift('FE' + i + effect.effect_type.identifier + ':' + effect.effect_type.value);
+    datalist.unshift('FE' + i + effect.datasize.identifier + ':' + effect.datasize.value);
 
-    let pathEffectListID = [];
+    if (effect.repeat) {
+      datalist.unshift('FE' + i + effect.repeat.identifier + ':' + effect.repeat.value);
+    }
+    datalist.unshift('FE' + i + effect.infinite.identifier + ':' + effect.infinite.value);
 
-    let runData = [];
-    let effectData = [];
-    let variableData = [];
-    let index = 0;
-    let positionDataPointer = 0;
-    let timeDataPointer = 0;
-    const effectObj = { data: [], name: 'effect data' };
-    const variableObj = { data: [], name: 'variables' };
+    i++;
+  }
 
+  for (const d of uploadContent.data.overlay) {
+    datalist.unshift('FDO' + i + 'P:' + d.position.start + ':' + d.position.end);
+    datalist.unshift('FDO' + i + 'D:' + (d.direction.cw ? 1 : 0) + ':' + (d.direction.ccw ? 1 : 0) );
 
-    for (const effect of effectList) {
-      let arraySize;
-      effectObj.name = effect.name;
-      const infinite = effect.slug === 4 ? effect.loop : effect.infinite;
+    for (const el of d.data) {
+      datalist.unshift('FDO:' + (Math.round(el.x) !== el.x ? el.x.toFixed(10) : el.x) + ':' + (Math.round(el.y) !== el.y ? el.y.toFixed(10) : el.y));
+    }
+    i++;
+  }
 
-      let effectDataStr = 'E;' + index + ';' + effect.slug + ';' + effect.quality + ';' + effect.position + ';' +
-        effect.angle + ';' + effect.direction + ';' + effect.scaleX + ';' + effect.scaleY + ';' + effect.startTime + ';' +
-        (effect.repeat !== null ? effect.repeat.length : 1) + ';' + (infinite ? 1 : 0)  + ';' +
-        (effect.enabled ? 1 : 0) + ';' + (effect.overlapping > 0 ? 1 : 0);
-
-      let variableStr = '';
-      if (effect.linear.Xmin !== null) {
-        variableStr += 'V;' + index + ';' + effect.linear.Xmin + ';' + effect.linear.Xmax + ';' + effect.linear.Ymin + ';' + effect.linear.Ymax + ';' + effect.linear.dYdX;
-        variableObj.data.push(variableStr);
+  for (const d of uploadContent.data.effectData) {
+    // send pointer value
+    const effect = uploadContent.effects.filter(e => e.id === d.id)[0];
+    if (effect) {
+      const effect_index = uploadContent.effects.indexOf(effect);
+      let ptr = 0;
+      for (let n = 0; n < effect_index; n++) {
+        ptr += uploadContent.effects[n].vis_type === 'position' ? uploadContent.effects[n].datasize.value * 2 : uploadContent.effects[n].datasize.value;
       }
-
-      if (effect.slug === 4) {
-
-        arraySize = effect.translatedData.length;
-
-        const existingPathDetails = pathEffectListID.filter(p => p.id === effect.id)[0];
-        if (existingPathDetails) {
-          effectDataStr += ';' + arraySize + ';' + existingPathDetails.pointer;
-
-        } else {
-          pathEffectListID.push({ id: effect.id, pointer: timeDataPointer });
-          effectDataStr += ';' + arraySize + ';' + timeDataPointer;
-
-        if (arraySize > 0) {
-            let dataObj = { effect: index, pointer: timeDataPointer, data: [] };
-            let elIndex = 0;
-            let subPointer = timeDataPointer;
-            let runDataStr = 'T;' + subPointer;
-            for (const t of effect.translatedData) {
-              runDataStr += ';' + t.x + ';' + t.y + ';' + t.cp1x + ';' + t.cp1y + ';' + t.cp2x + ';' + t.cp2y;
-              elIndex++;
-
-              if (elIndex > 20) {
-                elIndex = 0;
-                dataObj.data.push(runDataStr);
-                subPointer += elIndex;
-                runDataStr = 'T;' + subPointer;
-              }
-            }
-            if (runDataStr !== 'T;' + subPointer) {
-              dataObj.data.push(runDataStr);
-            }
-            runData.push(dataObj);
-          }
-          timeDataPointer += effect.translatedData.length - 1;
-        }
-      } else if (effect.slug === 5) {
-
-        arraySize = effect.translatedData.length;
-
-        const existingPathDetails = pathEffectListID.filter(p => p.id === effect.id)[0];
-        if (existingPathDetails) {
-          effectDataStr += ';' + arraySize + ';' + existingPathDetails.pointer;
-
-        } else {
-          pathEffectListID.push({ id: effect.id, pointer: positionDataPointer });
-          effectDataStr += ';' + arraySize + ';' + positionDataPointer;
-
-          if (effect.repeat !== null) {
-            for (let r = 0; r < effect.repeat.length; r++) {
-              effectDataStr += ';' + effect.repeat[r];
-            }
-          }
-
-          if (arraySize > 0) {
-            let dataObj = { effect: index, pointer: positionDataPointer, data: [] };
-            let elIndex = 0;
-            let subPointer = positionDataPointer;
-            let runDataStr = 'D;' + subPointer;
-            for (const t of effect.translatedData) {
-              runDataStr += ';' + t.y + ';' + t.d;
-              elIndex++;
-
-              if (elIndex > 64) {
-                dataObj.data.push(runDataStr);
-                subPointer += elIndex;
-                runDataStr = 'D;' + subPointer;
-                elIndex = 0;
-              }
-            }
-            if (runDataStr !== 'D;' + subPointer) {
-              dataObj.data.push(runDataStr);
-            }
-            runData.push(dataObj);
-          }
-          positionDataPointer += effect.translatedData.length - 1;
-        }
+      datalist.unshift('FE' + effect_index + 'R:' + ptr);
+    }
+    for (const el of d.data) {
+      if (d.type === 'position') {
+        datalist.unshift('FDI:' + (Math.round(el.d) !== el.d ? el.d.toFixed(10) : el.d));
       }
-      index++;
-      effectObj.data.push(effectDataStr);
+      datalist.unshift('FDI:' + (Math.round(el.y) !== el.y ? el.y.toFixed(10) : el.y));
     }
-
-    generalDataStr += ';' + positionDataPointer + ';' + timeDataPointer;
-    effectData.push(effectObj);
-
-    if (variableObj.data.length > 0) {
-      variableData.push(variableObj);
-    }
-    dataSendWaitList.unshift({ type: 'generalData', receivingPort, data: generalDataStr, name: 'motor settings' });
-    if (variableData.length > 0) {
-      dataSendWaitList.unshift({ type: 'runData', receivingPort, data: variableData, name: 'effect data'  });
-    }
-    dataSendWaitList.unshift({ type: 'runData', receivingPort, data: effectData, name: 'effect data'  });
-    if (runData.length > 0) {
-      dataSendWaitList.unshift({ type: 'runData', receivingPort, data: runData, name: 'effect data'  });
-    }
-    if (effectList[0].playAfterUpload) {
-      dataSendWaitList.unshift({ type: 'generalData', receivingPort, data: '*P;1', name: 'effect data'  });
-    }
-    uploadFromWaitList();
-  } else {
-    connectToSerialPort(serialData);
   }
+
+  return datalist;
+
+}
+
+
+
+function tryToEstablishConnection(receivingPort, port, vendor, baudrate) {
+  if (!receivingPort) {
+    createConnection({ port:port, type: vendor, baudrate: baudrate });
+    receivingPort = ports.filter(p => p.COM === port.path)[0];
+  } else if (!receivingPort.sp.IsOpen) {
+    receivingPort.sp.open();
+    activePorts.push(receivingPort.COM);
+  }
+  return receivingPort;
+}
+
+
+function uploadData(uploadContent) {
+  receivingPort = ports.filter(p => p.COM === uploadContent.config.serialPort.path)[0];
+
+  datalist = [];
+
+  receivingPort = tryToEstablishConnection(receivingPort, uploadContent.config.serialPort, uploadContent.config.vendor, uploadContent.config.baudrate);
+  // if (!receivingPort) {
+  //   createConnection({ port:uploadContent.config.serialPort, type: uploadContent.config.vendor, baudrate: uploadContent.config.baudrate });
+  //   receivingPort = ports.filter(p => p.COM === uploadContent.config.serialPort.path)[0];
+  // } else if (!receivingPort.sp.IsOpen) {
+  //   receivingPort.sp.open();
+  //   activePorts.push(receivingPort.COM);
+  // }
+
+  const motor = uploadContent.config.motor;
+
+  datalist = prepareMotorData(uploadContent, motor, datalist);
+  datalist = prepareEffectData(uploadContent, motor, datalist);
+
+  dataSendWaitList.push({ port: uploadContent.config.serialPort.path, data: datalist, totalItems: datalist.length, collection: uploadContent.config.collection });
+  dataSendWaitList.filter(d => d.port === uploadContent.config.serialPort.path)[0].data.unshift('FC');
+
+  setTimeout(() => {
+    uploadFromWaitList(receivingPort);
+  }, 500);
+
 }
 
 
 
 
-function updateRunData(port, runData) {
-  if (runDataIndex.parent < runData.length) {
-    if (runDataIndex.child < runData[runDataIndex.parent].data.length) {
-      port.writeData(runData[runDataIndex.parent].data[runDataIndex.child]);
-      runDataIndex.child ++;
-    } else {
-      runDataIndex.parent ++;
-      runDataIndex.child = 0;
-      updateRunData(port, runData);
-    }
-  } else {
-    port.writeData('S');
-  }
-  getUploadProgress();
-}
 
 
+function uploadFromWaitList(receivingPort) {
+  if (receivingPort && dataSendWaitList.length > 0) {
+    const datalist = dataSendWaitList.filter(d => d.port === receivingPort.COM)[0];
 
-function uploadFromWaitList() {
-  const index = dataSendWaitList.length - 1;
-  if (index > -1) {
-    let item = dataSendWaitList[index];
-    receivingPort = ports.filter(p => p.COM === item.receivingPort.COM)[0];
-    if (receivingPort) {
-      if (item.type === 'runData') {
-        runDataIndex = { parent: 0, child: 0 };
-        updateRunData(item.receivingPort, item.data);
+    if (datalist && datalist.data.length > 0) {
+      const item = datalist.data[datalist.data.length - 1];
+
+      receivingPort.writeData(item + '&');
+      datalist.data.pop();
+
+      if (datalist.data.length === 0) {
+        const index = dataSendWaitList.indexOf(datalist);
+        if (dataSendWaitList[index].collection) {
+          main.uploadSuccesful(dataSendWaitList[index].collection);
+        }
+        dataSendWaitList.splice(index, 1);
+        main.updateSerialProgress({ progress: 100, str: 'Ready' });
       } else {
-        item.receivingPort.writeData(item.data);
+        const progress = (100 / datalist.totalItems) * (datalist.totalItems - datalist.data.length);
+        main.updateSerialProgress({ progress: progress, str: 'Writing data to ' + receivingPort.portData.type + ' at ' + receivingPort.COM });
       }
-    } else {
-      dataSendWaitList.pop();
-      uploadFromWaitList();
-      main.updateSerialProgress({ progress: 0, str: 'Cannot find ' + item.receivingPort.COM });
+      return;
     }
+
+
   } else {
-    main.updateSerialProgress({ progress: 0, str: 'Ready' });
+    if (!receivingPort) {
+      main.updateSerialProgress({ progress: 0, str: 'Port is not available' });
+    }
   }
 }
+
 
 
 function moveToPos(serialData, pos = 0) {
@@ -578,7 +431,6 @@ function moveToPos(serialData, pos = 0) {
 
 
 
-
 function playEffect(play, serialData) {
   let str = '*P;' + (play ? 1 : 0);
   sendDataStr(str, serialData);
@@ -586,15 +438,28 @@ function playEffect(play, serialData) {
 }
 
 
-function calibrateMotor(motor, serialData) {
-  // let generalDataStr =  'M;' + motor.encoder.PR + ';' + motor.frequency + ';' + motor.position.start + ';0.0';
-  // sendDataStr(generalDataStr, serialData);
+function calibrateMotor(motor_id, microcontroller) {
+  receivingPort = ports.filter(p => p.COM === microcontroller.serialPort.path)[0];
+  motor = microcontroller.motors.filter(m => m.id === motor_id)[0];
 
-  let direction = 0;
-  if (motor.calibration.direction === 'clockwise') { direction = 1; } else if (motor.calibration.direction === 'counterclockwise') { direction = -1; }
-  const str = '*C;' + direction;
-  sendDataStr(str, serialData);
-  main.updateSerialProgress({ progress: 50, str: 'Calibrating motor at ' + serialData.port.path  });
+  receivingPort = tryToEstablishConnection(receivingPort, microcontroller.serialPort, microcontroller.vendor, microcontroller.baudrate);
+
+  let datalist = [];
+  datalist.unshift('FM' + motor.id + 'I' + motor.id);
+  datalist.unshift('FM' + motor.id + 'S' + motor.config.supplyVoltage);
+  datalist.unshift('FM' + motor.id + 'P' + motor.config.polepairs);
+  datalist.unshift('FM' + motor.id + 'R');
+  datalist.unshift('FC');
+
+  console.log(datalist);
+  dataSendWaitList.push({ port: microcontroller.serialPort.path, data: datalist, totalItems: datalist.length });
+
+  setTimeout(() => {
+    uploadFromWaitList(receivingPort);
+    main.updateSerialProgress({ progress: 0, str: 'Calibrating motor at ' + port  });
+  }, 500);
+
+
 }
 
 
@@ -629,7 +494,7 @@ function updateEffectData(type, data, effectIndex, serialData) {
 
 
 function sendDataStr(str, serialData) {
-  receivingPort = ports.filter(p => p.COM === serialData.port.path)[0];
+  receivingPort = ports.filter(p => p.COM === serialData.path)[0];
   if (receivingPort) {
     dataSendWaitList.unshift({ type: 'generalData', receivingPort, data: str });
     // if (dataSendWaitList.length === 1) {
@@ -640,34 +505,12 @@ function sendDataStr(str, serialData) {
   }
 }
 
-function updateExternalDevice(serialData, dataList) {
-  if (serialData) {
-    receivingPort = activeDevicePorts.filter(p => p.COM === serialData.path)[0];
-    if (receivingPort) {
-      let list = '';
-      let index = 0;
-      for (const item of dataList) {
-        list += item.identifier + ';' + item.value;
-        if (index < dataList.length - 1) {
-          list += ':';
-        }
-        index++;
-      }
-      if (list.length > 0) {
-        receivingPort.writeData(list + '\n');
-        main.updateSerialProgress({ progress: ((100 / dataList.length) * index), str: 'send motor data to ' + receivingPort.COM });
-      }
-    }
-  }
-}
-
 
 
 exports.listSerialPorts = listSerialPorts;
 exports.writeDataString = writeDataString;
 exports.createConnection = createConnection;
 exports.connectToSerialPort = connectToSerialPort;
-exports.addSerialPort = addSerialPort;
 exports.closeSerialPort = closeSerialPort;
 exports.closeAllSerialPorts = closeAllSerialPorts;
 exports.moveToPos = moveToPos;
@@ -676,7 +519,5 @@ exports.saveCalibrationValueToEEPROM = saveCalibrationValueToEEPROM;
 exports.updateStartPosition = updateStartPosition;
 exports.updateSleepmode = updateSleepmode;
 exports.playEffect = playEffect;
-exports.uploadEffectsToMicrocontroller = uploadEffectsToMicrocontroller;
 exports.updateEffectData = updateEffectData;
-exports.updateExternalDevice = updateExternalDevice;
 exports.uploadData = uploadData;

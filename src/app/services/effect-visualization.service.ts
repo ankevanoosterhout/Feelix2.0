@@ -53,7 +53,7 @@ export class EffectVisualizationService {
       .attr('stroke', '#2c2c2c')
       .attr('stroke-width', 0.5);
 
-    if (effect.type === 'torque') {
+    if (effect.type !== 'position') {
       const middleLine = svg.append('rect')
       .attr('width', width)
       .attr('height', 1)
@@ -82,13 +82,13 @@ export class EffectVisualizationService {
       const multiply = (collection.rotation.units.PR / effect.grid.xUnit.PR);
 
       const width = effect.paths.length === 0 ? 30 : collection.config.newXscale(collEffect.position.x + collEffect.position.width) - collection.config.newXscale(collEffect.position.x);
-      const domainSize = effect.type === 'torque' ? 200 : 100;
+      const domainSize = effect.type === 'position' ? 100 : 200;
 
       const heightEffect = (collection.config.newYscale(collEffect.position.bottom) - collection.config.newYscale(collEffect.position.top)) * (collEffect.scale.y / 100);
       const yPos = collection.config.newYscale(collEffect.position.top * (collEffect.scale.y / 100)) - (pixHeight * (collEffect.position.y / domainSize));
 
-      const offset = effect.type === 'torque' ? pixHeight * (((100-collEffect.scale.y)/100) / 2) - (pixHeight * (collEffect.position.y / 100) / 2) :
-                      pixHeight * ((100-collEffect.scale.y)/100) - (pixHeight * (collEffect.position.y / 100));
+      const offset = effect.type === 'position' ? pixHeight * ((100-collEffect.scale.y)/100) - (pixHeight * (collEffect.position.y / 100)) :
+                                                  pixHeight * (((100-collEffect.scale.y)/100) / 2) - (pixHeight * (collEffect.position.y / 100) / 2);
 
       const height = pixHeight * (collEffect.scale.y/100);
       const layerLocked = collection.effectDataList.length > 0 ? true : this.checkIfLayersIsLocked(collEffect.direction, collection.layers);
@@ -207,7 +207,7 @@ export class EffectVisualizationService {
           .domain([ effect.size.x * multiply, (effect.size.x + effect.size.width) * multiply ])
           .range([0, width]);
 
-      const domain = effect.type === 'torque' ? [100, -100] : [100, 0];
+      const domain = effect.type === 'position' ? [100, 0] : [100, -100];
 
       const yScale = d3.scaleLinear()
         .domain(domain)
@@ -278,8 +278,8 @@ export class EffectVisualizationService {
     const multiply = { x: collection.rotation.units.name === 'radians' ? (Math.PI / 180) : 1, y: collEffect.flip.y ? -100 : 100 };
 
 
-    const offset = renderedData.type === 'torque' ? pixHeight * (((100-collEffect.scale.y)/100) / 2) - (pixHeight * (collEffect.position.y / 100) / 2) :
-                      pixHeight * ((100-collEffect.scale.y)/100) - (pixHeight * (collEffect.position.y / 100));
+    const offset = renderedData.type === 'position' ? pixHeight * ((100-collEffect.scale.y)/100) - (pixHeight * (collEffect.position.y / 100)) :
+                                                      pixHeight * (((100-collEffect.scale.y)/100) / 2) - (pixHeight * (collEffect.position.y / 100) / 2);
 
     const renderedDataCopy = this.cloneService.deepClone(renderedData.data);
     const data = collEffect.flip.x ? renderedDataCopy.reverse() : renderedDataCopy;

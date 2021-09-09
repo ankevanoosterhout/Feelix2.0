@@ -10,7 +10,6 @@ import { EffectSettingsComponent } from './components/windows/settings/effect-se
 import { GridSettingsComponent } from './components/windows/settings/grid-settings.component';
 import { ZigZagComponent } from './components/windows/zigzag-effect.component';
 import { TransformComponent } from './components/windows/transform.component';
-import { SelectComComponent } from './components/windows/select-com.component';
 import { InfoPageComponent } from './pages/info-page.component';
 import { FeelixioPageComponent } from './pages/feelixio-page.component';
 import { MotorControlComponent } from './components/interface-elements/motor-control/motor-control.component';
@@ -33,8 +32,6 @@ const routes: Routes = [
     { path: 'grid-settings', component: GridSettingsComponent },
     { path: 'zigzag', component: ZigZagComponent },
     { path: 'transform', component: TransformComponent },
-    { path: 'connect-to-com', component: SelectComComponent },
-    { path: 'connect-to-com-custom', component: SelectComComponent },
     { path: 'info', component: InfoPageComponent },
     { path: 'feelixio-page', component: FeelixioPageComponent },
     { path: 'motor-control-component', component: MotorControlComponent },

@@ -119,10 +119,10 @@ export class HardwareService {
   }
 
 
-  updateMicroControllerDetails(microcontroller: MicroController, type: string) {
+  updateMicroControllerDetails(microcontroller: MicroController, vendor: string) {
     const controller = this.microcontrollers.filter(m => m.serialPort.path === microcontroller.serialPort.path)[0];
     if (controller) {
-      controller.type = type;
+      controller.vendor = vendor;
       this.store();
     }
   }
@@ -234,6 +234,14 @@ export class HardwareService {
       return microController.motors[id];
     }
     return;
+  }
+
+  updatePlay(com: string, playing: boolean) {
+    const microController = this.microcontrollers.filter(m => m.serialPort.path === com)[0];
+    if (microController) {
+      microController.playing = playing;
+      this.store();
+    }
   }
 
   disconnectAll() {

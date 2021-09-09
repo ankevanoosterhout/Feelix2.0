@@ -18,7 +18,7 @@ export class Quality {
 }
 
 export class Calibration {
-  value = 0.016875;
+  value = 0.0;
   direction: string = null;
   xStartPos = 0.0;
 }
@@ -52,18 +52,24 @@ export class PID {
   p: number = 0.2;
   i: number = 20;
   d: number = 0.001;
+  constructor(p: number, i: number, d: number) {
+    this.p = p;
+    this.i = i;
+    this.d = d;
+  }
 }
 
 
 export class Config {
-  polepairs: number = 7;
+  polepairs: number = 14;
+  phaseResistance: number = 15.2;
   motionControl: string = 'position';
   supplyVoltage: number = 12;
   voltageLimit: number = null;
   velocityLimit: number = null;
   inlineCurrentSensing = false;
-  positionSensorType: string = 'Magnetic sensor';
-  positionSensor: any = new MagneticSensor();
+  encoderType: string = 'Magnetic sensor';
+  encoder: any = new MagneticSensor();
   calibration = new Calibration();
   rotation = new Rotation();
   transmission = 1;
@@ -84,7 +90,9 @@ export class Motor {
   type: string = 'BLDC Motor';
   config = new Config();
   state = new State();
-  pid = new PID();
+  position_pid = new PID(0.2, 20, .001);
+  velocity_pid = new PID(0.2, 20, .001);
+
 
   constructor(id: number) {
     const charArray = [ 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U'];
@@ -109,10 +117,8 @@ export class OtherDevices {
 
 export class MicroController {
   id: string = null;
-  feelixio = 'motor';
   serialPort: any = null;
   vendor: string = null;
-  type: string = null;
   motors = [ new Motor(0) ];
   storageSpace: number = null;
   connected = false;
@@ -120,12 +126,13 @@ export class MicroController {
   selected = false;
   lastDataSend: number = null;
   updateSpeed = 20;
-  dataToOtherDevices: Array<OtherDevices> = [];
+  baudrate = 115200;
+  dataToOtherDevices: Array<any> = [];
 
-  constructor(id: string, serialPort: any, type: string) {
+  constructor(id: string, serialPort: any, vendor: string) {
     this.id = id;
     this.serialPort = serialPort;
-    this.type = type;
+    this.vendor = vendor;
     this.lastDataSend = new Date().getTime();
   }
 }
@@ -139,7 +146,7 @@ export class ConnectedDevice {
   lastDataSend: number = null;
   lastDataReceived: number = null;
   dataSendSpeed = 50;
-  baudrate = 9600;
+  baudrate = 115200;
 
   constructor(id: string, serialPort: any, name: string) {
     this.id = id;

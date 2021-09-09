@@ -80,6 +80,7 @@ export class Collection {
   overlappingData = [];
   effectDataList = [];
   renderedData = [];
+  playing = false;
 
   constructor(id: string, name: string) {
     this.id = id;

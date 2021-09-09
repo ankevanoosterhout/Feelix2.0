@@ -36,7 +36,6 @@ import { FixedToolbarComponent } from './components/interface-elements/toolbar-h
 import { DrawingService } from './services/drawing.service';
 import { BBoxService } from './services/bbox.service';
 import { DrawElementsService } from './services/draw-elements.service';
-import { SelectComComponent } from './components/windows/select-com.component';
 import { HardwareService } from './services/hardware.service';
 import { StatusbarComponent } from './components/interface-elements/statusbar.component';
 import { EaseFunctionLibraryService } from './services/ease-function-library.service';
@@ -82,7 +81,6 @@ import { GridService } from './services/grid.service';
     ExportDialogComponent,
     ZigZagComponent,
     TransformComponent,
-    SelectComComponent,
     StatusbarComponent,
     MotorSettingsComponent,
     MotorControlComponent,

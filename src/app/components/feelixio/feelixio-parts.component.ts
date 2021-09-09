@@ -404,7 +404,7 @@ export class FeelixioPartsComponent implements OnInit, AfterViewInit {
       this.updateMotor(motorObject);
       this.electronService.ipcRenderer.send('updateStartPos', {
         motor: Motor,
-        microcontroller: { port: motorObject.microcontroller.serialPort, type: motorObject.microcontroller.type,
+        microcontroller: { port: motorObject.microcontroller.serialPort, type: motorObject.microcontroller.vendor,
           position: Motor.position.start } });
     }
   }
@@ -414,7 +414,7 @@ export class FeelixioPartsComponent implements OnInit, AfterViewInit {
     if (Motor) {
       this.updateMotor(motorObject);
       this.electronService.ipcRenderer.send('updateSleepmode',  {
-        microcontroller: { port: motorObject.microcontroller.serialPort, type: motorObject.microcontroller.type },
+        microcontroller: { port: motorObject.microcontroller.serialPort, type: motorObject.microcontroller.vendor },
         sleep: Motor.sleep });
     }
   }
@@ -424,7 +424,7 @@ export class FeelixioPartsComponent implements OnInit, AfterViewInit {
     if (Motor) {
       this.electronService.ipcRenderer.send('calibrateMotor', {
         motor: Motor,
-        microcontroller: { port: motorObject.microcontroller.serialPort, type: motorObject.microcontroller.type } });
+        microcontroller: { port: motorObject.microcontroller.serialPort, type: motorObject.microcontroller.vendor } });
     }
   }
 
@@ -433,7 +433,7 @@ export class FeelixioPartsComponent implements OnInit, AfterViewInit {
     if (Motor) {
       this.electronService.ipcRenderer.send('saveCalibrationValueToEEPROM', {
         motor: Motor,
-        microcontroller: { port: motorObject.microcontroller.serialPort, type: motorObject.microcontroller.type } });
+        microcontroller: { port: motorObject.microcontroller.serialPort, type: motorObject.microcontroller.vendor } });
     }
   }
 
@@ -453,7 +453,7 @@ export class FeelixioPartsComponent implements OnInit, AfterViewInit {
 
   connectToMicrocontroller(microcontroller: MicroController, conn: boolean) {
     this.electronService.ipcRenderer.send('connectToSerialPort',
-      { COM: { port: microcontroller.serialPort, type: microcontroller.type }, connect: conn });
+      { COM: { port: microcontroller.serialPort, type: microcontroller.vendor }, connect: conn });
   }
 
   connectToDevice(device: ConnectedDevice, conn: boolean) {

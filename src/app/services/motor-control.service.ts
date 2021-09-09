@@ -18,9 +18,8 @@ export class MotorControlService {
 
   public toolList = [
     { id: 0, name: 'new collection', slug: 'collection', disabled: false, icon: './assets/icons/tools/collections.svg' },
-    { id: 1, name: 'upload all', slug: 'upload', disabled: false, icon: './assets/icons/buttons/upload-icon.svg' },
-    { id: 2, name: 'microcontroller settings', slug: 'settings', disabled: false, icon: './assets/icons/tools/settings.svg' },
-    { id: 3, name: 'display', slug: 'display', disabled: false,
+    { id: 1, name: 'microcontroller and motor settings', slug: 'settings', disabled: false, icon: './assets/icons/buttons/config.svg' },
+    { id: 2, name: 'display', slug: 'display', disabled: false,
       icon: this.file.configuration.collectionDisplay === 'small' ? './assets/icons/buttons/small-display.svg' : './assets/icons/buttons/large-display.svg' }
   ]
 
@@ -191,7 +190,7 @@ export class MotorControlService {
         .attr('fill', 'none');
     }
 
-    if (collection.visualizationType === 'torque') {
+    if (collection.visualizationType !== 'position') {
       const middleline = collection.config.svg.append('line')
         .attr('x1', 0)
         .attr('x2', this.width)
@@ -307,6 +306,7 @@ export class MotorControlService {
 
           if (collection.effectDataList.length > 0) {
             const effectData = collection.effectDataList.filter(e => e.id === effect.id)[0];
+            // console.log(effectData);
             this.effectVisualizationService.drawRenderedCollectionData(effectSVG, collection, collectionEffect, effectData, (this.height - 39), 'rgba(255,255,255,1)');
           }
 
@@ -417,15 +417,18 @@ export class MotorControlService {
   drawCursor(collection: Collection) {
     collection.config.svg.selectAll('.cursorIndicator-' + collection.id).remove();
 
-    const cursor = collection.config.svg.append('rect')
+    const cursor = collection.config.svg.append('line')
       .attr('class', 'cursorIndicator-' + collection.id)
-      .attr('x', () => { return collection.microcontroller.motors.filter(m => m.id === collection.motorID)[0].state.position ?
-        collection.config.newXscale(collection.microcontroller.motors.filter(m => m.id === collection.motorID)[0].state.position): 0; })
-      .attr('width', 1)
-      .attr('y', 0)
-      .attr('height', this.height - 39)
+      .attr('x1', collection.microcontroller.motors.filter(m => m.id === collection.motorID)[0].state.position.current ?
+        collection.config.newXscale(collection.microcontroller.motors.filter(m => m.id === collection.motorID)[0].state.position.current) : 0)
+      .attr('x2', collection.microcontroller.motors.filter(m => m.id === collection.motorID)[0].state.position.current ?
+        collection.config.newXscale(collection.microcontroller.motors.filter(m => m.id === collection.motorID)[0].state.position.current) : 0)
+      .attr('y1', 0)
+      .attr('y2', this.height - 39)
       .attr('transform', () => this.file.configuration.collectionDisplay === 'small' ? 'translate(5, 0)' : 'translate(5, 26)')
-      .styel('fill', '#FF9100');
+      .attr('shape-rendering', 'crisp-edges')
+      .style('stroke', '#FF9100')
+      .style('stroke-width', 1);
   }
 
 
@@ -480,7 +483,7 @@ export class MotorControlService {
 
     collection.config.yScale = d3
       .scaleLinear()
-      .domain([100, (collection.visualizationType === 'torque' ? -100 : 0)])
+      .domain([100, (collection.visualizationType === 'position' ? 0 : -100)])
       .range([0, this.height - 39]);
 
     collection.config.xScale = d3

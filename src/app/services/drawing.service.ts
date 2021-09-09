@@ -102,7 +102,7 @@ export class DrawingService {
           }
         });
 
-      if (this.file.activeEffect.type === 'torque') {
+      if (this.file.activeEffect.type !== 'position') {
         const middleLine = this.config.svg.append('rect')
           .attr('width', this.nodeService.scale.scaleX(this.config.editBounds.xMax) -
                         this.nodeService.scale.scaleX(this.config.editBounds.xMin))
@@ -214,7 +214,7 @@ export class DrawingService {
   setEditBounds() {
 
     if (this.file.activeEffect !== null) {
-      const yMin = this.file.activeEffect.type === 'torque' ? -100 : 0;
+      const yMin = this.file.activeEffect.type === 'position' ? 0 : -100;
 
       this.config.margin.top = this.config.svgDy * 0.4;
       this.config.editBounds = {

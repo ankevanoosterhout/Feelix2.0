@@ -140,10 +140,8 @@ export class MotorControlToolbarInsetComponent implements OnInit {
     if (id === 0) {
       this.motorControlService.addCollection();
     } else if (id === 1) {
-      this.electronService.ipcRenderer.send('uploadAll');
-    } else if (id === 2) {
       this.electronService.ipcRenderer.send('motorSettings');
-    } else if (id === 3) {
+    } else if (id === 2) {
       this.motorControlService.changeViewSettings();
     }
   }

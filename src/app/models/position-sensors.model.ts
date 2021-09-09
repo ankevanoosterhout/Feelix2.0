@@ -8,6 +8,7 @@ export class MagneticSensor {
   command_rw_bit: number = null;
   command_parity_bit: number = null;
   clock_speed = 1000000;
+  direction: string = 'CW';
 }
 
 export class Encoder {

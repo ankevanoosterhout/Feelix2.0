@@ -11,7 +11,7 @@ const { shell } = require('electron');
 
 const serialPort = require('./serial-communication.js');
 
-let mainWindow, infoWindow = null, effectWindow = null, layerWindow = null, zigzagWindow = null, helpWindow = null, FeelixioWindow = null;
+let mainWindow, infoWindow = null, effectWindow = null, layerWindow = null, helpWindow = null, FeelixioWindow = null;
 let playWindows = [];
 let toolbars = [];
 let mainMenu, displays, FeelixioMenu;
@@ -19,7 +19,6 @@ let gridSnap = false, gridVisible = false, guidesLock = false;
 let effectDetails = null;
 let tmpWindow = null;
 let activeWindow = null;
-let comType = 'motor';
 
 
 /****** start app *****/
@@ -900,7 +899,7 @@ function createEffectSettingWindow(filepath) {
 }
 
 function createMotorSettingsWindow() {
-  drawTemporaryWindow(520, 450, 'Microcontroller settings', false, 'motor-settings');
+  drawTemporaryWindow(520, 450, 'Microcontroller settings', true, 'motor-settings');
 }
 
 function adjustGridSettings() {
@@ -922,8 +921,9 @@ function createConnectToCOM(comPorts) {
   if (tmpWindow !== null && (activeWindow === 'motor-settings')) {
     tmpWindow.webContents.send('comports', comPorts);
   } else {
-    drawTemporaryWindow(500, (comType !== 'custom' ? 230 : 260), (comType !== 'custom' ? 'Connect to Motor' : 'Connect to Serialport' ), true, (comType !== 'custom' ? 'connect-to-com' : 'connect-to-com-custom'), null, null);
+    createMotorSettingsWindow();
   }
+
 }
 
 
@@ -1068,7 +1068,6 @@ ipcMain.on('updateHeightSettings', function (e, height) {
 });
 
 ipcMain.on('listSerialPorts', function (e, data) {
-  if (data) { comType = data.type; }
   serialPort.listSerialPorts(createConnectToCOM);
 })
 
@@ -1087,13 +1086,14 @@ ipcMain.on('connectToSerialPort', function (e, data) {
   }
 })
 
-ipcMain.on('addSerialPort', function (e, data) {
-  serialPort.addSerialPort(data);
-  if (FeelixioWindow) {
-    FeelixioWindow.webContents.send('addDevice', { device: data, error: false })
-  }
-  if (tmpWindow) { tmpWindow.close(); }
-})
+// ipcMain.on('addSerialPort', function (e, data) {
+//   console.log(data);
+//   serialPort.addSerialPort(data);
+//   if (FeelixioWindow) {
+//     FeelixioWindow.webContents.send('addDevice', { device: data, error: false })
+//   }
+//   if (tmpWindow) { tmpWindow.close(); }
+// })
 
 ipcMain.on('playEffect', function(e, data) {
   serialPort.playEffect(data.play, data.microcontroller);
@@ -1229,16 +1229,14 @@ ipcMain.on('upload', (event, data) => {
   serialPort.uploadData(data);
 });
 
-ipcMain.on('addFilesToUploadList', (event, data) => {
-  serialPort.uploadEffectsToMicrocontroller(data.effects, data.motor, data.microcontroller);
-});
+
 
 ipcMain.on('moveToPos', (event, data) => {
   serialPort.moveToPos(data.microcontroller, data.pos);
 });
 
-ipcMain.on('calibrateMotor', (event, data) => {
-  serialPort.calibrateMotor(data.motor, data.microcontroller);
+ipcMain.on('getCalibrationValue', (event, data) => {
+  serialPort.calibrateMotor(data.motor, data.port);
 });
 
 ipcMain.on('saveCalibrationValueToEEPROM', (event, data) => {
@@ -1270,9 +1268,9 @@ function updateSerialStatus(status) {
   if (status.microcontroller) {
     mainWindow.webContents.send('updateStatus', status);
   }
-  if (FeelixioWindow !== null) {
-    FeelixioWindow.webContents.send('updateStatus', status);
-  }
+  // if (FeelixioWindow !== null) {
+  //   FeelixioWindow.webContents.send('updateStatus', status);
+  // }
 
 }
 
@@ -1297,13 +1295,8 @@ function displayStatus(data, page) {
   }
 }
 
-function sendDataToPlayWindow(data, serialPort) {
-  const playWindow = playWindows.filter(p => p.data.serialPort.path === serialPort)[0];
-  if (playWindow) { playWindow.window.webContents.send('playData', data); }
+function visualizaMotorData(data) {
   mainWindow.webContents.send('playData', data);
-  if (FeelixioWindow) {
-    FeelixioWindow.webContents.send('playData', { d: data, port: serialPort });
-  }
 }
 
 function updateCalibrationValue(data, serialPort) {
@@ -1315,25 +1308,24 @@ function updateCalibrationValue(data, serialPort) {
   }
 }
 
-function updateSleepmodePlayWindow(data, serialPort) {
-  const playWindow = playWindows.filter(p => p.data.serialPort.path === serialPort)[0];
-  if (playWindow) {
-    playWindow.window.webContents.send('updateSleepmode', data);
-  }
+
+
+function updateZeroElectricAngle(data) {
+  mainWindow.webContents.send('zero_electric_angle', data);
 }
 
-function updateCustomVariableFeelixIO(data) {
-  if (FeelixioWindow) {
-    FeelixioWindow.webContents.send('customVarData', data);
-  }
+function uploadSuccesful(collection) {
+  mainWindow.webContents.send('upload_succesful', collection);
 }
+
+
 
 
 exports.updateSerialStatus = updateSerialStatus;
 exports.displayStatus = displayStatus;
 exports.updateAvailablePortList = updateAvailablePortList;
-exports.sendDataToPlayWindow = sendDataToPlayWindow;
+exports.visualizaMotorData = visualizaMotorData;
 exports.updateSerialProgress = updateSerialProgress;
 exports.updateCalibrationValue = updateCalibrationValue;
-exports.updateSleepmodePlayWindow = updateSleepmodePlayWindow;
-exports.updateCustomVariableFeelixIO = updateCustomVariableFeelixIO;
+exports.updateZeroElectricAngle = updateZeroElectricAngle;
+exports.uploadSuccesful = uploadSuccesful;

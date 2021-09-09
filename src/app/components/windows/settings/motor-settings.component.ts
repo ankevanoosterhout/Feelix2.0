@@ -45,7 +45,7 @@ export class MotorSettingsComponent implements OnInit {
     { name: 'degrees', PR: 360 }
   ];
 
-  public controllerOptions = [
+  public vendors = [
     { name: 'Arduino DUE' },
     { name: 'Teensy' },
     { name: 'ESP32' },
@@ -83,6 +83,11 @@ export class MotorSettingsComponent implements OnInit {
     { name: 'AS5600' }
   ];
 
+  public directionType = [
+    { name: 'CW' },
+    { name: 'CCW' }
+  ];
+
   public communicationType = [
     { name: 'SPI' },
     { name: 'I2C' },
@@ -113,6 +118,13 @@ export class MotorSettingsComponent implements OnInit {
     this.showSelectMicrocontroller = false;
   }
 
+  updateSelectedController() {
+    if (this.selectedPort.vendor !== 'unknown') {
+      this.selectedController = this.selectedPort.vendor;
+      (this.document.getElementById('controllerType') as HTMLSelectElement).value = this.selectedController;
+    }
+  }
+
   closeWindow() {
     if (this.electronService.isElectronApp) {
       this.electronService.ipcRenderer.send('closeTmpWindow');
@@ -129,13 +141,13 @@ export class MotorSettingsComponent implements OnInit {
 
   updateMicrocontroller(microcontroller: any) {
     this.hardwareService.updateMicroController(microcontroller);
-    // this.electronService.ipcRenderer.send('updateMicrocontrollerDetails', this.microcontroller);
+    // this.electronService.ipcRenderer.send('updateMicrocontrollerDetails', microcontroller);
   }
 
   calibrateMotor(microcontroller: any, motorIndex: number) {
     this.electronService.ipcRenderer.send('calibrateMotor', {
       motor: motorIndex,
-      microcontroller: { port: microcontroller.serialPort, type: microcontroller.type } });
+      microcontroller: { port: microcontroller.serialPort, type: microcontroller.vendor } });
   }
 
   compareUnits(unit1: Unit, unit2: Unit) {
@@ -147,17 +159,21 @@ export class MotorSettingsComponent implements OnInit {
     this.electronService.ipcRenderer.send('listSerialPorts');
   }
 
-  getNumberOfPolePairs(motor_id: string) {
+  // getNumberOfPolePairs(motor_id: string) {
+    // this.electronService.ipcRenderer.send('getNumberOfPolePairs');
+  // }
 
+  getCalibrationValue(motor_id: string) {
+    this.electronService.ipcRenderer.send('getCalibrationValue', { motor: motor_id, port: this.selectedMicrocontroller });
   }
 
-  createPositionSensor(motor_id: string) {
+  createencoder(motor_id: string) {
     const motor = this.selectedMicrocontroller.motors.filter(m => m.id === motor_id)[0];
     if (motor) {
-      if (motor.config.positionSensorType === 'Magnetic sensor') {
-        motor.config.positionSensor = new MagneticSensor();
-      } else if (motor.config.positionSensorType === 'Encoder') {
-        motor.config.positionSensor = new Encoder();
+      if (motor.config.encoderType === 'Magnetic sensor') {
+        motor.config.encoder = new MagneticSensor();
+      } else if (motor.config.encoderType === 'Encoder') {
+        motor.config.encoder = new Encoder();
       }
       this.updateMicrocontroller(this.selectMicrocontroller);
     }
@@ -192,7 +208,7 @@ export class MotorSettingsComponent implements OnInit {
   saveMicrocontroller(selectedPort: any, selectedController: string) {
     this.hardwareService.addMicroController(selectedPort, this.selectedController);
     if (selectedPort !== null && selectedController !== null) {
-      this.electronService.ipcRenderer.send('addMicrocontroller', { port: selectedPort.serialPort, type: this.selectedController });
+      this.electronService.ipcRenderer.send('addMicrocontroller', { port: selectedPort.serialPort, type: this.selectedController, baudrate: 115200 });
     }
     this.microcontrollers = this.hardwareService.getAllMicroControllers();
     this.selectedMicrocontroller = this.microcontrollers[this.microcontrollers.length - 1];

@@ -54,6 +54,41 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
               private cloneService: CloneService, private uploadService: UploadService, private electronService: ElectronService) {
 
     this.microcontrollers = this.hardwareService.getAllMicroControllers();
+
+    this.electronService.ipcRenderer.on('playData', (event: Event, data: any) => {
+      const selectedCollection = this.motorControlService.file.collections.filter(c => c.microcontroller && c.microcontroller.serialPort.path === data.serialPath && c.playing)[0];
+      if (selectedCollection) {
+        let angle = selectedCollection.rotation.units.name === 'degrees' ? data.angle * (180/Math.PI) : data.angle;
+        if (selectedCollection.rotation.loop) { angle = selectedCollection.rotation.units.name === 'degrees' ? this.fmod(data.angle * (180/Math.PI), 360) : this.fmod(data.angle, Math.PI * 2) }
+
+        const velocity = selectedCollection.rotation.units.name === 'degrees' ? data.velocity * (180/Math.PI) : data.velocity;
+        selectedCollection.microcontroller.motors.filter(m => m.id === selectedCollection.motorID)[0].state.position.current = angle;
+        selectedCollection.microcontroller.motors.filter(m => m.id === selectedCollection.motorID)[0].state.speed = velocity;
+        if (this.document.getElementById('position-' + selectedCollection.id) !== null) {
+          (this.document.getElementById('position-' + selectedCollection.id) as HTMLElement).innerHTML = (Math.round(angle * 100) / 100) + ' ';
+          (this.document.getElementById('speed-' + selectedCollection.id) as HTMLElement).innerHTML = (Math.round(velocity * 100) / 100) + ' ';
+        }
+        this.motorControlService.drawCursor(selectedCollection);
+      }
+    });
+
+    this.electronService.ipcRenderer.on('zero_electric_angle', (event: Event, data: any) => {
+      const microcontroller = this.hardwareService.getMicroControllerByCOM(data.serialPath);
+
+      if (microcontroller) {
+        microcontroller.motors.filter(m => m.id === data.motorID)[0].config.calibration.value = data.zero_electric_angle;
+        this.hardwareService.updateMicroController(microcontroller);
+      }
+    });
+
+    this.electronService.ipcRenderer.on('upload_succesful', (event: Event, collection: any) => {
+      const selectedCollection = this.motorControlService.file.collections.filter(c => c.id === collection)[0];
+      if (selectedCollection) {
+        selectedCollection.playing = true;
+        this.motorControlService.updateCollection(selectedCollection);
+      }
+    });
+
   }
 
   ngOnInit() {
@@ -68,6 +103,10 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
       }
       // this.motorControlService.drawCollections();
     });
+  }
+
+  fmod(val: number, mod: number) {
+    return ((val * 100) % (mod * 100) / 100);
   }
 
   ngAfterViewInit(): void {
@@ -89,7 +128,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
     this.motorControlService.saveCollection(collection);
   }
 
-  render(collection: Collection) {
+  render(collection: Collection, upload = false) {
     if (collection.effectDataList.length > 0) {
       collection.effectDataList = [];
       collection.overlappingData = [];
@@ -98,21 +137,31 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
       this.uploadService.renderCollection(collection, this.motorControlService.file.effects);
     }
     this.motorControlService.updateCollection(collection);
+    if (upload && collection.effectDataList.length > 0) {
+      this.upload(collection);
+    }
   }
 
   upload(collection: Collection) {
     if (collection.effectDataList.length > 0) {
       const microcontroller = this.hardwareService.getMicroControllerByCOM(collection.microcontroller.serialPort.path);
       const uploadModel = this.uploadService.createUploadModel(collection, microcontroller);
-      console.log(uploadModel, microcontroller);
 
+      console.log(microcontroller, this.motorControlService.file.effects);
+      console.log(uploadModel);
+      const activeCollection = this.motorControlService.file.collections.filter(c => c.microcontroller && c.microcontroller.serialPort.path === collection.microcontroller.serialPort.path && c.playing)[0];
+      if (activeCollection) {
+        activeCollection.playing = false;
+        this.motorControlService.updateCollection(activeCollection);
+      }
+
+      if (this.motorControlService.file.collections.filter(c => c.microcontroller && c.microcontroller.serialPort.path === collection.microcontroller.serialPort.path && c.playing))
       this.electronService.ipcRenderer.send('upload', uploadModel);
     } else {
-      this.render(collection);
+      this.render(collection, true);
     }
   }
 
-  play(collectionID: string) {}
 
   loop(collectionID: string) {
     const collection = this.motorControlService.file.collections.filter(c => c.id === collectionID)[0];

@@ -47,7 +47,7 @@ import { CloneService } from 'src/app/services/clone.service';
         </select>
       </div>
 
-      <div class="form-row" *ngIf="this.drawingService.file.activeEffect" title="select type of haptic effect">
+      <div class="form-row" *ngIf="this.drawingService.file.activeEffect && this.drawingService.file.activeEffect.type !== 'velocity'" title="select type of haptic effect">
         <label class="select"></label>
         <select class="form-control" id="select" [(ngModel)]="this.drawingService.file.activeEffect.rotation"
           (change)="this.drawingService.saveEffect(this.drawingService.file.activeEffect)" name="rotation-type">
@@ -148,7 +148,7 @@ export class FixedToolbarComponent implements OnInit {
   typeOptions = ['torque','position','velocity'];
   rotationOptions = ['independent', 'dependent'];
 
-  yAxisOptions = [ new Unit('voltage (%)', 100), new Unit('current (%)', 100) ];
+  yAxisOptions = [ new Unit('voltage (%)', 100), new Unit('velocity (%)', 100) ];
 
   referencePoints = [
     { name: 'nw', id: 0 },
@@ -297,9 +297,9 @@ export class FixedToolbarComponent implements OnInit {
 
 
   public updateEffectType() {
-    if (this.drawingService.config.editBounds.yMin < 0 && this.drawingService.file.activeEffect.type !== 'torque' ) {
+    if (this.drawingService.config.editBounds.yMin < 0 && this.drawingService.file.activeEffect.type === 'position' ) {
       this.drawingService.scaleActiveEffectFromTorqueToPosition(0.5, 100);
-    } else if (this.drawingService.config.editBounds.yMin >= 0 && this.drawingService.file.activeEffect.type === 'torque') {
+    } else if (this.drawingService.config.editBounds.yMin >= 0 && this.drawingService.file.activeEffect.type !== 'position') {
       this.drawingService.scaleActiveEffectFromTorqueToPosition(2, 100);
     }
     this.dataService.color = this.drawingService.file.configuration.colors.filter(c => c.type === this.drawingService.file.activeEffect.type)[0].hash;

@@ -10,7 +10,7 @@
 
           <div id="buttonsMotorControl" *ngIf="this.motorControlService.width > 350">
             <ul class="dropdown-buttons">
-              <li id="delete" (click)="delete(collection)"><img src="./assets/icons/buttons/bin.svg" title="delete collection"></li>
+              <li id="delete" (click)="delete(collection)"><img class="no-pointer-events" src="./assets/icons/buttons/bin.svg" title="delete collection"></li>
             </ul>
           </div>
 
@@ -28,12 +28,12 @@
 
           <div id="buttonsMotorControl" *ngIf="this.motorControlService.width > 350 && collection.microcontroller">
             <ul class="dropdown-buttons">
-              <li id="render" [ngClass]="{ active: collection.effectDataList.length > 0 }" (click)="render(collection)" title="render"><img src="./assets/icons/buttons/refresh.svg" title="render"></li>
-              <li id="upload" (click)="upload(collection)" title="upload"><img src="./assets/icons/buttons/upload.svg" title="upload"></li>
-              <li id="play"  [ngClass]="{ disabled: !collection.microcontroller.connected, active: collection.microcontroller.playing }" (click)="play(collection.id)">
-                <span *ngIf="!collection.microcontroller.playing" title="run"><div class="play-arrow"></div></span>
-                <span *ngIf="collection.microcontroller.playing" title="stop"><div class="stop-square"></div></span>
-              </li>
+              <li id="render" [ngClass]="{ active: collection.effectDataList.length > 0 }" (click)="render(collection)" title="render"><img class="no-pointer-events" src="./assets/icons/buttons/refresh.svg" title="render"></li>
+              <li id="upload" (click)="upload(collection)" title="upload"><img class="no-pointer-events" src="./assets/icons/buttons/upload.svg" title="upload"></li>
+              <!-- <li id="play"  [ngClass]="{ disabled: !collection.microcontroller.connected, active: collection.microcontroller.playing }" (click)="play(collection.id)"> -->
+                <!-- <span *ngIf="!collection.microcontroller.playing" title="run"><div class="play-arrow"></div></span> -->
+                <!-- <span *ngIf="collection.microcontroller.playing" title="stop"><div class="stop-square"></div></span> -->
+              <!-- </li> -->
             </ul>
           </div>
 
@@ -49,7 +49,7 @@
 
           <div id="buttonsMotorControl" *ngIf="this.motorControlService.width > 350">
             <ul class="dropdown-buttons">
-              <li id="loop" (click)="loop(collection.id)" [ngClass]="{ active: collection.rotation.loop }"><img class="no-pointer-events" src="./assets/icons/buttons/infinite.svg" title="repeat infinite rotation"></li>
+              <li id="loop" (click)="loop(collection.id)" [ngClass]="{ active: collection.rotation.loop }" title="repeat infinite rotation"><img class="no-pointer-events" src="./assets/icons/buttons/infinite.svg"></li>
             </ul>
           </div>
 
@@ -75,10 +75,13 @@
             </select>
           </div>
 
-          <div class="form-row" *ngIf="this.motorControlService.width > 950 || (collection.microcontroller && collection.microcontroller.playing)">
-            <div class="motor-info" id="speed">0 RPM</div>
-            <div class="motor-info posUnits" id="posUnits">&deg;</div>
-            <div class="motor-info" id="position">0 </div>
+          <div class="form-row" *ngIf="this.motorControlService.width > 900 || this.motorControlService.file.configuration.collectionDisplay !== 'large'">
+            <div class="motor-info posUnits" id="speedUnits-{{ collection.id }}" *ngIf="collection.rotation.units.name === 'degrees'">&deg;/s</div>
+            <div class="motor-info posUnits" id="speedUnits-{{ collection.id }}" *ngIf="collection.rotation.units.name === 'radians'">rad/s</div>
+            <div class="motor-info" id="speed-{{ collection.id }}">0 </div>
+            <div class="motor-info posUnits" id="posUnits-{{ collection.id }}" *ngIf="collection.rotation.units.name === 'degrees'">&deg;</div>
+            <div class="motor-info posUnits" id="posUnits-{{ collection.id }}" *ngIf="collection.rotation.units.name === 'radians'">rad</div>
+            <div class="motor-info" id="position-{{ collection.id }}">0 </div>
           </div>
         </div>
 

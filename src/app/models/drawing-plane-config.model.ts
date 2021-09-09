@@ -110,7 +110,7 @@ export class DrawingPlaneConfig {
   tmpEffect: any = null;
   newGuide = false;
   dataLoggingEnabled = false;
-  xAxisOptions = [ new Unit('degrees', 360), new Unit('radians', 2*Math.PI) ];
+  xAxisOptions = [ new Unit('degrees', 360), new Unit('radians', 2*Math.PI), new Unit('ms', 1000) ];
 }
 
 

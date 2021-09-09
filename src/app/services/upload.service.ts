@@ -272,8 +272,8 @@ export class UploadService {
 
           const coordinates = {
             x: m - startPos,
-            o: xOffset - startPos,
-            d: xOffset - m,
+            o: (xOffset - startPos),
+            d: (xOffset - m) * (Math.PI / 180),
             y: inlistValue ? (inlistValue.y + (yValue / 100)) / 2 : (yValue / 100)
           };
 
@@ -371,7 +371,6 @@ export class UploadService {
     let model = new UploadModel(collection, microcontroller);
     return model;
   }
-
 
 
 
