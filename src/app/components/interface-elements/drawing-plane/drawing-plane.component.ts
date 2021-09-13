@@ -141,9 +141,9 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
     });
 
 
-    // this.electronService.ipcRenderer.on('showExport', (event: Event, data: any) => {
-    //   this.showExportWindow('', data, microcontrollers);
-    // });
+    this.electronService.ipcRenderer.on('showExport', (event: Event, data: any) => {
+      this.showExportWindow('', data.effect, data.microcontrollers);
+    });
 
 
     this.electronService.ipcRenderer.on('saveToEffectLibrary', (event: Event, effect: any) => {
@@ -167,7 +167,16 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
 
     this.electronService.ipcRenderer.on('updateStatus', (event: Event, data: any) => {
       console.log(data);
+
       this.hardwareService.updatePlay(data.microcontroller.port.path, data.connected);
+
+      if (!data.connected) {
+        const collection = this.file.collections.filter(c => c.playing && c.microcontroller && c.microcontroller.serialPort.path == data.microcontroller.port.path)[0];
+        if (collection) {
+          collection.playing = false;
+          this.fileService.updateCollection(collection);
+        }
+      }
     });
 
     this.electronService.ipcRenderer.on('changeViewSettings', (event: Event, data: any) => {
@@ -692,7 +701,6 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
 
   showExportWindow(str: string, effect: any, controllers: any) {
 
-    // if (file.date.changed) {
     const dialogConfig = this.dialog.open(ExportDialogComponent, {
       width: '350px',
       data: { d: str, e: effect, microcontrollers: controllers   },

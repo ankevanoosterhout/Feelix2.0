@@ -3,7 +3,7 @@ import * as d3 from 'd3';
 import { Subject } from 'rxjs';
 import { Collection, Layer } from '../models/collection.model';
 import { effectTypeColor } from '../models/configuration.model';
-import { Details, Effect, RepeatInstance, Size } from '../models/effect.model';
+import { Details, Direction, Effect, RepeatInstance, Size } from '../models/effect.model';
 import { CloneService } from './clone.service';
 import { DataService } from './data.service';
 import { NodeService } from './node.service';
@@ -31,7 +31,7 @@ export class EffectVisualizationService {
 
   drawEffect(effect: Effect, colors: Array<effectTypeColor>, viewSettings = 'large-thumbnails') {
 
-    const height = 55;
+    const height = 86;
     let windowDivisionWidth = (window.innerWidth * this.verticalDivision / 100);
     if (windowDivisionWidth < 300) { windowDivisionWidth = 300; }
     const width = viewSettings !== 'small-thumbnails' ? windowDivisionWidth - 86 : (windowDivisionWidth / 2) - 70;
@@ -188,12 +188,10 @@ export class EffectVisualizationService {
   }
 
 
-  checkIfLayersIsLocked(effectDirection: string, layers: Layer[]) {
-    if (effectDirection === 'any' && (layers[0].locked || layers[1].locked)) {
+  checkIfLayersIsLocked(effectDirection: Direction, layers: Layer[]) {
+    if (effectDirection.cw && layers[0].locked) {
       return true;
-    } else if (effectDirection === 'CW' && layers[0].locked) {
-      return true;
-    } else if (effectDirection === 'CCW' && layers[1].locked) {
+    } else if (effectDirection.ccw && layers[1].locked) {
       return true;
     }
     return false;
@@ -264,6 +262,16 @@ export class EffectVisualizationService {
     return false;
   }
 
+  mirrorData(renderedData: any, position: any) {
+
+    const middleLine = ((position.top - position.bottom) / 2 + position.bottom) / 100;
+
+    for (const el of renderedData) {
+      let tmp_y = el.y;
+      el.y = middleLine + (middleLine - tmp_y);
+    }
+    return renderedData;
+  }
 
 
   drawRenderedCollectionData(svg: any, collection: Collection, collEffect: Details, renderedData: any, pixHeight: number, color: string) {
@@ -275,14 +283,21 @@ export class EffectVisualizationService {
       y: number
     }
 
-    const multiply = { x: collection.rotation.units.name === 'radians' ? (Math.PI / 180) : 1, y: collEffect.flip.y ? -100 : 100 };
+    const multiply = { x: collection.rotation.units.name === 'radians' ? (Math.PI / 180) : 1, y: 100 };
 
 
     const offset = renderedData.type === 'position' ? pixHeight * ((100-collEffect.scale.y)/100) - (pixHeight * (collEffect.position.y / 100)) :
                                                       pixHeight * (((100-collEffect.scale.y)/100) / 2) - (pixHeight * (collEffect.position.y / 100) / 2);
 
-    const renderedDataCopy = this.cloneService.deepClone(renderedData.data);
-    const data = collEffect.flip.x ? renderedDataCopy.reverse() : renderedDataCopy;
+
+
+    let renderedDataCopy = this.cloneService.deepClone(renderedData.data);
+    if (collEffect.flip.x) {
+      renderedDataCopy.reverse();
+    }
+    if (collEffect.flip.y) {
+      renderedDataCopy = this.mirrorData(renderedDataCopy, collEffect.position);
+    }
 
     const grp = svg.append('g')
       .attr('id', 'grp-render-' + collection.id + '-' + collEffect.id);
@@ -305,44 +320,36 @@ export class EffectVisualizationService {
 
     if (renderedData.type === 'position') {
       grp.selectAll('line.offset-' + collection.id + '-' + collEffect.id)
-      .data(data)
+      .data(renderedDataCopy)
       .enter()
       .append('line')
       .attr('class', 'offset-' + collection.id + '-' + collEffect.id)
-      .attr('x1', (d, i) => collection.config.newXscale(i * (collEffect.scale.x / 100) + (collEffect.position.x * multiply.x)))
-      .attr('x2', (d, i) => collection.config.newXscale(d.o * (collEffect.scale.x / 100) + (collEffect.position.x * multiply.x)))
-      .attr('y1', (d) => collEffect.flip.y ?
-      (collection.config.newYscale(d.y * multiply.y - (100 - renderedData.size.top) + renderedData.size.bottom + 100)  * (collEffect.scale.y / 100) + offset) :
-      collection.config.newYscale((d.y * multiply.y )) * (collEffect.scale.y / 100) + offset)
-      .attr('y2', (d) => collEffect.flip.y ?
-      (collection.config.newYscale(d.y * multiply.y - (100 - renderedData.size.top) + renderedData.size.bottom + 100)  * (collEffect.scale.y / 100) + offset) :
-      collection.config.newYscale((d.y * multiply.y )) * (collEffect.scale.y / 100) + offset)
+      .attr('x1', (d, i) => collection.config.newXscale((d.x * (collEffect.scale.x / 100) * multiply.x) + collEffect.position.x))
+      .attr('x2', (d, i) => collection.config.newXscale((d.o * (collEffect.scale.x / 100) * multiply.x) + collEffect.position.x))
+      .attr('y1', (d) => collection.config.newYscale((d.y * multiply.y )) * (collEffect.scale.y / 100) + offset)
+      .attr('y2', (d) => collection.config.newYscale((d.y * multiply.y )) * (collEffect.scale.y / 100) + offset)
       .attr('stroke', 'rgba(255,255,255,0.4)')
       .attr('stroke-width', 1);
 
       grp.selectAll('circle.offset-' + collection.id + '-' + collEffect.id)
-        .data(data)
+        .data(renderedDataCopy)
         .enter()
         .append('circle')
         .attr('class', 'offset-' + collection.id + '-' + collEffect.id)
-        .attr('cx', (d) => collection.config.newXscale(d.o * (collEffect.scale.x / 100) + (collEffect.position.x * multiply.x)))
-        .attr('cy', (d) => renderedData.type === 'position' && collEffect.flip.y ?
-            (collection.config.newYscale(d.y * multiply.y - (100 - renderedData.size.top) + renderedData.size.bottom + 100)  * (collEffect.scale.y / 100) + offset) :
-            collection.config.newYscale((d.y * multiply.y )) * (collEffect.scale.y / 100) + offset)
+        .attr('cx', (d) => collection.config.newXscale((d.o * (collEffect.scale.x / 100) * multiply.x) + collEffect.position.x))
+        .attr('cy', (d) => collection.config.newYscale((d.y * multiply.y )) * (collEffect.scale.y / 100) + offset)
         .attr('r', (d) => collection.config.newXscale((d.x * multiply.x) + 0.2) - collection.config.newXscale((d.x * multiply.x) - 0.2) < 2 ?
                           collection.config.newXscale((d.x * multiply.x) + 0.2) - collection.config.newXscale((d.x * multiply.x) - 0.2) : 2)
         .style('fill', 'rgba(255,255,255,0.4)');
     }
 
     grp.selectAll('circle.render-' + collection.id + '-' + collEffect.id)
-      .data(data)
+      .data(renderedDataCopy)
       .enter()
       .append('circle')
       .attr('class', 'render-' + collection.id + '-' + collEffect.id)
-      .attr('cx', (d, i) => collection.config.newXscale(i * (collEffect.scale.x / 100) + (collEffect.position.x * multiply.x)))
-      .attr('cy', (d) => renderedData.type === 'position' && collEffect.flip.y ?
-          (collection.config.newYscale(d.y * multiply.y - (100 - renderedData.size.top) + renderedData.size.bottom + 100)  * (collEffect.scale.y / 100) + offset) :
-          collection.config.newYscale((d.y * multiply.y )) * (collEffect.scale.y / 100) + offset)
+      .attr('cx', (d, i) => collection.config.newXscale((i * (collEffect.scale.x / 100) * multiply.x) + collEffect.position.x))
+      .attr('cy', (d) => collection.config.newYscale((d.y * multiply.y )) * (collEffect.scale.y / 100) + offset)
       .attr('r', (d) => collection.config.newXscale((d.x * multiply.x) + 0.2) - collection.config.newXscale((d.x * multiply.x) - 0.2) < 2 ?
                         collection.config.newXscale((d.x * multiply.x) + 0.2) - collection.config.newXscale((d.x * multiply.x) - 0.2) : 2)
       .style('fill', color)

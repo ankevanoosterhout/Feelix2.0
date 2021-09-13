@@ -42,7 +42,6 @@ export class FeelixioPartsComponent implements OnInit, AfterViewInit {
    ];
 
   public directionOptions = [
-    { name: 'any', val: null, i: 0 },
     { name: 'clockwise', val: 'cw', i: 1 },
     { name: 'counterclockwise',  val: 'ccw', i: 2 }
   ];

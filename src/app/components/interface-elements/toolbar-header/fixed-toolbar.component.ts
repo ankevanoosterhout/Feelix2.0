@@ -20,7 +20,6 @@ import { CloneService } from 'src/app/services/clone.service';
           <li id="new" (click)="createNewEffect()"><img src="./assets/icons/tools/collections.svg" title="New effect"></li>
           <li id="settings" (click)="openEffectSettings()"><img src="./assets/icons/tools/settings.svg" title="Effect settings"></li>
           <li id="save" (click)="saveEffectToLibrary(this.drawingService.file.activeEffect)"><img src="./assets/icons/buttons/save.svg" title="Save effect to library"></li>
-          <li id="export" (click)="exportEffect(this.drawingService.file.activeEffect)"><img src="./assets/icons/buttons/export.svg" title="Export effect"></li>
         </ul>
       </div>
 

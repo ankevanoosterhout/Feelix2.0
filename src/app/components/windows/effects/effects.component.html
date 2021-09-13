@@ -42,6 +42,9 @@
               <div class="buttonPlayWindow delete" (click)="editEffectItem(item.id)">
                 <img src="./assets/icons/buttons/edit.svg">
               </div>
+              <div class="buttonPlayWindow delete" (click)="exportEffectItem(item.id)">
+                <img src="./assets/icons/buttons/export.svg">
+              </div>
               <div class="buttonPlayWindow delete" (click)="deleteEffectItem(item.id)">
                 <img src="./assets/icons/buttons/bin.svg">
               </div>
@@ -52,6 +55,9 @@
             <div class="buttonsPlayWindow">
               <div class="buttonPlayWindow delete" (click)="editEffectItem(item.id)">
                 <img src="./assets/icons/buttons/edit.svg">
+              </div>
+              <div class="buttonPlayWindow delete" (click)="exportEffectItem(item.id)">
+                <img src="./assets/icons/buttons/export.svg">
               </div>
               <div class="buttonPlayWindow delete" (click)="deleteEffectItem(item.id)">
                 <img src="./assets/icons/buttons/bin.svg">
@@ -115,6 +121,14 @@
           <div class="row" *ngIf="this.drawingService.file.activeCollection">
             <label class="labelRow" for="name">Collection</label>
             <input type="text" class="settings" id="collection-name" [(ngModel)]="this.drawingService.file.activeCollection.name" name="collection-name" disabled>
+          </div>
+          <div class="row" *ngIf="this.effect">
+            <label class="labelRow" for="name">Control type</label>
+            <input type="text" class="settings" id="effect-type" [(ngModel)]=" this.effect.type" name="effect-type" disabled>
+          </div>
+          <div class="row" *ngIf="this.effect && this.effect.type !== 'velocity'">
+            <label class="labelRow" for="name">Type</label>
+            <input type="text" class="settings" id="effect-rotation-type" [(ngModel)]=" this.effect.rotation" name="effect-rotation-type" disabled>
           </div>
         </div>
 
@@ -211,26 +225,38 @@
           </div>
         </div>
 
-        <div class="horizontalSeparator details"></div>
+        <div class="horizontalSeparator details" *ngIf="this.effect && this.effect.type !== 'velocity'"></div>
 
-        <div class="form-group details">
+        <div class="form-group details" *ngIf="this.effect && this.effect.type !== 'velocity'">
           <div class="opencloseArrow" [ngClass]="{ open: detailsVisible }" (click)="detailsVisible = !detailsVisible"><div></div></div>
           <label class="labelRow start nextToArrow">Rotation</label>
           <div *ngIf="detailsVisible">
             <div class="row">
-              <label class="label select"><div class="question-mark" title="Rotational direction in which the effect can be experienced">?</div>Direction</label>
-              <select class="details" id="select-controller-type" [(ngModel)]="this.drawingService.file.activeCollectionEffect.direction" name="direction">
-                <option *ngFor="let type of directionOptions" [ngValue]="type.name">{{ type.name }}</option>
-              </select>
+              <label class="radio-container details">CW <div class="question-mark inline" title="Experience effect in clockwise direction.">?</div>
+                <input type="checkbox" class="type" id="direction_cw" name="direction_cw"
+                [(ngModel)]="this.drawingService.file.activeCollectionEffect.direction.cw" [checked]="this.drawingService.file.activeCollectionEffect.direction.cw" (change)="updateCollectionEffect()">
+                <span class="checkmark radio"></span>
+              </label>
             </div>
+
             <div class="row">
-              <label class="radio-container details">Every rotation <div class="question-mark inline" title="Experience effect once at its indicated position or repeat the effect every rotation at its indicated position">?</div>
+              <label class="radio-container details">CCW <div class="question-mark inline" title="Experience effect in counterclockwise direction.">?</div>
+                <input type="checkbox" class="type" id="direction_ccw" name="direction_ccw"
+                [(ngModel)]="this.drawingService.file.activeCollectionEffect.direction.ccw" [checked]="this.drawingService.file.activeCollectionEffect.direction.ccw" (change)="updateCollectionEffect()">
+                <span class="checkmark radio"></span>
+              </label>
+            </div>
+
+            <div class="row" >
+              <label class="radio-container details">Every rotation <div class="question-mark inline" title="Experience effect once or every rotation.">?</div>
                 <input type="checkbox" class="type" id="infinite" name="infinite"
                 [(ngModel)]="this.drawingService.file.activeCollectionEffect.infinite" [checked]="this.drawingService.file.activeCollectionEffect.infinite"
                 (change)="updateCollectionEffect()">
                 <span class="checkmark radio"></span>
               </label>
             </div>
+
+
           </div>
         </div>
 

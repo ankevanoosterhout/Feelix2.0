@@ -83,8 +83,8 @@ export class UploadService {
     for (const item of array) {
       for (let i = item.position.x1; i <= item.position.x2; i++) {
 
-        const cw = (item.effect1.direction === 'any' || item.effect1.direction === 'clockwise') && (item.effect2.direction === 'any' || item.effect2.direction === 'clockwise') ? true : false;
-        const ccw = (item.effect1.direction === 'any' || item.effect1.direction === 'counterclockwise') && (item.effect2.direction === 'any' || item.effect2.direction === 'counterclockwise') ? true : false;
+        const cw = item.effect1.direction.cw && item.effect2.direction.cw ? true : false;
+        const ccw = item.effect1.direction.ccw && item.effect2.direction.ccw ? true : false;
 
         if (cw || ccw) {
           const y1 = this.bezierService.closestY(i, item.points);
@@ -223,6 +223,7 @@ export class UploadService {
       }
       i++;
     }
+
     return translatedData;
   }
 
@@ -383,15 +384,7 @@ export class UploadService {
     return unitValue;
   }
 
-  getDirectionValue(effectObj: EffectObject) {
-    const direction = effectObj.parameters.input.filter(p => p.name === 'direction')[0];
-    let directionValue = 0;
-    if (direction) {
-      const value = !direction.hidden && direction.value ? direction.value.category.val : direction.defaultVal.category.val;
-      if (value === 'clockwise') { directionValue = 1; } else if (value === 'counterclockwise') { directionValue = -1; }
-    }
-    return directionValue;
-  }
+
 
   getRepeatValue(effectObj: EffectObject, motor: any) {
     const repeat = effectObj.parameters.input.filter(p => p.name === 'repeat')[0];

@@ -99,11 +99,16 @@ export class Size {
   }
 }
 
+export class Direction {
+  cw = true;
+  ccw = true;
+}
+
 export class Details {
   id: string = null;
   name: string = null;
   effectID: string = null;
-  direction = 'any';
+  direction = new Direction();
   scale = new XY(100,100);
   position = new Size(0,0,0,0);
   flip = new XY(false, false);

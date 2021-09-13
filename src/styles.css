@@ -593,9 +593,18 @@ button.disabled:focus {
     width: 0;
 }
 
+.cdk-overlay-container {
+  overflow: hidden!important;
+}
+
+.cdk-global-scrollblock {
+  width: 100vw!important;
+  height: 100vh!important;
+  overflow: hidden!important;
+}
 
 .custom-modalbox > mat-dialog-container {
-  padding: 0px;
+  padding: 0;
   background: #333;
 }
 

@@ -1,5 +1,5 @@
 export class MagneticSensor {
-  part_number: string = 'AS5047'
+  part_number: string = 'AS5X4X'
   bit_resolution: number = 14;
   protocol: string = 'SPI';
   spi_mode: string = 'SPI_MODE1';

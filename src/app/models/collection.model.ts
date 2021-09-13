@@ -81,6 +81,7 @@ export class Collection {
   effectDataList = [];
   renderedData = [];
   playing = false;
+  changedAfterRender = false;
 
   constructor(id: string, name: string) {
     this.id = id;

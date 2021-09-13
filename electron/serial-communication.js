@@ -203,21 +203,13 @@ class newSerialPort {
           };
           main.visualizaMotorData(data);
 
-        } else if (d.charAt(0) === 'U') {
-          const dataArray = d.split(':');
-          main.updateCalibrationValue(parseFloat(dataArray[1]), this.COM);
-          updateProgress(100, ('Calibration of motor at ' + this.COM + ' is complete'));
-
-        } else if (d.charAt(0) === 'S') { // receive custom variable
-
-          // const dataArray = d.split(':');
-
         } else if (d.charAt(0) === 'Z') { // receive custom variable
           console.log('received data ', d);
           const dataArray = d.substr(1).split(':');
           const data = {
               motorID: dataArray[0],
               zero_electric_angle: parseFloat(dataArray[1]),
+              direction: parseInt(dataArray[2]),
               serialPath: this.COM
           };
           main.updateZeroElectricAngle(data);
@@ -264,20 +256,21 @@ function prepareMotorData(uploadContent, motor, datalist) {
   datalist.unshift('FM' + motor.id + 'P' + motor.config.polepairs);
 
 
-  if (motor.config.voltageLimit) {
-    datalist.unshift('FM' + motor.id + 'L' + motor.config.voltageLimit);
-  }
+  datalist.unshift('FM' + motor.id + 'L' + (motor.config.voltageLimit || motor.config.supplyVoltage));
+
   if (motor.config.velocityLimit) {
     datalist.unshift('FM' + motor.id + 'V' + motor.config.velocityLimit);
   }
-  if (motor.config.calibration.value && motor.config.calibration.value !== 0.0  && motor.config.calibration.value !== -12345.0) {
+  if (motor.config.calibration.value && motor.config.calibration.value !== 0.0  && motor.config.calibration.value !== -12345.0 && motor.config.calibration.direction) {
     datalist.unshift('FM' + motor.id + 'Z' + motor.config.calibration.value.toFixed(12));
+    datalist.unshift('FM' + motor.id + 'N' + (motor.config.calibration.direction === 'CW' ? 1 : -1));
   }
   datalist.unshift('FM' + motor.id + 'E' + motor.config.encoder.part_number);
   datalist.unshift('FM' + motor.id + 'O' + motor.state.position.start);
   datalist.unshift('FM' + motor.id + 'C' + motor.config.encoder.clock_speed);
-  datalist.unshift('FM' + motor.id + 'D' + (motor.config.encoder.direction == 'CW' ? 1 : -1));
+  datalist.unshift('FM' + motor.id + 'D' + (motor.config.encoder.direction === 'CW' ? 1 : -1));
   datalist.unshift('FM' + motor.id + 'T' + uploadContent.config.updateSpeed);
+  datalist.unshift('FM' + motor.id + 'J' + Math.round(uploadContent.config.range));
   // datalist.unshift('FM' + motor.id + 'B' + uploadContent.baudRate);
 
   return datalist;
@@ -362,13 +355,6 @@ function uploadData(uploadContent) {
   datalist = [];
 
   receivingPort = tryToEstablishConnection(receivingPort, uploadContent.config.serialPort, uploadContent.config.vendor, uploadContent.config.baudrate);
-  // if (!receivingPort) {
-  //   createConnection({ port:uploadContent.config.serialPort, type: uploadContent.config.vendor, baudrate: uploadContent.config.baudrate });
-  //   receivingPort = ports.filter(p => p.COM === uploadContent.config.serialPort.path)[0];
-  // } else if (!receivingPort.sp.IsOpen) {
-  //   receivingPort.sp.open();
-  //   activePorts.push(receivingPort.COM);
-  // }
 
   const motor = uploadContent.config.motor;
 
@@ -451,7 +437,6 @@ function calibrateMotor(motor_id, microcontroller) {
   datalist.unshift('FM' + motor.id + 'R');
   datalist.unshift('FC');
 
-  console.log(datalist);
   dataSendWaitList.push({ port: microcontroller.serialPort.path, data: datalist, totalItems: datalist.length });
 
   setTimeout(() => {

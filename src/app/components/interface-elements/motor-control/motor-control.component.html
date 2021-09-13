@@ -10,7 +10,7 @@
 
           <div id="buttonsMotorControl" *ngIf="this.motorControlService.width > 350">
             <ul class="dropdown-buttons">
-              <li id="delete" (click)="delete(collection)"><img class="no-pointer-events" src="./assets/icons/buttons/bin.svg" title="delete collection"></li>
+              <li id="delete" (click)="delete(collection)" title="delete collection"><img class="no-pointer-events" src="./assets/icons/buttons/bin.svg"></li>
             </ul>
           </div>
 
@@ -28,16 +28,17 @@
 
           <div id="buttonsMotorControl" *ngIf="this.motorControlService.width > 350 && collection.microcontroller">
             <ul class="dropdown-buttons">
-              <li id="render" [ngClass]="{ active: collection.effectDataList.length > 0 }" (click)="render(collection)" title="render"><img class="no-pointer-events" src="./assets/icons/buttons/refresh.svg" title="render"></li>
-              <li id="upload" (click)="upload(collection)" title="upload"><img class="no-pointer-events" src="./assets/icons/buttons/upload.svg" title="upload"></li>
-              <!-- <li id="play"  [ngClass]="{ disabled: !collection.microcontroller.connected, active: collection.microcontroller.playing }" (click)="play(collection.id)"> -->
-                <!-- <span *ngIf="!collection.microcontroller.playing" title="run"><div class="play-arrow"></div></span> -->
-                <!-- <span *ngIf="collection.microcontroller.playing" title="stop"><div class="stop-square"></div></span> -->
-              <!-- </li> -->
+              <li id="render" [ngClass]="{ active: collection.effectDataList.length > 0 }" (click)="render(collection)" title="render">
+                <img class="no-pointer-events" src="./assets/icons/buttons/refresh.svg"></li>
+              <li id="upload" (click)="upload(collection)" title="upload"><img class="no-pointer-events" src="./assets/icons/buttons/upload.svg"></li>
+              <li id="play"  [ngClass]="{ active: collection.renderedData && collection.renderedData.length > 0 }" (click)="play(collection)" *ngIf="collection.visualizationType === 'velocity'">
+                <span *ngIf="!collection.playing" title="play"><div class="play-arrow"></div></span>
+                <span *ngIf="collection.playing" title="stop"><div class="stop-square"></div></span>
+              </li>
             </ul>
           </div>
 
-          <div id="rangeValues" *ngIf="(collection.microcontroller === null || (collection.microcontroller !== null && !collection.microcontroller.playing)) && this.motorControlService.file.configuration.collectionDisplay === 'large' && this.motorControlService.width > 800">
+          <div id="rangeValues" *ngIf="(collection.microcontroller === null || !collection.playing) && this.motorControlService.file.configuration.collectionDisplay === 'large' && this.motorControlService.width > 800">
             <label>range</label>
             <input type="number" id="range-start" name="rotation-start" value="{{ collection.rotation.start | number:'1.0-2' }}" (change)="updateRangeValues(collection)">
             <input type="number" id="range-end" name="rotation-end" value="{{ collection.rotation.end | number:'1.0-2' }}" (change)="updateRangeValues(collection)">
@@ -49,12 +50,12 @@
 
           <div id="buttonsMotorControl" *ngIf="this.motorControlService.width > 350">
             <ul class="dropdown-buttons">
-              <li id="loop" (click)="loop(collection.id)" [ngClass]="{ active: collection.rotation.loop }" title="repeat infinite rotation"><img class="no-pointer-events" src="./assets/icons/buttons/infinite.svg"></li>
+              <li id="loop" (click)="loop(collection.id)" [ngClass]="{ active: collection.rotation.loop }" title="infinite rotation / loop"><img class="no-pointer-events" src="./assets/icons/buttons/infinite.svg"></li>
             </ul>
           </div>
 
-          <div id="visualizationType" class="form-row left" title="visualization type" *ngIf="this.motorControlService.file.configuration.collectionDisplay === 'large' && this.motorControlService.width > 700">
-            <select class="form-control" id="visualizationType" [(ngModel)]="collection.visualizationType" (change)="this.motorControlService.drawCollection(collection)" name="visualizationType">
+          <div id="visualizationType" class="form-row left" *ngIf="this.motorControlService.file.configuration.collectionDisplay === 'large' && this.motorControlService.width > 700">
+            <select class="form-control" id="visualizationType" [(ngModel)]="collection.visualizationType" (change)="this.motorControlService.drawCollection(collection)" name="visualizationType" title="visualization type">
                 <option *ngFor="let type of visualizationTypes" [ngValue]="type.name">{{ type.name }}</option>
             </select>
           </div>
@@ -75,7 +76,7 @@
             </select>
           </div>
 
-          <div class="form-row" *ngIf="this.motorControlService.width > 900 || this.motorControlService.file.configuration.collectionDisplay !== 'large'">
+          <div class="form-row" *ngIf="this.motorControlService.width > 900 || this.motorControlService.file.configuration.collectionDisplay !== 'large' || collection.playing">
             <div class="motor-info posUnits" id="speedUnits-{{ collection.id }}" *ngIf="collection.rotation.units.name === 'degrees'">&deg;/s</div>
             <div class="motor-info posUnits" id="speedUnits-{{ collection.id }}" *ngIf="collection.rotation.units.name === 'radians'">rad/s</div>
             <div class="motor-info" id="speed-{{ collection.id }}">0 </div>

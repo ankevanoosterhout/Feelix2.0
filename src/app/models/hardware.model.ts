@@ -66,7 +66,7 @@ export class Config {
   motionControl: string = 'position';
   supplyVoltage: number = 12;
   voltageLimit: number = null;
-  velocityLimit: number = null;
+  velocityLimit: number = 20;
   inlineCurrentSensing = false;
   encoderType: string = 'Magnetic sensor';
   encoder: any = new MagneticSensor();

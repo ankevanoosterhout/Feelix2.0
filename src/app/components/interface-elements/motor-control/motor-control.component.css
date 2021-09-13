@@ -158,7 +158,9 @@ ul {
 .stop-square {
   display:inline-block;
   position: absolute;
-  margin: 7px;
+  margin: 5px 6px;
+  width: 8px;
+  height: 8px;
   background: #ccc;
 }
 

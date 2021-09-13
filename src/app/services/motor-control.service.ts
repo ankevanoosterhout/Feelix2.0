@@ -6,7 +6,7 @@ import * as d3 from 'd3';
 import { FileService } from './file.service';
 import { Collection, Layer, Scale } from '../models/collection.model';
 import { DrawingService } from './drawing.service';
-import { Details, Effect, Unit } from '../models/effect.model';
+import { Details, Direction, Effect, Unit } from '../models/effect.model';
 import { EffectVisualizationService } from './effect-visualization.service';
 
 @Injectable()
@@ -329,12 +329,10 @@ export class MotorControlService {
   }
 
 
-  checkIfLayersIsLocked(effectDirection: string, layers: Layer[]) {
-    if (effectDirection === 'any' && (layers[0].locked || layers[1].locked)) {
+  checkIfLayersIsLocked(effectDirection: Direction, layers: Layer[]) {
+    if (effectDirection.cw && layers[0].locked) {
       return true;
-    } else if (effectDirection === 'clockwise' && layers[0].locked) {
-      return true;
-    } else if (effectDirection === 'counterclockwise' && layers[1].locked) {
+    } else if (effectDirection.ccw && layers[1].locked) {
       return true;
     }
     return false;
@@ -342,12 +340,10 @@ export class MotorControlService {
 
 
 
-  checkVisibility(effectDirection: string, layers: Layer[]) {
-    if (effectDirection === 'any' && (layers[0].visible || layers[1].visible)) {
+  checkVisibility(effectDirection: Direction, layers: Layer[]) {
+    if (effectDirection.cw && layers[0].visible) {
       return true;
-    } else if (effectDirection === 'clockwise' && layers[0].visible) {
-      return true;
-    } else if (effectDirection === 'counterclockwise' && layers[1].visible) {
+    } else if (effectDirection.ccw && layers[1].visible) {
       return true;
     }
     return false;
@@ -417,18 +413,22 @@ export class MotorControlService {
   drawCursor(collection: Collection) {
     collection.config.svg.selectAll('.cursorIndicator-' + collection.id).remove();
 
+    let position_x = collection.microcontroller.motors.filter(m => m.id === collection.motorID)[0].state.position.current ?
+      collection.config.newXscale(collection.microcontroller.motors.filter(m => m.id === collection.motorID)[0].state.position.current) : 0;
+
+    if (position_x < 0) { position_x = -2; }
+    else if (position_x > this.width - 15) { position_x = this.width - 17 }
+
     const cursor = collection.config.svg.append('line')
       .attr('class', 'cursorIndicator-' + collection.id)
-      .attr('x1', collection.microcontroller.motors.filter(m => m.id === collection.motorID)[0].state.position.current ?
-        collection.config.newXscale(collection.microcontroller.motors.filter(m => m.id === collection.motorID)[0].state.position.current) : 0)
-      .attr('x2', collection.microcontroller.motors.filter(m => m.id === collection.motorID)[0].state.position.current ?
-        collection.config.newXscale(collection.microcontroller.motors.filter(m => m.id === collection.motorID)[0].state.position.current) : 0)
+      .attr('x1', position_x)
+      .attr('x2', position_x)
       .attr('y1', 0)
       .attr('y2', this.height - 39)
       .attr('transform', () => this.file.configuration.collectionDisplay === 'small' ? 'translate(5, 0)' : 'translate(5, 26)')
       .attr('shape-rendering', 'crisp-edges')
-      .style('stroke', '#FF9100')
-      .style('stroke-width', 1);
+      .style('stroke', () => position_x === -2 || position_x === this.width - 17 ? 'rgba(255, 145, 0, 0.2)' : '#FF9100')
+      .style('stroke-width', () => position_x === -2 || position_x === this.width - 17 ? 4 : 1);
   }
 
 

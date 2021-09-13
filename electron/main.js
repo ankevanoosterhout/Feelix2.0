@@ -1299,23 +1299,29 @@ function visualizaMotorData(data) {
   mainWindow.webContents.send('playData', data);
 }
 
-function updateCalibrationValue(data, serialPort) {
-  const playWindow = playWindows.filter(p => p.data.serialPort.path === serialPort)[0];
-  if (playWindow) {
-    playWindow.window.webContents.send('updateCalibrationValue', data);
-  } else if (FeelixioWindow) {
-    FeelixioWindow.webContents.send('updateCalibrationValue', { data: data, port: serialPort });
-  }
-}
+// function updateCalibrationValue(data, serialPort) {
+//   const playWindow = playWindows.filter(p => p.data.serialPort.path === serialPort)[0];
+//   if (playWindow) {
+//     playWindow.window.webContents.send('updateCalibrationValue', data);
+//   } else if (FeelixioWindow) {
+//     FeelixioWindow.webContents.send('updateCalibrationValue', { data: data, port: serialPort });
+//   }
+// }
 
 
 
 function updateZeroElectricAngle(data) {
   mainWindow.webContents.send('zero_electric_angle', data);
+
+  if (tmpWindow !== null && (activeWindow === 'motor-settings')) {
+    tmpWindow.webContents.send('zero_electric_angle', data);
+  }
+
 }
 
 function uploadSuccesful(collection) {
   mainWindow.webContents.send('upload_succesful', collection);
+
 }
 
 
@@ -1326,6 +1332,5 @@ exports.displayStatus = displayStatus;
 exports.updateAvailablePortList = updateAvailablePortList;
 exports.visualizaMotorData = visualizaMotorData;
 exports.updateSerialProgress = updateSerialProgress;
-exports.updateCalibrationValue = updateCalibrationValue;
 exports.updateZeroElectricAngle = updateZeroElectricAngle;
 exports.uploadSuccesful = uploadSuccesful;

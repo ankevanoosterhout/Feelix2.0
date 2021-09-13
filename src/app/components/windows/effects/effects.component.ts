@@ -35,11 +35,10 @@ export class EffectsComponent implements OnInit, AfterViewInit {
   buttons = [ { name: 'add', icon: '../../src/assets/icons/buttons/add.svg' },
               { name: 'remove', icon: '../../src/assets/icons/buttons/bin.svg' }];
 
-  directionOptions = [
-    { name: 'any', val: null },
-    { name: 'clockwise', val: 'cw' },
-    { name: 'counterclockwise',  val: 'ccw' }
-  ];
+  // directionOptions = [
+  //   { name: 'clockwise', val: 'cw' },
+  //   { name: 'counterclockwise',  val: 'ccw' }
+  // ];
 
   displayOptions = [
     { name: 'list', src: '../../src/assets/icons/buttons/list.svg', slug: 'list', selected: false },
@@ -227,6 +226,13 @@ export class EffectsComponent implements OnInit, AfterViewInit {
 
   editEffectItem(effectID: string) {
     this.fileService.openEffect(effectID);
+  }
+
+  exportEffectItem(effectID: string) {
+    let effect = this.drawingService.file.effects.filter(e => e.id === effectID)[0];
+    if (effect) {
+      this.electronService.ipcRenderer.send('export', effect);
+    }
   }
 
   deleteEffectItem(effectID: string) {

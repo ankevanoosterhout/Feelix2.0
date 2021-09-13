@@ -59,9 +59,20 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
       const selectedCollection = this.motorControlService.file.collections.filter(c => c.microcontroller && c.microcontroller.serialPort.path === data.serialPath && c.playing)[0];
       if (selectedCollection) {
         let angle = selectedCollection.rotation.units.name === 'degrees' ? data.angle * (180/Math.PI) : data.angle;
-        if (selectedCollection.rotation.loop) { angle = selectedCollection.rotation.units.name === 'degrees' ? this.fmod(data.angle * (180/Math.PI), 360) : this.fmod(data.angle, Math.PI * 2) }
+        if (selectedCollection.rotation.loop) {
+          const range = selectedCollection.rotation.end - selectedCollection.rotation.start;
+          angle = this.fmod(data.angle * (180/Math.PI), range);
+          if (angle < 0) {
+            if (selectedCollection.rotation.units.name === 'degrees') {
+              angle += range;
+            } else {
+              angle += (range * (Math.PI/180));
+            }
+          }
+        }
 
         const velocity = selectedCollection.rotation.units.name === 'degrees' ? data.velocity * (180/Math.PI) : data.velocity;
+
         selectedCollection.microcontroller.motors.filter(m => m.id === selectedCollection.motorID)[0].state.position.current = angle;
         selectedCollection.microcontroller.motors.filter(m => m.id === selectedCollection.motorID)[0].state.speed = velocity;
         if (this.document.getElementById('position-' + selectedCollection.id) !== null) {
@@ -77,6 +88,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
 
       if (microcontroller) {
         microcontroller.motors.filter(m => m.id === data.motorID)[0].config.calibration.value = data.zero_electric_angle;
+        microcontroller.motors.filter(m => m.id === data.motorID)[0].config.calibration.direction = data.direction === 1 ? 'CW' : 'CCW';
         this.hardwareService.updateMicroController(microcontroller);
       }
     });
@@ -147,7 +159,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
       const microcontroller = this.hardwareService.getMicroControllerByCOM(collection.microcontroller.serialPort.path);
       const uploadModel = this.uploadService.createUploadModel(collection, microcontroller);
 
-      console.log(microcontroller, this.motorControlService.file.effects);
+      // console.log(microcontroller, this.motorControlService.file.effects);
       console.log(uploadModel);
       const activeCollection = this.motorControlService.file.collections.filter(c => c.microcontroller && c.microcontroller.serialPort.path === collection.microcontroller.serialPort.path && c.playing)[0];
       if (activeCollection) {
@@ -162,6 +174,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
     }
   }
 
+  play(collection: Collection) { }
 
   loop(collectionID: string) {
     const collection = this.motorControlService.file.collections.filter(c => c.id === collectionID)[0];

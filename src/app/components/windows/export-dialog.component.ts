@@ -105,6 +105,7 @@ import { UploadService } from 'src/app/services/upload.service';
       margin-top: 55px;
     }
 
+    
 
   `]
 })
@@ -124,22 +125,22 @@ export class ExportDialogComponent implements OnInit {
   constructor(@Inject(DOCUMENT) public document: Document, @Inject(MAT_DIALOG_DATA) data: any, private uploadService: UploadService) {
     this.data = data.d;
     this.effect = data.e;
-    this.microcontrollerList = data.microcontrollers;
-    if (this.microcontrollerList.length > 0) {
-      this.selectedDevice = this.microcontrollerList[0];
-    }
+    // this.microcontrollerList = data.microcontrollers;
+    // if (this.microcontrollerList.length > 0) {
+    //   this.selectedDevice = this.microcontrollerList[0];
+    // }
     this.exportEffect(this.effect);
   }
 
   public exportEffect(libEffect: any) {
     let dataStr = '';
-    if (libEffect.effect.slug === 5) {
+    // if (libEffect.effect.slug === 5) {
       // dataStr = this.uploadService
         // .translatePositionEffectForExport(libEffect, (this.useDefault ? this.defaultSettings.motor : this.selectedDevice.motor));
-    } else {
+    // } else {
       // dataStr = this.uploadService.
         // translateTimeEffectForExport(libEffect, (this.useDefault ? this.defaultSettings.motor : this.selectedDevice.motor));
-    }
+    // }
     this.data = dataStr;
   }
 

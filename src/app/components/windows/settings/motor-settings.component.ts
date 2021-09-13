@@ -24,11 +24,10 @@ export class MotorSettingsComponent implements OnInit {
   selectedController = 'Teensy';
   showSelectMicrocontroller = false;
 
-  public directionOptions = [
-    { name: 'any', val: null },
-    { name: 'clockwise', val: 'cw' },
-    { name: 'counterclockwise',  val: 'ccw' }
-  ];
+  // public directionOptions = [
+  //   { name: 'clockwise', val: 'cw' },
+  //   { name: 'counterclockwise',  val: 'ccw' }
+  // ];
 
   public unitOptions = [
     { name: '4096PPR', PR: 4096 },
@@ -77,9 +76,7 @@ export class MotorSettingsComponent implements OnInit {
   ];
 
   public magneticSensorType = [
-    { name: 'AS5048A' },
-    { name: 'AS5047' },
-    { name: 'AS5147' },
+    { name: 'AS5X4X' },
     { name: 'AS5600' }
   ];
 
@@ -97,18 +94,19 @@ export class MotorSettingsComponent implements OnInit {
   constructor(@Inject(DOCUMENT) private document: Document, private electronService: ElectronService, private uploadService: UploadService,
               private hardwareService: HardwareService, private fileService: FileService, private router: Router ) {
 
-    this.electronService.ipcRenderer.on('updateCalibrationValue', (event: Event, data: any) => {
-      // this.microcontroller.motor.calibration.xStartPos = data;
-      // this.updateMotor(this.microcontroller.motor);
-      (this.document.getElementById('calibration_val') as HTMLInputElement).value = data;
-
-    });
 
     this.electronService.ipcRenderer.on('comports', (event: Event, comports: any) => {
       this.comports = comports;
       if (this.comports.length > 0) {
         this.selectedPort = this.comports[0];
       }
+    });
+
+    this.electronService.ipcRenderer.on('zero_electric_angle', (event: Event, data: any) => {
+
+      (this.document.getElementById('calibrationValue-' + data.serialPath + '-' + data.motorID) as HTMLInputElement).value = data.zero_electric_angle;
+      (this.document.getElementById('calibrationDirection-' + data.serialPath + '-' + data.motorID) as HTMLInputElement).value = data.direction === 1 ? 'CW' : 'CCW';
+
     });
 
   }
@@ -141,7 +139,6 @@ export class MotorSettingsComponent implements OnInit {
 
   updateMicrocontroller(microcontroller: any) {
     this.hardwareService.updateMicroController(microcontroller);
-    // this.electronService.ipcRenderer.send('updateMicrocontrollerDetails', microcontroller);
   }
 
   calibrateMotor(microcontroller: any, motorIndex: number) {
@@ -159,9 +156,6 @@ export class MotorSettingsComponent implements OnInit {
     this.electronService.ipcRenderer.send('listSerialPorts');
   }
 
-  // getNumberOfPolePairs(motor_id: string) {
-    // this.electronService.ipcRenderer.send('getNumberOfPolePairs');
-  // }
 
   getCalibrationValue(motor_id: string) {
     this.electronService.ipcRenderer.send('getCalibrationValue', { motor: motor_id, port: this.selectedMicrocontroller });
@@ -222,23 +216,6 @@ export class MotorSettingsComponent implements OnInit {
       this.selectedMicrocontroller = this.microcontrollers[0];
     }
   }
-
-
-
-
-  // drawFileDataMotors() {
-  //   if (this.microcontroller) {
-  //     this.drawFileData(this.microcontroller.motor, this.microcontroller.motor.translatedData, this.microcontroller.motor.file);
-
-  //     if (this.microcontroller.motor.file !== null) {
-  //       const motorFile = this.filelist.filter(f => f._id === this.microcontroller.motor.file._id)[0];
-  //       if (!motorFile && this.microcontroller.motor.file.mode === 'default') {
-  //         this.filelist.push(this.microcontroller.motor.file);
-  //       }
-  //     }
-  //   }
-  // }
-
 
 
 }

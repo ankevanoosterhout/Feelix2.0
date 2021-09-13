@@ -29,6 +29,7 @@ export class ConfigModel {
   updateSpeed: number;
   baudrate: number;
   collection: string;
+  range: number;
 
   constructor(collection: Collection, microcontroller: MicroController) {
     this.serialPort = microcontroller.serialPort;
@@ -37,6 +38,10 @@ export class ConfigModel {
     this.updateSpeed = microcontroller.updateSpeed;
     this.baudrate = microcontroller.baudrate;
     this.collection = collection.id;
+    this.range = collection.rotation.end - collection.rotation.start;
+    if (collection.rotation.units.name === 'radians') {
+      this.range *= (Math.PI / 180);
+    }
   }
 }
 
@@ -63,10 +68,10 @@ export class EffectModel {
     this.scale = new Model('S', [ Math.round(collEffect.scale.x) !== collEffect.scale.x ? (collEffect.scale.x / 100).toFixed(5) : (collEffect.scale.x / 100),
       Math.round(collEffect.scale.y) !== collEffect.scale.y ? (collEffect.scale.y / 100).toFixed(5) : (collEffect.scale.y / 100) ]);
 
-    this.flip = new Model('F', [ collEffect.flip.x ? 1 : 0, collEffect.flip.y ? 1 : 0 ]);
+    const middleLine = (((collEffect.position.top - collEffect.position.bottom) / 2 + collEffect.position.bottom) / 100) * (collEffect.scale.y / 100) + (collEffect.position.y / 100);
+    this.flip = new Model('F', [ collEffect.flip.x ? 1 : 0, collEffect.flip.y ? 1 : 0, middleLine.toFixed(6) ]);
 
-    this.direction = new Model('D', [ (collEffect.direction === 'any' || collEffect.direction === 'clockwise' ? 1 : 0),
-      (collEffect.direction === 'any' || collEffect.direction === 'counterclockwise' ? 1 : 0) ]);
+    this.direction = new Model('D', [ (collEffect.direction.cw ? 1 : 0), (collEffect.direction.ccw? 1 : 0) ]);
 
     this.infinite = new Model ('I', collEffect.infinite ? 1 : 0);
 
