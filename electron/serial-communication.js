@@ -132,7 +132,9 @@ class newSerialPort {
   writeData(data) {
     this.sp.write(data, function (err) {
         if (err) { return console.log('Error: ', err.message); }
-        else {  console.log('written ', data); }
+        else {
+          //  console.log('written ', data);
+        }
     });
   }
 
@@ -271,6 +273,8 @@ function prepareMotorData(uploadContent, motor, datalist) {
   datalist.unshift('FM' + motor.id + 'D' + (motor.config.encoder.direction === 'CW' ? 1 : -1));
   datalist.unshift('FM' + motor.id + 'T' + uploadContent.config.updateSpeed);
   datalist.unshift('FM' + motor.id + 'J' + Math.round(uploadContent.config.range));
+  datalist.unshift('FM' + motor.id + 'A' + motor.position_pid.p + ':' + motor.position_pid.i + ':' + motor.position_pid.d);
+  datalist.unshift('FM' + motor.id + 'Q' + motor.velocity_pid.p + ':' + motor.velocity_pid.i + ':' + motor.velocity_pid.d);
   // datalist.unshift('FM' + motor.id + 'B' + uploadContent.baudRate);
 
   return datalist;
@@ -286,7 +290,7 @@ function prepareEffectData(uploadContent, motor, datalist) {
   datalist.unshift('FM' + motor.id + 'F' + uploadContent.effects.length);
 
   for (const effect of uploadContent.effects) {
-    datalist.unshift('FE' + i + effect.position.identifier + ':' + effect.position.value[0] + ':' + effect.position.value[1]);
+    datalist.unshift('FE' + i + effect.position.identifier + ':' + effect.position.value[1]);
     datalist.unshift('FE' + i + effect.direction.identifier + ':' + effect.direction.value[0] + ':' + effect.direction.value[1]);
     datalist.unshift('FE' + i + effect.scale.identifier + ':' + effect.scale.value[0] + ':' + effect.scale.value[1]);
     datalist.unshift('FE' + i + effect.angle.identifier + ':' + effect.angle.value);
@@ -294,8 +298,14 @@ function prepareEffectData(uploadContent, motor, datalist) {
     datalist.unshift('FE' + i + effect.effect_type.identifier + ':' + effect.effect_type.value);
     datalist.unshift('FE' + i + effect.datasize.identifier + ':' + effect.datasize.value);
 
+
+    datalist.unshift('FE' + i + 'C' + ':' + effect.position.value[0]);
+
     if (effect.repeat) {
-      datalist.unshift('FE' + i + effect.repeat.identifier + ':' + effect.repeat.value);
+      for (const repeat of effect.repeat.value) {
+        datalist.unshift('FE' + i + effect.repeat.identifier + ':' + repeat.x.toFixed(8));
+        console.log('FE' + i + effect.repeat.identifier + ':' + repeat.x.toFixed(8));
+      }
     }
     datalist.unshift('FE' + i + effect.infinite.identifier + ':' + effect.infinite.value);
 
@@ -303,8 +313,8 @@ function prepareEffectData(uploadContent, motor, datalist) {
   }
 
   for (const d of uploadContent.data.overlay) {
-    datalist.unshift('FDO' + i + 'P:' + d.position.start + ':' + d.position.end);
-    datalist.unshift('FDO' + i + 'D:' + (d.direction.cw ? 1 : 0) + ':' + (d.direction.ccw ? 1 : 0) );
+    datalist.unshift('FDO' + i + 'P:' + d.position.start.toFixed(5) + ':' + d.position.end.toFixed(5));
+    datalist.unshift('FDO' + i + 'D:' + (d.direction.cw ? 1 : -1) + ':' + (d.direction.ccw ? 1 : -1) );
 
     for (const el of d.data) {
       datalist.unshift('FDO:' + (Math.round(el.x) !== el.x ? el.x.toFixed(10) : el.x) + ':' + (Math.round(el.y) !== el.y ? el.y.toFixed(10) : el.y));

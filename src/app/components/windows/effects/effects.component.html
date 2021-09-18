@@ -283,9 +283,9 @@
           </div>
         </div>
 
-        <div class="horizontalSeparator details"></div>
+        <div class="horizontalSeparator details" *ngIf="this.effect && this.effect.rotation !== 'independent'"></div>
 
-        <div class="form-group details">
+        <div class="form-group details" *ngIf="this.effect && this.effect.rotation !== 'independent'">
           <div class="opencloseArrow" [ngClass]="{ open: repeatVisible }" (click)="repeatVisible = !repeatVisible"><div></div></div>
           <label class="labelRow start nextToArrow">Repeat</label>
           <div *ngIf="repeatVisible">

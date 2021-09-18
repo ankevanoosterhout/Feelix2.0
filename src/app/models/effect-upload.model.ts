@@ -10,6 +10,12 @@ export class Linear {
   dYdX: number = null;
 }
 
+export class PID {
+  P: number;
+  I: number;
+  D: number;
+}
+
 
 
 export class Model {
@@ -75,7 +81,7 @@ export class EffectModel {
 
     this.infinite = new Model ('I', collEffect.infinite ? 1 : 0);
 
-    this.datasize = new Model ('Z', effect.data.length);
+    this.datasize = new Model ('Z', (effect.type === 'position' ? effect.data.length * 2 : effect.data.length));
 
     if (effect.type === 'torque') {
       this.vis_type = new Model('T', 'T');
@@ -88,7 +94,7 @@ export class EffectModel {
     this.effect_type = new Model('E', effect.rotation === 'dependent' ? 'D' : 'I');
 
     if (collEffect.repeat.repeatInstances.length > 0) {
-      this.repeat = new Model('R', collEffect.repeat.repeatInstances);
+      this.repeat = new Model('C', collEffect.repeat.repeatInstances);
     }
   }
 }

@@ -322,6 +322,10 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
 
               this.motorControlService.file.effects.push(copyTmpEffect);
             }
+            
+            collection.renderedData = [];
+            collection.effectDataList = [];
+
             this.motorControlService.drawCollectionEffects(collection);
           }
         }

@@ -286,7 +286,7 @@ export class EffectVisualizationService {
     const multiply = { x: collection.rotation.units.name === 'radians' ? (Math.PI / 180) : 1, y: 100 };
 
 
-    const offset = renderedData.type === 'position' ? pixHeight * ((100-collEffect.scale.y)/100) - (pixHeight * (collEffect.position.y / 100)) :
+    const offset = renderedData && renderedData.type === 'position' ? pixHeight * ((100-collEffect.scale.y)/100) - (pixHeight * (collEffect.position.y / 100)) :
                                                       pixHeight * (((100-collEffect.scale.y)/100) / 2) - (pixHeight * (collEffect.position.y / 100) / 2);
 
 
@@ -318,7 +318,7 @@ export class EffectVisualizationService {
     //   .attr('d', line);
 
 
-    if (renderedData.type === 'position') {
+    if (renderedData && renderedData.type === 'position') {
       grp.selectAll('line.offset-' + collection.id + '-' + collEffect.id)
       .data(renderedDataCopy)
       .enter()

@@ -12,7 +12,7 @@ import { CloneService } from 'src/app/services/clone.service';
 @Component({
   selector: 'app-fixed-toolbar',
   template: `
-  <div class="fixed-toolbar" id="fixed-toolbar">
+  <div class="fixed-toolbar" id="fixed-toolbar" onmousedown="return false">
 
     <div *ngIf="this.drawingService.file.configuration.horizontalScreenDivision < (100/innerHeight) * (innerHeight - 50)">
       <div class="form-row">
