@@ -133,7 +133,7 @@ class newSerialPort {
     this.sp.write(data, function (err) {
         if (err) { return console.log('Error: ', err.message); }
         else {
-          //  console.log('written ', data);
+           console.log('written ', data);
         }
     });
   }
@@ -190,7 +190,7 @@ class newSerialPort {
       parser.on('data', (d) => {
 
         if (d.charAt(0) === '*') {
-          // console.log('received data ', d);
+          console.log('received data ', d);
           if (dataSendWaitList.filter(d => d.port === this.COM)) {
             uploadFromWaitList(ports.filter(p => p.COM === this.COM)[0]);
           }
@@ -322,7 +322,7 @@ function prepareEffectData(uploadContent, motor, datalist) {
       }
       datalist.unshift('FE' + effect_index + 'R:' + ptr);
 
-      if (ptr !== lastPtr) {
+      if (ptr === 0 || ptr !== lastPtr) {
         for (const el of d.data) {
           if (d.type === 'position') {
             datalist.unshift('FDI:' + (Math.round(el.d) !== el.d ? el.d.toFixed(6) : el.d));
