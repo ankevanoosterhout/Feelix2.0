@@ -444,7 +444,7 @@ select {
 }
 
 select#comport, select#unitsDropdown {
-  width: 70px;
+  width: 80px;
   padding: 3px 5px;
 }
 

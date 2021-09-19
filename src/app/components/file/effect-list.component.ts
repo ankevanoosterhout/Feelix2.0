@@ -70,6 +70,8 @@ export class EffectListComponent implements OnInit {
           snap: effect.grid.snap,
           lock: effect.grid.lockGuides
         });
+
+        this.electronService.ipcRenderer.send('updateToolbar', { type: effect.type });
       }
 
     }

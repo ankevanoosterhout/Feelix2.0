@@ -14,9 +14,9 @@
             </ul>
           </div>
 
-          <div class="form-row left" title="select port"  *ngIf="this.motorControlService.width > 100">
+          <div class="form-row left" title="select microcontroller"  *ngIf="this.motorControlService.width > 100">
             <select class="form-control" id="comport" [(ngModel)]="collection.microcontroller" (change)="saveCollection(collection)" name="comport" [compareWith]="compareCOM">
-                <option *ngFor="let port of microcontrollers" [ngValue]="port">{{ port.serialPort.path }}</option>
+                <option *ngFor="let mcu of microcontrollers" [ngValue]="mcu">{{ mcu.name }}</option>
             </select>
           </div>
 
@@ -50,7 +50,7 @@
 
           <div id="buttonsMotorControl" *ngIf="this.motorControlService.width > 350">
             <ul class="dropdown-buttons">
-              <li id="loop" (click)="loop(collection.id)" [ngClass]="{ active: collection.rotation.loop }" title="infinite rotation / loop"><img class="no-pointer-events" src="./assets/icons/buttons/infinite.svg"></li>
+              <li id="loop" (click)="loop(collection.id)" [ngClass]="{ active: collection.rotation.loop }" title="infinite rotation / loop (motor cursor)"><img class="no-pointer-events" src="./assets/icons/buttons/infinite.svg"></li>
             </ul>
           </div>
 

@@ -8,6 +8,7 @@ import { Linear, UploadModel } from '../models/effect-upload.model';
 import { Collection } from '../models/collection.model';
 import { Details, Effect } from '../models/effect.model';
 import { CloneService } from './clone.service';
+import { v4 as uuid } from 'uuid';
 
 @Injectable()
 export class UploadService {
@@ -23,52 +24,77 @@ export class UploadService {
     collection.renderedData = [];
 
     let n = 0;
-    for (const collEffect of collection.effects) {
-      this.calculateOverlappingPaths(collection, collEffect, effectList);
+
+    const updatedEffectList = this.createNewEffectListWithRepeatedEffects(collection.effects);
+
+    for (const collEffect of updatedEffectList) {
+      this.calculateOverlappingPaths(collection, updatedEffectList, collEffect, effectList);
 
       const effectData = effectList.filter(e => e.id === collEffect.effectID)[0];
 
-      if (effectlistCollection.indexOf(collEffect) > -1) {
+      if (collection.effectDataList.filter(c => c.effectID === collEffect.effectID).length === 0) {
         collection.effectDataList.push(this.translateEffectData(collEffect, effectData));
       }
-      if (n >= collection.effects.length - 1) {
+      if (n >= updatedEffectList.length - 1) {
         this.convertDataList(collection, effectList);
       }
       n++;
     }
   }
 
+  createNewEffectListWithRepeatedEffects(collEffects: Array<Details>) {
+    const effectListCopy = [];
+
+    for (const collEffect of collEffects) {
+      const collEffect_clone = this.cloneService.deepClone(collEffect);
+      effectListCopy.push(collEffect_clone);
+      for (const repeated_collEffect of collEffect.repeat.repeatInstances) {
+        const collEffect_clone_repeated = this.cloneService.deepClone(collEffect);
+        collEffect_clone_repeated.position.x = repeated_collEffect.x;
+        effectListCopy.push(collEffect_clone_repeated);
+      }
+    }
+
+    return effectListCopy;
+
+  }
+
   convertDataList(collection: Collection, effectList: Array<Effect>) {
     let dataArray = [];
     for (const d of collection.overlappingData) {
-      // console.log(d);
-      const collEffect1 = collection.effects.filter(c => c.id === d.effect1)[0];
-      const collEffect2 = collection.effects.filter(c => c.id === d.effect2)[0];
       const newDataArray = [];
 
-      if (collEffect1 && collEffect2) {
-        const effectData = effectList.filter(e => e.id === collEffect1.effectID)[0];
-        const translatedDataEffect1 = this.cloneService.deepClone(collection.effectDataList.filter(e => e.id === collEffect1.effectID)[0]);
+      if (d.effect1 && d.effect2) {
+        const effectData1 = effectList.filter(e => e.id === d.effect1.effectID)[0];
+        const translatedDataEffect1 = this.cloneService.deepClone(collection.effectDataList.filter(e => e.id === effectData1.id)[0]);
 
         for (const el of translatedDataEffect1.data) {
-          if (el.x >= d.overlap.x1 * effectData.size.width - 2 && el.x <= d.overlap.x2 * effectData.size.width + 2) {
-            el.x *= (collEffect1.scale.x / 100);
-            el.y *= (collEffect1.scale.y / 100);
-            el.x += collEffect1.position.x;
-            el.y += collEffect1.position.y;
+          if (el.x >= d.overlap.x1 * effectData1.size.width - 2 && el.x <= d.overlap.x2 * effectData1.size.width + 2) {
+            el.x *= (d.effect1.scale.x / 100);
+            el.y *= (d.effect1.scale.y / 100);
+            el.x += d.effect1.position.x;
+            el.y += d.effect1.position.y;
+            if (el.d) {
+              console.log(el.o);
+              el.o *= (d.effect1.scale.x / 100);
+              el.o += d.effect1.position.x;
+            }
             newDataArray.push(el);
           }
         }
-      }
 
-      if (newDataArray.length > 0) {
+        if (newDataArray.length > 0) {
 
-        const obj = { position: { x1: Math.ceil(newDataArray[0].x), x2: Math.floor(newDataArray[newDataArray.length - 1].x) },
-                      points: newDataArray,
-                      effect1: collEffect1,
-                      effect2: collEffect2
-                    };
-        dataArray.push(obj);
+          const obj = { position: { x1: Math.ceil(newDataArray[0].x), x2: Math.floor(newDataArray[newDataArray.length - 1].x) },
+                        points: newDataArray,
+                        effect1: d.effect1,
+                        effect2: d.effect2,
+                        type: effectData1.type,
+                        id: uuid()
+                      };
+          dataArray.push(obj);
+
+        }
       }
     }
     this.mergeAndSplitDataArray(collection, dataArray);
@@ -78,34 +104,47 @@ export class UploadService {
 
 
   mergeAndSplitDataArray(collection: Collection, array: any) {
+    // console.log(array);
     let newArray = [];
 
     for (const item of array) {
-      for (let i = item.position.x1; i <= item.position.x2; i++) {
+      const cw = item.effect1.direction.cw && item.effect2.direction.cw ? true : false;
+      const ccw = item.effect1.direction.ccw && item.effect2.direction.ccw ? true : false;
 
-        const cw = item.effect1.direction.cw && item.effect2.direction.cw ? true : false;
-        const ccw = item.effect1.direction.ccw && item.effect2.direction.ccw ? true : false;
+      if (cw || ccw) {
+        for (let i = item.position.x1; i <= item.position.x2; i++) {
 
-        if (cw || ccw) {
           const y1 = this.bezierService.closestY(i, item.points);
           const x1 = item.points.filter(p => p.y === y1)[0].x;
+          const d1 = item.type === 'position' ? item.points.filter(p => p.y === y1)[0].d * (180 / Math.PI) : null;
+          const o1 = item.type === 'position' ? item.points.filter(p => p.y === y1)[0].o : null;
 
           const y2 = x1 > i ? this.bezierService.closestY(i - 1, item.points) : this.bezierService.closestY(i + 1, item.points);
           const x2 = item.points.filter(p => p.y === y2)[0].x;
+          const d2 = item.type === 'position' ? item.points.filter(p => p.y === y2)[0].d * (180 / Math.PI) : null;
+          const o2 = item.type === 'position' ? item.points.filter(p => p.y === y2)[0].o : null;
 
-          let newY = y1;
 
-          if (x2 !== x1) {
-            newY = x1 > i ? (y1 - y2) * (i - x1) + y1 : (y2 - y1) * (i - x2) + y2;
+
+          let newY = (y2 - y1) / (x2 - x1) * (i - x1) + y1;
+
+          let newD = null;
+          let newO = null;
+          if (d1 && d2 && o1 && o2) {
+            newD = (d2 - d1) / (x2 - x1) * (i - x1) + d1;
+            newO = (o2 - o1) / (x2 - x1) * (i - x1) + o1;
           }
-
-          const pointAtNewArray = newArray.filter(n => n.x === i && (n.direction.cw === cw || n.direction.ccw === ccw))[0];
+          const pointAtNewArray = newArray.filter(n => n.x === i && n.id !== item.id && ((n.direction.cw === cw) || (n.direction.ccw === ccw)))[0];
 
           if (pointAtNewArray) {
-            pointAtNewArray.y += newY;
+            pointAtNewArray.y += (newY);
+            if (pointAtNewArray.y > 1) { pointAtNewArray.y = 1; }
+            if (pointAtNewArray.y < -1) { pointAtNewArray.y = -1; }
+            if (pointAtNewArray.d && newD) { pointAtNewArray.d += (newD); }
+            if (pointAtNewArray.o && newO) { pointAtNewArray.x += pointAtNewArray.d; }
             pointAtNewArray.n++;
           } else {
-            newArray.push({ x: i, y: newY, direction: { cw: cw, ccw: ccw }, n: 1 });
+            newArray.push({ x: i, y: newY, d: newD, o: newO, direction: { cw: cw, ccw: ccw }, type: item.type, n: 1, effect: item.id });
           }
         }
       }
@@ -128,11 +167,11 @@ export class UploadService {
       for (const el of array) {
         if (tmpArray.length > 0 && ((el.x - array[i - 1].x > 1) || i === array.length - 1) &&
           (el.direction.cw === array[i - 1].direction.cw || el.direction.ccw === array[i - 1].direction.ccw)) {
-          newArray.push({ data: tmpArray, direction: el.direction, position: { start: startPosition, end: array[i - 1].x } });
+          newArray.push({ data: tmpArray, direction: el.direction, type: el.type, position: { start: startPosition, end: array[i - 1].x } });
           tmpArray = [];
           startPosition = array[i].x;
         }
-        tmpArray.push( { x: el.x - startPosition, y: el.y });
+        tmpArray.push( { x: el.x - startPosition, y: el.y, d: el.d, o: el.o - startPosition });
 
         i++;
       }
@@ -288,33 +327,45 @@ export class UploadService {
   }
 
 
-  calculateOverlappingPaths(collection: Collection, collEffect: Details, effectList: Array<Effect>) {
-    const multiply = effectList.filter(e => e.id === collEffect.effectID)[0].grid.xUnit.name === 'radians' ? (180 / Math.PI) : 1;
-    const e_x1 = collEffect.position.x * multiply;
-    const e_x2 = (collEffect.position.x + (effectList.filter(e => e.id === collEffect.effectID)[0].size.width * (collEffect.scale.x / 100))) * multiply;
-    const width = (effectList.filter(e => e.id === collEffect.effectID)[0].size.width * (collEffect.scale.x / 100)) * multiply;
+  calculateOverlappingPaths(collection: Collection, collEffectList: Array<Details>, collEffect: Details, effectList: Array<Effect>) {
 
-    for (const el of collection.effects) {
-
-      if (el.id !== collEffect.id) {
-        const multiply_el = effectList.filter(e => e.id === el.effectID)[0].grid.xUnit.name === 'radians' ? (180 / Math.PI) : 1;
-        const x1 = el.position.x * multiply_el;
-        const width_el = (effectList.filter(e => e.id === el.effectID)[0].size.width * (el.scale.x / 100)) * multiply_el;
-        const x2 = (el.position.x * multiply_el) + width_el;
-        let overlap = null;
-
-        if (x1 >= e_x1 && x1 <= e_x2) {
-          overlap = { x1: ((100 / width) * (x1 - e_x1) / 100), x2: 1 };
-        }
-        if (x2 >= e_x1 && x2 <= e_x2) {
-          overlap = { x1: (overlap ? overlap.x1 : 0), x2: (overlap ? 1 - ((100 / width) * (e_x2 - x2) / 100) : (100 / width) * (x2 - e_x1) / 100) };
-        }
-        if (overlap) {
-          collection.overlappingData.push({ effect1: collEffect.id, effect2: el.id, overlap: overlap });
-        }
+    for (const el of collEffectList) {
+      if (JSON.stringify(el) !== JSON.stringify(collEffect)) {
+        this.calculateOverlay(collection, effectList, collEffect, el);
       }
     }
+  }
 
+  calculateOverlay(collection: Collection, effectList: Array<Effect>, collEffect1: Details, collEffect2: Details) {
+    const original_effect = effectList.filter(e => e.id === collEffect1.effectID)[0];
+    const multiply = original_effect.grid.xUnit.name === 'radians' ? (180 / Math.PI) : 1;
+    const original_effect_x1 = collEffect1.position.x * multiply;
+    const width = (original_effect.size.width * (collEffect1.scale.x / 100)) * multiply;
+    const original_effect_x2 = (collEffect1.position.x + width) * multiply;
+
+    const overlay_effect = effectList.filter(e => e.id === collEffect2.effectID)[0];
+
+    if (overlay_effect.type === original_effect.type) {
+      const multiply_el = overlay_effect.grid.xUnit.name === 'radians' ? (180 / Math.PI) : 1;
+      const x1 = collEffect2.position.x * multiply_el;
+      const width_el = (overlay_effect.size.width * (collEffect2.scale.x / 100)) * multiply_el;
+      const x2 = (collEffect2.position.x * multiply_el) + width_el;
+      let overlap = null;
+
+
+      if (x1 >= original_effect_x1 && x1 <= original_effect_x2) {
+        overlap = { x1: ((100 / width) * (x1 - original_effect_x1) / 100), x2: 1 };
+      }
+      if (x2 >= original_effect_x1 && x2 <= original_effect_x2) {
+        overlap = { x1: (overlap ? overlap.x1 : 0), x2: (overlap ? 1 - ((100 / width) * (original_effect_x2 - x2) / 100) : (100 / width) * (x2 - original_effect_x1) / 100) };
+      }
+      if (original_effect_x1 >= x1 && original_effect_x2 <= x2) {
+        overlap = { x1: 0, x2: 1 };
+      }
+      if (overlap) {
+        collection.overlappingData.push({ effect1: collEffect1, effect2: collEffect2, overlap: overlap });
+      }
+    }
   }
 
 

@@ -80,18 +80,20 @@ export class EffectModel {
     this.direction = new Model('D', [ (collEffect.direction.cw ? 1 : 0), (collEffect.direction.ccw? 1 : 0) ]);
 
     this.infinite = new Model ('I', collEffect.infinite ? 1 : 0);
+    console.log(this.infinite);
 
     this.datasize = new Model ('Z', (effect.type === 'position' ? effect.data.length * 2 : effect.data.length));
 
     if (effect.type === 'torque') {
-      this.vis_type = new Model('T', 'T');
+      this.vis_type = new Model('T', 0);
     } else if (effect.type === 'position') {
-      this.vis_type = new Model('T', 'P');
+      this.vis_type = new Model('T', 1);
     } else if (effect.type === 'velocity') {
-      this.vis_type = new Model('T', 'V');
+      this.vis_type = new Model('T', 2);
     }
 
-    this.effect_type = new Model('E', effect.rotation === 'dependent' ? 'D' : 'I');
+    this.effect_type = new Model('E', effect.rotation === 'dependent' ? 0 : 1);
+    console.log(this.effect_type);
 
     if (collEffect.repeat.repeatInstances.length > 0) {
       this.repeat = new Model('C', collEffect.repeat.repeatInstances);

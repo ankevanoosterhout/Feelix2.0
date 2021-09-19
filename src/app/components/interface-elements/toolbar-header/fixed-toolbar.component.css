@@ -9,7 +9,7 @@
   left: 0;
   z-index: 10;
   box-sizing: border-box;
-  user-select: none!important;
+  user-select: none;
   background: #3a3a3a;
 
   border-bottom: 1px solid #202020;

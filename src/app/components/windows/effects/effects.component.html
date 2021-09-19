@@ -247,7 +247,7 @@
               </label>
             </div>
 
-            <div class="row" >
+            <div class="row" *ngIf="this.effect && this.effect.rotation !== 'independent'">
               <label class="radio-container details">Every rotation <div class="question-mark inline" title="Experience effect once or every rotation.">?</div>
                 <input type="checkbox" class="type" id="infinite" name="infinite"
                 [(ngModel)]="this.drawingService.file.activeCollectionEffect.infinite" [checked]="this.drawingService.file.activeCollectionEffect.infinite"

@@ -285,10 +285,8 @@ export class EffectVisualizationService {
 
     const multiply = { x: collection.rotation.units.name === 'radians' ? (Math.PI / 180) : 1, y: 100 };
 
-
     const offset = renderedData && renderedData.type === 'position' ? pixHeight * ((100-collEffect.scale.y)/100) - (pixHeight * (collEffect.position.y / 100)) :
                                                       pixHeight * (((100-collEffect.scale.y)/100) / 2) - (pixHeight * (collEffect.position.y / 100) / 2);
-
 
 
     let renderedDataCopy = this.cloneService.deepClone(renderedData.data);
@@ -302,61 +300,59 @@ export class EffectVisualizationService {
     const grp = svg.append('g')
       .attr('id', 'grp-render-' + collection.id + '-' + collEffect.id);
 
-    // const line = d3.line<Data>()
-    //     .x((d: Data, i) => { return collection.config.newXscale(i * (collEffect.scale.x / 100) + (collEffect.position.x * multiply.x)); })
-    //     .y((d: Data) => { return renderedData.type === 'position' && collEffect.flip.y ?
-    //     (collection.config.newYscale(d.y * multiply.y - (100 - renderedData.size.top) + renderedData.size.bottom + 100)  * (collEffect.scale.y / 100) + offset) :
-    //     collection.config.newYscale((d.y * multiply.y )) * (collEffect.scale.y / 100) + offset; })
-    //     .curve(d3.curveMonotoneX);
+    if (renderedData && renderedData.type === collection.visualizationType) {
+      this.drawRenderedData(grp, renderedDataCopy, renderedData.type, collection, collEffect, collEffect.position.x, multiply, offset, color);
 
-    // grp.append('path')
-    //   .attr('class', 'data-' + collection.id + '-' + collEffect.id)
-    //   .datum(data)
-    //   .attr('fill', 'none')
-    //   .attr('stroke', color)
-    //   .attr('stroke-width', 1.5)
-    //   .attr('d', line);
+      for (const repeat of collEffect.repeat.repeatInstances) {
+        this.drawRenderedData(grp, renderedDataCopy, renderedData.type, collection, collEffect, repeat.x, multiply, offset, color);
+      }
+    }
+  }
 
 
-    if (renderedData && renderedData.type === 'position') {
-      grp.selectAll('line.offset-' + collection.id + '-' + collEffect.id)
-      .data(renderedDataCopy)
-      .enter()
-      .append('line')
-      .attr('class', 'offset-' + collection.id + '-' + collEffect.id)
-      .attr('x1', (d, i) => collection.config.newXscale((d.x * (collEffect.scale.x / 100) * multiply.x) + collEffect.position.x))
-      .attr('x2', (d, i) => collection.config.newXscale((d.o * (collEffect.scale.x / 100) * multiply.x) + collEffect.position.x))
-      .attr('y1', (d) => collection.config.newYscale((d.y * multiply.y )) * (collEffect.scale.y / 100) + offset)
-      .attr('y2', (d) => collection.config.newYscale((d.y * multiply.y )) * (collEffect.scale.y / 100) + offset)
-      .attr('stroke', 'rgba(255,255,255,0.4)')
-      .attr('stroke-width', 1);
+  drawRenderedData(grp: any, dataCopy: any, type: string, collection: Collection, collEffect: any, x: number, multiply: any, offset: any, color: string) {
 
-      grp.selectAll('circle.offset-' + collection.id + '-' + collEffect.id)
-        .data(renderedDataCopy)
+    if (type === 'position') {
+      grp.selectAll('line.offset-' + collection.id + '-' + collEffect.id + '-' + Math.round(x))
+        .data(dataCopy)
+        .enter()
+        .append('line')
+        .attr('class', 'offset-' + collection.id + '-' + collEffect.id + '-' + Math.round(x))
+        .attr('x1', (d, i) => collection.config.newXscale((d.x * (collEffect.scale.x / 100) * multiply.x) + x))
+        .attr('x2', (d, i) => collection.config.newXscale((d.o * (collEffect.scale.x / 100) * multiply.x) + x))
+        .attr('y1', (d) => collection.config.newYscale((d.y * multiply.y )) * (collEffect.scale.y / 100) + offset)
+        .attr('y2', (d) => collection.config.newYscale((d.y * multiply.y )) * (collEffect.scale.y / 100) + offset)
+        .attr('stroke', 'rgba(255,255,255,0.4)')
+        .attr('stroke-width', 1)
+        .style('opacity', (d, i) => this.checkIfXisWithinOverlap(i * (collEffect.scale.x / 100) + (x * multiply.x), collection.renderedData) ? 0 : 0.4);
+
+      grp.selectAll('circle.offset-' + collection.id + '-' + collEffect.id + '-' + Math.round(x))
+        .data(dataCopy)
         .enter()
         .append('circle')
-        .attr('class', 'offset-' + collection.id + '-' + collEffect.id)
-        .attr('cx', (d) => collection.config.newXscale((d.o * (collEffect.scale.x / 100) * multiply.x) + collEffect.position.x))
+        .attr('class', 'offset-' + collection.id + '-' + collEffect.id + '-' + Math.round(x))
+        .attr('cx', (d) => collection.config.newXscale((d.o * (collEffect.scale.x / 100) * multiply.x) + x))
         .attr('cy', (d) => collection.config.newYscale((d.y * multiply.y )) * (collEffect.scale.y / 100) + offset)
         .attr('r', (d) => collection.config.newXscale((d.x * multiply.x) + 0.2) - collection.config.newXscale((d.x * multiply.x) - 0.2) < 2 ?
                           collection.config.newXscale((d.x * multiply.x) + 0.2) - collection.config.newXscale((d.x * multiply.x) - 0.2) : 2)
-        .style('fill', 'rgba(255,255,255,0.4)');
+        .style('fill', 'rgba(255,255,255,0.4)')
+        .style('opacity', (d, i) => this.checkIfXisWithinOverlap(i * (collEffect.scale.x / 100) + (x * multiply.x), collection.renderedData) ? 0 : 0.4);
     }
 
-    grp.selectAll('circle.render-' + collection.id + '-' + collEffect.id)
-      .data(renderedDataCopy)
+    grp.selectAll('circle.render-' + collection.id + '-' + collEffect.id + '-' + Math.round(x))
+      .data(dataCopy)
       .enter()
       .append('circle')
-      .attr('class', 'render-' + collection.id + '-' + collEffect.id)
-      .attr('cx', (d, i) => collection.config.newXscale((i * (collEffect.scale.x / 100) * multiply.x) + collEffect.position.x))
+      .attr('class', 'render-' + collection.id + '-' + collEffect.id + '-' + Math.round(x))
+      .attr('cx', (d, i) => collection.config.newXscale((d.x * (collEffect.scale.x / 100) * multiply.x) + x))
       .attr('cy', (d) => collection.config.newYscale((d.y * multiply.y )) * (collEffect.scale.y / 100) + offset)
       .attr('r', (d) => collection.config.newXscale((d.x * multiply.x) + 0.2) - collection.config.newXscale((d.x * multiply.x) - 0.2) < 2 ?
                         collection.config.newXscale((d.x * multiply.x) + 0.2) - collection.config.newXscale((d.x * multiply.x) - 0.2) : 2)
       .style('fill', color)
-      .style('opacity', (d, i) => this.checkIfXisWithinOverlap(i * (collEffect.scale.x / 100) + (collEffect.position.x * multiply.x), collection.renderedData) ? 0 : 1);
-
+      .style('opacity', (d, i) => this.checkIfXisWithinOverlap(i * (collEffect.scale.x / 100) + (x * multiply.x), collection.renderedData) ? 0 : 1);
 
   }
+
 
   drawOverlappingData(svg: any, collection: Collection, color: string) {
     d3.selectAll('#grp-render-overlap-' + collection.id).remove();
@@ -364,8 +360,36 @@ export class EffectVisualizationService {
     const grp = svg.append('g').attr('id', 'grp-render-overlap-' + collection.id);
     let i = 0;
     for (const overlap of collection.renderedData) {
+      console.log(overlap);
 
       if ((collection.layers.filter(l => l.name === 'CW')[0].visible && overlap.direction.cw) || (collection.layers.filter(l => l.name === 'CCW')[0].visible && overlap.direction.ccw)) {
+        // this.drawRenderedData(grp, overlap.data, overlap.type, collection, { scale: { x: 100, y: 100 }, id: i }, overlap.position.start, { x: 1, y: 1 }, 0, color, false);
+
+        if (overlap.type === 'position') {
+          grp.selectAll('line.offset-' + collection.id + '-' + i)
+            .data(overlap.data)
+            .enter()
+            .append('line')
+            .attr('class', 'offset-' + collection.id + '-' + i)
+            .attr('x1', (d, i) => collection.config.newXscale(d.x + overlap.position.start))
+            .attr('x2', (d, i) => collection.config.newXscale(d.x + d.d + overlap.position.start))
+            .attr('y1', (d) => collection.config.newYscale(d.y * 100))
+            .attr('y2', (d) => collection.config.newYscale(d.y * 100))
+            .attr('stroke', 'rgba(255,255,255,0.4)')
+            .attr('stroke-width', 1);
+
+          grp.selectAll('circle.offset-' + collection.id + '-' + i)
+            .data(overlap.data)
+            .enter()
+            .append('circle')
+            .attr('class', 'offset-' + collection.id + '-' + i)
+            .attr('cx', (d) => collection.config.newXscale(d.x + d.d + overlap.position.start))
+            .attr('cy', (d) => collection.config.newYscale(d.y * 100))
+            .attr('r', (d) => collection.config.newXscale(d.x + 0.2) - collection.config.newXscale(d.x - 0.2) < 2 ?
+                              collection.config.newXscale(d.x + 0.2) - collection.config.newXscale(d.x - 0.2) : 2)
+            .style('fill', 'rgba(255,255,255,0.4)');
+        }
+
         grp.selectAll('circle.overlap-' + collection.id + '-' + i)
           .data(overlap.data)
           .enter()
@@ -383,10 +407,10 @@ export class EffectVisualizationService {
 
 
   updateCursor(effectID: string, units: any, position: number, xScale: any, width: number) {
-    let cursorPos = units.name === 'degrees' ? xScale(position * (360 / 4096)) : xScale(position);
-    if (cursorPos < 15) { cursorPos = 15; }
-    if (cursorPos > width - 15) { cursorPos = width - 15; }
-    d3.select('#cursor_' + effectID).attr('x', cursorPos);
+    // let cursorPos = units.name === 'degrees' ? xScale(position * (360 / 4096)) : xScale(position);
+    // if (cursorPos < 15) { cursorPos = 15; }
+    // if (cursorPos > width - 15) { cursorPos = width - 15; }
+    // d3.select('#cursor_' + effectID).attr('x', cursorPos);
   }
 
 

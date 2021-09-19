@@ -12,7 +12,6 @@ const { shell } = require('electron');
 const serialPort = require('./serial-communication.js');
 
 let mainWindow, infoWindow = null, effectWindow = null, layerWindow = null, helpWindow = null, FeelixioWindow = null;
-let playWindows = [];
 let toolbars = [];
 let mainMenu, displays, FeelixioMenu;
 let gridSnap = false, gridVisible = false, guidesLock = false;
@@ -27,9 +26,6 @@ app.on('ready', createWindow)
 
 app.on('window-all-closed', function () {
   if (process.platform !== 'darwin') {
-    for (const playW of playWindows) {
-      playW.window.webContents.send('disconnectAll');
-    }
     app.quit()
   }
 })
@@ -557,9 +553,6 @@ function createWindow() {
   );
 
   mainWindow.on('close', function () {
-    for (const playW of playWindows) {
-      playW.window.webContents.send('disconnectAll');
-    }
     app.quit();
   })
 
@@ -1184,7 +1177,17 @@ ipcMain.on('update', (event, details) => {
   } else {
     effectWindow.webContents.send('showEffectDetails', details);
   }
-})
+});
+
+ipcMain.on('updateToolbar', (event, data) => {
+  const selectedToolbar = toolbars.filter(t => t.type === 'edit')[0];
+  if (selectedToolbar) {
+    selectedToolbar.toolbar.webContents.send('updateToolbar', data);
+  } else {
+    mainWindow.webContents.send('updateToolbar', data);
+  }
+});
+
 
 ipcMain.on('showTabEffectWindow', (event, tab) => {
   if (effectWindow !== null) {
@@ -1209,16 +1212,6 @@ ipcMain.on('saveToEffectLibrary', (event, data) => {
   mainWindow.webContents.send('saveToEffectLibrary', data);
 });
 
-
-ipcMain.on('openFileDialogWindow', (event, windowIndex) => {
-  dialog.showOpenDialog({ filters: [{ name: 'All Files', extensions: ['json'] }] }, function (fileName) {
-    if (fileName != null) {
-      jsonfile.readFile(fileName[0], function (err, obj) {
-        playWindows[windowIndex].window.webContents.send('openedFile', obj);
-      });
-    }
-  });
-});
 
 ipcMain.on('updateMicrocontrollerDetails', (event, microcontrollerDetails) => {
   mainWindow.webContents.send('updateControllerDetails', microcontrollerDetails);
@@ -1298,16 +1291,6 @@ function displayStatus(data, page) {
 function visualizaMotorData(data) {
   mainWindow.webContents.send('playData', data);
 }
-
-// function updateCalibrationValue(data, serialPort) {
-//   const playWindow = playWindows.filter(p => p.data.serialPort.path === serialPort)[0];
-//   if (playWindow) {
-//     playWindow.window.webContents.send('updateCalibrationValue', data);
-//   } else if (FeelixioWindow) {
-//     FeelixioWindow.webContents.send('updateCalibrationValue', { data: data, port: serialPort });
-//   }
-// }
-
 
 
 function updateZeroElectricAngle(data) {

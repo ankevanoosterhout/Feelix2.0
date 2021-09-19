@@ -144,6 +144,19 @@ export class ToolbarInsetComponent implements OnInit {
       this.attachToolbar();
     });
 
+    this.electronService.ipcRenderer.on('updateToolbar', (event: Event, data: any) => {
+      if (data.type !== 'position') {
+        this.toolService.disable('thick');
+        this.electronService.ipcRenderer.send('updateToolbarSize', 'small');
+        if (this.selectedTool === 5) { this.selectTool(4); }
+      } else {
+        this.electronService.ipcRenderer.send('updateToolbarSize', 'large');
+        this.toolService.enable('thick');
+      }
+
+      this.toolList = this.toolService.getTools();
+    });
+
     this.innerHeight = window.innerHeight;
   }
 

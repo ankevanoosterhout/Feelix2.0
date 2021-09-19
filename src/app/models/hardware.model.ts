@@ -118,6 +118,7 @@ export class OtherDevices {
 export class MicroController {
   id: string = null;
   serialPort: any = null;
+  name: string = null;
   vendor: string = null;
   motors = [ new Motor(0) ];
   storageSpace: number = null;
@@ -134,6 +135,7 @@ export class MicroController {
     this.serialPort = serialPort;
     this.vendor = vendor;
     this.lastDataSend = new Date().getTime();
+    this.name = serialPort.path + '-' + vendor;
   }
 }
 

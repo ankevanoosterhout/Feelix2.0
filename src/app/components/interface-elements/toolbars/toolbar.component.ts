@@ -137,8 +137,8 @@ export class ToolbarComponent implements OnInit {
       this.selectTool(tool.id);
     });
 
-    this.electronService.ipcRenderer.on('update', (event: Event, item: any) => {
-      if (item.mode === 'servo' || (item.type === 'steps' && item.mode === 'default')) {
+    this.electronService.ipcRenderer.on('updateToolbar', (event: Event, data: any) => {
+      if (data.type !== 'position') {
         this.toolService.disable('thick');
         this.electronService.ipcRenderer.send('updateToolbarSize', 'small');
         if (this.selectedTool === 5) { this.selectTool(4); }

@@ -12,7 +12,7 @@ import { CloneService } from 'src/app/services/clone.service';
 @Component({
   selector: 'app-fixed-toolbar',
   template: `
-  <div class="fixed-toolbar" id="fixed-toolbar" onmousedown="return false">
+  <div class="fixed-toolbar" id="fixed-toolbar" ondrag="return false">
 
     <div *ngIf="this.drawingService.file.configuration.horizontalScreenDivision < (100/innerHeight) * (innerHeight - 50)">
       <div class="form-row">
@@ -304,7 +304,7 @@ export class FixedToolbarComponent implements OnInit {
     this.dataService.color = this.drawingService.file.configuration.colors.filter(c => c.type === this.drawingService.file.activeEffect.type)[0].hash;
     this.drawingService.updateActiveEffect(this.drawingService.file);
     this.drawingService.updateConfigActiveFile(this.drawingService.file.configuration);
-
+    this.electronService.ipcRenderer.send('updateToolbar', { type: this.drawingService.file.activeEffect.type });
   }
 
   public toggleDrawPlane() {

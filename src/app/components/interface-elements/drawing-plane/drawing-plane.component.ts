@@ -207,6 +207,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
       this.dataService.setColor(this.file.configuration.colors.filter(c => c.type === this.file.activeEffect.type)[0].hash);
       this.nodeService.setGridLayer(this.file.activeEffect.grid);
       this.updateGridSettingsInMenu(this.file);
+      this.electronService.ipcRenderer.send('updateToolbar', { type: this.drawingService.file.activeEffect.type });
     } else {
       this.nodeService.reset();
     }

@@ -27,6 +27,11 @@
     </div>
 
     <div class="form-group">
+      <label class="labelRow motorsettings">Name</label>
+      <input type="text" class="blue" id="name" name="name" [(ngModel)]="selectedMicrocontroller.name" (change)="updateMicrocontroller(selectedMicrocontroller)">
+    </div>
+
+    <div class="form-group">
       <label class="labelRow select motorsettings">Microcontroller</label>
       <select class="form-control playWindow" id="select-controller-type" [(ngModel)]="selectedMicrocontroller.vendor" name="controller" (change)="updateMicrocontroller(selectedMicrocontroller)">
         <option *ngFor="let vendor of vendors" [ngValue]="vendor.name">{{ vendor.name }}</option>
