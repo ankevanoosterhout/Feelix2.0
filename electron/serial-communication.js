@@ -317,16 +317,20 @@ function prepareEffectData(uploadContent, motor, datalist) {
     const effect = uploadContent.effects.filter(e => e.id === d.id)[0];
     if (effect) {
       const effect_index = uploadContent.effects.indexOf(effect);
+      const lastPtr = ptr;
       for (let n = 0; n < effect_index; n++) {
         ptr += uploadContent.effects[n].vis_type === 'position' ?  d.data.length * 2 :  d.data.length;
       }
       datalist.unshift('FE' + effect_index + 'R:' + ptr);
-    }
-    for (const el of d.data) {
-      if (d.type === 'position') {
-        datalist.unshift('FDI:' + effect_index + ':' + (Math.round(el.d) !== el.d ? el.d.toFixed(6) : el.d));
+
+      if (ptr !== lastPtr) {
+        for (const el of d.data) {
+          if (d.type === 'position') {
+            datalist.unshift('FDI:' + (Math.round(el.d) !== el.d ? el.d.toFixed(6) : el.d));
+          }
+          datalist.unshift('FDI:' + (Math.round(el.y) !== el.y ? el.y.toFixed(6) : el.y));
+        }
       }
-      datalist.unshift('FDI:' + effect_index + ':' + (Math.round(el.y) !== el.y ? el.y.toFixed(6) : el.y));
     }
   }
 
@@ -349,9 +353,9 @@ function prepareEffectData(uploadContent, motor, datalist) {
 
     for (const el of d.data) {
       if (d.type === 'position') {
-        datalist.unshift('FDO:' + o + ':' + (Math.round(el.d) !== el.d ? el.d.toFixed(6) : el.d));
+        datalist.unshift('FDO:' + (Math.round(el.d) !== el.d ? el.d.toFixed(6) : el.d));
       }
-      datalist.unshift('FDO:' + o + ':' + (Math.round(el.y) !== el.y ? el.y.toFixed(6) : el.y));
+      datalist.unshift('FDO:' + (Math.round(el.y) !== el.y ? el.y.toFixed(6) : el.y));
     }
     o++;
   }

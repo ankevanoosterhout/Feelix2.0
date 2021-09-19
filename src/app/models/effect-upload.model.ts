@@ -113,6 +113,7 @@ export class DataModel {
 export class UploadModel {
   effects: Array<EffectModel> = [];
   config: ConfigModel = null;
+  vendor: string = null;
   data: DataModel = null;
 
   constructor(collection: Collection, microcontroller: MicroController) {
@@ -125,6 +126,7 @@ export class UploadModel {
     }
     this.config = new ConfigModel(collection, microcontroller);
     this.data = new DataModel(collection.effectDataList, collection.renderedData);
+    this.vendor = microcontroller.vendor;
   }
 
 }
