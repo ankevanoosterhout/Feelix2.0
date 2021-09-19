@@ -318,7 +318,7 @@ function prepareEffectData(uploadContent, motor, datalist) {
     if (effect) {
       const effect_index = uploadContent.effects.indexOf(effect);
       for (let n = 0; n < effect_index; n++) {
-        ptr += uploadContent.effects[n].vis_type === 'position' ? uploadContent.effects[n].datasize.value * 2 : uploadContent.effects[n].datasize.value;
+        ptr += uploadContent.effects[n].vis_type === 'position' ?  d.data.length * 2 :  d.data.length;
         console.log(ptr);
       }
       datalist.unshift('FE' + effect_index + 'R:' + ptr);
