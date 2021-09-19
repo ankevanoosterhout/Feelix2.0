@@ -133,7 +133,7 @@ class newSerialPort {
     this.sp.write(data, function (err) {
         if (err) { return console.log('Error: ', err.message); }
         else {
-           console.log('written ', data);
+          //  console.log('written ', data);
         }
     });
   }
@@ -190,7 +190,7 @@ class newSerialPort {
       parser.on('data', (d) => {
 
         if (d.charAt(0) === '*') {
-          console.log('received data ', d);
+          // console.log('received data ', d);
           if (dataSendWaitList.filter(d => d.port === this.COM)) {
             uploadFromWaitList(ports.filter(p => p.COM === this.COM)[0]);
           }
@@ -206,7 +206,7 @@ class newSerialPort {
           main.visualizaMotorData(data);
 
         } else if (d.charAt(0) === 'Z') { // receive custom variable
-          console.log('received data ', d);
+          // console.log('received data ', d);
           const dataArray = d.substr(1).split(':');
           const data = {
               motorID: dataArray[0],
@@ -304,7 +304,6 @@ function prepareEffectData(uploadContent, motor, datalist) {
     if (effect.repeat) {
       for (const repeat of effect.repeat.value) {
         datalist.unshift('FE' + i + effect.repeat.identifier + ':' + repeat.x.toFixed(8));
-        console.log('FE' + i + effect.repeat.identifier + ':' + repeat.x.toFixed(8));
       }
     }
     datalist.unshift('FE' + i + effect.infinite.identifier + ':' + effect.infinite.value);
