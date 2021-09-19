@@ -324,36 +324,36 @@ function prepareEffectData(uploadContent, motor, datalist) {
     }
     for (const el of d.data) {
       if (d.type === 'position') {
-        datalist.unshift('FD:' + (Math.round(el.d) !== el.d ? el.d.toFixed(7) : el.d));
+        datalist.unshift('FDI:' + effect_index + ':' + (Math.round(el.d) !== el.d ? el.d.toFixed(6) : el.d));
       }
-      datalist.unshift('FD:' + (Math.round(el.y) !== el.y ? el.y.toFixed(7) : el.y));
+      datalist.unshift('FDI:' + effect_index + ':' + (Math.round(el.y) !== el.y ? el.y.toFixed(6) : el.y));
     }
   }
 
-
+  let o = 0;
   for (const d of uploadContent.data.overlay) {
-    datalist.unshift('FO' + i + 'P:' + d.position.start.toFixed(5) + ':' + (d.position.end.toFixed(5) - d.position.start.toFixed(5)));
-    datalist.unshift('FO' + i + 'D:' + (d.direction.cw ? 1 : -1) + ':' + (d.direction.ccw ? 1 : -1) );
-    datalist.unshift('FO' + i + 'I:' + (d.infinite ? 1 : -1));
+    datalist.unshift('FO' + o + 'P:' + d.position.start.toFixed(5) + ':' + (d.position.end.toFixed(5) - d.position.start.toFixed(5)));
+    datalist.unshift('FO' + o + 'D:' + (d.direction.cw ? 1 : -1) + ':' + (d.direction.ccw ? 1 : -1) );
+    datalist.unshift('FO' + o + 'I:' + (d.infinite ? 1 : -1));
     let type = 0;
     if (d.type === 'position') { type = 1; }
     if (d.type === 'velocity') { type = 2; }
-    datalist.unshift('FO' + i + 'T:' + type);
-    datalist.unshift('FO' + i + 'Z:' + (d.type === 'position' ? d.data.length * 2 : d.data.length));
+    datalist.unshift('FO' + o + 'T:' + type);
+    datalist.unshift('FO' + o + 'Z:' + (d.type === 'position' ? d.data.length * 2 : d.data.length));
 
-    for (let n = 0; n < i; n++) {
-      ptr += uploadContent.effects[n].vis_type === 'position' ? d.data.length * 2 : d.data.length;
+    for (let n = 0; n < o; n++) {
+      ptr += d.type === 'position' ? d.data.length * 2 : d.data.length;
     }
 
-    datalist.unshift('FO' + i + 'R:' + ptr);
+    datalist.unshift('FO' + o + 'R:' + ptr);
 
     for (const el of d.data) {
       if (d.type === 'position') {
-        datalist.unshift('FD:' + (Math.round(el.d) !== el.d ? el.d.toFixed(7) : el.d));
+        datalist.unshift('FDO:' + o + ':' + (Math.round(el.d) !== el.d ? el.d.toFixed(6) : el.d));
       }
-      datalist.unshift('FD:' + (Math.round(el.y) !== el.y ? el.y.toFixed(7) : el.y));
+      datalist.unshift('FDO:' + o + ':' + (Math.round(el.y) !== el.y ? el.y.toFixed(6) : el.y));
     }
-    i++;
+    o++;
   }
 
 
