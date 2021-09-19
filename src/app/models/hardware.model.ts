@@ -49,9 +49,9 @@ export class Rotation {
 }
 
 export class PID {
-  p: number = 0.2;
-  i: number = 20;
-  d: number = 0.001;
+  p: number = null;
+  i: number = null;
+  d: number = null;
   constructor(p: number, i: number, d: number) {
     this.p = p;
     this.i = i;
@@ -90,8 +90,8 @@ export class Motor {
   type: string = 'BLDC Motor';
   config = new Config();
   state = new State();
-  position_pid = new PID(0.2, 20, .001);
-  velocity_pid = new PID(0.2, 20, .001);
+  position_pid = new PID(20.0, 0.0, 0.0);
+  velocity_pid = new PID(0.5, 10, .001);
 
 
   constructor(id: number) {

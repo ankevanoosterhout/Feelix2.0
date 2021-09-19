@@ -273,8 +273,8 @@ function prepareMotorData(uploadContent, motor, datalist) {
   datalist.unshift('FM' + motor.id + 'D' + (motor.config.encoder.direction === 'CW' ? 1 : -1));
   datalist.unshift('FM' + motor.id + 'T' + uploadContent.config.updateSpeed);
   datalist.unshift('FM' + motor.id + 'J' + Math.round(uploadContent.config.range));
-  datalist.unshift('FM' + motor.id + 'A' + motor.position_pid.p + ':' + motor.position_pid.i + ':' + motor.position_pid.d);
-  datalist.unshift('FM' + motor.id + 'Q' + motor.velocity_pid.p + ':' + motor.velocity_pid.i + ':' + motor.velocity_pid.d);
+  datalist.unshift('FM' + motor.id + 'A' + ':' + motor.position_pid.p + ':' + motor.position_pid.i + ':' + motor.position_pid.d);
+  datalist.unshift('FM' + motor.id + 'Q' + ':' + motor.velocity_pid.p + ':' + motor.velocity_pid.i + ':' + motor.velocity_pid.d);
   // datalist.unshift('FM' + motor.id + 'B' + uploadContent.baudRate);
 
   return datalist;
@@ -286,8 +286,23 @@ function prepareMotorData(uploadContent, motor, datalist) {
 function prepareEffectData(uploadContent, motor, datalist) {
 
   let i = 0;
+  let ptr = 0;
 
   datalist.unshift('FM' + motor.id + 'F' + uploadContent.effects.length);
+  for (const d of uploadContent.data.effectData) {
+    // send pointer value
+    const sameEffectList = uploadContent.effects.filter(e => e.id === d.id);
+    for (const sameEffect of sameEffectList) {
+      sameEffect.pointer = ptr;
+    }
+    ptr += d.type === 'position' ? d.data.length * 2 : d.data.length;
+  }
+
+  let ptr2 = 0;
+  for (const d of uploadContent.data.overlay) {
+    d.pointer = ptr2 + ptr;
+    ptr2 += d.type === 'position' ? d.data.length * 2 : d.data.length;
+  }
 
   for (const effect of uploadContent.effects) {
     datalist.unshift('FE' + i + effect.position.identifier + ':' + effect.position.value[1]);
@@ -297,9 +312,8 @@ function prepareEffectData(uploadContent, motor, datalist) {
     datalist.unshift('FE' + i + effect.vis_type.identifier + ':' + effect.vis_type.value);
     datalist.unshift('FE' + i + effect.effect_type.identifier + ':' + effect.effect_type.value);
     datalist.unshift('FE' + i + effect.datasize.identifier + ':' + effect.datasize.value);
-
-
-    datalist.unshift('FE' + i + 'C' + ':' + effect.position.value[0]);
+    datalist.unshift('FE' + i + 'C:' + effect.position.value[0]);
+    datalist.unshift('FE' + i + 'R:' + effect.pointer);
 
     if (effect.repeat) {
       for (const repeat of effect.repeat.value) {
@@ -310,26 +324,14 @@ function prepareEffectData(uploadContent, motor, datalist) {
 
     i++;
   }
-  let ptr = 0;
-  for (const d of uploadContent.data.effectData) {
-    // send pointer value
-    const effect = uploadContent.effects.filter(e => e.id === d.id)[0];
-    if (effect) {
-      const effect_index = uploadContent.effects.indexOf(effect);
-      const lastPtr = ptr;
-      for (let n = 0; n < effect_index; n++) {
-        ptr += uploadContent.effects[n].vis_type === 'position' ?  d.data.length * 2 :  d.data.length;
-      }
-      datalist.unshift('FE' + effect_index + 'R:' + ptr);
 
-      if (ptr === 0 || ptr !== lastPtr) {
-        for (const el of d.data) {
-          if (d.type === 'position') {
-            datalist.unshift('FDI:' + (Math.round(el.d) !== el.d ? el.d.toFixed(6) : el.d));
-          }
-          datalist.unshift('FDI:' + (Math.round(el.y) !== el.y ? el.y.toFixed(6) : el.y));
-        }
+  for (const d of uploadContent.data.effectData) {
+
+    for (const el of d.data) {
+      if (d.type === 'position') {
+        datalist.unshift('FDI:' + (Math.round(el.d) !== el.d ? el.d.toFixed(6) : el.d));
       }
+      datalist.unshift('FDI:' + (Math.round(el.y) !== el.y ? el.y.toFixed(6) : el.y));
     }
   }
 
@@ -338,17 +340,13 @@ function prepareEffectData(uploadContent, motor, datalist) {
     datalist.unshift('FO' + o + 'P:' + d.position.start.toFixed(5) + ':' + (d.position.end.toFixed(5) - d.position.start.toFixed(5)));
     datalist.unshift('FO' + o + 'D:' + (d.direction.cw ? 1 : -1) + ':' + (d.direction.ccw ? 1 : -1) );
     datalist.unshift('FO' + o + 'I:' + (d.infinite ? 1 : -1));
+    datalist.unshift('FO' + o + 'R:' + d.pointer);
     let type = 0;
     if (d.type === 'position') { type = 1; }
     if (d.type === 'velocity') { type = 2; }
     datalist.unshift('FO' + o + 'T:' + type);
     datalist.unshift('FO' + o + 'Z:' + (d.type === 'position' ? d.data.length * 2 : d.data.length));
 
-    for (let n = 0; n < o; n++) {
-      ptr += d.type === 'position' ? d.data.length * 2 : d.data.length;
-    }
-
-    datalist.unshift('FO' + o + 'R:' + ptr);
 
     for (const el of d.data) {
       if (d.type === 'position') {

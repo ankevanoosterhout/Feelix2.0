@@ -213,10 +213,10 @@ export class UploadService {
     for (const path of copyEffectList.paths) {
       if (effectData.type === 'torque' || effectData.type === 'velocity') {
         // data.push(this.translateTorqueEffectData(path, multiply));
-        return { id: collEffect.effectID, type: effectData.type, size: effectData.size, infinite: collEffect.infinite, data:this.translateTorqueEffectData(path, multiply) };
+        return { id: collEffect.effectID, type: effectData.type, size: effectData.size, rotation: effectData.rotation, infinite: collEffect.infinite, data:this.translateTorqueEffectData(path, multiply) };
       }
       else if (effectData.type === 'position') {
-        return { id: collEffect.effectID, type: effectData.type, size: effectData.size, infinite: collEffect.infinite, data:this.translatePositionEffectData(path, multiply) };
+        return { id: collEffect.effectID, type: effectData.type, size: effectData.size, rotation: effectData.rotation, infinite: collEffect.infinite, data:this.translatePositionEffectData(path, multiply) };
         // data.push(this.translatePositionEffectData(path, multiply));
 
       }
@@ -426,6 +426,7 @@ export class UploadService {
 
   createUploadModel(collection: Collection, microcontroller: MicroController) {
     let model = new UploadModel(collection, microcontroller);
+    console.log(model);
     return model;
   }
 

@@ -291,10 +291,15 @@ export class EffectVisualizationService {
 
 
     let renderedDataCopy = this.cloneService.deepClone(renderedData.data);
-    if (collEffect.flip.x) {
-      renderedDataCopy.reverse();
-    }
     if (collEffect.flip.y) {
+      renderedDataCopy.reverse();
+      let i = 0;
+      for (const el of renderedDataCopy) {
+        el.x = i;
+        i++;
+      }
+    }
+    if (collEffect.flip.x) {
       renderedDataCopy = this.mirrorData(renderedDataCopy, collEffect.position);
     }
 

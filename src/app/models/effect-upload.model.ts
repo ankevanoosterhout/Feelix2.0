@@ -63,6 +63,7 @@ export class EffectModel {
   vis_type: Model = null;
   effect_type: Model = null;
   datasize: Model = null;
+  pointer: number = null;
 
   constructor(collEffect: Details, effect: any) {
     this.id = effect.id;

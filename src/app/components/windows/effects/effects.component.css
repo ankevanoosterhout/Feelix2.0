@@ -713,6 +713,8 @@ input {
   font-family: 'Open Sans', Arial, sans-serif;
 }
 
+
+
 input.settings {
   color: #00AEEF;
   vertical-align: top;
@@ -732,6 +734,10 @@ input[type=number] {
 
 input[type=text] {
   max-width: 100px;
+}
+
+input[type=text].effect_name {
+  max-width: 180px;
 }
 
 input[type=range] {

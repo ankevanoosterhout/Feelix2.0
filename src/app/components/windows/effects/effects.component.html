@@ -35,7 +35,7 @@
         <li class="blockContent {{ this.drawingService.file.configuration.libraryViewSettings }}" *ngFor="let item of this.drawingService.file.effects">
           <div class="rowDetails">
             <div class="title {{ this.drawingService.file.configuration.libraryViewSettings }}">
-              <input type="text" class="form-control" id="name-{{ item.id }}" [(ngModel)]="item.name" name="name-{{ item.id }}" (change)="updateEffectName(item)">
+              <input type="text" class="form-control effect_name" id="name-{{ item.id }}" [(ngModel)]="item.name" name="name-{{ item.id }}" (change)="updateEffectName(item)">
             </div>
             <div class="buttonsPlayWindow {{ this.drawingService.file.configuration.libraryViewSettings }}"
                  *ngIf="this.drawingService.file.configuration.libraryViewSettings === 'list'">
