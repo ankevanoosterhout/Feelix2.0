@@ -319,7 +319,6 @@ function prepareEffectData(uploadContent, motor, datalist) {
       const effect_index = uploadContent.effects.indexOf(effect);
       for (let n = 0; n < effect_index; n++) {
         ptr += uploadContent.effects[n].vis_type === 'position' ?  d.data.length * 2 :  d.data.length;
-        console.log(ptr);
       }
       datalist.unshift('FE' + effect_index + 'R:' + ptr);
     }
@@ -344,7 +343,6 @@ function prepareEffectData(uploadContent, motor, datalist) {
 
     for (let n = 0; n < i; n++) {
       ptr += uploadContent.effects[n].vis_type === 'position' ? d.data.length * 2 : d.data.length;
-      console.log(ptr);
     }
 
     datalist.unshift('FO' + i + 'R:' + ptr);
