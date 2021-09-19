@@ -150,7 +150,6 @@ export class Effect {
 
 export class LibraryEffect {
   id: string;
-  // feelixio = 'effect';
   effect: Effect = null;
 
   constructor(id: string, effect: Effect) {

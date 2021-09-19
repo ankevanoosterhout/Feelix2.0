@@ -3,7 +3,6 @@ import { MicroController, Motor } from '../models/hardware.model';
 import { Path } from '../models/node.model';
 import { BezierService } from './bezier.service';
 import { NodeService } from './node.service';
-import { EffectObject } from '../models/feelixio-file.model';
 import { Linear, UploadModel } from '../models/effect-upload.model';
 import { Collection } from '../models/collection.model';
 import { Details, Effect } from '../models/effect.model';
@@ -66,16 +65,18 @@ export class UploadService {
 
       if (d.effect1 && d.effect2) {
         const effectData1 = effectList.filter(e => e.id === d.effect1.effectID)[0];
+        const effectData2 = effectList.filter(e => e.id === d.effect2.effectID)[0];
         const translatedDataEffect1 = this.cloneService.deepClone(collection.effectDataList.filter(e => e.id === effectData1.id)[0]);
+        const translatedDataEffect2 = this.cloneService.deepClone(collection.effectDataList.filter(e => e.id === effectData2.id)[0]);
+        const multiply = collection.rotation.units.name === 'radians' ? (Math.PI / 180) : 1;
 
         for (const el of translatedDataEffect1.data) {
           if (el.x >= d.overlap.x1 * effectData1.size.width - 2 && el.x <= d.overlap.x2 * effectData1.size.width + 2) {
             el.x *= (d.effect1.scale.x / 100);
             el.y *= (d.effect1.scale.y / 100);
             el.x += d.effect1.position.x;
-            el.y += d.effect1.position.y;
+            el.y += (d.effect1.position.y / 100);
             if (el.d) {
-              console.log(el.o);
               el.o *= (d.effect1.scale.x / 100);
               el.o += d.effect1.position.x;
             }
@@ -89,6 +90,7 @@ export class UploadService {
                         points: newDataArray,
                         effect1: d.effect1,
                         effect2: d.effect2,
+                        inf: translatedDataEffect1.infinite && translatedDataEffect2 ? true : false,
                         type: effectData1.type,
                         id: uuid()
                       };
@@ -111,6 +113,7 @@ export class UploadService {
       const cw = item.effect1.direction.cw && item.effect2.direction.cw ? true : false;
       const ccw = item.effect1.direction.ccw && item.effect2.direction.ccw ? true : false;
 
+
       if (cw || ccw) {
         for (let i = item.position.x1; i <= item.position.x2; i++) {
 
@@ -125,7 +128,6 @@ export class UploadService {
           const o2 = item.type === 'position' ? item.points.filter(p => p.y === y2)[0].o : null;
 
 
-
           let newY = (y2 - y1) / (x2 - x1) * (i - x1) + y1;
 
           let newD = null;
@@ -134,6 +136,7 @@ export class UploadService {
             newD = (d2 - d1) / (x2 - x1) * (i - x1) + d1;
             newO = (o2 - o1) / (x2 - x1) * (i - x1) + o1;
           }
+
           const pointAtNewArray = newArray.filter(n => n.x === i && n.id !== item.id && ((n.direction.cw === cw) || (n.direction.ccw === ccw)))[0];
 
           if (pointAtNewArray) {
@@ -141,10 +144,10 @@ export class UploadService {
             if (pointAtNewArray.y > 1) { pointAtNewArray.y = 1; }
             if (pointAtNewArray.y < -1) { pointAtNewArray.y = -1; }
             if (pointAtNewArray.d && newD) { pointAtNewArray.d += (newD); }
-            if (pointAtNewArray.o && newO) { pointAtNewArray.x += pointAtNewArray.d; }
+            // if (pointAtNewArray.o && newO) { console.log(pointAtNewArray.o, newO); }
             pointAtNewArray.n++;
           } else {
-            newArray.push({ x: i, y: newY, d: newD, o: newO, direction: { cw: cw, ccw: ccw }, type: item.type, n: 1, effect: item.id });
+            newArray.push({ x: i, y: newY, d: newD, o: newO, direction: { cw: cw, ccw: ccw }, type: item.type, inf: item.inf, n: 1, effect: item.id });
           }
         }
       }
@@ -167,7 +170,7 @@ export class UploadService {
       for (const el of array) {
         if (tmpArray.length > 0 && ((el.x - array[i - 1].x > 1) || i === array.length - 1) &&
           (el.direction.cw === array[i - 1].direction.cw || el.direction.ccw === array[i - 1].direction.ccw)) {
-          newArray.push({ data: tmpArray, direction: el.direction, type: el.type, position: { start: startPosition, end: array[i - 1].x } });
+          newArray.push({ data: tmpArray, direction: el.direction, type: el.type, inf: el.inf, position: { start: startPosition, end: array[i - 1].x } });
           tmpArray = [];
           startPosition = array[i].x;
         }
@@ -208,15 +211,17 @@ export class UploadService {
     const multiply = effectData.grid.xUnit.name === 'radians' ? (180 / Math.PI) : 1;
 
     for (const path of copyEffectList.paths) {
-
       if (effectData.type === 'torque' || effectData.type === 'velocity') {
-        return { id: collEffect.effectID, type: effectData.type, size: effectData.size, data:this.translateTorqueEffectData(path, multiply) };
+        // data.push(this.translateTorqueEffectData(path, multiply));
+        return { id: collEffect.effectID, type: effectData.type, size: effectData.size, infinite: collEffect.infinite, data:this.translateTorqueEffectData(path, multiply) };
       }
       else if (effectData.type === 'position') {
+        return { id: collEffect.effectID, type: effectData.type, size: effectData.size, infinite: collEffect.infinite, data:this.translatePositionEffectData(path, multiply) };
+        // data.push(this.translatePositionEffectData(path, multiply));
 
-        return { id: collEffect.effectID, type: effectData.type, size: effectData.size, data:this.translatePositionEffectData(path, multiply) };
       }
     }
+    // return { id: collEffect.effectID, type: effectData.type, size: effectData.size, data:data };
   }
 
   translateTorqueEffectData(path: Path, multiply: number, quality = 1) {
@@ -428,203 +433,11 @@ export class UploadService {
 
 
 
-  getStartTime(effectObj: EffectObject, defaultStartTime = 0) {
-    const startTime = effectObj.parameters.input.filter(p => p.name === 'start')[0];
-    const value = !startTime.hidden && startTime.value ? startTime.value : startTime.defaultVal;
-    const unitValue = value.units.name === 'cm' ? Math.round(value.type.val * 10) : Math.round(value.type.val);
-    return unitValue;
-  }
 
 
 
-  getRepeatValue(effectObj: EffectObject, motor: any) {
-    const repeat = effectObj.parameters.input.filter(p => p.name === 'repeat')[0];
-    const repeatList = [];
-    if (repeat && repeat.value && repeat.value.length > 0) {
-      for (const r of repeat.value) {
-        if (r.units) {
-          const value = r.units.name === 'degrees' ? r.val * (motor.encoder.PR / 360) : r.val;
-          repeatList.push(Math.round(value));
-        }
-      }
-      repeatList.sort((a, b) => a - b);
-    }
-    return repeatList;
-  }
 
 
-  getRepeatList(parentlist: any, effectList: any, startPosition: number, multiply: number) {
-    const repeatList = [];
-    repeatList.push(startPosition);
-
-    for (const el of parentlist) {
-      const effectFromList = effectList.filter(e => e.id === el)[0];
-      if (effectFromList) {
-        repeatList.push(Math.round(effectFromList.details.position.start * multiply));
-      }
-    }
-    repeatList.sort((a, b) => a - b);
-    return repeatList;
-  }
-
-  getAngleAsWidth(effectObj: EffectObject, motor: any) {
-
-    if (effectObj.effect.slug !== 0 && effectObj.effect.slug !== 4) {
-      const angle = effectObj.parameters.input.filter(p => p.name === 'angle')[0];
-      const value = !angle.hidden ? angle.value : angle.defaultVal;
-      const multiply = this.getMultiplyFactor(value.units, motor, value.units.name === 'degrees' ? 360 : motor.encoder.PR);
-      // if (multiply) {
-      //   return Math.round(value.type.val * multiply);
-      // }
-      return Math.round(value.type.val);
-      // if (angle.defaultVal.units !== 'mm' && angle.defaultVal.units !== 'cm') {
-      //   return value.units.symbol === 'ppr' ? Math.round(value.type.val) : Math.round(value.type.val * (motor.encoder.PR / 360));
-      // } else {
-      //   return Math.round(value.type.val * multiply);
-      // }
-    } else {
-      return 30;
-    }
-  }
-
-  getAngleValue(effectObj: EffectObject, motor: any) {
-    const angle = effectObj.parameters.input.filter(p => p.name === 'angle')[0];
-    if (angle && !angle.hidden) {
-      if (angle.defaultVal.units !== 'mm' && angle.defaultVal.units !== 'cm') {
-        const unitValue = angle.value.units.symbol === 'ppr' ?
-          Math.round(angle.value.type.val) : Math.round(angle.value.type.val * (motor.encoder.PR / 360));
-        const unitDefaultValue = angle.defaultVal.units.symbol === 'ppr' ?
-          Math.round(angle.defaultVal.type.val) : Math.round(angle.defaultVal.type.val * (motor.encoder.PR / 360));
-        return unitValue / unitDefaultValue;
-      } else {
-        // console.log(angle);
-        return 1;
-      }
-    } else {
-      return 1;
-    }
-  }
-
-  getLinearValue(effectObj: EffectObject, motor: any) {
-    const intensity = effectObj.parameters.input.filter(p => p.name === 'intensity (l)')[0];
-    // console.log(effectObj.parameters.input, intensity);
-    if (intensity) {
-      const linear = new Linear();
-      linear.Ymin = Math.round(intensity.value.type.start * 2.55);
-      linear.Ymax = Math.round(intensity.value.type.end * 2.55);
-      if (effectObj.effect.slug <= 1) {
-        const angle = effectObj.parameters.input.filter(p => p.name === 'angle')[0];
-        const angleVal = !angle.hidden && angle.value ? angle.value : angle.defaultVal;
-        const angleUnitVal = angleVal.units.symbol === 'ppr' ? Math.round(angleVal.type.val) :
-          Math.round(angleVal.type.val * (motor.encoder.PR / 360));
-
-        const position = effectObj.parameters.input.filter(p => p.name === 'position')[0];
-        const positionVal = !position.hidden && position.value ? position.value : position.defaultVal;
-        const positionUnitVal = positionVal.units.symbol === 'ppr' ? Math.round(positionVal.type.val) :
-          Math.round(positionVal.type.val * (motor.encoder.PR / 360));
-        linear.Xmin = positionUnitVal;
-        linear.Xmax = positionUnitVal + angleUnitVal;
-      } else {
-        linear.Xmin = Math.round(intensity.value.type.start2);
-        linear.Xmax = Math.round(intensity.value.type.end2);
-      }
-
-      linear.dYdX = (linear.Ymax - linear.Ymin) / (linear.Xmax - linear.Xmin);
-      return linear;
-    } else {
-      return null;
-    }
-  }
-
-
-  getLinearValues(slug: number, details: any, multiply: number) {
-    const linear = new Linear();
-    linear.Ymin = Math.round(details.parameter.value.start2 * 2.55);
-    linear.Ymax = Math.round(details.parameter.value.end2 * 2.55);
-
-    if (slug <= 1) {
-      linear.Xmin = Math.round(details.position.start * multiply);
-      linear.Xmax = Math.round(details.position.end * multiply);
-    } else {
-      linear.Xmin = Math.round(details.parameter.value.start);
-      linear.Xmax = Math.round(details.parameter.value.end);
-    }
-    linear.dYdX = (linear.Ymax - linear.Ymin) / (linear.Xmax - linear.Xmin);
-    return linear;
-  }
-
-
-  getIntensityValue(effectObj: EffectObject) {
-    const intensity = effectObj.parameters.input.filter(p => p.name === 'intensity' || p.name === 'intensity (l)')[0];
-    if (intensity.value && intensity.value.type.val2 !== undefined) {
-      return -1; // linear value
-    }
-    return !intensity.hidden ? intensity.value.type.val / 100 : 1;
-
-  }
-
-  getPositionValue(effectObj: EffectObject, motor: any) {
-    let posVal = 0;
-    const position = effectObj.parameters.input.filter(p => p.name === 'position')[0];
-    const pos = !position.hidden && position.value ? position.value : position.defaultVal;
-
-    if (pos.units.name !== 'mm' && pos.units.name !== 'cm') {
-      posVal = pos.units.symbol === 'ppr' ? Math.round(pos.type.val) : Math.round(pos.type.val * (motor.encoder.PR / 360));
-      const align = effectObj.parameters.input.filter(p => p.name === 'align')[0];
-      const angle = effectObj.parameters.input.filter(p => p.name === 'angle')[0];
-      if (angle && align) {
-        const angleVal = !angle.hidden && angle.value ? angle.value : angle.defaultVal;
-        const angleUnitValue = angleVal.units.symbol === 'ppr' ? Math.round(angleVal.type.val) :
-          Math.round(angleVal.type.val * (motor.encoder.PR / 360));
-        const alignVal = !align.hidden && align.value ? align.value.category.val : align.defaultVal.category.val;
-        if (alignVal !== 'left') {
-          posVal = alignVal === 'center' ? posVal - (angleUnitValue / 2) : posVal - angleUnitValue;
-        }
-      }
-    } else {
-      const multiply = this.getMultiplyFactor(pos.units, motor);
-      // if (multiply) {
-      //   return Math.round(pos.type.val * multiply);
-      // }
-    }
-    return posVal;
-  }
-
-  getDurationAsValue(effectObj: EffectObject) {
-    const duration = effectObj.parameters.input.filter(p => p.name === 'duration')[0];
-    const velocity = effectObj.parameters.input.filter(p => p.name === 'velocity')[0];
-
-    const durationVal = !duration.hidden ? duration.value : duration.defaultVal;
-    const durationUnitValue = durationVal.units.symbol !== 's' ? durationVal.type.val : durationVal.type.val * 1000;
-    let scaleX = durationUnitValue / duration.defaultVal.type.val;
-
-    const velocityVal = !velocity.hidden && velocity.value ? velocity.value : velocity.defaultVal;
-    if (!velocity.hidden) {
-      scaleX = velocityVal.type.val;
-    }
-    return durationUnitValue;
-  }
-
-
-  getDurationValue(effectObj: EffectObject) {
-    const duration = effectObj.parameters.input.filter(p => p.name === 'duration')[0];
-    const velocity = effectObj.parameters.input.filter(p => p.name === 'velocity')[0];
-
-    const durationVal = !duration.hidden ? duration.value : duration.defaultVal;
-    const durationUnitValue = durationVal.units.symbol !== 's' ? durationVal.type.val : durationVal.type.val * 1000;
-    let scaleX = durationUnitValue / duration.defaultVal.type.val;
-
-    const velocityVal = !velocity.hidden && velocity.value ? velocity.value : velocity.defaultVal;
-    if (!velocity.hidden) {
-      scaleX = velocityVal.type.val;
-    }
-    return scaleX;
-  }
-
-  getBooleanValue(parameter: any) {
-    const value = !parameter.hidden && parameter.value ? parameter.value : parameter.defaultVal;
-    return value.category.val === 'true' ? true : false;
-  }
 
 
 

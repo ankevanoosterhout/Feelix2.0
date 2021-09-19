@@ -80,7 +80,6 @@ export class EffectModel {
     this.direction = new Model('D', [ (collEffect.direction.cw ? 1 : 0), (collEffect.direction.ccw? 1 : 0) ]);
 
     this.infinite = new Model ('I', collEffect.infinite ? 1 : 0);
-    console.log(this.infinite);
 
     this.datasize = new Model ('Z', (effect.type === 'position' ? effect.data.length * 2 : effect.data.length));
 
@@ -93,7 +92,6 @@ export class EffectModel {
     }
 
     this.effect_type = new Model('E', effect.rotation === 'dependent' ? 0 : 1);
-    console.log(this.effect_type);
 
     if (collEffect.repeat.repeatInstances.length > 0) {
       this.repeat = new Model('C', collEffect.repeat.repeatInstances);

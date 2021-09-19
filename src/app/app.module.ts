@@ -45,18 +45,9 @@ import { MotorControlToolbarInsetComponent } from './components/interface-elemen
 import { MotorControlToolbarComponent } from './components/interface-elements/toolbars/motor-control-toolbar.component';
 import { UploadService } from './services/upload.service';
 import { HistoryService } from './services/history.service';
-import { FeelixioComponent } from './components/feelixio/feelixio.component';
 import { EffectLibraryService } from './services/effect-library.service';
-import { FeelixioPartsComponent } from './components/feelixio/feelixio-parts.component';
-import { FeelixioPageComponent } from './pages/feelixio-page.component';
-import { FeelixioFileService } from './services/feelixio-file.service';
 import { EffectVisualizationService } from './services/effect-visualization.service';
-import { FeelixioDrawService } from './services/feelixio-draw.service';
-import { FeelixioDrawElementsService } from './services/feelixio-draw-elements.service';
 import { ComponentService } from './services/component.service';
-import { RenderInfoComponent } from './components/interface-elements/toolbar-header/render-info.component';
-import { FeelixioRenderService } from './services/feelixio-render.service';
-import { FeelixioValidationService } from './services/feelixio-validation.service';
 import { ExportDialogComponent } from './components/windows/export-dialog.component';
 import { CloneService } from './services/clone.service';
 import { GridService } from './services/grid.service';
@@ -85,11 +76,7 @@ import { GridService } from './services/grid.service';
     MotorSettingsComponent,
     MotorControlComponent,
     MotorControlToolbarInsetComponent,
-    MotorControlToolbarComponent,
-    FeelixioComponent,
-    FeelixioPartsComponent,
-    FeelixioPageComponent,
-    RenderInfoComponent
+    MotorControlToolbarComponent
   ],
   imports: [
     BrowserModule,
@@ -117,13 +104,8 @@ import { GridService } from './services/grid.service';
     UploadService,
     HistoryService,
     EffectLibraryService,
-    FeelixioFileService,
-    FeelixioDrawService,
-    FeelixioDrawElementsService,
     EffectVisualizationService,
     ComponentService,
-    FeelixioRenderService,
-    FeelixioValidationService,
     MotorControlService,
     CollectionService,
     CloneService

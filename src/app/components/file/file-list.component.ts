@@ -6,7 +6,6 @@ import { MatDialog } from '@angular/material/dialog';
 import { DialogComponent } from '../windows/dialog.component';
 import { DOCUMENT } from '@angular/common';
 import { v4 as uuid } from 'uuid';
-import { FeelixioFileService } from 'src/app/services/feelixio-file.service';
 
 
 @Component({
@@ -45,18 +44,17 @@ export class FileListComponent implements OnInit {
   public scrollTab = false;
 
   constructor(@Inject(DOCUMENT) private document: Document, public fileService: FileService,
-              private electronService: ElectronService, public dialog: MatDialog,
-              public feelixioFileService: FeelixioFileService) {
+              private electronService: ElectronService, public dialog: MatDialog) {
 
     this.electronService.ipcRenderer.on('saveActiveFile', (event: Event, type: any) => {
-      const activeFile = this._list === 'FeelixioFiles' ? this.feelixioFileService.getActiveFile() : this.fileService.getAllFileData();
+      const activeFile = this.fileService.getAllFileData();
 
       if (activeFile.overwrite) { // prevent overwrite example files
         const data = {
           file: activeFile,
           overwrite: type,
           newId: uuid(),
-          extension: this._list === 'FeelixioFiles' ? '.feelixio' : '.feelix'
+          extension: '.feelix'
         };
         this.electronService.ipcRenderer.send('saveFile', data);
       }
@@ -64,9 +62,9 @@ export class FileListComponent implements OnInit {
 
     this.electronService.ipcRenderer.on('updatedFile', (event: Event, data: any) => {
       if (data.type === 'add') {
-        this._list === 'FeelixioFiles' ? this.feelixioFileService.add(data.file) : this.fileService.add(data.file);
+        this.fileService.add(data.file);
       } else if (data.type === 'update') {
-        this._list === 'FeelixioFiles' ? this.feelixioFileService.update(data.file, false) : this.fileService.update(data.file, false);
+        this.fileService.update(data.file, false);
       }
     });
   }
@@ -77,38 +75,21 @@ export class FileListComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    if (this._list === 'designFiles') {
+    this.files = this.fileService.getAll();
+    this.scrollVisible(window.innerWidth);
+    if (this.files.length < 1) {
+      this.fileService.createDefault('Untitled-1');
+      this.fileService.store();
       this.files = this.fileService.getAll();
-      this.scrollVisible(window.innerWidth);
-      if (this.files.length < 1) {
-        this.fileService.createDefault('Untitled-1');
-        this.fileService.store();
-        this.files = this.fileService.getAll();
-      }
-      this.fileService.fileObservable.subscribe(files => {
-        this.files = files;
-        this.scrollVisible(window.innerWidth);
-      });
-    } else {
-      this.files = this.feelixioFileService.getAll();
-      if (this.files.length === 0) {
-        const newFile = this.feelixioFileService.newFile();
-        this.files.push(newFile);
-      }
-      this.feelixioFileService.feelixioFileObservable.subscribe(files => {
-        this.files = files;
-        this.scrollVisible(window.innerWidth - 300);
-      });
     }
-
+    this.fileService.fileObservable.subscribe(files => {
+      this.files = files;
+      this.scrollVisible(window.innerWidth);
+    });
   }
 
   selectTab(file: any) {
-    if (this._list === 'FeelixioFiles') {
-      this.feelixioFileService.setActive(file);
-    } else {
-      this.fileService.setActive(file);
-    }
+    this.fileService.setActive(file);
   }
 
   closeTab(file: any) {
@@ -125,11 +106,8 @@ export class FileListComponent implements OnInit {
     dialogConfig.afterClosed().subscribe(
         data => {
           if (data === 'no') {
-            if (this._list === 'FeelixioFiles') {
-              this.feelixioFileService.delete(file);
-            } else {
-              this.fileService.delete(file);
-            }
+            this.fileService.delete(file);
+
           } else if (data === 'yes') {
             this.saveFileData(file, true);
           } else {
@@ -141,11 +119,7 @@ export class FileListComponent implements OnInit {
 
 
   saveFileData(file: File, close = false) {
-    if (this._list === 'FeelixioFiles') {
-      // this.feelixioFileService.save(file, close);
-    } else {
-      this.fileService.save(file, close);
-    }
+    this.fileService.save(file, close);
   }
 
 

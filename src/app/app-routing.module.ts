@@ -11,7 +11,6 @@ import { GridSettingsComponent } from './components/windows/settings/grid-settin
 import { ZigZagComponent } from './components/windows/zigzag-effect.component';
 import { TransformComponent } from './components/windows/transform.component';
 import { InfoPageComponent } from './pages/info-page.component';
-import { FeelixioPageComponent } from './pages/feelixio-page.component';
 import { MotorControlComponent } from './components/interface-elements/motor-control/motor-control.component';
 import { MotorControlToolbarInsetComponent } from './components/interface-elements/toolbars/motor-control-toolbar-inset.component';
 import { MotorControlToolbarComponent } from './components/interface-elements/toolbars/motor-control-toolbar.component';
@@ -33,7 +32,6 @@ const routes: Routes = [
     { path: 'zigzag', component: ZigZagComponent },
     { path: 'transform', component: TransformComponent },
     { path: 'info', component: InfoPageComponent },
-    { path: 'feelixio-page', component: FeelixioPageComponent },
     { path: 'motor-control-component', component: MotorControlComponent },
     { path: 'motor-control-toolbar-inset', component: MotorControlToolbarInsetComponent },
     { path: 'motor-control-toolbar', component: MotorControlToolbarComponent },

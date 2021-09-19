@@ -11,9 +11,9 @@ const { shell } = require('electron');
 
 const serialPort = require('./serial-communication.js');
 
-let mainWindow, infoWindow = null, effectWindow = null, layerWindow = null, helpWindow = null, FeelixioWindow = null;
+let mainWindow, infoWindow = null, effectWindow = null, layerWindow = null, helpWindow = null;
 let toolbars = [];
-let mainMenu, displays, FeelixioMenu;
+let mainMenu, displays;
 let gridSnap = false, gridVisible = false, guidesLock = false;
 let effectDetails = null;
 let tmpWindow = null;
@@ -59,18 +59,6 @@ const mainMenuTemplate = [
           openFileDialog('feelix', 'loadFile', 'loadFileLocation');
         }
       },
-      // {
-      //   label: 'Open Feelix IO',
-      //   accelerator: process.platform == 'darwin' ? 'Command+F' : 'Ctrl+F',
-      //   click() {
-      //     if (FeelixioWindow === null) {
-      //       createVisualProgrammingWindow();
-      //     } else {
-      //       FeelixioWindow.focus();
-      //     }
-      //     mainWindow.blur();
-      //   }
-      // },
       {
         label: 'Save',
         accelerator: process.platform == 'darwin' ? 'Command+S' : 'Ctrl+S',
@@ -119,12 +107,6 @@ const mainMenuTemplate = [
         click() {
           mainWindow.webContents.send('saveData');
           createEffectSettingWindow("effect-update-settings");
-        }
-      },
-      {
-        label: 'Export Effect',
-        click() {
-          mainWindow.webContents.send('exportEffect');
         }
       },
       {
@@ -341,106 +323,6 @@ const mainMenuTemplate = [
 ];
 
 
-const FeelixioMenuTemplate = [
-  {
-    label: 'File',
-    submenu: [
-      {
-        label: 'New File',
-        click() { FeelixioWindow.webContents.send('updateFeelixio', { type: 'new' }); }
-      },
-      {
-        label: 'Open File',
-        click() {
-          openFileDialog('feelixio', 'loadFeelixioFile', 'loadFeelixioFileLocation');
-        }
-      },
-      {
-        label: 'Save',
-        // accelerator: process.platform == 'darwin' ? 'Command+S' : 'Ctrl+S',
-        click() { FeelixioWindow.webContents.send('saveActiveFile', true); }
-      },
-      {
-        label: 'Save as',
-        // accelerator: process.platform == 'darwin' ? 'Command+Shift+S' : 'Ctrl+Shift+S',
-        click() { FeelixioWindow.webContents.send('saveActiveFile', false); }
-      }
-    ]
-  },
-  {
-    label: 'Edit',
-    submenu: [
-      {
-        label: 'Undo',
-        // accelerator: process.platform === 'darwin' ? 'Command+Z' : 'Ctrl+Z',
-        enabled: false,
-        click() {
-          FeelixioWindow.webContents.send('undo');
-        }
-      },
-      {
-        label: 'Redo',
-        // accelerator: process.platform === 'darwin' ? 'Command+Shift+Z' : 'Ctrl+Shift+Z',
-        enabled: false,
-        click() {
-          FeelixioWindow.webContents.send('redo');
-        }
-      }
-    ]
-  },
-  {
-    label: 'Play',
-    submenu: [
-      {
-        label: 'Connect to Microcontroller',
-        click() { serialPort.listSerialPorts(createConnectToCOM); }
-      },
-      {
-        label: 'Reset',
-        submenu: [
-          {
-            label: 'Reset COMPort list',
-            click() {
-              serialPort.closeAllSerialPorts();
-              mainWindow.webContents.send('resetCOMList');
-            }
-          },
-          {
-            label: 'Clear effect library',
-            click() {
-              mainWindow.webContents.send('clearCache');
-            }
-          }
-        ]
-      },
-      {
-        label: 'Export',
-        enabled: false,
-      }
-    ]
-  },
-  {
-    label: 'Help',
-    submenu: [
-      {
-        label: 'Info',
-        click() {
-          if (infoWindow === null) {
-            createInfoWindow();
-          }
-        }
-      },
-      {
-        label: 'Online help',
-        click() { shell.openExternal('https://docs.feelix.xyz/'); }
-      },
-      {
-        label: 'Open development tools',
-        click() {  FeelixioWindow.webContents.openDevTools(); }
-      }
-    ]
-  }
-];
 
 
 function openFileDialog(extension, storage, location) {
@@ -490,7 +372,7 @@ function saveFileWidthDialog(file, overwrite, newId, ext) {
       if (filePath != null) {
         let fileName = filePath.replace(/^.*[\\\/]/, '');
         let extension = fileName.split(".");
-        if (extension[extension.length - 1] === 'feelix' || extension[extension.length - 1] === 'feelixio') {
+        if (extension[extension.length - 1] === 'feelix') {
           fileName = fileName.slice(0, -5);
         }
 
@@ -515,11 +397,9 @@ function saveChanges(file, type, extension = '.feelix') {
       file: file,
       type: type
     };
-    if (extension === '.feelixio') {
-      FeelixioWindow.webContents.send('updatedFile', data)
-    } else {
-      mainWindow.webContents.send('updatedFile', data);
-    }
+
+    mainWindow.webContents.send('updatedFile', data);
+
   });
 }
 
@@ -568,7 +448,7 @@ function createWindow() {
     if (data !== 'false') { createInfoWindow(); }
   });
 
-  mainWindow.webContents.openDevTools();
+  // mainWindow.webContents.openDevTools();
 
   mainWindow.webContents.on('did-finish-load', function() {
     displayStatus('Ready', 'main');
@@ -666,58 +546,6 @@ function createInfoWindow() {
   })
 }
 
-
-function createVisualProgrammingWindow() {
-  FeelixioWindow = new BrowserWindow({
-    backgroundColor: '#4a4a4a',
-    width: displays[0].bounds.width * 0.8,
-    height: displays[0].bounds.height * 0.8,
-    title: 'Feelixio',
-    backgroundColor: '#3a3a3a',
-    resizable: true,
-    movable: true,
-    show: false,
-    icon: path.join(__dirname, '../src/assets/icons/png/64x64.png'),
-    // parent: mainWindow,
-    webPreferences: {
-      nodeIntegration: true
-    }
-  })
-
-  FeelixioWindow.loadURL(
-    url.format({
-      pathname: path.join(__dirname, `../dist/feelix/index.html`),
-      protocol: "file:",
-      slashes: true,
-      hash: '/feelixio-page'
-    })
-  );
-
-  FeelixioMenu = Menu.buildFromTemplate(FeelixioMenuTemplate);
-  FeelixioWindow.setMenu(FeelixioMenu);
-
-  FeelixioWindow.once('ready-to-show', () => {
-    FeelixioWindow.show()
-  });
-
-  FeelixioWindow.on('close', function () {
-    FeelixioWindow = null
-  })
-
-  FeelixioWindow.on('focus', function () {
-    for (let el of toolbars) {
-      console.log(el);
-      if (el && el.toolbar) {
-        el.toolbar.setAlwaysOnTop(false);
-      }
-    }
-  });
-
-  FeelixioWindow.webContents.on('did-finish-load', function() {
-    displayStatus('Ready', 'Feelixio');
-  });
-
-}
 
 
 function createToolbar(hash, width, type) {
@@ -1079,14 +907,7 @@ ipcMain.on('connectToSerialPort', function (e, data) {
   }
 })
 
-// ipcMain.on('addSerialPort', function (e, data) {
-//   console.log(data);
-//   serialPort.addSerialPort(data);
-//   if (FeelixioWindow) {
-//     FeelixioWindow.webContents.send('addDevice', { device: data, error: false })
-//   }
-//   if (tmpWindow) { tmpWindow.close(); }
-// })
+
 
 ipcMain.on('playEffect', function(e, data) {
   serialPort.playEffect(data.play, data.microcontroller);
@@ -1261,17 +1082,11 @@ function updateSerialStatus(status) {
   if (status.microcontroller) {
     mainWindow.webContents.send('updateStatus', status);
   }
-  // if (FeelixioWindow !== null) {
-  //   FeelixioWindow.webContents.send('updateStatus', status);
-  // }
 
 }
 
 function updateSerialProgress(progress) {
   mainWindow.webContents.send('updateProgress', progress);
-  if (FeelixioWindow !== null) {
-    FeelixioWindow.webContents.send('updateProgress', progress);
-  }
 }
 
 function updateAvailablePortList(list) {
@@ -1281,10 +1096,6 @@ function updateAvailablePortList(list) {
 function displayStatus(data, page) {
   if (page === 'main') {
     mainWindow.webContents.send('statusMsg', data);
-  } else if (page === 'Feelixio') {
-    if (FeelixioWindow !== null) {
-      FeelixioWindow.webContents.send('statusMsg', data);
-    }
   }
 }
 

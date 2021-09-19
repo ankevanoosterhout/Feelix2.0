@@ -21,7 +21,7 @@ const msiCreator = new MSICreator({
     exe: 'Feelix',
     name: 'Feelix',
     manufacturer: 'Anke',
-    version: '1.0.6',
+    version: '2.0.0',
     arch: 'x64',
 
     // Configure installer User Interface

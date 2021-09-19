@@ -73,15 +73,6 @@ export class EffectLibraryService {
     return this.effectLibrary;
   }
 
-  getEffectsFeelixio() {
-    this.getEffectsFromLocalStorage();
-    const newEffectList = [];
-    for (const libEffect of this.effectLibrary) {
-      const effect = libEffect.effect;
-      newEffectList.push(effect);
-    }
-    return newEffectList;
-  }
 
   getEffect(id: string) {
     this.getEffectsFromLocalStorage();

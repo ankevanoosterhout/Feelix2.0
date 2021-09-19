@@ -33,7 +33,6 @@ export class HardwareService {
       this.disconnectAllDevices();
     }
 
-    console.log(data);
 
     window.addEventListener('storage', event => {
         if (event.storageArea === localStorage) {

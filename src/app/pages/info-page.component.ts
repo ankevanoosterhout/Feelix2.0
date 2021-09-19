@@ -11,12 +11,12 @@ import { ElectronService } from 'ngx-electron';
     <div class="row">
       <div class="column">
         Design directional force feedback or precise motion control for your brushless motor with Feelix.<br /><br />
-        Feelix can be used in combination with the following hardware:
+        Feelix makes use of the <p class="link" (click)="gotToLink('https://simplefoc.com/')">SimpleFOC library</p> and can be used in combination with the following hardware:
         <ul>
           <li>Brushless motor (high torque)</li>
-          <li>Encoder (ams AS5047D-ATSM)</li>
+          <li>Encoder (e.g. ams AS5047 / AS5058A)</li>
           <li>3-Phase motor driver (L6234)</li>
-          <li>Teensy 3.2 / 3.5 / 3.6 <p class="link" (click)="gotToLink('https://docs.feelix.xyz/downloads/arduino-library')">
+          <li>Teensy / STM32 / Arduino / ESP <p class="link" (click)="gotToLink('https://docs.feelix.xyz/downloads/c-library')">
             download library
           </p></li>
         </ul>

@@ -141,17 +141,26 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
   }
 
   render(collection: Collection, upload = false) {
-    if (collection.effectDataList.length > 0) {
-      collection.effectDataList = [];
-      collection.overlappingData = [];
-      collection.renderedData = [];
-    } else {
-      this.uploadService.renderCollection(collection, this.motorControlService.file.effects);
+    let time = 0;
+    if (collection.rotation.units.name === 'radians' && collection.effectDataList.length === 0) {
+      time = 200;
+      collection.rotation.units = { name: 'degrees', PR: 360 };
+      this.changeUnits(collection);
     }
-    this.motorControlService.updateCollection(collection);
-    if (upload && collection.effectDataList.length > 0) {
-      this.upload(collection);
-    }
+    setTimeout(() => {
+      if (collection.effectDataList.length > 0) {
+        collection.effectDataList = [];
+        collection.overlappingData = [];
+        collection.renderedData = [];
+      } else {
+        this.uploadService.renderCollection(collection, this.motorControlService.file.effects);
+      }
+      this.motorControlService.updateCollection(collection);
+      if (upload && collection.effectDataList.length > 0) {
+        this.upload(collection);
+      }
+    }, time);
+
   }
 
   upload(collection: Collection) {
@@ -159,8 +168,6 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
       const microcontroller = this.hardwareService.getMicroControllerByCOM(collection.microcontroller.serialPort.path);
       const uploadModel = this.uploadService.createUploadModel(collection, microcontroller);
 
-      // console.log(microcontroller, this.motorControlService.file.effects);
-      console.log(uploadModel);
       const activeCollection = this.motorControlService.file.collections.filter(c => c.microcontroller && c.microcontroller.serialPort.path === collection.microcontroller.serialPort.path && c.playing)[0];
       if (activeCollection) {
         activeCollection.playing = false;
@@ -322,7 +329,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
 
               this.motorControlService.file.effects.push(copyTmpEffect);
             }
-            
+
             collection.renderedData = [];
             collection.effectDataList = [];
 

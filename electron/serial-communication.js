@@ -133,7 +133,7 @@ class newSerialPort {
     this.sp.write(data, function (err) {
         if (err) { return console.log('Error: ', err.message); }
         else {
-          //  console.log('written ', data);
+           console.log('written ', data);
         }
     });
   }
@@ -311,37 +311,56 @@ function prepareEffectData(uploadContent, motor, datalist) {
 
     i++;
   }
-
-  for (const d of uploadContent.data.overlay) {
-    datalist.unshift('FDO' + i + 'P:' + d.position.start.toFixed(5) + ':' + d.position.end.toFixed(5));
-    datalist.unshift('FDO' + i + 'D:' + (d.direction.cw ? 1 : -1) + ':' + (d.direction.ccw ? 1 : -1) );
-
-    for (const el of d.data) {
-      datalist.unshift('FDO:' + (Math.round(el.x) !== el.x ? el.x.toFixed(10) : el.x) + ':' + (Math.round(el.y) !== el.y ? el.y.toFixed(10) : el.y));
-    }
-    i++;
-  }
-
+  let ptr = 0;
   for (const d of uploadContent.data.effectData) {
     // send pointer value
     const effect = uploadContent.effects.filter(e => e.id === d.id)[0];
     if (effect) {
       const effect_index = uploadContent.effects.indexOf(effect);
-      let ptr = 0;
       for (let n = 0; n < effect_index; n++) {
         ptr += uploadContent.effects[n].vis_type === 'position' ? uploadContent.effects[n].datasize.value * 2 : uploadContent.effects[n].datasize.value;
+        console.log(ptr);
       }
       datalist.unshift('FE' + effect_index + 'R:' + ptr);
     }
     for (const el of d.data) {
       if (d.type === 'position') {
-        datalist.unshift('FDI:' + (Math.round(el.d) !== el.d ? el.d.toFixed(10) : el.d));
+        datalist.unshift('FD:' + (Math.round(el.d) !== el.d ? el.d.toFixed(7) : el.d));
       }
-      datalist.unshift('FDI:' + (Math.round(el.y) !== el.y ? el.y.toFixed(10) : el.y));
+      datalist.unshift('FD:' + (Math.round(el.y) !== el.y ? el.y.toFixed(7) : el.y));
     }
   }
 
+
+  for (const d of uploadContent.data.overlay) {
+    datalist.unshift('FO' + i + 'P:' + d.position.start.toFixed(5) + ':' + (d.position.end.toFixed(5) - d.position.start.toFixed(5)));
+    datalist.unshift('FO' + i + 'D:' + (d.direction.cw ? 1 : -1) + ':' + (d.direction.ccw ? 1 : -1) );
+    datalist.unshift('FO' + i + 'I:' + (d.infinite ? 1 : -1));
+    let type = 0;
+    if (d.type === 'position') { type = 1; }
+    if (d.type === 'velocity') { type = 2; }
+    datalist.unshift('FO' + i + 'T:' + type);
+    datalist.unshift('FO' + i + 'Z:' + (d.type === 'position' ? d.data.length * 2 : d.data.length));
+
+    for (let n = 0; n < i; n++) {
+      ptr += uploadContent.effects[n].vis_type === 'position' ? d.data.length * 2 : d.data.length;
+      console.log(ptr);
+    }
+
+    datalist.unshift('FO' + i + 'R:' + ptr);
+
+    for (const el of d.data) {
+      if (d.type === 'position') {
+        datalist.unshift('FD:' + (Math.round(el.d) !== el.d ? el.d.toFixed(7) : el.d));
+      }
+      datalist.unshift('FD:' + (Math.round(el.y) !== el.y ? el.y.toFixed(7) : el.y));
+    }
+    i++;
+  }
+
+
   return datalist;
+
 
 }
 

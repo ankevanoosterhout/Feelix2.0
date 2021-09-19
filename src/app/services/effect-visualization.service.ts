@@ -254,8 +254,9 @@ export class EffectVisualizationService {
 
 
   checkIfXisWithinOverlap(x: number, overlappingEffects: Array<any>) {
+
     for (const el of overlappingEffects) {
-      if (x >= el.position.start - 0.5 && x <= el.position.end + 0.75) {
+      if (x >= el.position.start - 0.75 && x <= el.position.end + 0.75) {
         return true;
       }
     }
@@ -310,46 +311,48 @@ export class EffectVisualizationService {
   }
 
 
-  drawRenderedData(grp: any, dataCopy: any, type: string, collection: Collection, collEffect: any, x: number, multiply: any, offset: any, color: string) {
+  drawRenderedData(grp: any, dataCopy: any, type: string, collection: Collection, collEffect: any, x: number, multiply: any, offset: any, color: string, render = true) {
+
+    const min_radius = (0.2 * multiply.x);
 
     if (type === 'position') {
-      grp.selectAll('line.offset-' + collection.id + '-' + collEffect.id + '-' + Math.round(x))
+      grp.selectAll('line.offset-' + collection.id + '-' + collEffect.id + '-' + Math.round(x * 1000))
         .data(dataCopy)
         .enter()
         .append('line')
-        .attr('class', 'offset-' + collection.id + '-' + collEffect.id + '-' + Math.round(x))
+        .attr('class', 'offset-' + collection.id + '-' + collEffect.id + '-' + Math.round(x * 1000))
         .attr('x1', (d, i) => collection.config.newXscale((d.x * (collEffect.scale.x / 100) * multiply.x) + x))
-        .attr('x2', (d, i) => collection.config.newXscale((d.o * (collEffect.scale.x / 100) * multiply.x) + x))
+        .attr('x2', (d, i) => render ? collection.config.newXscale((d.o * (collEffect.scale.x / 100) * multiply.x) + x) : collection.config.newXscale(((d.x + d.d) * multiply.x) + x))
         .attr('y1', (d) => collection.config.newYscale((d.y * multiply.y )) * (collEffect.scale.y / 100) + offset)
         .attr('y2', (d) => collection.config.newYscale((d.y * multiply.y )) * (collEffect.scale.y / 100) + offset)
         .attr('stroke', 'rgba(255,255,255,0.4)')
         .attr('stroke-width', 1)
-        .style('opacity', (d, i) => this.checkIfXisWithinOverlap(i * (collEffect.scale.x / 100) + (x * multiply.x), collection.renderedData) ? 0 : 0.4);
+        .style('opacity', (d, i) => render && this.checkIfXisWithinOverlap(d.x * (collEffect.scale.x / 100) + (x/multiply.x), collection.renderedData) ? 0 : 0.4);
 
-      grp.selectAll('circle.offset-' + collection.id + '-' + collEffect.id + '-' + Math.round(x))
+      grp.selectAll('circle.offset-' + collection.id + '-' + collEffect.id + '-' + Math.round(x * 1000))
         .data(dataCopy)
         .enter()
         .append('circle')
-        .attr('class', 'offset-' + collection.id + '-' + collEffect.id + '-' + Math.round(x))
-        .attr('cx', (d) => collection.config.newXscale((d.o * (collEffect.scale.x / 100) * multiply.x) + x))
-        .attr('cy', (d) => collection.config.newYscale((d.y * multiply.y )) * (collEffect.scale.y / 100) + offset)
-        .attr('r', (d) => collection.config.newXscale((d.x * multiply.x) + 0.2) - collection.config.newXscale((d.x * multiply.x) - 0.2) < 2 ?
-                          collection.config.newXscale((d.x * multiply.x) + 0.2) - collection.config.newXscale((d.x * multiply.x) - 0.2) : 2)
+        .attr('class', 'offset-' + collection.id + '-' + collEffect.id + '-' + Math.round(x * 1000))
+        .attr('cx', (d) => render ? collection.config.newXscale((d.o * (collEffect.scale.x / 100) * multiply.x) + x) : collection.config.newXscale(((d.x + d.d) * multiply.x) + x))
+        .attr('cy', (d) => collection.config.newYscale((d.y * multiply.y)) * (collEffect.scale.y / 100) + offset)
+        .attr('r', (d) => collection.config.newXscale((d.x * multiply.x) + min_radius) - collection.config.newXscale((d.x * multiply.x) - min_radius) < 2 ?
+                          collection.config.newXscale((d.x * multiply.x) + min_radius) - collection.config.newXscale((d.x * multiply.x) - min_radius) : 2)
         .style('fill', 'rgba(255,255,255,0.4)')
-        .style('opacity', (d, i) => this.checkIfXisWithinOverlap(i * (collEffect.scale.x / 100) + (x * multiply.x), collection.renderedData) ? 0 : 0.4);
+        .style('opacity', (d, i) => render && this.checkIfXisWithinOverlap(d.x * (collEffect.scale.x / 100) + (x/multiply.x), collection.renderedData) ? 0 : 0.4);
     }
 
-    grp.selectAll('circle.render-' + collection.id + '-' + collEffect.id + '-' + Math.round(x))
+    grp.selectAll('circle.render-' + collection.id + '-' + collEffect.id + '-' + Math.round(x * 1000))
       .data(dataCopy)
       .enter()
       .append('circle')
-      .attr('class', 'render-' + collection.id + '-' + collEffect.id + '-' + Math.round(x))
+      .attr('class', 'render-' + collection.id + '-' + collEffect.id + '-' + Math.round(x * 1000))
       .attr('cx', (d, i) => collection.config.newXscale((d.x * (collEffect.scale.x / 100) * multiply.x) + x))
       .attr('cy', (d) => collection.config.newYscale((d.y * multiply.y )) * (collEffect.scale.y / 100) + offset)
-      .attr('r', (d) => collection.config.newXscale((d.x * multiply.x) + 0.2) - collection.config.newXscale((d.x * multiply.x) - 0.2) < 2 ?
-                        collection.config.newXscale((d.x * multiply.x) + 0.2) - collection.config.newXscale((d.x * multiply.x) - 0.2) : 2)
+      .attr('r', (d) => collection.config.newXscale((d.x * multiply.x) + min_radius) - collection.config.newXscale((d.x * multiply.x) - min_radius) < 2 ?
+                        collection.config.newXscale((d.x * multiply.x) + min_radius) - collection.config.newXscale((d.x * multiply.x) - min_radius) : 2)
       .style('fill', color)
-      .style('opacity', (d, i) => this.checkIfXisWithinOverlap(i * (collEffect.scale.x / 100) + (x * multiply.x), collection.renderedData) ? 0 : 1);
+      .style('opacity', (d, i) => render && this.checkIfXisWithinOverlap(d.x * (collEffect.scale.x / 100) + (x/multiply.x), collection.renderedData) ? 0 : 1);
 
   }
 
@@ -357,61 +360,18 @@ export class EffectVisualizationService {
   drawOverlappingData(svg: any, collection: Collection, color: string) {
     d3.selectAll('#grp-render-overlap-' + collection.id).remove();
 
+    const multiply = { x: collection.rotation.units.name === 'radians' ? (Math.PI / 180) : 1, y: 100 };
+
     const grp = svg.append('g').attr('id', 'grp-render-overlap-' + collection.id);
     let i = 0;
     for (const overlap of collection.renderedData) {
-      console.log(overlap);
-
       if ((collection.layers.filter(l => l.name === 'CW')[0].visible && overlap.direction.cw) || (collection.layers.filter(l => l.name === 'CCW')[0].visible && overlap.direction.ccw)) {
-        // this.drawRenderedData(grp, overlap.data, overlap.type, collection, { scale: { x: 100, y: 100 }, id: i }, overlap.position.start, { x: 1, y: 1 }, 0, color, false);
-
-        if (overlap.type === 'position') {
-          grp.selectAll('line.offset-' + collection.id + '-' + i)
-            .data(overlap.data)
-            .enter()
-            .append('line')
-            .attr('class', 'offset-' + collection.id + '-' + i)
-            .attr('x1', (d, i) => collection.config.newXscale(d.x + overlap.position.start))
-            .attr('x2', (d, i) => collection.config.newXscale(d.x + d.d + overlap.position.start))
-            .attr('y1', (d) => collection.config.newYscale(d.y * 100))
-            .attr('y2', (d) => collection.config.newYscale(d.y * 100))
-            .attr('stroke', 'rgba(255,255,255,0.4)')
-            .attr('stroke-width', 1);
-
-          grp.selectAll('circle.offset-' + collection.id + '-' + i)
-            .data(overlap.data)
-            .enter()
-            .append('circle')
-            .attr('class', 'offset-' + collection.id + '-' + i)
-            .attr('cx', (d) => collection.config.newXscale(d.x + d.d + overlap.position.start))
-            .attr('cy', (d) => collection.config.newYscale(d.y * 100))
-            .attr('r', (d) => collection.config.newXscale(d.x + 0.2) - collection.config.newXscale(d.x - 0.2) < 2 ?
-                              collection.config.newXscale(d.x + 0.2) - collection.config.newXscale(d.x - 0.2) : 2)
-            .style('fill', 'rgba(255,255,255,0.4)');
-        }
-
-        grp.selectAll('circle.overlap-' + collection.id + '-' + i)
-          .data(overlap.data)
-          .enter()
-          .append('circle')
-          .attr('class', 'overlap-' + collection.id + '-' + i)
-          .attr('cx', (d) => collection.config.newXscale(d.x + overlap.position.start))
-          .attr('cy', (d) => collection.config.newYscale(d.y * 100))
-          .attr('r', (d) => collection.config.newXscale(d.x + 0.2) - collection.config.newXscale(d.x - 0.2) < 2 ?
-                            collection.config.newXscale(d.x + 0.2) - collection.config.newXscale(d.x - 0.2) : 2)
-          .style('fill', color);
+        this.drawRenderedData(grp, overlap.data, overlap.type, collection, { scale: { x: 100, y: 100 }, id: i }, overlap.position.start * multiply.x, multiply, 0, color, false);
       }
       i++;
     }
   }
 
-
-  updateCursor(effectID: string, units: any, position: number, xScale: any, width: number) {
-    // let cursorPos = units.name === 'degrees' ? xScale(position * (360 / 4096)) : xScale(position);
-    // if (cursorPos < 15) { cursorPos = 15; }
-    // if (cursorPos > width - 15) { cursorPos = width - 15; }
-    // d3.select('#cursor_' + effectID).attr('x', cursorPos);
-  }
 
 
 
@@ -522,52 +482,6 @@ export class EffectVisualizationService {
   }
 
 
-  drawNodePath(module: any) {
-
-    const SVG = d3.select('#nodePath-module-' + module.id)
-      .append('svg')
-      .attr('id', 'svgID-' + module.id)
-      .attr('width', 58)
-      .attr('height', 50);
-
-    const pathModuleSVG = SVG.append('g')
-      .attr('id', 'pathModuleSVG_' + module.id)
-      .attr('class', 'pathModuleSVG');
-
-    this.drawNodePathModule(pathModuleSVG, module, 58, 50);
-  }
-
-
-  drawNodePathModule(pathModuleSVG: any, module: any, w: number, h: number, feelixio = false) {
-    const scaledData = this.scalePathCopy({ width: w, height: h }, module, 'module');
-
-    let i = 0;
-    for (const scaledPath of scaledData.paths) {
-      const nodePath = pathModuleSVG.selectAll('path.nodePath_' + module.id + '_' + i)
-        .data(scaledPath)
-        .enter()
-        .append('path')
-        .attr('d', (d: { svgPath: string }) => d.svgPath)
-        .attr('id', (d: { id: string; }) => 'nodePath_' + d.id)
-        .attr('class', 'nodePath_' + module.id + '_' + i)
-        .attr('stroke', () => 'rgba(255,255,255,0.6)')
-        .attr('stroke-width', () => module.type === 'ease' ? 1.4 : 2.4)
-        .attr('fill', 'transparent');
-      i++;
-    }
-
-    if (feelixio) {
-      pathModuleSVG.append('rect')
-        .attr('id', 'cursor_' + module.id)
-        .attr('x', 0)
-        .attr('y', -3)
-        .attr('width', 1.5)
-        .attr('height', h + 6)
-        .style('fill', '#FF0036');
-
-      return scaledData.xScale;
-    }
-  }
 
   scalePathCopy(box: any, module: any, type: string) {
     const paths = module.nodes;

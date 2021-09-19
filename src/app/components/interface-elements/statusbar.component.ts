@@ -13,9 +13,7 @@ import { DOCUMENT } from '@angular/common';
       </div>
 
       <div class="version">version B2.0.0</div>
-      <div class="logo" *ngIf="this._page === 'main'"><img src="./assets/icons/logo/feelix-logo-gray.svg"></div>
-      <div class="logo" *ngIf="this._page === 'Feelixio'"><img src="./assets/icons/logo/feelix-io-logo-gray.svg"></div>
-
+      <div class="logo"><img src="./assets/icons/logo/feelix-logo-gray.svg"></div>
     </div>
 
   `,
