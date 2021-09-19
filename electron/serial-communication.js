@@ -133,7 +133,7 @@ class newSerialPort {
     this.sp.write(data, function (err) {
         if (err) { return console.log('Error: ', err.message); }
         else {
-           console.log('written ', data);
+          //  console.log('written ', data);
         }
     });
   }
@@ -190,7 +190,7 @@ class newSerialPort {
       parser.on('data', (d) => {
 
         if (d.charAt(0) === '*') {
-          console.log('received data ', d);
+          // console.log('received data ', d);
           if (dataSendWaitList.filter(d => d.port === this.COM)) {
             uploadFromWaitList(ports.filter(p => p.COM === this.COM)[0]);
           }

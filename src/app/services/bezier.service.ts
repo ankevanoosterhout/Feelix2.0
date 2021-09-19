@@ -351,61 +351,6 @@ export class BezierService {
   }
 
 
-  /*checkIfPathIsWithinBounds(d: any, bounds: any, filetype: any) {
-    const path = this.nodeService.getPath(d.path);
-    const bbox = this.getBBoxSizePath(path);
-    let nodes = [];
-    let i = 0;
-    const boxesOutsideRange = [];
-    for (const box of bbox.allBoxes) {
-      if (box.top < Math.round(this.nodeService.scale.scaleY(bounds.yMax)) ||
-        box.top + box.height > Math.round(this.nodeService.scale.scaleY(bounds.yMin))) {
-        boxesOutsideRange.push( { index: i, _box: box, axis: 'y' } );
-      }
-      if (box.left < this.nodeService.scale.scaleX(bounds.xMin) || box.left + box.width > this.nodeService.scale.scaleX(bounds.xMax)) {
-        boxesOutsideRange.push(i);
-        boxesOutsideRange.push( { index: i, _box: box, axis: 'x' } );
-      }
-      i++;
-    }
-    let index = 0;
-    for (const node of path.nodes) {
-      nodes.push(node);
-      if (node.type === 'node') {
-        if (nodes.filter(n => n.type === 'node').length > 1) {
-          const pathOutsideRange = boxesOutsideRange.filter(b => b.index === index);
-          console.log('path ', pathOutsideRange);
-          if (pathOutsideRange.length > 0) {
-            console.log(nodes, pathOutsideRange[0]);
-            this.getIntersection(nodes, pathOutsideRange[0]._box, pathOutsideRange[0].axis);
-          }
-          index++;
-        }
-        const lastEl = nodes[nodes.length - 1];
-        nodes = [ lastEl ];
-      }
-    }
-  }
-
-  getIntersection(nodes: Array<Node>, box: any, axis: string) {
-    const range = { xMin: null, xMax: null, yMin: null, yMax: null };
-    if (axis === 'y') {
-      range.xMin = box.left;
-      range.xMax = box.left + box.width;
-    }
-    if (axis === 'x') {
-      range.yMin = box.top;
-      range.yMax = box.top + box.height;
-    }
-    if (nodes.length > 3) {
-      // console.log('cubic', nodes, range);
-    } else if (nodes.length > 2) {
-      // console.log('quadratic', nodes, range);
-    } else if (nodes.length === 2) {
-      // console.log('linear', nodes, range);
-    }
-  }
-  */
 
   findClosestPointOnPath(mouse: { x: number, y: number}, nodes: Array<Node>, pathID: string) {
 

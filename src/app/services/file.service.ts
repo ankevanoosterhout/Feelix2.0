@@ -395,9 +395,9 @@ export class FileService {
   }
 
   update(file: File, changes = true) {
-    console.log('update');
+    // console.log('update');
     const originalFile = this.files.filter(f => f._id === file._id)[0];
-    console.log(file.collections, originalFile.collections);
+    // console.log(file.collections, originalFile.collections);
     const index = this.files.indexOf(originalFile, 0);
     if (index > -1) {
       this.files[index] = this.cloneService.deepClone(file);

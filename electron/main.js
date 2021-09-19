@@ -894,7 +894,7 @@ ipcMain.on('listSerialPorts', function (e, data) {
 
 
 ipcMain.on('addMicrocontroller', function (e, data) {
-  console.log(data);
+  // console.log(data);
   serialPort.createConnection(data);
   mainWindow.webContents.send('updateStatus', { microcontroller: data, connected: false, error: false });
 })

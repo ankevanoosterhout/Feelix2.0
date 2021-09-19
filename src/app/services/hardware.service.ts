@@ -53,7 +53,6 @@ export class HardwareService {
   }
 
   addMicroController(COM: any, type: string) {
-    console.log(COM);
     if (COM !== null) {
       if (this.microcontrollers.length > 0) {
         const controller = this.microcontrollers.filter(m => m.serialPort.path === COM.serialPort.path);
@@ -67,7 +66,7 @@ export class HardwareService {
         this.microcontrollers.push(new MicroController(uuid(), COM.serialPort, type));
         this.store();
       }
-      console.log(this.microcontrollers);
+      // console.log(this.microcontrollers);
     }
   }
 
