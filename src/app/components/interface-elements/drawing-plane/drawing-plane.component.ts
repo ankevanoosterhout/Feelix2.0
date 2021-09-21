@@ -142,6 +142,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
 
 
     this.electronService.ipcRenderer.on('showExport', (event: Event, data: any) => {
+      console.log(data);
       this.showExportWindow('', data.effect, data.microcontrollers);
     });
 

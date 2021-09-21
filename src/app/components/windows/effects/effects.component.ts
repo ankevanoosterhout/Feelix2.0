@@ -231,7 +231,7 @@ export class EffectsComponent implements OnInit, AfterViewInit {
   exportEffectItem(effectID: string) {
     let effect = this.drawingService.file.effects.filter(e => e.id === effectID)[0];
     if (effect) {
-      this.electronService.ipcRenderer.send('export', effect);
+      this.electronService.ipcRenderer.send('export', { effect: effect });
     }
   }
 
@@ -281,13 +281,13 @@ export class EffectsComponent implements OnInit, AfterViewInit {
       } else if (id === 'position-y') {
         this.drawingService.file.activeCollectionEffect.position.y = value;
       } else if (id === 'position-width') {
-        if (value > 0) {
+        if (value > 0.0) {
           const newXscale = this.updateScale(this.drawingService.file.activeCollectionEffect.position.width, value, this.drawingService.file.activeCollectionEffect.scale.x);
           this.drawingService.file.activeCollectionEffect.position.width = value;
           this.drawingService.file.activeCollectionEffect.scale.x = newXscale;
         }
       } else if (id === 'position-height') {
-        if (value > 0) {
+        if (value > 0.0) {
           const newYscale = this.updateScale(this.drawingService.file.activeCollectionEffect.position.height, value, this.drawingService.file.activeCollectionEffect.scale.y);
           this.drawingService.file.activeCollectionEffect.position.height = value;
           this.drawingService.file.activeCollectionEffect.scale.y = newYscale;
@@ -301,7 +301,7 @@ export class EffectsComponent implements OnInit, AfterViewInit {
         this.updateEffectWidth(value);
         this.updateEffectHeight(value);
       }
-      (this.document.getElementById(id) as HTMLInputElement).value = value.toFixed(2);
+      (this.document.getElementById(id) as HTMLInputElement).value = value.toFixed(2).toString();
     }
     this.updateCollectionEffect();
   }
@@ -354,12 +354,14 @@ export class EffectsComponent implements OnInit, AfterViewInit {
 
   hideCompleteValue(id = null) {
     if (id) {
-      let value = (this.document.getElementById(id) as HTMLInputElement).value;
-      let decimals = this.countDecimals(parseFloat(value));
-      if (decimals > 3) { decimals = 3; }
-      if (decimals < 2) { decimals = 2; }
-      (this.document.getElementById(id) as HTMLInputElement).value = parseFloat(value).toFixed(decimals);
+      let value = parseFloat((this.document.getElementById(id) as HTMLInputElement).value);
+      if (value) {
+        let decimals = this.countDecimals(value);
+        if (decimals > 3) { decimals = 3; }
+        if (decimals < 2) { decimals = 2; }
+        (this.document.getElementById(id) as HTMLInputElement).value = value.toFixed(decimals).toString();
       }
+    }
     this.drawingService.setInputFieldsActive(false);
   }
 
@@ -396,7 +398,7 @@ export class EffectsComponent implements OnInit, AfterViewInit {
 
   countDecimals(value: number) {
     if(Math.floor(value) === value) return 0;
-    return value.toString().split('.')[1].length || 0;
+    return value.toString().split('.').length > 1 && value.toString().split('.')[1].length || 0;
   }
 
 

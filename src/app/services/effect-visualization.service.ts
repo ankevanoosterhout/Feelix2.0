@@ -283,8 +283,11 @@ export class EffectVisualizationService {
       x: number,
       y: number
     }
+    let multiply_x = 1;
+    if (collection.rotation.units.name === 'radians') { multiply_x = (Math.PI / 180); }
+    if (collection.rotation.units.name === 'ms') { multiply_x = (1000 / 360); }
 
-    const multiply = { x: collection.rotation.units.name === 'radians' ? (Math.PI / 180) : 1, y: 100 };
+    const multiply = { x: multiply_x, y: 100 };
 
     const offset = renderedData && renderedData.type === 'position' ? pixHeight * ((100-collEffect.scale.y)/100) - (pixHeight * (collEffect.position.y / 100)) :
                                                       pixHeight * (((100-collEffect.scale.y)/100) / 2) - (pixHeight * (collEffect.position.y / 100) / 2);
@@ -318,7 +321,7 @@ export class EffectVisualizationService {
 
   drawRenderedData(grp: any, dataCopy: any, type: string, collection: Collection, collEffect: any, x: number, multiply: any, offset: any, color: string, render = true) {
 
-    const min_radius = (0.2 * multiply.x);
+    const min_radius = (0.4 * multiply.x);
 
     if (type === 'position') {
       grp.selectAll('line.offset-' + collection.id + '-' + collEffect.id + '-' + Math.round(x * 1000))
@@ -341,8 +344,7 @@ export class EffectVisualizationService {
         .attr('class', 'offset-' + collection.id + '-' + collEffect.id + '-' + Math.round(x * 1000))
         .attr('cx', (d) => render ? collection.config.newXscale((d.o * (collEffect.scale.x / 100) * multiply.x) + x) : collection.config.newXscale(((d.x + d.d) * multiply.x) + x))
         .attr('cy', (d) => collection.config.newYscale((d.y * multiply.y)) * (collEffect.scale.y / 100) + offset)
-        .attr('r', (d) => collection.config.newXscale((d.x * multiply.x) + min_radius) - collection.config.newXscale((d.x * multiply.x) - min_radius) < 2 ?
-                          collection.config.newXscale((d.x * multiply.x) + min_radius) - collection.config.newXscale((d.x * multiply.x) - min_radius) : 2)
+        .attr('r', (d) => 1)
         .style('fill', 'rgba(255,255,255,0.4)')
         .style('opacity', (d, i) => render && this.checkIfXisWithinOverlap(d.x * (collEffect.scale.x / 100) + (x/multiply.x), collection.renderedData) ? 0 : 0.4);
     }
@@ -354,8 +356,7 @@ export class EffectVisualizationService {
       .attr('class', 'render-' + collection.id + '-' + collEffect.id + '-' + Math.round(x * 1000))
       .attr('cx', (d, i) => collection.config.newXscale((d.x * (collEffect.scale.x / 100) * multiply.x) + x))
       .attr('cy', (d) => collection.config.newYscale((d.y * multiply.y )) * (collEffect.scale.y / 100) + offset)
-      .attr('r', (d) => collection.config.newXscale((d.x * multiply.x) + min_radius) - collection.config.newXscale((d.x * multiply.x) - min_radius) < 2 ?
-                        collection.config.newXscale((d.x * multiply.x) + min_radius) - collection.config.newXscale((d.x * multiply.x) - min_radius) : 2)
+      .attr('r', (d) =>  1.3)
       .style('fill', color)
       .style('opacity', (d, i) => render && this.checkIfXisWithinOverlap(d.x * (collEffect.scale.x / 100) + (x/multiply.x), collection.renderedData) ? 0 : 1);
 
@@ -365,7 +366,11 @@ export class EffectVisualizationService {
   drawOverlappingData(svg: any, collection: Collection, color: string) {
     d3.selectAll('#grp-render-overlap-' + collection.id).remove();
 
-    const multiply = { x: collection.rotation.units.name === 'radians' ? (Math.PI / 180) : 1, y: 100 };
+    let multiply_x = 1;
+    if (collection.rotation.units.name === 'radians') { multiply_x = (Math.PI / 180); }
+    if (collection.rotation.units.name === 'ms') { multiply_x = (1000/360); }
+
+    const multiply = { x: multiply_x, y: 100 };
 
     const grp = svg.append('g').attr('id', 'grp-render-overlap-' + collection.id);
     let i = 0;

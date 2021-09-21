@@ -1,8 +1,6 @@
 import { Component, OnInit, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA } from '@angular/material';
 import { DOCUMENT } from '@angular/common';
-import { MicroController } from 'src/app/models/hardware.model';
-import { v4 as uuid } from 'uuid';
 import { UploadService } from 'src/app/services/upload.service';
 
 
@@ -11,11 +9,11 @@ import { UploadService } from 'src/app/services/upload.service';
   template: `
   <div mat-dialog-title class="window-title-bar">Export</div>
     <div class="window-content">
-      <div class="row">
+      <!-- <div class="row">
         <div class="text-button" [ngClass]="{ active: useDefault }"
         (click)="useDefault=!useDefault; exportEffect(this.effect)">Default motor settings</div>
-      </div>
-      <div class="row">
+      </div> -->
+      <!-- <div class="row">
         <label class="labelRow select">Export for </label>
         <select class="form-control" [(ngModel)]="this.selectedDevice" [ngClass]="{ inactive: useDefault }"
           name="customVarComport" (change)="exportEffect(this.effect)">
@@ -23,7 +21,7 @@ import { UploadService } from 'src/app/services/upload.service';
             {{ device.serialPort.path }} - {{ device.type }}
           </option>
         </select>
-      </div>
+      </div> -->
       <div mat-dialog-content class="row" >
         <textarea id="copyfield">{{ data }}</textarea>
       </div>
@@ -105,7 +103,7 @@ import { UploadService } from 'src/app/services/upload.service';
       margin-top: 55px;
     }
 
-    
+
 
   `]
 })
@@ -114,8 +112,8 @@ export class ExportDialogComponent implements OnInit {
   public data = '';
   public buttons = ['Cancel'];
 
-  public defaultSettings = new MicroController(uuid(), null, 'Teensy');
-  public microcontrollerList = [];
+  // public defaultSettings = new MicroController(uuid(), null, 'STM32');
+  // public microcontrollerList = [];
 
   public selectedDevice: any;
   public effect: any;
@@ -125,23 +123,15 @@ export class ExportDialogComponent implements OnInit {
   constructor(@Inject(DOCUMENT) public document: Document, @Inject(MAT_DIALOG_DATA) data: any, private uploadService: UploadService) {
     this.data = data.d;
     this.effect = data.e;
-    // this.microcontrollerList = data.microcontrollers;
+    // this.microcontrollerList = this.hardwareService.getAllMicroControllers();
     // if (this.microcontrollerList.length > 0) {
     //   this.selectedDevice = this.microcontrollerList[0];
     // }
     this.exportEffect(this.effect);
   }
 
-  public exportEffect(libEffect: any) {
-    let dataStr = '';
-    // if (libEffect.effect.slug === 5) {
-      // dataStr = this.uploadService
-        // .translatePositionEffectForExport(libEffect, (this.useDefault ? this.defaultSettings.motor : this.selectedDevice.motor));
-    // } else {
-      // dataStr = this.uploadService.
-        // translateTimeEffectForExport(libEffect, (this.useDefault ? this.defaultSettings.motor : this.selectedDevice.motor));
-    // }
-    this.data = dataStr;
+  public exportEffect(effect: any) {
+    this.data = this.uploadService.translateEffectForExport(effect);
   }
 
   public copy() {

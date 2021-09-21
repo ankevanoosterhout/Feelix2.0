@@ -412,23 +412,33 @@ export class MotorControlService {
 
   drawCursor(collection: Collection) {
     collection.config.svg.selectAll('.cursorIndicator-' + collection.id).remove();
+    let position = 0;
 
-    let position_x = collection.microcontroller.motors.filter(m => m.id === collection.motorID)[0].state.position.current ?
+    if (collection.rotation.units.name === 'ms') {
+      position = collection.config.newXscale(collection.time);
+    } else {
+      position = collection.microcontroller.motors.filter(m => m.id === collection.motorID)[0].state.position.current ?
       collection.config.newXscale(collection.microcontroller.motors.filter(m => m.id === collection.motorID)[0].state.position.current) : 0;
+    }
 
-    if (position_x < 0) { position_x = -2; }
-    else if (position_x > this.width - 15) { position_x = this.width - 17 }
+    this.drawCursorAtPosition(position, collection);
+  }
+
+
+  drawCursorAtPosition(position: number, collection: Collection) {
+    if (position < 0) { position = -2; }
+    else if (position > this.width - 15) { position = this.width - 17 }
 
     const cursor = collection.config.svg.append('line')
       .attr('class', 'cursorIndicator-' + collection.id)
-      .attr('x1', position_x)
-      .attr('x2', position_x)
+      .attr('x1', position)
+      .attr('x2', position)
       .attr('y1', 0)
       .attr('y2', this.height - 39)
       .attr('transform', () => this.file.configuration.collectionDisplay === 'small' ? 'translate(5, 0)' : 'translate(5, 26)')
       .attr('shape-rendering', 'crisp-edges')
-      .style('stroke', () => position_x === -2 || position_x === this.width - 17 ? 'rgba(255, 145, 0, 0.2)' : '#FF9100')
-      .style('stroke-width', () => position_x === -2 || position_x === this.width - 17 ? 4 : 1);
+      .style('stroke', () => position === -2 || position === this.width - 17 ? 'rgba(255, 145, 0, 0.2)' : '#FF9100')
+      .style('stroke-width', () => position === -2 || position === this.width - 17 ? 4 : 1);
   }
 
 

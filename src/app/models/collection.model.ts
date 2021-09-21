@@ -82,6 +82,7 @@ export class Collection {
   renderedData = [];
   playing = false;
   changedAfterRender = false;
+  time = 0;
 
   constructor(id: string, name: string) {
     this.id = id;

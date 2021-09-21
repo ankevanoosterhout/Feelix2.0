@@ -133,7 +133,7 @@ class newSerialPort {
     this.sp.write(data, function (err) {
         if (err) { return console.log('Error: ', err.message); }
         else {
-          //  console.log('written ', data);
+           console.log('written ', data);
         }
     });
   }
@@ -190,7 +190,7 @@ class newSerialPort {
       parser.on('data', (d) => {
 
         if (d.charAt(0) === '*') {
-          // console.log('received data ', d);
+          console.log('received data ', d);
           if (dataSendWaitList.filter(d => d.port === this.COM)) {
             uploadFromWaitList(ports.filter(p => p.COM === this.COM)[0]);
           }
@@ -201,12 +201,13 @@ class newSerialPort {
           const data = {
               angle: parseFloat(dataArray[0]),
               velocity: parseFloat(dataArray[1]),
+              time: parseInt(dataArray[2]),
               serialPath: this.COM
           };
           main.visualizaMotorData(data);
 
         } else if (d.charAt(0) === 'Z') { // receive custom variable
-          // console.log('received data ', d);
+
           const dataArray = d.substr(1).split(':');
           const data = {
               motorID: dataArray[0],
@@ -253,6 +254,7 @@ function updateProgress(_progress, _str) {
 
 function prepareMotorData(uploadContent, motor, datalist) {
 
+  datalist.unshift('FM' + motor.id + 'F');
   datalist.unshift('FM' + motor.id + 'I' + motor.id);
   datalist.unshift('FM' + motor.id + 'S' + motor.config.supplyVoltage);
   datalist.unshift('FM' + motor.id + 'P' + motor.config.polepairs);
@@ -287,30 +289,55 @@ function prepareEffectData(uploadContent, motor, datalist) {
 
   let i = 0;
   let ptr = 0;
-
-  datalist.unshift('FM' + motor.id + 'F' + uploadContent.effects.length);
-  for (const d of uploadContent.data.effectData) {
-    // send pointer value
-    const sameEffectList = uploadContent.effects.filter(e => e.id === d.id);
-    for (const sameEffect of sameEffectList) {
-      sameEffect.pointer = ptr;
-    }
+  for (const d of uploadContent.data.overlay) {
+    d.pointer = ptr;
     ptr += d.type === 'position' ? d.data.length * 2 : d.data.length;
   }
 
   let ptr2 = 0;
-  for (const d of uploadContent.data.overlay) {
-    d.pointer = ptr2 + ptr;
+  for (const d of uploadContent.data.effectData) {
+    const sameEffectList = uploadContent.effects.filter(e => e.id === d.id);
+    for (const sameEffect of sameEffectList) {
+      sameEffect.pointer = ptr2 + ptr;
+    }
     ptr2 += d.type === 'position' ? d.data.length * 2 : d.data.length;
   }
 
+
+  for (const d of uploadContent.data.overlay) {
+    datalist.unshift('FE' + i + 'C:' + d.position.start.toFixed(5));
+    datalist.unshift('FE' + i + 'A:' + (d.data.length - 1));
+    datalist.unshift('FE' + i + 'D:' + (d.direction.cw ? 1 : -1) + ':' + (d.direction.ccw ? 1 : -1) );
+    datalist.unshift('FE' + i + 'I:' + (d.infinite ? 1 : -1));
+    datalist.unshift('FE' + i + 'R:' + d.pointer);
+    let type = 0;
+    if (d.type === 'position') { type = 1; }
+    if (d.type === 'velocity') { type = 2; }
+    datalist.unshift('FE' + i + 'T:' + type);
+    datalist.unshift('FE' + i + 'Z:' + (d.type === 'position' ? d.data.length * 2 : d.data.length));
+
+
+    for (const el of d.data) {
+      if (d.type === 'position') {
+        datalist.unshift('FDI:' + (Math.round(el.d) !== el.d ? el.d.toFixed(6) : el.d));
+      }
+      datalist.unshift('FDI:' + (Math.round(el.y) !== el.y ? el.y.toFixed(6) : el.y));
+    }
+    i++;
+  }
+
+
   for (const effect of uploadContent.effects) {
     datalist.unshift('FE' + i + effect.position.identifier + ':' + effect.position.value[1]);
-    datalist.unshift('FE' + i + effect.direction.identifier + ':' + effect.direction.value[0] + ':' + effect.direction.value[1]);
+    if (effect.vis_type !== 'velocity') {
+      datalist.unshift('FE' + i + effect.direction.identifier + ':' + effect.direction.value[0] + ':' + effect.direction.value[1]);
+    }
     datalist.unshift('FE' + i + effect.scale.identifier + ':' + effect.scale.value[0] + ':' + effect.scale.value[1]);
     datalist.unshift('FE' + i + effect.angle.identifier + ':' + effect.angle.value);
     datalist.unshift('FE' + i + effect.vis_type.identifier + ':' + effect.vis_type.value);
-    datalist.unshift('FE' + i + effect.effect_type.identifier + ':' + effect.effect_type.value);
+    if (effect.vis_type !== 'velocity') {
+      datalist.unshift('FE' + i + effect.effect_type.identifier + ':' + effect.effect_type.value);
+    }
     datalist.unshift('FE' + i + effect.datasize.identifier + ':' + effect.datasize.value);
     datalist.unshift('FE' + i + 'C:' + effect.position.value[0]);
     datalist.unshift('FE' + i + 'R:' + effect.pointer);
@@ -324,9 +351,7 @@ function prepareEffectData(uploadContent, motor, datalist) {
 
     i++;
   }
-
   for (const d of uploadContent.data.effectData) {
-
     for (const el of d.data) {
       if (d.type === 'position') {
         datalist.unshift('FDI:' + (Math.round(el.d) !== el.d ? el.d.toFixed(6) : el.d));
@@ -335,31 +360,7 @@ function prepareEffectData(uploadContent, motor, datalist) {
     }
   }
 
-  let o = 0;
-  for (const d of uploadContent.data.overlay) {
-    datalist.unshift('FO' + o + 'P:' + d.position.start.toFixed(5) + ':' + (d.position.end.toFixed(5) - d.position.start.toFixed(5)));
-    datalist.unshift('FO' + o + 'D:' + (d.direction.cw ? 1 : -1) + ':' + (d.direction.ccw ? 1 : -1) );
-    datalist.unshift('FO' + o + 'I:' + (d.infinite ? 1 : -1));
-    datalist.unshift('FO' + o + 'R:' + d.pointer);
-    let type = 0;
-    if (d.type === 'position') { type = 1; }
-    if (d.type === 'velocity') { type = 2; }
-    datalist.unshift('FO' + o + 'T:' + type);
-    datalist.unshift('FO' + o + 'Z:' + (d.type === 'position' ? d.data.length * 2 : d.data.length));
-
-
-    for (const el of d.data) {
-      if (d.type === 'position') {
-        datalist.unshift('FDO:' + (Math.round(el.d) !== el.d ? el.d.toFixed(6) : el.d));
-      }
-      datalist.unshift('FDO:' + (Math.round(el.y) !== el.y ? el.y.toFixed(6) : el.y));
-    }
-    o++;
-  }
-
-
   return datalist;
-
 
 }
 
@@ -437,18 +438,18 @@ function uploadFromWaitList(receivingPort) {
 
 
 
-function moveToPos(serialData, pos = 0) {
-  let str = '*R;' + pos;
-  sendDataStr(str, serialData);
-  main.updateSerialProgress({ progress: 100, str: 'Move motor at ' + serialData.port.path + ' to start position' });
-}
+// function moveToPos(serialData, pos = 0) {
+//   let str = '*R;' + pos;
+//   sendDataStr(str, serialData);
+//   main.updateSerialProgress({ progress: 100, str: 'Move motor at ' + serialData.port.path + ' to start position' });
+// }
 
 
 
-function playEffect(play, serialData) {
-  let str = '*P;' + (play ? 1 : 0);
-  sendDataStr(str, serialData);
-  main.updateSerialProgress({ progress: 100, str: (play ? 'Play motor at ' + serialData.port.path : 'Stop motor at ' + serialData.port.path) });
+function play(play, motor_id, collection_name, port) {
+  let str = 'FM' + motor_id + 'K' + (play ? 1 : 0);
+  sendDataStr(str, port);
+  main.updateSerialProgress({ progress: 100, str: (play ? 'Play ' + collection_name + ' at ' + port : 'Stop ' + collection_name + ' at ' + port) });
 }
 
 
@@ -471,51 +472,43 @@ function calibrateMotor(motor_id, microcontroller) {
     uploadFromWaitList(receivingPort);
     main.updateSerialProgress({ progress: 0, str: 'Calibrating motor at ' + port  });
   }, 500);
-
-
 }
 
 
-function saveCalibrationValueToEEPROM(motor, serialData) {
-  main.updateSerialProgress({ progress: 100, str: 'Save calibration value' });
-  const str = '*M;' + motor.calibration.value;
-  sendDataStr(str, serialData);
-}
+// function saveCalibrationValueToEEPROM(motor, serialData) {
+//   main.updateSerialProgress({ progress: 100, str: 'Save calibration value' });
+//   const str = '*M;' + motor.calibration.value;
+//   sendDataStr(str, serialData);
+// }
 
 
-function updateStartPosition(serialData, position) {
-  main.updateSerialProgress({ progress: 100, str: 'Update start position' });
-  const str = '*U;' + position;
-  sendDataStr(str, serialData);
-}
+// function updateStartPosition(serialData, position) {
+//   main.updateSerialProgress({ progress: 100, str: 'Update start position' });
+//   const str = '*U;' + position;
+//   sendDataStr(str, serialData);
+// }
 
 
-function updateSleepmode(serialData, sleep) {
-  main.updateSerialProgress({ progress: 100, str: (sleep === true ? 'Enable sleep mode' : 'Disable sleep mode') });
-  const str = '*Z;' + (sleep === true ? 1 : 0);
-  sendDataStr(str, serialData);
-}
+// function updateSleepmode(serialData, sleep) {
+//   main.updateSerialProgress({ progress: 100, str: (sleep === true ? 'Enable sleep mode' : 'Disable sleep mode') });
+//   const str = '*Z;' + (sleep === true ? 1 : 0);
+//   sendDataStr(str, serialData);
+// }
 
 
-function updateEffectData(type, data, effectIndex, serialData) {
-  if (serialData) {
-    main.updateSerialProgress({ progress: 100, str: 'send update ' + data });
-    let str = '&' + type + ';' + effectIndex + ';' + data;
-    sendDataStr(str, serialData);
-  }
-}
+// function updateEffectData(type, data, effectIndex, serialData) {
+//   if (serialData) {
+//     main.updateSerialProgress({ progress: 100, str: 'send update ' + data });
+//     let str = '&' + type + ';' + effectIndex + ';' + data;
+//     sendDataStr(str, serialData);
+//   }
+// }
 
 
-function sendDataStr(str, serialData) {
-  receivingPort = ports.filter(p => p.COM === serialData.path)[0];
-  if (receivingPort) {
-    dataSendWaitList.unshift({ type: 'generalData', receivingPort, data: str });
-    // if (dataSendWaitList.length === 1) {
-      uploadFromWaitList();
-    // }
-  } else {
-    connectToSerialPort(serialData);
-  }
+function sendDataStr(str, port) {
+  receivingPort = ports.filter(p => p.COM === port)[0];
+  dataSendWaitList.push({ port: port, data: [str], totalItems: 1 });
+  uploadFromWaitList(receivingPort);
 }
 
 
@@ -526,11 +519,11 @@ exports.createConnection = createConnection;
 exports.connectToSerialPort = connectToSerialPort;
 exports.closeSerialPort = closeSerialPort;
 exports.closeAllSerialPorts = closeAllSerialPorts;
-exports.moveToPos = moveToPos;
+// exports.moveToPos = moveToPos;
 exports.calibrateMotor = calibrateMotor;
-exports.saveCalibrationValueToEEPROM = saveCalibrationValueToEEPROM;
-exports.updateStartPosition = updateStartPosition;
-exports.updateSleepmode = updateSleepmode;
-exports.playEffect = playEffect;
-exports.updateEffectData = updateEffectData;
+// exports.saveCalibrationValueToEEPROM = saveCalibrationValueToEEPROM;
+// exports.updateStartPosition = updateStartPosition;
+// exports.updateSleepmode = updateSleepmode;
+exports.play = play;
+// exports.updateEffectData = updateEffectData;
 exports.uploadData = uploadData;

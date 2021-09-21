@@ -1045,9 +1045,9 @@ ipcMain.on('upload', (event, data) => {
 
 
 
-ipcMain.on('moveToPos', (event, data) => {
-  serialPort.moveToPos(data.microcontroller, data.pos);
-});
+// ipcMain.on('moveToPos', (event, data) => {
+//   serialPort.moveToPos(data.microcontroller, data.pos);
+// });
 
 ipcMain.on('getCalibrationValue', (event, data) => {
   serialPort.calibrateMotor(data.motor, data.port);
@@ -1076,7 +1076,12 @@ ipcMain.on('updateExternalDevice', (event, data) => {
 ipcMain.on('openEffectInNewFile', (event, effect) => {
   mainWindow.send('openEffectInNewFile', effect);
   mainWindow.focus();
+});
+
+ipcMain.on('play_collection', (event, data) => {
+  serialPort.play(data.play, data.motor_id, data.collection_name, data.port);
 })
+
 
 function updateSerialStatus(status) {
   if (status.microcontroller) {

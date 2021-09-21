@@ -45,6 +45,7 @@ export class ConfigModel {
     this.baudrate = microcontroller.baudrate;
     this.collection = collection.id;
     this.range = collection.rotation.end - collection.rotation.start;
+    console.log(this.range);
     if (collection.rotation.units.name === 'radians') {
       this.range *= (Math.PI / 180);
     }
@@ -70,7 +71,7 @@ export class EffectModel {
     this.position = new Model('P', [ Math.round(collEffect.position.x) !== collEffect.position.x ? collEffect.position.x.toFixed(5) : collEffect.position.x,
       Math.round(collEffect.position.y) !== collEffect.position.y ? (collEffect.position.y / 100).toFixed(5) : (collEffect.position.y / 100) ]);
 
-    this.angle = new Model('A', (effect.data.length - 1) * (collEffect.scale.x / 100));
+    this.angle = new Model('A', ((effect.data.length - 1) * (collEffect.scale.x / 100)).toFixed(10));
 
     this.scale = new Model('S', [ Math.round(collEffect.scale.x) !== collEffect.scale.x ? (collEffect.scale.x / 100).toFixed(5) : (collEffect.scale.x / 100),
       Math.round(collEffect.scale.y) !== collEffect.scale.y ? (collEffect.scale.y / 100).toFixed(5) : (collEffect.scale.y / 100) ]);

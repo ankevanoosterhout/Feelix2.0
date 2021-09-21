@@ -34,9 +34,11 @@ export class FileService {
 
     // retrive files stored in local storage
     const storedFiles = this.localSt.retrieve('files');
-    if (storedFiles) {
+    if (storedFiles && storedFiles.length > 0) {
       this.files = storedFiles;
       this.setAnyActive();
+    } else {
+      this.createDefault('Untitled-1');
     }
 
     // listen for new files made by the user
