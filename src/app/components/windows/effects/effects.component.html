@@ -32,7 +32,7 @@
     <ul class="tabContent tab-{{ this.activeTab }}" id="outer">
       <!-- normal tab -->
       <div class="innerContent" id="inner" *ngIf="this.activeTab === 0">
-        <li class="blockContent {{ this.drawingService.file.configuration.libraryViewSettings }}" *ngFor="let item of this.drawingService.file.effects">
+        <li class="blockContent {{ this.drawingService.file.configuration.libraryViewSettings }} file-view" *ngFor="let item of this.drawingService.file.effects">
           <div class="rowDetails">
             <div class="title {{ this.drawingService.file.configuration.libraryViewSettings }}">
               <input type="text" class="form-control effect_name" id="name-{{ item.id }}" [(ngModel)]="item.name" name="name-{{ item.id }}" (change)="updateEffectName(item)">
@@ -73,15 +73,18 @@
       <!-- library tab -->
 
       <div class="innerContent" id="inner" *ngIf="this.activeTab === 1">
-        <li class="blockContent {{ this.drawingService.file.configuration.libraryViewSettings }}" *ngFor="let item of this.effectLibraryService.effectLibrary">
+        <li class="blockContent {{ this.drawingService.file.configuration.libraryViewSettings }} library-view" *ngFor="let item of this.effectLibraryService.effectLibrary">
           <div class="rowDetails">
             <div class="title {{ this.drawingService.file.configuration.libraryViewSettings }}">
               <input type="text" class="form-control" id="name-{{ item.id }}" [(ngModel)]="item.effect.name" name="name-{{ item.id }}" (change)="updateLibEffectName(item.effect)">
             </div>
             <div class="buttonsPlayWindow {{ this.drawingService.file.configuration.libraryViewSettings }}"
                  *ngIf="this.drawingService.file.configuration.libraryViewSettings === 'list'">
-              <div class="buttonPlayWindow delete" (click)="editLibraryEffectItem(item.id)">
+              <!-- <div class="buttonPlayWindow delete" (click)="editLibraryEffectItem(item.id)">
                 <img src="./assets/icons/buttons/edit.svg">
+              </div> -->
+              <div class="buttonPlayWindow delete" (click)="exportEffectItem(item.id)">
+                <img src="./assets/icons/buttons/export.svg">
               </div>
               <div class="buttonPlayWindow delete" (click)="deleteLibraryItem(item.id)">
                 <img src="./assets/icons/buttons/bin.svg">
@@ -91,8 +94,8 @@
           <div class="row" *ngIf="this.drawingService.file.configuration.libraryViewSettings !== 'list'">
             <div id="effectSVG-{{ item.effect.id }}" class="effectSVG"></div>
             <div class="buttonsPlayWindow">
-              <div class="buttonPlayWindow delete" (click)="editLibraryEffectItem(item.id)">
-                <img src="./assets/icons/buttons/edit.svg">
+              <div class="buttonPlayWindow delete" (click)="exportEffectItem(item.id)">
+                <img src="./assets/icons/buttons/export.svg">
               </div>
               <div class="buttonPlayWindow delete" (click)="deleteLibraryItem(item.id)">
                 <img src="./assets/icons/buttons/bin.svg">
@@ -144,8 +147,12 @@
             (focusout)="hideCompleteValue('position-x')" (focus)="showCompleteValue('position-x')" (change)="updateValue('position-x')" name="position-x">
             <span class="units" *ngIf="this.drawingService.file.activeCollection.rotation.units.name === 'degrees'">&deg;</span>
             <span class="units" *ngIf="this.drawingService.file.activeCollection.rotation.units.name === 'radians'">rad</span>
-            <input type="number" class="settings" id="position-y" value="{{ this.drawingService.file.activeCollectionEffect.position.y }}"
-            (focusout)="hideCompleteValue('position-y')" (focus)="showCompleteValue('position-y')" (change)="updateValue('position-y')" name="position-y">
+            <span class="units" *ngIf="this.drawingService.file.activeCollection.rotation.units.name === 'ms'">ms</span>
+
+            <span *ngIf="this.drawingService.file.activeCollection.rotation.units_y.name !== 'degrees'">
+              <input type="number" class="settings" id="position-y" value="{{ this.drawingService.file.activeCollectionEffect.position.y }}"
+              (focusout)="hideCompleteValue('position-y')" (focus)="showCompleteValue('position-y')" (change)="updateValue('position-y')" name="position-y">
+            </span>
           </div>
           <div class="row" *ngIf="positionVisible">
             <div class="row">
@@ -154,8 +161,9 @@
                (focusout)="hideCompleteValue('position-x')" (focus)="showCompleteValue('position-x')" (change)="updateValue('position-x')" name="position-x">
               <span class="units" *ngIf="this.drawingService.file.activeCollection.rotation.units.name === 'degrees'">&deg;</span>
               <span class="units" *ngIf="this.drawingService.file.activeCollection.rotation.units.name === 'radians'">rad</span>
+              <span class="units" *ngIf="this.drawingService.file.activeCollection.rotation.units.name === 'ms'">ms</span>
             </div>
-            <div class="row">
+            <div class="row" *ngIf="this.drawingService.file.activeCollection.rotation.units_y.name !== 'degrees'">
               <label class="label" for="name"><div class="question-mark" title="Vertical translation on the Y axis in relation to the original position of the effect">?</div>Y</label>
               <input type="number" class="settings" id="position-y" value="{{ this.drawingService.file.activeCollectionEffect.position.y }}"
                (focusout)="hideCompleteValue('position-y')" (focus)="showCompleteValue('position-y')" (change)="updateValue('position-y')" name="position-y">
@@ -166,6 +174,7 @@
                (focusout)="hideCompleteValue('position-width')" (focus)="showCompleteValue('position-width')" (change)="updateValue('position-width')" name="position-width">
               <span class="units" *ngIf="this.drawingService.file.activeCollection.rotation.units.name === 'degrees'">&deg;</span>
               <span class="units" *ngIf="this.drawingService.file.activeCollection.rotation.units.name === 'radians'">rad</span>
+              <span class="units" *ngIf="this.drawingService.file.activeCollection.rotation.units.name === 'ms'">ms</span>
             </div>
             <div class="row">
               <label class="label" for="name"><div class="question-mark" title="Effect insensity (height)">?</div>Height</label>
@@ -210,7 +219,7 @@
             <div class="row" *ngIf="!this.drawingService.file.activeCollectionEffect.scale.uniform">
               <label class="label" for="name"><div class="question-mark" title="Scale height of effect in % of the original effect height">?</div>Scale height</label>
               <input type="number" class="settings" id="scale-y" value="{{ this.drawingService.file.activeCollectionEffect.scale.y | number:'1.2-2' }}"
-              (focusout)="hideCompleteValue('scale-y')"  (focus)="showCompleteValue('scale-y')" (change)="updateValue('scale-y')" name="scale-y">
+              (focusout)="hideCompleteValue('scale-y')" (focus)="showCompleteValue('scale-y')" (change)="updateValue('scale-y')" name="scale-y">
               <span class="units">%</span>
             </div>
 
@@ -291,8 +300,7 @@
           <div *ngIf="repeatVisible">
             <div class="row">
               <label class="label"><div class="question-mark" title="Repeat the effect N times">?</div>Instances</label>
-              <input type="number" class="settings" id="repeat-instances" [(ngModel)]="this.drawingService.file.activeCollectionEffect.repeat.instances" name="repeat-instances"
-              (change)="updateEffectRepeat()" (focus)="showCompleteValue()" (focusout)="hideCompleteValue()">
+              <input type="number" class="settings" id="repeat-instances" [(ngModel)]="this.drawingService.file.activeCollectionEffect.repeat.instances" name="repeat-instances" (change)="updateEffectRepeat()">
               <span class="units">N</span>
             </div>
             <div class="row" *ngFor="let item of this.drawingService.file.activeCollectionEffect.repeat.repeatInstances; let i = index" [attr.data-index]="i">
@@ -301,6 +309,21 @@
                (focusout)="hideCompleteValue()" (focus)="showCompleteValue()">
               <span class="units" *ngIf="this.drawingService.file.activeCollection.rotation.units.name === 'degrees'">&deg;</span>
               <span class="units" *ngIf="this.drawingService.file.activeCollection.rotation.units.name === 'radians'">rad</span>
+              <span class="units" *ngIf="this.drawingService.file.activeCollection.rotation.units.name === 'ms'">ms</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="horizontalSeparator details"></div>
+
+        <div class="form-group details">
+          <div class="opencloseArrow" [ngClass]="{ open: qualityVisible }" (click)="qualityVisible = !qualityVisible"><div></div></div>
+          <label class="labelRow start nextToArrow">Quality</label>
+          <div *ngIf="qualityVisible">
+            <div class="row">
+              <label class="label"><div class="question-mark" title="Render quality (increase value to reduce number of data points)">?</div>Quality</label>
+              <input type="number" class="settings" id="render-quality" [(ngModel)]="this.drawingService.file.activeCollectionEffect.quality" name="render-quality" (change)="updateQuality()"
+              (focusout)="hideCompleteValue()" (focus)="showCompleteValue()">
             </div>
           </div>
         </div>

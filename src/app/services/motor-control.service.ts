@@ -190,20 +190,19 @@ export class MotorControlService {
         .attr('fill', 'none');
     }
 
-    if (collection.visualizationType !== 'position') {
-      const middleline = collection.config.svg.append('line')
-        .attr('x1', 0)
-        .attr('x2', this.width)
-        .attr('y1', (this.height - 39) / 2 )
-        .attr('y2', (this.height - 39) / 2 )
-        .attr('stroke', '#4a4a4a')
-        .attr('stroke-width', 1)
-        .attr('fill', 'none')
-        .attr('shape-rendering', 'crispEdges')
-        .attr('pointer-events', 'none')
-        .attr('transform', () => this.file.configuration.collectionDisplay === 'small' ? 'translate(0, 0)' : 'translate(0, 26)');
-    }
+    const frame_height = (this.height - 39) / 2;
 
+    const middleline = collection.config.svg.append('line')
+      .attr('x1', 0)
+      .attr('x2', this.width)
+      .attr('y1', () => collection.config.newYscale(0))
+      .attr('y2', () => collection.config.newYscale(0))
+      .attr('stroke', '#4a4a4a')
+      .attr('stroke-width', 1)
+      .attr('fill', 'none')
+      .attr('shape-rendering', 'crispEdges')
+      .attr('pointer-events', 'none')
+      .attr('transform', () => this.file.configuration.collectionDisplay === 'small' ? 'translate(0, 0)' : 'translate(0, 26)');
 
 
     if (this.file.configuration.collectionDisplay !== 'small') {
@@ -417,8 +416,8 @@ export class MotorControlService {
     if (collection.rotation.units.name === 'ms') {
       position = collection.config.newXscale(collection.time);
     } else {
-      position = collection.microcontroller.motors.filter(m => m.id === collection.motorID)[0].state.position.current ?
-      collection.config.newXscale(collection.microcontroller.motors.filter(m => m.id === collection.motorID)[0].state.position.current) : 0;
+      position = collection.microcontroller.motors.filter(m => m.id === collection.motorID.name)[0].state.position.current ?
+      collection.config.newXscale(collection.microcontroller.motors.filter(m => m.id === collection.motorID.name)[0].state.position.current) : 0;
     }
 
     this.drawCursorAtPosition(position, collection);
@@ -493,7 +492,7 @@ export class MotorControlService {
 
     collection.config.yScale = d3
       .scaleLinear()
-      .domain([100, (collection.visualizationType === 'position' ? 0 : -100)])
+      .domain([collection.rotation.end_y, collection.rotation.start_y])
       .range([0, this.height - 39]);
 
     collection.config.xScale = d3

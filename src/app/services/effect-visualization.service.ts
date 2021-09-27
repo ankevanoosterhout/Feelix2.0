@@ -29,9 +29,9 @@ export class EffectVisualizationService {
   }
 
 
-  drawEffect(effect: Effect, colors: Array<effectTypeColor>, viewSettings = 'large-thumbnails') {
+  drawEffect(effect: Effect, colors: Array<effectTypeColor>, viewSettings = 'large-thumbnails', storedIn: string) {
 
-    const height = 86;
+    const height = storedIn === 'file' ? 86 : 55;
     let windowDivisionWidth = (window.innerWidth * this.verticalDivision / 100);
     if (windowDivisionWidth < 300) { windowDivisionWidth = 300; }
     const width = viewSettings !== 'small-thumbnails' ? windowDivisionWidth - 86 : (windowDivisionWidth / 2) - 70;
@@ -53,14 +53,15 @@ export class EffectVisualizationService {
       .attr('stroke', '#2c2c2c')
       .attr('stroke-width', 0.5);
 
-    if (effect.type !== 'position') {
-      const middleLine = svg.append('rect')
-      .attr('width', width)
-      .attr('height', 1)
-      .attr('x', 0)
-      .attr('y', height / 2 - 0.5)
-      .attr('fill', '#3a3a3a');
-    }
+    const zeroline = svg.append('line')
+      .attr('x2', width)
+      .attr('y1', height - (height / (effect.range_y.end - effect.range_y.start)) * (effect.range_y.start * -1))
+      .attr('x1', 0)
+      .attr('y2', height - (height / (effect.range_y.end - effect.range_y.start)) * (effect.range_y.start * -1))
+      .style('stroke', '#3a3a3a')
+      .style('stroke-width', 1)
+      .style('shape-rendering', 'crispEdges');
+
 
     if (effect.paths && effect.paths.length > 0) {
 
@@ -68,7 +69,7 @@ export class EffectVisualizationService {
         .attr('class', 'nodes effect' + effect.id)
         .attr('transform', 'translate(14, 2)');
 
-      this.drawEffectData(nodes, effect, height - 4, colors, width - 28);
+      this.drawEffectData(nodes, effect, height - 4, colors, width - 28, [effect.range_y.end, effect.range_y.start]);
     }
   }
 
@@ -82,9 +83,10 @@ export class EffectVisualizationService {
       const multiply = (collection.rotation.units.PR / effect.grid.xUnit.PR);
 
       const width = effect.paths.length === 0 ? 30 : collection.config.newXscale(collEffect.position.x + collEffect.position.width) - collection.config.newXscale(collEffect.position.x);
-      const domainSize = effect.type === 'position' ? 100 : 200;
+      const domainSize = effect.range_y.end - effect.range_y.start;
 
       const heightEffect = (collection.config.newYscale(collEffect.position.bottom) - collection.config.newYscale(collEffect.position.top)) * (collEffect.scale.y / 100);
+
       const yPos = collection.config.newYscale(collEffect.position.top * (collEffect.scale.y / 100)) - (pixHeight * (collEffect.position.y / domainSize));
 
       const offset = effect.type === 'position' ? pixHeight * ((100-collEffect.scale.y)/100) - (pixHeight * (collEffect.position.y / 100)) :
@@ -129,9 +131,9 @@ export class EffectVisualizationService {
         .attr('id', (d) => 'coll-effect-' + collection.id + '-' + d.id)
         .attr('class', 'coll-effect-' + collEffect.id)
         .attr('x', (d) => collection.config.newXscale(d.x))
-        .attr('y', () => effect.type === collection.visualizationType ? yPos : 0)
+        .attr('y', this.checkIfEffectTypeEqualsVisualizationType(effect, collection) ? yPos : 0)
         .attr('width', width === 0 ? 10 : width)
-        .attr('height', effect.type === collection.visualizationType && effect.paths.length > 0 ? heightEffect : pixHeight)
+        .attr('height', this.checkIfEffectTypeEqualsVisualizationType(effect, collection) ? heightEffect : pixHeight)
         .style('fill', colors.filter(c => c.type === effect.type)[0].hash)
         .style('opacity', activeCollEffect !== null && activeCollEffect.id === collEffect.id ? 0.6 : 0.2)
         .style('shape-rendering', 'crispEdges')
@@ -139,7 +141,7 @@ export class EffectVisualizationService {
         .attr('cursor', layerLocked ? 'not-allowed': 'default')
         .call(dragCollectionEffect);
 
-      if (effect.type === collection.visualizationType) {
+      if (this.checkIfEffectTypeEqualsVisualizationType(effect, collection)) {
 
         const clipPath = svg.append('clipPath')
           .attr('id', 'clip-' + collEffect.id + '-' + effect.id)
@@ -154,9 +156,7 @@ export class EffectVisualizationService {
           // .attr('clip-path', 'url(#clip-' + collEffect.id + '-' + effect.id +')')
           .attr('transform', 'translate('+ [collection.config.newXscale(collEffect.position.x), offset] + ')');
 
-        // if (collection.effectDataList.length === 0) {
-        this.drawEffectData(nodes, effect, height, colors, width, collEffect.flip, multiply);
-        // }
+        this.drawEffectData(nodes, effect, height, colors, width, [collection.rotation.end_y, collection.rotation.start_y], collEffect.flip, multiply);
 
         for(const instance of collEffect.repeat.repeatInstances) {
           const nodes = svg.append('g')
@@ -164,9 +164,7 @@ export class EffectVisualizationService {
           .attr('id', 'coll-effect-group-' + collEffect.id + '-' + effect.id + '-' + instance.id)
           .attr('transform', 'translate('+ [collection.config.newXscale(instance.x), offset] + ')');
 
-          // if (collection.effectDataList.length === 0) {
-          this.drawEffectData(nodes, effect, height, colors, width, collEffect.flip, multiply);
-          // }
+          this.drawEffectData(nodes, effect, height, colors, width, [collection.rotation.end_y, collection.rotation.start_y], collEffect.flip, multiply);
         }
       }
 
@@ -176,7 +174,7 @@ export class EffectVisualizationService {
         .append('text')
         .attr('class', 'coll-effect-' + collEffect.id)
         .attr('x', (d) => collection.config.newXscale(d.x) + width - 5)
-        .attr('y', () => effect.type === collection.visualizationType ? yPos + 12 : 12)
+        .attr('y', () => this.checkIfEffectTypeEqualsVisualizationType(effect, collection) ? yPos + 12 : 12)
         .attr('text-anchor', 'end')
         .text((d, i) => i > 0 ? effect.name + ' n' + (i+ 1) : effect.name)
         .style('fill', '#fff')
@@ -185,6 +183,14 @@ export class EffectVisualizationService {
         .style('font-family', 'Open Sans, Arial, sans-serif')
         .style('font-size', '9px');
     }
+  }
+
+  checkIfEffectTypeEqualsVisualizationType(effect: Effect, collection: Collection) {
+    if (effect.paths.length > 0) {
+      if (effect.type !== 'velocity' && effect.type === collection.visualizationType) { return true; }
+      if (effect.type === 'velocity' && effect.grid.yUnit.name === collection.rotation.units_y.name) { return true; }
+    }
+    return false;
   }
 
 
@@ -198,14 +204,12 @@ export class EffectVisualizationService {
   }
 
 
-  drawEffectData(nodes: any, effect: any, height: number, colors: Array<effectTypeColor>, width = (window.innerWidth * this.verticalDivision / 100) - 120, reflect = { x: false, y: false }, multiply = 1) {
+  drawEffectData(nodes: any, effect: any, height: number, colors: Array<effectTypeColor>, width = (window.innerWidth * this.verticalDivision / 100) - 120, domain: any, reflect = { x: false, y: false }, multiply = 1) {
 
     if (effect.size) {
       const xScale = d3.scaleLinear()
           .domain([ effect.size.x * multiply, (effect.size.x + effect.size.width) * multiply ])
           .range([0, width]);
-
-      const domain = effect.type === 'position' ? [100, 0] : [100, -100];
 
       const yScale = d3.scaleLinear()
         .domain(domain)
@@ -287,6 +291,7 @@ export class EffectVisualizationService {
     if (collection.rotation.units.name === 'radians') { multiply_x = (Math.PI / 180); }
     if (collection.rotation.units.name === 'ms') { multiply_x = (1000 / 360); }
 
+    // const multiply = { x: multiply_x, y: collection.rotation.units_y.name === 'degrees' ? collection.rotation.end_y - collection.rotation.start_y : 100 };
     const multiply = { x: multiply_x, y: 100 };
 
     const offset = renderedData && renderedData.type === 'position' ? pixHeight * ((100-collEffect.scale.y)/100) - (pixHeight * (collEffect.position.y / 100)) :

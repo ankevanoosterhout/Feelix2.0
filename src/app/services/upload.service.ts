@@ -17,7 +17,7 @@ export class UploadService {
 
 
   renderCollection(collection: Collection, effectList: Array<Effect>) {
-    const effectlistCollection = this.removeDuplicateEffects(collection.effects);
+    // const effectlistCollection = this.removeDuplicateEffects(collection.effects);
     collection.effectDataList = [];
     collection.overlappingData = [];
     collection.renderedData = [];
@@ -53,9 +53,7 @@ export class UploadService {
         effectListCopy.push(collEffect_clone_repeated);
       }
     }
-
     return effectListCopy;
-
   }
 
   convertDataList(collection: Collection, effectList: Array<Effect>) {
@@ -68,7 +66,6 @@ export class UploadService {
         const effectData2 = effectList.filter(e => e.id === d.effect2.effectID)[0];
         const translatedDataEffect1 = this.cloneService.deepClone(collection.effectDataList.filter(e => e.id === effectData1.id)[0]);
         const translatedDataEffect2 = this.cloneService.deepClone(collection.effectDataList.filter(e => e.id === effectData2.id)[0]);
-        const multiply = collection.rotation.units.name === 'radians' ? (Math.PI / 180) : 1;
 
         for (const el of translatedDataEffect1.data) {
           if (el.x >= d.overlap.x1 * effectData1.size.width - 2 && el.x <= d.overlap.x2 * effectData1.size.width + 2) {
@@ -92,6 +89,7 @@ export class UploadService {
                         effect2: d.effect2,
                         inf: translatedDataEffect1.infinite && translatedDataEffect2 ? true : false,
                         type: effectData1.type,
+                        yUnit: effectData1.grid.yUnit.name,
                         id: uuid()
                       };
           dataArray.push(obj);
@@ -211,23 +209,24 @@ export class UploadService {
     let multiply = 1;
     if (effectData.grid.xUnit.name === 'radians') { multiply = (180 / Math.PI); }
     if (effectData.grid.xUnit.name === 'ms') { multiply = (360 / 1000); }
+    let data = [];
+    let start_offset = 0;
 
     for (const path of copyEffectList.paths) {
-      if (effectData.type === 'torque' || effectData.type === 'velocity') {
-        // data.push(this.translateTorqueEffectData(path, multiply));
-        return { id: collEffect.effectID, type: effectData.type, size: effectData.size, rotation: effectData.rotation, infinite: collEffect.infinite, data:this.translateTorqueEffectData(path, multiply) };
-      }
-      else if (effectData.type === 'position') {
-        return { id: collEffect.effectID, type: effectData.type, size: effectData.size, rotation: effectData.rotation, infinite: collEffect.infinite, data:this.translatePositionEffectData(path, multiply) };
-        // data.push(this.translatePositionEffectData(path, multiply));
+      data = effectData.type === 'position' ?
+        data.concat(this.translatePositionEffectData(path, multiply, start_offset, collEffect.quality)) :
+        data.concat(this.translateTorqueEffectData(path, multiply, effectData.range_y, start_offset, collEffect.quality));
 
-      }
+      start_offset += data[data.length - 1].x + collEffect.quality;
     }
-    // return { id: collEffect.effectID, type: effectData.type, size: effectData.size, data:data };
+    return { id: collEffect.effectID, type: effectData.type, size: effectData.size, rotation: effectData.rotation, infinite: collEffect.infinite, yUnit: effectData.grid.yUnit.name, data: data };
   }
 
-  translateTorqueEffectData(path: Path, multiply: number, quality = 1) {
+
+
+  translateTorqueEffectData(path: Path, multiply: number, effect_range: any, start_offset: number, quality = 1) {
     let translatedData = [];
+    let offset = 0;
 
     if (path.nodes[0].pos.x > path.nodes[path.nodes.length - 1].pos.x) {
       path.nodes.reverse();
@@ -236,6 +235,9 @@ export class UploadService {
     let i = 0;
     const nodes = path.nodes.filter(n => n.type === 'node');
     const startPos = Math.ceil(nodes[0].pos.x * multiply);
+    let start: number;
+    let end: number;
+
     for (const node of nodes) {
 
       if (i < nodes.length - 1) {
@@ -243,13 +245,13 @@ export class UploadService {
         const range = this.bezierService.getCurveLength(pathSegment);
         const coords = this.bezierService.getAllCoordinates(range[0] * 4, (1 / (range[0] * 4)), pathSegment, multiply, 'force');
 
-        const start = Math.ceil(pathSegment[0].pos.x * multiply);
-        const end = Math.round(pathSegment[pathSegment.length - 1].pos.x * multiply);
-
+        start = offset === 0 ? Math.ceil(pathSegment[0].pos.x * multiply) + offset : Math.round(pathSegment[0].pos.x * multiply) + offset;
+        end = Math.round(pathSegment[pathSegment.length - 1].pos.x * multiply);
         for (let m = start; m <= end; m += quality) {
+
           let yValue = this.bezierService.closestY(m, coords);
-          if (yValue > 100) { yValue = 100; }
-          if (yValue < -100) { yValue = -100; }
+          if (yValue > effect_range.end) { yValue = effect_range.end; }
+          if (yValue < effect_range.start) { yValue = effect_range.start; }
 
           const inlistValue = translatedData.filter(d => d.x === m - startPos)[0] ? translatedData.filter(d => d.x === m - startPos)[0] : null;
           if (inlistValue) {
@@ -260,22 +262,23 @@ export class UploadService {
           }
 
           const coordinates = {
-            x: m - startPos,
+            x: (m - startPos) + start_offset,
             y: inlistValue ? (inlistValue.y + (yValue / 100)) / 2 : (yValue / 100)
           };
 
           translatedData.push(coordinates);
+
         }
       }
+      offset = quality - ((end - start) % quality);
       i++;
     }
-
     return translatedData;
   }
 
 
 
-  translatePositionEffectData(path: Path, multiply: number, quality = 1) {
+  translatePositionEffectData(path: Path, multiply: number, start_offset: number, quality = 1) {
     let translatedData = [];
 
     if (path.nodes[0].pos.x > path.nodes[path.nodes.length - 1].pos.x) {
@@ -318,7 +321,7 @@ export class UploadService {
           }
 
           const coordinates = {
-            x: m - startPos,
+            x: m - startPos + start_offset,
             o: (xOffset - startPos),
             d: (xOffset - m) * (Math.PI / 180),
             y: inlistValue ? (inlistValue.y + (yValue / 100)) / 2 : (yValue / 100)
@@ -389,43 +392,45 @@ export class UploadService {
   }
 
 
-  translateEffectForExport(effect: any) {
+  translateEffectForExport(effect: any, quality: number) {
     let data = '';
     let translatedData: any;
     let multiply = 1;
-    if (effect.grid.xUnit.name === 'radians') { multiply = (180 / Math.PI); }
-    if (effect.grid.xUnit.name === 'ms') { multiply = 360 / 1000; }
+    if (effect.paths.length > 0) {
+      if (effect.grid.xUnit.name === 'radians') { multiply = (180 / Math.PI); }
+      if (effect.grid.xUnit.name === 'ms') { multiply = 360 / 1000; }
 
-    if (multiply) {
-      translatedData = this.translateEffectData(new Details(uuid(), effect.id, effect.name), effect);
-      console.log(translatedData);
-      // const angle = translatedData[translatedData.length - 1].x - translatedData[0].x;
-      let dataArrayAsString = '{'
-      // let i = 0;
-      for (const item of translatedData.data) {
-        if (item.id) {
-          dataArrayAsString +=  item.d.toFixed(7) + ', ' + item.y.toFixed(7) + ', '
-        } else {
-          dataArrayAsString +=  item.y.toFixed(7) + ', '
-        }
-        // if (i < translatedData.length - 1) {
-
-        //   forceArray += item.y + ', ';
-        //   offsetArray += item.d + ', ';
-        // } else {
-        //   forceArray += item.y + ' }';
-        //   offsetArray += item.d + ' } ';
-        // }
-        // i++;
+      let effect_type = null;
+      if (effect.type !== 'velocity') {
+        effect_type = effect.rotation === 'dependent' ? 'Effect_type::DEPENDENT' : 'Effect_type::INDEPENDENT';
       }
-      dataArrayAsString.slice(0, -1);
-      dataArrayAsString += '}';
 
-      data = '/* initialize */ \nEffect ' + effect.name.replace('-', '_') + ';\nint data_' +
-          effect.name.replace('-', '_') + '[] = ' + dataArrayAsString + ';\n\r/* call in setup */\n' +
-          effect.name.replace('-', '_') + '.initPositionEffect(force_' +
-          effect.name.replace('-', '_') + ',  offset_' +
-          effect.name.replace('-', '_') + ', ' + (translatedData.length) + ');\n\r';
+      if (multiply) {
+        const newDetails = new Details(uuid(), effect.id, effect.name);
+        newDetails.quality = quality;
+        translatedData = this.translateEffectData(newDetails, effect);
+        const angle = effect.size.width;
+        let dataArrayAsString = '{';
+
+        for (const item of translatedData.data) {
+          if (item.d) {
+            dataArrayAsString += (Math.round(item.d) === item.d ? item.d.toFixed(1) : item.d.toFixed(9)) + ', ' + (Math.round(item.y) === item.y ? item.y.toFixed(1) : item.y.toFixed(9)) + ', '
+          } else {
+            dataArrayAsString += (Math.round(item.y) === item.y ? item.y.toFixed(1) : item.y.toFixed(9)) + ', '
+          }
+        }
+        dataArrayAsString = dataArrayAsString.slice(0, -2);
+        dataArrayAsString += '}';
+
+        const newEffectName = effect.name.replace(/-/g, '_');
+
+        data = '/* initialize */ \nEffectConfig_s ' + newEffectName + '_config {\n\t.data_size = ' + (effect.type !== 'position' ? translatedData.data.length : (translatedData.data.length * 2)) + ',\n\t.angle = ' + angle +
+          (effect_type ? ',\n\t.effect_type = ' + effect_type + '\n' : '\n') + '};\r\n\n';
+
+        data += 'float data_' + newEffectName + '[] = ' + dataArrayAsString + ';\r\n';
+        data += 'FeelixEffect ' + newEffectName + ' = FeelixEffect(' + newEffectName + '_config, data_' + newEffectName + ');'
+
+      }
     }
     return data;
   }

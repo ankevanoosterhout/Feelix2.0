@@ -276,16 +276,23 @@ ul.motorlist {
 
 .tabContent li.blockContent.small-thumbnails {
   width: 50%;
-  height: 120px;
   float: left;
+}
+.tabContent li.blockContent.large-thumbnails {
+  width: 100%;
+}
+
+.tabContent li.blockContent.large-thumbnails, .tabContent li.blockContent.small-thumbnails {
+  height: 120px;
+}
+
+.tabContent li.blockContent.large-thumbnails.library-view, .tabContent li.blockContent.small-thumbnails.library-view {
+  height: 90px;
 }
 .tabContent li.blockContent.small-thumbnails:nth-child(odd) {
   border-right: 1px solid #2c2c2c;
 }
-.tabContent li.blockContent.large-thumbnails {
-  width: 100%;
-  height: 120px;
-}
+
 
 .details-list {
   padding:0;

@@ -119,6 +119,8 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
       }
     });
 
+
+
     this.electronService.ipcRenderer.on('grid:toggle', (event: Event, visible: boolean) => {
       this.file.activeEffect.grid.visible = visible;
       if (!visible) { this.file.activeEffect.grid.snap = false; }
@@ -204,7 +206,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
 
     if (this.file.activeEffect) {
       this.nodeService.loadFile(this.file.activeEffect.paths);
-      this.dataService.setColor(this.file.configuration.colors.filter(c => c.type === this.file.activeEffect.type)[0].hash);
+      this.dataService.setColor(this.file.configuration.colors.filter(c => c.type === this.file.activeEffect.type)[0].hash, this.file.configuration.colors.filter(c => c.type === 'position2')[0].hash);
       this.nodeService.setGridLayer(this.file.activeEffect.grid);
       this.updateGridSettingsInMenu(this.file);
       this.electronService.ipcRenderer.send('updateToolbar', { type: this.drawingService.file.activeEffect.type });
@@ -224,7 +226,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
         if ((this.file.activeEffect !== null && newFile.activeEffect.id !== this.file.activeEffect.id) || this.file.activeEffect === null) {
           this.loadEffectData(newFile);
         }
-        this.dataService.setColor(newFile.configuration.colors.filter(c => c.type === newFile.activeEffect.type)[0].hash);
+        this.dataService.setColor(newFile.configuration.colors.filter(c => c.type === newFile.activeEffect.type)[0].hash, this.file.configuration.colors.filter(c => c.type === 'position2')[0].hash);
         this.nodeService.setGridLayer(newFile.activeEffect.grid);
       } else {
         this.nodeService.reset();

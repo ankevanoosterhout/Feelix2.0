@@ -23,15 +23,20 @@ import { CloneService } from 'src/app/services/clone.service';
         </ul>
       </div>
 
-      <div class="form-row" *ngIf="this.drawingService.file.activeEffect" title="select effect visualization type">
-        <input type="color" id="color-picker" name="color-picker" [(ngModel)]="this.dataService.color" (change)="updateColor()">
-        <label class="select color-picker"></label>
-        <select class="form-control" id="select" (change)="this.updateEffectType()" [(ngModel)]="this.drawingService.file.activeEffect.type" name="type">
+      <div class="form-row" *ngIf="this.drawingService.file.activeEffect">
+        <span>
+          <input type="color" id="color-picker" name="color-picker" [(ngModel)]="this.dataService.color" (change)="updateColor()">
+        </span>
+        <span *ngIf="this.drawingService.file.activeEffect.type === 'position'">
+          <input type="color" id="color-picker" name="color-picker-2" [(ngModel)]="this.dataService.color2" (change)="updateColor2()">
+        </span>
+        <label class="select color-picker {{ this.drawingService.file.activeEffect.type }}" title="select effect visualization type"></label>
+        <select class="form-control" id="select" (change)="this.updateEffectType()" [(ngModel)]="this.drawingService.file.activeEffect.type" name="type" title="select effect visualization type">
             <option *ngFor="let type of typeOptions" [ngValue]="type">{{ type }}</option>
         </select>
       </div>
 
-      <div class="form-row" *ngIf="this.drawingService.file.activeEffect" title="select units x-axis">
+      <div class="form-row" *ngIf="this.drawingService.file.activeEffect && this.drawingService.file.activeEffect.type !== 'velocity'" title="select units x-axis">
         <label class="select axes">x </label>
         <select class="form-control" id="select" value="{{ this.drawingService.file.activeEffect.grid.xUnit.name }}" (change)="this.drawingService.updateUnitsActiveEffect($event.target.value)"
           name="x-axis">
@@ -39,10 +44,25 @@ import { CloneService } from 'src/app/services/clone.service';
         </select>
       </div>
 
-      <div class="form-row" *ngIf="this.drawingService.file.activeEffect" title="select units y-axis">
+      <div class="form-row" *ngIf="this.drawingService.file.activeEffect && this.drawingService.file.activeEffect.type === 'velocity'" title="select units x-axis">
+        <label class="select axes">x </label>
+        <select class="form-control" id="select" value="{{ this.drawingService.file.activeEffect.grid.xUnit.name }}" (change)="this.drawingService.updateUnitsActiveEffect($event.target.value)"
+          name="x-axis">
+            <option *ngFor="let type of this.drawingService.config.xAxisOptions_velocity" [ngValue]="type">{{ type.name }}</option>
+        </select>
+      </div>
+
+      <div class="form-row" *ngIf="this.drawingService.file.activeEffect && this.drawingService.file.activeEffect.type !== 'velocity'" title="select units y-axis">
         <label class="select axes">y </label>
         <select class="form-control" id="select" [(ngModel)]="this.drawingService.file.activeEffect.grid.yUnit" name="y-axis" [compareWith]="compareUnits">
-            <option *ngFor="let type of yAxisOptions" [ngValue]="type">{{ type.name }}</option>
+            <option *ngFor="let type of this.drawingService.config.yAxisOptions" [ngValue]="type">{{ type.name }}</option>
+        </select>
+      </div>
+
+      <div class="form-row" *ngIf="this.drawingService.file.activeEffect && this.drawingService.file.activeEffect.type === 'velocity'" title="select units y-axis">
+        <label class="select axes">y </label>
+        <select class="form-control" id="select" [(ngModel)]="this.drawingService.file.activeEffect.grid.yUnit" name="y-axis" [compareWith]="compareUnits">
+            <option *ngFor="let type of this.drawingService.config.yAxisOptions_velocity" [ngValue]="type">{{ type.name }}</option>
         </select>
       </div>
 
@@ -52,6 +72,14 @@ import { CloneService } from 'src/app/services/clone.service';
           (change)="this.drawingService.saveEffect(this.drawingService.file.activeEffect)" name="rotation-type">
             <option *ngFor="let type of rotationOptions" [ngValue]="type">{{ type }}</option>
         </select>
+      </div>
+
+
+      <div class="form-row range" *ngIf="this.drawingService.file.activeEffect && this.drawingService.file.activeEffect.type === 'velocity' && (this.drawingService.file.activeEffect.grid.yUnit.name === 'radians' || this.drawingService.file.activeEffect.grid.yUnit.name === 'degrees')"
+        title="specify range y-axis (degrees)">
+        <label>range</label>
+        <input type="number" class="small" id="range-start" name="range-start" [(ngModel)]="this.drawingService.file.activeEffect.range_y.start" (change)="updateRange()">
+        <input type="number" class="small" id="range-end" name="range-end" [(ngModel)]="this.drawingService.file.activeEffect.range_y.end" (change)="updateRange()">
       </div>
 
       <ul>
@@ -147,7 +175,7 @@ export class FixedToolbarComponent implements OnInit {
   typeOptions = ['torque','position','velocity'];
   rotationOptions = ['independent', 'dependent'];
 
-  yAxisOptions = [ new Unit('voltage (%)', 100), new Unit('velocity (%)', 100) ];
+
 
   referencePoints = [
     { name: 'nw', id: 0 },
@@ -296,14 +324,7 @@ export class FixedToolbarComponent implements OnInit {
 
 
   public updateEffectType() {
-    if (this.drawingService.config.editBounds.yMin < 0 && this.drawingService.file.activeEffect.type === 'position' ) {
-      this.drawingService.scaleActiveEffectFromTorqueToPosition(0.5, 100);
-    } else if (this.drawingService.config.editBounds.yMin >= 0 && this.drawingService.file.activeEffect.type !== 'position') {
-      this.drawingService.scaleActiveEffectFromTorqueToPosition(2, 100);
-    }
-    this.dataService.color = this.drawingService.file.configuration.colors.filter(c => c.type === this.drawingService.file.activeEffect.type)[0].hash;
-    this.drawingService.updateActiveEffect(this.drawingService.file);
-    this.drawingService.updateConfigActiveFile(this.drawingService.file.configuration);
+    this.drawingService.updateEffectType();
     this.electronService.ipcRenderer.send('updateToolbar', { type: this.drawingService.file.activeEffect.type });
   }
 
@@ -377,6 +398,12 @@ export class FixedToolbarComponent implements OnInit {
     this.drawingService.updateConfigActiveFile(this.drawingService.file.configuration);
   }
 
+  updateColor2() {
+    this.drawingService.file.configuration.colors.filter(c => c.type === 'position2')[0].hash = this.dataService.color2;
+    // this.drawingService.saveFile(this.drawingService.file);
+    this.drawingService.updateConfigActiveFile(this.drawingService.file.configuration);
+  }
+
   getPercentage(oldVal: number, newVal: number) {
     return newVal / oldVal;
   }
@@ -407,5 +434,12 @@ export class FixedToolbarComponent implements OnInit {
     return unit1 && unit2 ? unit1.name === unit2.name : unit1 === unit2;
   }
 
+  updateRange() {
+    if (this.drawingService.file.activeEffect.range_y.end < this.drawingService.file.activeEffect.range_y.start) {
+      this.drawingService.file.activeEffect.range_y.end = this.drawingService.file.activeEffect.range_y.start + 1;
+    }
+    this.drawingService.updateActiveEffect(this.drawingService.file);
+    this.drawingService.redraw();
+  }
 
 }

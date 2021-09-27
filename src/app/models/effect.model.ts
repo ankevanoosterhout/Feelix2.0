@@ -70,6 +70,11 @@ export class Grid {
 export class Range {
   start: number = 0;
   end: number = 360;
+
+  constructor(start: number, end: number) {
+    this.start = start;
+    this.end = end;
+  }
 }
 
 export class XY {
@@ -114,7 +119,7 @@ export class Details {
   flip = new XY(false, false);
   repeat = new Repeat();
   infinite = false;
-  // quality = new Quality();
+  quality = 1;
 
   constructor(id: string, effectID: string, name: string) {
     this.id = id;
@@ -134,7 +139,8 @@ export class Effect {
   grid = new Grid();
   scale: any = null;
   colors: Array<Color> = [];
-  range = new Range();
+  range = new Range(0, 360);
+  range_y = new Range(-100, 100);
   size = new Size(0,0,0,0);
   storedIn = 'file';
 

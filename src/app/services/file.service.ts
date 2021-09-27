@@ -522,7 +522,6 @@ export class FileService {
 
 
   save(file: File, close = false) {
-    // file.nodes = this.nodeService.getAll();
     if (file.isActive) {
       this.updateActiveEffectData(file);
     }
@@ -531,10 +530,10 @@ export class FileService {
       fetch(file.path).then((res) => {
         this.saveChangesToFile(file);
       }).catch((err) => {
-        this.saveFileWithDialog(file, 'json');
+        this.saveFileWithDialog(file);
       });
     } else {
-      this.saveFileWithDialog(file, 'json');
+      this.saveFileWithDialog(file);
     }
 
     if (close) {
@@ -542,12 +541,11 @@ export class FileService {
       this.setAnyActive();
       this.delete(file);
     }
-
   }
 
-  saveFileWithDialog(file: File, type: string) {
+  saveFileWithDialog(file: File) {
     const blob = new Blob([JSON.stringify(file)], { type: 'text/plain' });
-    const currentFileName = file.name + '.json';
+    const currentFileName = file.name + '.feelix';
     this._FileSaverService.save(blob, currentFileName, 'text/plain');
     // this._FileSaverService.save(blob, file.name + '.json');
   }
@@ -563,7 +561,7 @@ export class FileService {
     try {
       this.fs.writeFileSync(file.path, JSON.stringify(file), 'utf-8');
     } catch (e) {
-      alert('Failed to save the file');
+      alert('Failed to save file data');
     }
   }
 

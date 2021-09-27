@@ -40,5 +40,6 @@ export class Configuration {
   colors: Array<effectTypeColor> =
     [ new effectTypeColor('torque', '#0f4d9d'),
       new effectTypeColor('velocity', '#ed1a75'),
-      new effectTypeColor('position', '#d94313') ];
+      new effectTypeColor('position', '#d94313'),
+      new effectTypeColor('position2', '#d5afaf') ];
 }

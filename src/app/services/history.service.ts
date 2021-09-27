@@ -69,27 +69,29 @@ export class HistoryService {
   addToHistory() {
     const effect = this.cloneService.deepClone(this.file.activeEffect);
 
-    const historyDataFile = this.config.history.filter(h => h.fileId === this.file._id)[0] || new HistoryListElement(this.file._id, []);
-    const effectList = historyDataFile.list.filter(l => l.id === effect.id)[0] || new HistoryEffects(effect.id);
+    if (effect) {
+      const historyDataFile = this.config.history.filter(h => h.fileId === this.file._id)[0] || new HistoryListElement(this.file._id, []);
+      const effectList = historyDataFile.list.filter(l => l.id === effect.id)[0] || new HistoryEffects(effect.id);
 
-    effectList.effects.push(effect);
-    if (effectList.index < 30) {
-      effectList.index ++;
-    } else {
-      effectList.effects.shift();
-    }
+      effectList.effects.push(effect);
+      if (effectList.index < 30) {
+        effectList.index ++;
+      } else {
+        effectList.effects.shift();
+      }
 
-    if (historyDataFile.list.filter(l => l.id === effect.id).length === 0) {
-      historyDataFile.list.push(effectList);
-    }
+      if (historyDataFile.list.filter(l => l.id === effect.id).length === 0) {
+        historyDataFile.list.push(effectList);
+      }
 
-    if (this.config.history.filter(h => h.fileId === this.file._id).length === 0) {
-      this.config.history.push(historyDataFile);
+      if (this.config.history.filter(h => h.fileId === this.file._id).length === 0) {
+        this.config.history.push(historyDataFile);
+      }
     }
   }
 
   updateFileData(historyEl: any) {
-    if (historyEl) {
+    if (historyEl && this.file.activeEffect) {
       if (this.file.activeEffect.id === historyEl.id) {
         this.file.activeEffect = this.cloneService.deepClone(historyEl);
         return this.file;

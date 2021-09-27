@@ -12,8 +12,7 @@ import { DrawingService } from 'src/app/services/drawing.service';
     <div class="inputfield">
         <div class="form-row">
             <label class="select color">Color</label>
-            <select class="form-control"
-                required [(ngModel)]="file.activeEffect.grid.settings.color.hash" name="color">
+            <select class="form-control" [(ngModel)]="file.activeEffect.grid.settings.color.hash" name="color">
                 <option *ngFor="let item of colors" [ngValue]="item.hash">{{ item.name }}</option>
             </select>
         </div>
@@ -36,7 +35,8 @@ import { DrawingService } from 'src/app/services/drawing.service';
           <div class="form-row">
               <label>grid line every</label>
               <input type="number" [(ngModel)]="file.activeEffect.grid.settings.spacingY" name="grid-spacingY">
-              <span class="span-text"> %</span>
+              <span class="span-text" *ngIf="file.activeEffect.grid.yUnit.name !== 'degrees'"> %</span>
+              <span class="span-text" *ngIf="file.activeEffect.grid.yUnit.name === 'degrees'"> degrees</span>
           </div>
           <div class="form-row">
               <label>subdivision</label>
@@ -44,10 +44,10 @@ import { DrawingService } from 'src/app/services/drawing.service';
           </div>
         </div>
 
-        <div class="form-row" *ngIf="file.activeEffect.grid.xUnit.name === 'custom'">
+        <!-- <div class="form-row" *ngIf="file.activeEffect.grid.xUnit.name === 'custom'">
           <label>Points per revolution</label>
           <input type="number" id="PR" name="PR" [(ngModel)]="file.activeEffect.grid.xUnit.PR">
-        </div>
+        </div> -->
 
         <div class="form-row buttons">
           <button (click)="submit();">Ok</button>
@@ -58,6 +58,10 @@ import { DrawingService } from 'src/app/services/drawing.service';
   styles: [`
     .span-text {
       padding-left: 10px;
+    }
+
+    label.select:after {
+      margin-top: 20px;
     }
   `]
 })

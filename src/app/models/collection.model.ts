@@ -1,5 +1,5 @@
 import { SliderDrawplane } from './drawing-plane-config.model';
-import { Details, Effect } from './effect.model';
+import { Details } from './effect.model';
 import { MicroController, Unit } from './hardware.model';
 
 export class Rotation {
@@ -8,26 +8,10 @@ export class Rotation {
   units = new Unit('degrees', 360);
   linear = false;
   loop = false;
+  start_y = -100;
+  end_y = 100;
+  units_y = new Unit('voltage (%)', 100);
 }
-
-
-// export class Layer {
-//   id = 0;
-//   type = 'cw';
-//   name = 'clockwise rotation';
-//   visible = 'visible';
-//   status = 'active';
-//   colors: Array<Color> = [];
-//   options = false;
-
-//   constructor(id: number, type: string, name: string, status: string, visible: string) {
-//     this.id = id;
-//     this.type = type;
-//     this.name = name;
-//     this.status = status;
-//     this.visible = visible;
-//   }
-// }
 
 
 export class Scale {
@@ -67,12 +51,17 @@ export class Layer {
   }
 }
 
+export class motorid {
+  name: string = 'A';
+  index: number = 0;
+}
+
 export class Collection {
   id: string = null;
   name: string = 'Sequence-1';
   effects: Array<Details> = [];
   microcontroller: MicroController = null;
-  motorID: string = 'A';
+  motorID = new motorid();
   rotation = new Rotation();
   config = new Config();
   visualizationType = 'torque';

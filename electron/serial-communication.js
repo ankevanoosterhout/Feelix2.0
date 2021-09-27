@@ -286,7 +286,6 @@ function prepareMotorData(uploadContent, motor, datalist) {
 
 
 function prepareEffectData(uploadContent, motor, datalist) {
-
   let i = 0;
   let ptr = 0;
   for (const d of uploadContent.data.overlay) {
@@ -321,7 +320,11 @@ function prepareEffectData(uploadContent, motor, datalist) {
       if (d.type === 'position') {
         datalist.unshift('FDI:' + (Math.round(el.d) !== el.d ? el.d.toFixed(6) : el.d));
       }
-      datalist.unshift('FDI:' + (Math.round(el.y) !== el.y ? el.y.toFixed(6) : el.y));
+      if (d.type === 'velocity' && d.yUnit === 'degrees') {
+        datalist.unshift('FDI:' + (el.y * 100) * (Math.PI / 180)).toFixed(6);
+      } else {
+        datalist.unshift('FDI:' + (Math.round(el.y) !== el.y ? el.y.toFixed(6) : el.y));
+      }
     }
     i++;
   }
@@ -339,6 +342,7 @@ function prepareEffectData(uploadContent, motor, datalist) {
       datalist.unshift('FE' + i + effect.effect_type.identifier + ':' + effect.effect_type.value);
     }
     datalist.unshift('FE' + i + effect.datasize.identifier + ':' + effect.datasize.value);
+    datalist.unshift('FE' + i + effect.quality.identifier + ':' + effect.quality.value);
     datalist.unshift('FE' + i + 'C:' + effect.position.value[0]);
     datalist.unshift('FE' + i + 'R:' + effect.pointer);
 
@@ -356,7 +360,11 @@ function prepareEffectData(uploadContent, motor, datalist) {
       if (d.type === 'position') {
         datalist.unshift('FDI:' + (Math.round(el.d) !== el.d ? el.d.toFixed(6) : el.d));
       }
-      datalist.unshift('FDI:' + (Math.round(el.y) !== el.y ? el.y.toFixed(6) : el.y));
+      if (d.type === 'velocity' && d.yUnit === 'degrees') {
+        datalist.unshift('FDI:' + (el.y * 100) * (Math.PI / 180)).toFixed(6);
+      } else {
+        datalist.unshift('FDI:' + (Math.round(el.y) !== el.y ? el.y.toFixed(6) : el.y));
+      }
     }
   }
 

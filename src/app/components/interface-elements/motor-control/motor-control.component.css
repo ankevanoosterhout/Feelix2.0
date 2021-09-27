@@ -202,6 +202,11 @@ ul {
   width: 20px;
 }
 
+.collection_pid {
+  margin-top: -2px;
+  margin-left: 5px;
+}
+
 .comport, .PID-name, .motor-info {
   font-family: Arial, Helvetica, sans-serif;
   font-size: 11px;
@@ -327,9 +332,9 @@ ul {
   padding: 12%;
 }
 
-#buttonsMotorControl .dropdown-buttons li:active, #buttonsMotorControl  .dropdown-buttons li.active {
+#buttonsMotorControl .dropdown-buttons li:active, #buttonsMotorControl .dropdown-buttons li.active {
   opacity: 1;
-  border: 1px solid  #df9b08;
+  border: 1px solid #df9b08;
 }
 
 
@@ -348,12 +353,17 @@ ul {
    margin-right: 0;
 }
 
-#rangeValues, #coll-layers-row {
+#rangeValues, #coll-layers-row, #PID_angle, #PID_velocity, #max {
   font-size: 11px;
   color: #ccc;
   margin-left: 20px;
   vertical-align: top;
   margin-top: -2px;
+}
+
+#PID_angle, #PID_velocity, #max {
+  margin-left: 18px;
+  margin-top: 0;
 }
 
 #coll-layers-row label {
@@ -407,6 +417,13 @@ input#collection-name {
   left:0;
   width: 75px;
   margin-top: -1px;
+}
+
+input#collection-PID {
+  width: 19px;
+  padding: 3px 4px;
+  margin-top: -3px;
+  margin-left: 4px;
 }
 
 #range-end, #range-start {

@@ -5,7 +5,6 @@ import { ToolService } from 'src/app/services/tool.service';
 import { DrawingPlaneConfig } from 'src/app/models/drawing-plane-config.model';
 import { DrawingService } from 'src/app/services/drawing.service';
 import { MotorControlService } from 'src/app/services/motor-control.service';
-import { HardwareService } from 'src/app/services/hardware.service';
 
 @Component({
     selector: 'app-motor-control-toolbar-inset',
@@ -125,7 +124,7 @@ export class MotorControlToolbarInsetComponent implements OnInit {
   public config: DrawingPlaneConfig;
 
   // tslint:disable-next-line: variable-name
-  constructor(@Inject(DOCUMENT) private document: Document, private electronService: ElectronService, private hardwareService: HardwareService,
+  constructor(@Inject(DOCUMENT) private document: Document, private electronService: ElectronService,
               public toolService: ToolService, private drawingService: DrawingService, public motorControlService: MotorControlService) {
 
     this.config = this.drawingService.config;

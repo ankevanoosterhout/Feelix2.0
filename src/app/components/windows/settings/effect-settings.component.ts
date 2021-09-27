@@ -25,13 +25,20 @@ import { Effect, Unit } from 'src/app/models/effect.model';
 
                 <div class="form-row">
                   <label class="select units">Control Type</label>
-                  <select class="form-control" id="select-type" [(ngModel)]="effect.type" name="type">
+                  <select class="form-control" id="select-type" [(ngModel)]="effect.type" name="type" (change)="updateControlType()">
                       <option *ngFor="let type of controlTypes" [ngValue]="type">{{ type }}</option>
                   </select>
                 </div>
 
+                <div class="form-row" *ngIf="!this.updateMode && effect.type !== 'velocity'">
+                    <label class="select units">Units</label>
+                    <select class="form-control" id="select-units"
+                        (change)="updateRotationRange()" [(ngModel)]="effect.grid.xUnit" name="xUnit" [compareWith]="compareUnits">
+                        <option *ngFor="let unit of unitOptionsRadial" [ngValue]="unit">{{ unit.name }}</option>
+                    </select>
+                </div>
 
-                <div class="form-row">
+                <div class="form-row" *ngIf="!this.updateMode && effect.type === 'velocity'">
                     <label class="select units">Units</label>
                     <select class="form-control" id="select-units"
                         (change)="updateRotationRange()" [(ngModel)]="effect.grid.xUnit" name="xUnit" [compareWith]="compareUnits">
@@ -69,15 +76,8 @@ import { Effect, Unit } from 'src/app/models/effect.model';
 export class EffectSettingsComponent implements OnInit {
   effect: Effect;
   updateMode = false;
-  mode = 'default';
   effectCount = 2;
   buttonText = 'Create';
-
-  unitOptionsLinear = [
-    { name: 'MM', PR: 50 },
-    { name: 'CM', PR: 5 },
-    { name: 'radians', PR: (2 * Math.PI) }
-  ];
 
   unitOptionsRadial = [
     { name: 'degrees', PR: 360 },
@@ -85,10 +85,9 @@ export class EffectSettingsComponent implements OnInit {
   ];
 
   unitOptions = [
-    { name: 'mm', PR: 50 },
-    { name: 'cm', PR: 5 },
-    { name: 'degrees', PR: 360 },
-    { name: 'radians', PR: (2 * Math.PI) }
+    // { name: 'degrees', PR: 360 },
+    // { name: 'radians', PR: (2 * Math.PI) },
+    { name: 'ms', PR: 1000 }
   ];
 
   controlTypes = ['position', 'velocity', 'torque' ];
@@ -119,13 +118,28 @@ export class EffectSettingsComponent implements OnInit {
     this.prevUnits = this.effect.grid.xUnit;
   }
 
+  updateControlType() {
+    if (this.effect.type === 'velocity' && this.effect.grid.xUnit.name !== 'ms') {
+      this.prevUnits = this.effect.grid.xUnit;
+      this.effect.grid.xUnit = { name: 'ms', PR: 1000 };
+      this.updateRotationRange();
+    } else if (this.effect.type !== 'velocity' && this.effect.grid.xUnit.name === 'ms') {
+      this.prevUnits = { name: 'ms', PR: 1000 };
+      this.effect.grid.xUnit = { name: 'degrees', PR: 360 };
+      this.updateRotationRange();
+    }
+  }
+
   public submit() {
+
+    if (this.effect.type === 'velocity' && this.effect.grid.yUnit.name === 'voltage (%)') { this.effect.grid.yUnit = new Unit('velocity (%)', 1000); }
 
     if (!this.updateMode) {
       this.fileService.addEffect(this.effect);
     } else {
       this.fileService.updateEffect(this.effect);
     }
+    this.electronService.ipcRenderer.send('updateToolbar', { type: this.effect.type });
     this.close();
   }
 

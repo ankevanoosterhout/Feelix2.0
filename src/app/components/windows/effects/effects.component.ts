@@ -23,6 +23,7 @@ export class EffectsComponent implements OnInit, AfterViewInit {
   detailsVisible = false;
   repeatVisible = false;
   reflectVisible = false;
+  qualityVisible = false;
 
   effect: Effect = null;
 
@@ -160,7 +161,7 @@ export class EffectsComponent implements OnInit, AfterViewInit {
     for (const effect of effects) {
       const div = this.document.getElementById('effectSVG-' + effect.id);
       if (div) {
-        this.effectVisualizationService.drawEffect(effect, this.drawingService.file.configuration.colors, this.drawingService.file.configuration.libraryViewSettings);
+        this.effectVisualizationService.drawEffect(effect, this.drawingService.file.configuration.colors, this.drawingService.file.configuration.libraryViewSettings, 'file');
       }
     }
   }
@@ -169,7 +170,7 @@ export class EffectsComponent implements OnInit, AfterViewInit {
     for (const libEffect of libEffects) {
       const div = this.document.getElementById('effectSVG-' + libEffect.effect.id);
       if (div) {
-        this.effectVisualizationService.drawEffect(libEffect.effect, this.drawingService.file.configuration.colors, this.drawingService.file.configuration.libraryViewSettings);
+        this.effectVisualizationService.drawEffect(libEffect.effect, this.drawingService.file.configuration.colors, this.drawingService.file.configuration.libraryViewSettings, 'library');
       }
     }
   }
@@ -225,7 +226,9 @@ export class EffectsComponent implements OnInit, AfterViewInit {
   }
 
   editEffectItem(effectID: string) {
+    const fileEffect = this.drawingService.file.effects.filter(e => e.id === effectID)[0];
     this.fileService.openEffect(effectID);
+    this.electronService.ipcRenderer.send('updateToolbar', { type: fileEffect.type });
   }
 
   exportEffectItem(effectID: string) {
@@ -392,13 +395,25 @@ export class EffectsComponent implements OnInit, AfterViewInit {
   updateRepeatInstanceXValue(id: string) {
     const value = (this.document.getElementById('r-' + id) as HTMLInputElement).value;
     this.drawingService.file.activeCollectionEffect.repeat.repeatInstances.filter(r => r.id === id)[0].x = parseFloat(value);
-    console.log(this.drawingService.file.activeCollectionEffect.repeat.repeatInstances);
     this.updateCollectionEffect();
   }
 
   countDecimals(value: number) {
     if(Math.floor(value) === value) return 0;
     return value.toString().split('.').length > 1 && value.toString().split('.')[1].length || 0;
+  }
+
+  updateQuality() {
+    if (this.drawingService.file.activeCollectionEffect.quality < 1) {
+      this.drawingService.file.activeCollectionEffect.quality = 1;
+    } else {
+      this.drawingService.file.activeCollectionEffect.quality = Math.round(this.drawingService.file.activeCollectionEffect.quality);
+    }
+    if (this.drawingService.file.activeCollection.effectDataList.length > 0) {
+      this.document.getElementById('render-' + this.drawingService.file.activeCollection.id).click();
+      this.document.getElementById('render-' + this.drawingService.file.activeCollection.id).click();
+    }
+    this.updateCollectionEffect();
   }
 
 

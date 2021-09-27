@@ -23,7 +23,6 @@ import { ToolService } from './services/tool.service';
 import { NodeService } from './services/node.service';
 import { BezierService } from './services/bezier.service';
 import { MotorControlService } from './services/motor-control.service';
-import { CollectionService } from './services/collection.service';
 import { DialogComponent } from './components/windows/dialog.component';
 import { MatDialogModule } from '@angular/material/dialog';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -107,7 +106,6 @@ import { GridService } from './services/grid.service';
     EffectVisualizationService,
     ComponentService,
     MotorControlService,
-    CollectionService,
     CloneService
   ],
   bootstrap: [

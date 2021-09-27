@@ -133,7 +133,7 @@ export class DrawElementsService {
         .attr('d', (d: { svgPath: string }) => d.svgPath)
         .attr('id', (d: { id: string; parent: string }) => 'id_' + d.id + '_' + d.parent)
         .attr('class', (d: { parent: string; }) => 'path_' + d.parent + '_' + type)
-        .attr('stroke', () =>  type === 'pos' ? this.getEffectColor() : this.file.activeEffect.colors[1].hash)
+        .attr('stroke', () =>  type === 'pos' ? this.getEffectColor() : this.file.configuration.colors.filter(c => c.type === 'position2')[0].hash)
         .attr('stroke-width', () => {
           if (type === 'angle') { return 0.3; }
           else if (this.file.activeEffect.rotation === 'dependent') { return 2.5; }
@@ -249,7 +249,7 @@ export class DrawElementsService {
           this.nodeService.selectPath(d.path, d3.event.sourceEvent.shiftKey);
           this.nodeService.selectNode(d.id, d3.event.sourceEvent.shiftKey);
 
-          this.config.nodesSVG.selectAll('.fn_' + d.path).style('fill', this.file.activeEffect.colors[1].hash);
+          this.config.nodesSVG.selectAll('.fn_' + d.path).style('fill', this.file.configuration.colors.filter(c => c.type === 'position2')[0].hash);
           this.dataService.selectElement(d.id, d.pos.x, d.pos.y, null, null);
 
         } else if (this.config.cursor.slug === 'pen' || this.config.cursor.slug === 'anchor') {
@@ -421,12 +421,12 @@ export class DrawElementsService {
         !this.config.zoomable && !this.nodeService.getPath(d.path).lock ? 'auto' : 'none')
       .style('fill', (d: { id: string; path: string; }) => {
         if (this.nodeService.selectedNodes.indexOf(d.id) > -1) {
-          return this.file.activeEffect.colors[1].hash;
+          return this.file.configuration.colors.filter(c => c.type === 'position2')[0].hash;
         }
         return 'transparent';
       })
       .on('mouseover', (d: { id: string, path: string }) => {
-        d3.select('#id_nf_' + d.id + '_' + d.path).style('fill', this.file.activeEffect.colors[1].hash);
+        d3.select('#id_nf_' + d.id + '_' + d.path).style('fill', this.file.configuration.colors.filter(c => c.type === 'position2')[0].hash);
       })
       .on('mousedown', (d: any) => {
         this.nodeService.addSelectedNode(d.id);
@@ -501,7 +501,7 @@ export class DrawElementsService {
             .style('stroke-width', 0.5)
             .style('fill', () => this.nodeService.selectedNodes.indexOf(d.id) < 0 ? 'white' : this.getEffectColor());
 
-          this.config.nodesSVG.selectAll('#id_nf_' + d.id + '_' + d.path).style('fill', this.file.activeEffect.colors[1].hash);
+          this.config.nodesSVG.selectAll('#id_nf_' + d.id + '_' + d.path).style('fill', this.file.configuration.colors.filter(c => c.type === 'position2')[0].hash);
         }
       })
       .on('mouseleave', (d: { id: string; path: string; pos: { x: number; y: number; };  }) => {
@@ -540,6 +540,8 @@ export class DrawElementsService {
   getEffectColor() {
     return this.file.configuration.colors.filter(c => c.type === this.file.activeEffect.type)[0].hash;
   }
+
+
 
 
   drawControlPoints(points: Array<any>, type = 'pos') {
@@ -624,7 +626,7 @@ export class DrawElementsService {
         .attr('x2', (d: any) => type === 'pos' ? this.nodeService.scale.scaleX(d.cp.pos.x) : this.nodeService.scale.scaleX(d.cp.angle.x))
         .attr('y2', (d: any) => type === 'pos' ? this.nodeService.scale.scaleY(d.cp.pos.y) : this.nodeService.scale.scaleY(d.cp.angle.y))
         .attr('transform', 'translate(0, ' + this.config.margin.top + ')')
-        .style('stroke', () => type === 'pos' ? this.getEffectColor() : this.file.activeEffect.colors[1].hash)
+        .style('stroke', () => type === 'pos' ? this.getEffectColor() : this.file.configuration.colors.filter(c => c.type === 'position2')[0].hash)
         .style('stroke-width', 0.5);
 
       this.config.cpSVG.selectAll('circle.cp')
@@ -637,7 +639,7 @@ export class DrawElementsService {
         .attr('cx', (d: any) => type === 'pos' ? this.nodeService.scale.scaleX(d.cp.pos.x) : this.nodeService.scale.scaleX(d.cp.angle.x))
         .attr('cy', (d: any) => type === 'pos' ? this.nodeService.scale.scaleY(d.cp.pos.y) : this.nodeService.scale.scaleY(d.cp.angle.y))
         .attr('transform', 'translate(0, ' + this.config.margin.top + ')')
-        .style('fill', () => type === 'pos' ? this.getEffectColor() : this.file.activeEffect.colors[1].hash)
+        .style('fill', () => type === 'pos' ? this.getEffectColor() : this.file.configuration.colors.filter(c => c.type === 'position2')[0].hash)
         .style('stroke', 'transparent')
         .style('stroke-width', 5)
         .attr('pointer-events', (d: any) => !this.config.zoomable &&
@@ -671,9 +673,9 @@ export class DrawElementsService {
         .attr('id', (d: { id: string; parent: string }) => 'id_' + d.id + '_' + d.parent)
         .attr('class', (d: { parent: string; }) => 'path_' + d.parent)
         .attr('stroke-width', 1.2)
-        .attr('stroke', this.getEffectColor())
-        .attr('fill', this.getEffectColor())
-        .style('opacity', 0.3);
+        .attr('stroke', this.file.configuration.colors.filter(c => c.type === 'position2')[0].hash)
+        .attr('fill', this.file.configuration.colors.filter(c => c.type === 'position2')[0].hash)
+        .style('opacity', 0.2);
 
     }
   }

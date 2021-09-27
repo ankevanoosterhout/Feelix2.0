@@ -9,19 +9,12 @@ import { UploadService } from 'src/app/services/upload.service';
   template: `
   <div mat-dialog-title class="window-title-bar">Export</div>
     <div class="window-content">
-      <!-- <div class="row">
-        <div class="text-button" [ngClass]="{ active: useDefault }"
-        (click)="useDefault=!useDefault; exportEffect(this.effect)">Default motor settings</div>
-      </div> -->
-      <!-- <div class="row">
-        <label class="labelRow select">Export for </label>
-        <select class="form-control" [(ngModel)]="this.selectedDevice" [ngClass]="{ inactive: useDefault }"
-          name="customVarComport" (change)="exportEffect(this.effect)">
-          <option *ngFor="let device of this.microcontrollerList" [ngValue]="device">
-            {{ device.serialPort.path }} - {{ device.type }}
-          </option>
-        </select>
-      </div> -->
+
+      <div class="row">
+        <label class="label">Render quality</label>
+        <input type="number" id="quality" name="quality" [(ngModel)]="this.quality" (change)="this.exportEffect(this.effect)">
+      </div>
+
       <div mat-dialog-content class="row" >
         <textarea id="copyfield">{{ data }}</textarea>
       </div>
@@ -43,6 +36,22 @@ import { UploadService } from 'src/app/services/upload.service';
       cursor: default;
     }
 
+    .label {
+      width: auto;
+      margin-right: 15px;
+    }
+
+    input {
+      -webkit-appearance: none;
+      background: #4a4a4a;
+      border: 1px solid #1c1c1c;
+      border-radius: 0;
+      font-size: 11px;
+      width: 20px;
+      min-width: 20px;
+      color: #bbb;
+    }
+
     textarea#copyfield {
       font-size: 11px;
       font-family: 'Courier';
@@ -60,6 +69,7 @@ import { UploadService } from 'src/app/services/upload.service';
       border: 1px solid #888;
       border-radius: 5px;
       resize: none;
+      tab-size: 2;
     }
     .form-row.buttons {
       margin-top: 0;
@@ -112,26 +122,20 @@ export class ExportDialogComponent implements OnInit {
   public data = '';
   public buttons = ['Cancel'];
 
-  // public defaultSettings = new MicroController(uuid(), null, 'STM32');
-  // public microcontrollerList = [];
-
   public selectedDevice: any;
   public effect: any;
+  public quality = 1;
 
   public useDefault = true;
 
   constructor(@Inject(DOCUMENT) public document: Document, @Inject(MAT_DIALOG_DATA) data: any, private uploadService: UploadService) {
     this.data = data.d;
     this.effect = data.e;
-    // this.microcontrollerList = this.hardwareService.getAllMicroControllers();
-    // if (this.microcontrollerList.length > 0) {
-    //   this.selectedDevice = this.microcontrollerList[0];
-    // }
     this.exportEffect(this.effect);
   }
 
   public exportEffect(effect: any) {
-    this.data = this.uploadService.translateEffectForExport(effect);
+    this.data = this.uploadService.translateEffectForExport(effect, this.quality);
   }
 
   public copy() {
@@ -139,7 +143,6 @@ export class ExportDialogComponent implements OnInit {
     if (copyText) {
       copyText.select();
       document.execCommand('copy');
-      // alert('Copied the text: ' + copyText.value);
     }
   }
 

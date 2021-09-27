@@ -233,7 +233,7 @@ const mainMenuTemplate = [
             }
           },
           {
-            label: 'Grid size',
+            label: 'Grid settings',
             click() {
               mainMenu.items[3].submenu.items[2].submenu.items[2].enabled = true;
               adjustGridSettings();
@@ -716,7 +716,7 @@ function createFileSettingWindow(filepath) {
 }
 
 function createEffectSettingWindow(filepath) {
-  drawTemporaryWindow(400, 370, 'Effect Settings', true, filepath);
+  drawTemporaryWindow(400, (filepath === "effect-settings" ? 370 : 350), 'Effect Settings', false, filepath);
 }
 
 function createMotorSettingsWindow() {
@@ -843,7 +843,7 @@ ipcMain.on('export', function (e, data) {
 })
 
 ipcMain.on('updateButtonState', function(e, data) {
-  mainWindow.send('updateButtonState', data);
+  mainWindow.webContents.send('updateButtonState', data);
 })
 
 ipcMain.on('transform', function (e, data) {

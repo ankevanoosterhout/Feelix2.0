@@ -9,7 +9,7 @@ import { Cursor } from '../models/tool.model';
 import { Subject } from 'rxjs';
 import { FileService } from './file.service';
 import { EffectVisualizationService } from './effect-visualization.service';
-import { Details, Effect } from '../models/effect.model';
+import { Details, Effect, Unit } from '../models/effect.model';
 import { Collection } from '../models/collection.model';
 import { Configuration } from '../models/configuration.model';
 
@@ -102,17 +102,16 @@ export class DrawingService {
           }
         });
 
-      if (this.file.activeEffect.type !== 'position') {
-        const middleLine = this.config.svg.append('rect')
-          .attr('width', this.nodeService.scale.scaleX(this.config.editBounds.xMax) -
-                        this.nodeService.scale.scaleX(this.config.editBounds.xMin))
-          .attr('height', 0.6)
-          .attr('class', 'middleLine')
-          .attr('x', this.nodeService.scale.scaleX(this.config.editBounds.xMin))
-          .attr('y', (this.config.chartDy / 2) - 0.3)
-          .attr('transform', 'translate(0, ' + this.config.margin.top + ')')
-          .style('fill', '#1c1c1c');
-      }
+      const zeroLine = this.config.svg.append('line')
+        .attr('x1', this.nodeService.scale.scaleX(this.config.editBounds.xMin))
+        .attr('x2', this.nodeService.scale.scaleX(this.config.editBounds.xMax))
+        .attr('class', 'zeroLine')
+        .attr('y1', this.nodeService.scale.scaleY(0))
+        .attr('y2', this.nodeService.scale.scaleY(0))
+        .attr('transform', 'translate(0, ' + this.config.margin.top + ')')
+        .style('stroke', '#1c1c1c')
+        .style('stroke-width', 0.6)
+        .attr('shape-rendering', 'crispEdges');
 
       if (this.config.rulerVisible) {
         this.drawRulers();
@@ -214,14 +213,12 @@ export class DrawingService {
   setEditBounds() {
 
     if (this.file.activeEffect !== null) {
-      const yMin = this.file.activeEffect.type === 'position' ? 0 : -100;
-
       this.config.margin.top = this.config.svgDy * 0.4;
       this.config.editBounds = {
         xMin: this.file.activeEffect.range.start,
         xMax: this.file.activeEffect.range.end,
-        yMin: yMin,
-        yMax: 100
+        yMin: this.file.activeEffect.range_y.start,
+        yMax: this.file.activeEffect.range_y.end,
       };
     }
     this.resetVariables();
@@ -256,10 +253,9 @@ export class DrawingService {
       .attr('width', this.nodeService.scale.scaleX(this.config.editBounds.xMax) -
                      this.nodeService.scale.scaleX(this.config.editBounds.xMin));
 
-    this.config.svg.select('.middleLine')
-      .attr('x', this.nodeService.scale.scaleX(this.config.editBounds.xMin))
-      .attr('width', this.nodeService.scale.scaleX(this.config.editBounds.xMax) -
-                    this.nodeService.scale.scaleX(this.config.editBounds.xMin));
+    this.config.svg.select('.zeroLine')
+      .attr('x1', this.nodeService.scale.scaleX(this.config.editBounds.xMin))
+      .attr('x2', this.nodeService.scale.scaleX(this.config.editBounds.xMax));
 
     this.drawFileData();
   }
@@ -630,8 +626,6 @@ export class DrawingService {
     this.nodeService.reset();
   }
 
-
-
   compareDateModified(a, b) {
     if ( a.date.modified < b.date.modified ) { return -1; }
     if ( a.date.modified > b.date.modified ) { return 1; }
@@ -983,6 +977,7 @@ export class DrawingService {
     }
   }
 
+  /*
   drawGrid(gridSettings: any) {
 
     if (this.file.activeEffect.grid.visible) {
@@ -1020,6 +1015,7 @@ export class DrawingService {
         .style('stroke-width', 0.5);
     }
   }
+  */
 
 
   scaleActiveEffectFromTorqueToPosition(scaleFactor: number, offset: number) {
@@ -1031,6 +1027,29 @@ export class DrawingService {
   setActiveCollectionEffect(details: { effect: Details, collection: Collection }) {
     this.file.activeCollectionEffect = details.effect;
     this.file.activeCollection = details.collection;
+  }
+
+  updateEffectType() {
+    if (this.file.activeEffect.type === 'velocity' && this.file.activeEffect.grid.yUnit.name === 'voltage (%)') {
+      this.file.activeEffect.grid.yUnit = new Unit('velocity (%)', 100);
+    }
+    if (this.file.activeEffect.type !== 'velocity' && this.file.activeEffect.grid.yUnit.name === 'velocity (%)') {
+      this.file.activeEffect.grid.yUnit = new Unit('voltage (%)', 100);
+    }
+    if (this.file.activeEffect.type !== 'velocity' && this.file.activeEffect.grid.yUnit.name !== 'velocity (%)') {
+      this.file.activeEffect.range_y.start = this.file.activeEffect.type === 'position' ? 0 : -100;
+      this.file.activeEffect.range_y.end = 100;
+    }
+    if (this.config.editBounds.yMin < 0 && this.file.activeEffect.type === 'position' ) {
+      this.scaleActiveEffectFromTorqueToPosition(0.5, 100);
+    } else if (this.config.editBounds.yMin >= 0 && this.file.activeEffect.type !== 'position') {
+      this.scaleActiveEffectFromTorqueToPosition(2, 100);
+    }
+    this.dataService.color = this.file.configuration.colors.filter(c => c.type === this.file.activeEffect.type)[0].hash;
+    // this.updateActiveEffect(this.file);
+    this.updateConfigActiveFile(this.file.configuration);
+
+    this.updateActiveEffect(this.file);
   }
 
 

@@ -9,6 +9,7 @@ export class DataService {
 
   toolbar = new Toolbar();
   color: string;
+  color2: string;
   public dataObservable = new Subject<Toolbar>();
   // public colorObservable = new Subject<any>();
   public config: DrawingPlaneConfig;
@@ -27,8 +28,9 @@ export class DataService {
     return this.toolbar;
   }
 
-  setColor(color: string) {
+  setColor(color: string, color2: string) {
     this.color = color;
+    this.color2 = color2;
     // this.colorObservable.next(this.color);
   }
 
