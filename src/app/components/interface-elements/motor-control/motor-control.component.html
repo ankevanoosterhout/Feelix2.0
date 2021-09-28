@@ -40,8 +40,8 @@
 
           <div id="rangeValues" *ngIf="(collection.microcontroller === null || !collection.playing) && collection.effectDataList.length === 0 && this.motorControlService.file.configuration.collectionDisplay === 'large' && this.motorControlService.width > 800">
             <label>x</label>
-            <input type="number" *ngIf="collection.rotation.units.name !== 'ms'" id="range-start" name="rotation-start" value="{{ collection.rotation.start }}" (change)="updateRangeValues(collection)">
-            <input type="number" id="range-end" name="rotation-end" value="{{ collection.rotation.end }}" (change)="updateRangeValues(collection)">
+            <input type="number" *ngIf="collection.rotation.units.name !== 'ms'" id="range-start" name="rotation-start" [(ngModel)]="collection.rotation.start" (change)="this.motorControlService.updateCollection(collection)">
+            <input type="number" id="range-end" name="rotation-end" [(ngModel)]="collection.rotation.end" (change)="this.motorControlService.updateCollection(collection)">
 
             <select class="form-control" *ngIf="collection.visualizationType !== 'velocity'" id="unitsDropdown" (focus)="this.oldUnits = collection.rotation.units" [(ngModel)]="collection.rotation.units" (change)="changeUnits(collection)" name="units" [compareWith]="compareName">
               <option *ngFor="let unit of unitOptions" [ngValue]="unit">{{ unit.name }}</option>

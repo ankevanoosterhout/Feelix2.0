@@ -105,10 +105,9 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
 
     this.electronService.ipcRenderer.on('zero_electric_angle', (event: Event, data: any) => {
       const microcontroller = this.hardwareService.getMicroControllerByCOM(data.serialPath);
-
       if (microcontroller) {
-        microcontroller.motors.filter(m => m.id === data.motorID.name)[0].config.calibration.value = data.zero_electric_angle;
-        microcontroller.motors.filter(m => m.id === data.motorID.name)[0].config.calibration.direction = data.direction === 1 ? 'CW' : 'CCW';
+        microcontroller.motors.filter(m => m.id === data.motorID)[0].config.calibration.value = data.zero_electric_angle;
+        microcontroller.motors.filter(m => m.id === data.motorID)[0].config.calibration.direction = data.direction === 1 ? 'CW' : 'CCW';
         this.hardwareService.updateMicroController(microcontroller);
       }
     });
@@ -163,28 +162,28 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
   }
 
   render(collection: Collection, upload = false) {
-    if (collection.effects.length > 0) {
-      let time = 0;
-      if (collection.rotation.units.name === 'radians' && collection.effectDataList.length === 0) {
-        time = 200;
-        collection.rotation.units = { name: 'degrees', PR: 360 };
-        this.changeUnits(collection);
-      }
+    let time = 0;
+    if (collection.rotation.units.name === 'radians' && collection.effectDataList.length === 0) {
+      time = 200;
+      collection.rotation.units = { name: 'degrees', PR: 360 };
+      this.changeUnits(collection);
+    }
 
-      setTimeout(() => {
-        if (collection.effectDataList.length > 0) {
-          collection.effectDataList = [];
-          collection.overlappingData = [];
-          collection.renderedData = [];
-        } else {
+    setTimeout(() => {
+      if (collection.effectDataList.length > 0) {
+        collection.effectDataList = [];
+        collection.overlappingData = [];
+        collection.renderedData = [];
+      } else {
+        if (this.motorControlService.file.effects.length > 0) {
           this.uploadService.renderCollection(collection, this.motorControlService.file.effects);
         }
-        this.motorControlService.updateCollection(collection);
-        if (upload && collection.effectDataList.length > 0) {
-          this.upload(collection);
-        }
-      }, time);
-    }
+      }
+      this.motorControlService.updateCollection(collection);
+      if (upload && collection.effectDataList.length > 0) {
+        this.upload(collection);
+      }
+    }, time);
   }
 
   upload(collection: Collection) {
@@ -304,7 +303,6 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
   }
 
   updateRangeYValues(collection: Collection) {
-
     // this.motorControlService.updateCollection(collection);
   }
 
@@ -317,6 +315,13 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
     if (collection.visualizationType === 'torque') {
       collection.rotation.start_y = -100;
       collection.rotation.end_y = 100;
+    }
+    if (collection.visualizationType === 'velocity') {
+      this.oldUnits = collection.rotation.units;
+      collection.rotation.units = { name: 'ms', PR: 1000 };
+      this.changeUnits(collection);
+      collection.rotation.units_y = { name: 'velocity (%)', PR: 100 };
+      this.changeUnitsY(collection);
     }
     this.motorControlService.drawCollection(collection);
   }
@@ -331,9 +336,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
   }
 
   saveMotorData(collection: Collection) {
-    console.log(collection);
     const coll_microcontroller = this.hardwareService.getMicroControllerByCOM(collection.microcontroller.serialPort.path);
-    console.log(coll_microcontroller);
     if (coll_microcontroller) {
       if (collection.visualizationType === 'position') {
         coll_microcontroller.motors.filter(m => m.id === collection.motorID.name)[0].position_pid = collection.microcontroller.motors[collection.motorID.index].position_pid;

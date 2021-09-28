@@ -409,11 +409,17 @@ export class EffectsComponent implements OnInit, AfterViewInit {
     } else {
       this.drawingService.file.activeCollectionEffect.quality = Math.round(this.drawingService.file.activeCollectionEffect.quality);
     }
+    for (const collEffect of this.drawingService.file.activeCollection.effects) {
+      if (collEffect.effectID === this.drawingService.file.activeCollectionEffect.effectID) {
+        collEffect.quality = this.drawingService.file.activeCollectionEffect.quality;
+      }
+    }
     if (this.drawingService.file.activeCollection.effectDataList.length > 0) {
       this.document.getElementById('render-' + this.drawingService.file.activeCollection.id).click();
       this.document.getElementById('render-' + this.drawingService.file.activeCollection.id).click();
     }
-    this.updateCollectionEffect();
+
+    this.fileService.updateCollection(this.drawingService.file.activeCollection);
   }
 
 

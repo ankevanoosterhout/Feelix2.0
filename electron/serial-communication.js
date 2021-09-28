@@ -111,6 +111,7 @@ function ifSerialAvailable(serialData, portlist, connect) {
 function createConnection(serialData) {
   if (serialData && serialData.port) {
     if (ports.filter(d => d.path === serialData.port.path).length === 0) {
+      console.log(serialData, serialData.port.path);
       const sp = new newSerialPort(serialData, port);
       sp.createSerialPort();
       ports.push(sp);
@@ -133,7 +134,7 @@ class newSerialPort {
     this.sp.write(data, function (err) {
         if (err) { return console.log('Error: ', err.message); }
         else {
-           console.log('written ', data);
+          //  console.log('written ', data);
         }
     });
   }
@@ -190,7 +191,7 @@ class newSerialPort {
       parser.on('data', (d) => {
 
         if (d.charAt(0) === '*') {
-          console.log('received data ', d);
+          // console.log('received data ', d);
           if (dataSendWaitList.filter(d => d.port === this.COM)) {
             uploadFromWaitList(ports.filter(p => p.COM === this.COM)[0]);
           }
@@ -256,10 +257,12 @@ function prepareMotorData(uploadContent, motor, datalist) {
 
   datalist.unshift('FM' + motor.id + 'F');
   datalist.unshift('FM' + motor.id + 'I' + motor.id);
-  datalist.unshift('FM' + motor.id + 'S' + motor.config.supplyVoltage);
-  datalist.unshift('FM' + motor.id + 'P' + motor.config.polepairs);
-
-
+  if (motor.config.supplyVoltage) {
+    datalist.unshift('FM' + motor.id + 'S' + motor.config.supplyVoltage);
+  }
+  if (motor.config.polepairs) {
+    datalist.unshift('FM' + motor.id + 'P' + motor.config.polepairs);
+  }
   datalist.unshift('FM' + motor.id + 'L' + (motor.config.voltageLimit || motor.config.supplyVoltage));
 
   if (motor.config.velocityLimit) {
@@ -269,7 +272,7 @@ function prepareMotorData(uploadContent, motor, datalist) {
     datalist.unshift('FM' + motor.id + 'Z' + motor.config.calibration.value.toFixed(12));
     datalist.unshift('FM' + motor.id + 'N' + (motor.config.calibration.direction === 'CW' ? 1 : -1));
   }
-  datalist.unshift('FM' + motor.id + 'E' + motor.config.encoder.part_number);
+  // datalist.unshift('FM' + motor.id + 'E' + motor.config.encoder.part_number);
   datalist.unshift('FM' + motor.id + 'O' + motor.state.position.start);
   datalist.unshift('FM' + motor.id + 'C' + motor.config.encoder.clock_speed);
   datalist.unshift('FM' + motor.id + 'D' + (motor.config.encoder.direction === 'CW' ? 1 : -1));
@@ -478,7 +481,7 @@ function calibrateMotor(motor_id, microcontroller) {
 
   setTimeout(() => {
     uploadFromWaitList(receivingPort);
-    main.updateSerialProgress({ progress: 0, str: 'Calibrating motor at ' + port  });
+    main.updateSerialProgress({ progress: 0, str: 'Calibrating motor at ' + receivingPort.COM });
   }, 500);
 }
 
@@ -493,13 +496,6 @@ function calibrateMotor(motor_id, microcontroller) {
 // function updateStartPosition(serialData, position) {
 //   main.updateSerialProgress({ progress: 100, str: 'Update start position' });
 //   const str = '*U;' + position;
-//   sendDataStr(str, serialData);
-// }
-
-
-// function updateSleepmode(serialData, sleep) {
-//   main.updateSerialProgress({ progress: 100, str: (sleep === true ? 'Enable sleep mode' : 'Disable sleep mode') });
-//   const str = '*Z;' + (sleep === true ? 1 : 0);
 //   sendDataStr(str, serialData);
 // }
 
@@ -527,11 +523,6 @@ exports.createConnection = createConnection;
 exports.connectToSerialPort = connectToSerialPort;
 exports.closeSerialPort = closeSerialPort;
 exports.closeAllSerialPorts = closeAllSerialPorts;
-// exports.moveToPos = moveToPos;
 exports.calibrateMotor = calibrateMotor;
-// exports.saveCalibrationValueToEEPROM = saveCalibrationValueToEEPROM;
-// exports.updateStartPosition = updateStartPosition;
-// exports.updateSleepmode = updateSleepmode;
 exports.play = play;
-// exports.updateEffectData = updateEffectData;
 exports.uploadData = uploadData;

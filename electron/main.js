@@ -73,10 +73,10 @@ const mainMenuTemplate = [
         label: 'Settings',
         click() { createFileSettingWindow("file-update-settings"); }
       },
-      {
-        label: 'Example files',
-        submenu: []
-      },
+      // {
+      //   label: 'Example files',
+      //   submenu: []
+      // },
       {
         label: 'Quit',
         accelerator: process.platform === 'darwin' ? 'Command+Q' : 'Ctrl+Q',
