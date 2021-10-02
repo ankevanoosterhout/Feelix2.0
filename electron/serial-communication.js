@@ -111,7 +111,6 @@ function ifSerialAvailable(serialData, portlist, connect) {
 function createConnection(serialData) {
   if (serialData && serialData.port) {
     if (ports.filter(d => d.path === serialData.port.path).length === 0) {
-      console.log(serialData, serialData.port.path);
       const sp = new newSerialPort(serialData, port);
       sp.createSerialPort();
       ports.push(sp);
@@ -134,7 +133,7 @@ class newSerialPort {
     this.sp.write(data, function (err) {
         if (err) { return console.log('Error: ', err.message); }
         else {
-          //  console.log('written ', data);
+           console.log('written ', data);
         }
     });
   }
@@ -324,7 +323,7 @@ function prepareEffectData(uploadContent, motor, datalist) {
         datalist.unshift('FDI:' + (Math.round(el.d) !== el.d ? el.d.toFixed(6) : el.d));
       }
       if (d.type === 'velocity' && d.yUnit === 'degrees') {
-        datalist.unshift('FDI:' + (el.y * 100) * (Math.PI / 180)).toFixed(6);
+        datalist.unshift('FDI:' + ((el.y2 * 100) * (Math.PI / 180)).toFixed(6));
       } else {
         datalist.unshift('FDI:' + (Math.round(el.y) !== el.y ? el.y.toFixed(6) : el.y));
       }
@@ -364,7 +363,7 @@ function prepareEffectData(uploadContent, motor, datalist) {
         datalist.unshift('FDI:' + (Math.round(el.d) !== el.d ? el.d.toFixed(6) : el.d));
       }
       if (d.type === 'velocity' && d.yUnit === 'degrees') {
-        datalist.unshift('FDI:' + (el.y * 100) * (Math.PI / 180)).toFixed(6);
+        datalist.unshift('FDI:' + ((el.y * 100) * (Math.PI / 180)).toFixed(6));
       } else {
         datalist.unshift('FDI:' + (Math.round(el.y) !== el.y ? el.y.toFixed(6) : el.y));
       }

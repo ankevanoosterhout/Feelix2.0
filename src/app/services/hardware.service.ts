@@ -66,7 +66,7 @@ export class HardwareService {
         this.microcontrollers.push(new MicroController(uuid(), COM.serialPort, type));
         this.store();
       }
-      // console.log(this.microcontrollers);
+      console.log(this.microcontrollers);
     }
   }
 
@@ -126,6 +126,7 @@ export class HardwareService {
   }
 
   updateMicroController(microcontroller: MicroController) {
+    console.log(microcontroller);
     if (microcontroller) {
       let controller = this.microcontrollers.filter(m => m.serialPort.path === microcontroller.serialPort.path)[0];
       if (controller) {
@@ -166,6 +167,7 @@ export class HardwareService {
 
 
   deleteMicroController(COM: string) {
+    console.log(COM);
     const microController = this.microcontrollers.filter(m => m.serialPort.path === COM)[0];
     const index = this.microcontrollers.indexOf(microController);
     if (index > -1) {
@@ -234,11 +236,13 @@ export class HardwareService {
     return;
   }
 
-  updatePlay(com: string, playing: boolean) {
-    const microController = this.microcontrollers.filter(m => m.serialPort.path === com)[0];
-    if (microController) {
-      microController.playing = playing;
+  updatePlay(com: string, type: string, playing: boolean) {
+    const microcontroller = this.microcontrollers.filter(m => m.serialPort.path === com)[0];
+    if (microcontroller) {
+      microcontroller.playing = playing;
       this.store();
+    } else if (com && type) {
+      this.addMicroController(com, type);
     }
   }
 

@@ -112,6 +112,14 @@ export class MotorSettingsComponent implements OnInit {
 
     });
 
+    this.electronService.ipcRenderer.on('microcontrollers', (event: Event, data: any) => {
+      this.microcontrollers = data;
+      this.selectedMicrocontroller = this.microcontrollers[this.microcontrollers.length - 1];
+      this.showSelectMicrocontroller = false;
+    });
+
+
+
   }
 
   selectMicrocontroller(microcontroller: MicroController) {
@@ -133,11 +141,14 @@ export class MotorSettingsComponent implements OnInit {
   }
 
   deleteMicrocontroller(microcontroller: any) {
-    const port = microcontroller.serialPort.path;
-    if (this.selectedMicrocontroller.id === microcontroller.id) {
-      this.selectedMicrocontroller = null;
+    if (microcontroller) {
+      const port = microcontroller.serialPort.path;
+      if (this.selectedMicrocontroller.id === microcontroller.id) {
+        this.selectedMicrocontroller = null;
+      }
+      this.hardwareService.deleteMicroController(port);
+      this.electronService.ipcRenderer.send('deleteMicrocontrollerCollections', microcontroller);
     }
-    this.hardwareService.deleteMicroController(port);
   }
 
   updateMicrocontroller(microcontroller: any) {
@@ -203,13 +214,13 @@ export class MotorSettingsComponent implements OnInit {
   }
 
   saveMicrocontroller(selectedPort: any, selectedController: string) {
-    this.hardwareService.addMicroController(selectedPort, this.selectedController);
+
     if (selectedPort !== null && selectedController !== null) {
+      this.hardwareService.addMicroController(selectedPort, this.selectedController);
       this.electronService.ipcRenderer.send('addMicrocontroller', { port: selectedPort.serialPort, type: this.selectedController, baudrate: 115200 });
+      this.selectedMicrocontroller = this.microcontrollers[this.microcontrollers.length - 1];
+      this.showSelectMicrocontroller = false;
     }
-    this.microcontrollers = this.hardwareService.getAllMicroControllers();
-    this.selectedMicrocontroller = this.microcontrollers[this.microcontrollers.length - 1];
-    this.showSelectMicrocontroller = false;
   }
 
 
@@ -218,7 +229,16 @@ export class MotorSettingsComponent implements OnInit {
     if (this.microcontrollers.length > 0) {
       this.selectedMicrocontroller = this.microcontrollers[0];
     }
+
+    this.hardwareService.microcontrollerObservable.subscribe(microcontrollers => {
+      this.microcontrollers = microcontrollers;
+      if (this.selectedMicrocontroller) {
+        this.selectedMicrocontroller = this.microcontrollers.filter(m => m.id === this.selectedMicrocontroller.id)[0];
+      }
+    });
   }
+
+
 
 
 }

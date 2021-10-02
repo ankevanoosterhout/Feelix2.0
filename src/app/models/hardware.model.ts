@@ -65,7 +65,7 @@ export class Config {
   phaseResistance: number = 15.2;
   motionControl: string = 'position';
   supplyVoltage: number = 12;
-  voltageLimit: number = null;
+  voltageLimit: number = 12;
   velocityLimit: number = 20;
   inlineCurrentSensing = false;
   encoderType: string = 'Magnetic sensor';

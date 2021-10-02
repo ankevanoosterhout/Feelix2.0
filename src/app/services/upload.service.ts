@@ -211,11 +211,16 @@ export class UploadService {
     if (effectData.grid.xUnit.name === 'ms') { multiply = (360 / 1000); }
     let data = [];
     let start_offset = 0;
+    let start_pos = 0;
 
     for (const path of copyEffectList.paths) {
+      if (effectData.type === 'velocity' && effectData.grid.yUnit.name === 'degrees') {
+        const nodes = path.nodes.filter(n => n.type === 'node');
+        start_pos = Math.ceil(nodes[0].pos.y * (Math.PI / 180));
+      }
       data = effectData.type === 'position' ?
         data.concat(this.translatePositionEffectData(path, multiply, start_offset, collEffect.quality)) :
-        data.concat(this.translateTorqueEffectData(path, multiply, effectData.range_y, start_offset, collEffect.quality));
+        data.concat(this.translateTorqueEffectData(path, multiply, effectData.range_y, start_offset, collEffect.quality, start_pos));
 
       start_offset += data[data.length - 1].x + collEffect.quality;
     }
@@ -224,7 +229,7 @@ export class UploadService {
 
 
 
-  translateTorqueEffectData(path: Path, multiply: number, effect_range: any, start_offset: number, quality = 1) {
+  translateTorqueEffectData(path: Path, multiply: number, effect_range: any, start_offset: number, quality = 1, start_from = 0) {
     let translatedData = [];
     let offset = 0;
 
@@ -263,7 +268,8 @@ export class UploadService {
 
           const coordinates = {
             x: (m - startPos) + start_offset,
-            y: inlistValue ? (inlistValue.y + (yValue / 100)) / 2 : (yValue / 100)
+            y: inlistValue ? (inlistValue.y + (yValue / 100)) / 2 : (yValue / 100),
+            y2: inlistValue ? (inlistValue.y + (yValue / 100)) / 2 - start_from: (yValue / 100) - start_from
           };
 
           translatedData.push(coordinates);
@@ -387,6 +393,7 @@ export class UploadService {
 
   createUploadModel(collection: Collection, microcontroller: MicroController) {
     let model = new UploadModel(collection, microcontroller);
+    console.log(model);
     return model;
   }
 

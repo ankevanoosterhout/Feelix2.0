@@ -16,7 +16,8 @@
 
           <div class="form-row left" title="select microcontroller"  *ngIf="this.motorControlService.width > 100">
             <select class="form-control" id="comport" [(ngModel)]="collection.microcontroller" (change)="saveCollection(collection)" name="comport" [compareWith]="compareCOM">
-                <option *ngFor="let mcu of microcontrollers" [ngValue]="mcu">{{ mcu.name }}</option>
+              <option *ngIf="!collection.microcontroller" [ngValue]="this.undefinedVar" disabled selected="selected">-- select --</option>
+              <option *ngFor="let mcu of microcontrollers" [ngValue]="mcu">{{ mcu.name }}</option>
             </select>
           </div>
 
@@ -31,7 +32,7 @@
               <li id="render-{{ collection.id }}" [ngClass]="{ active: collection.effectDataList.length > 0 }" (click)="render(collection)" title="render">
                 <img class="no-pointer-events" src="./assets/icons/buttons/refresh.svg"></li>
               <li id="upload" (click)="upload(collection)" title="upload"><img class="no-pointer-events" src="./assets/icons/buttons/upload.svg"></li>
-              <li id="play"  [ngClass]="{ active: collection.renderedData && collection.renderedData.length > 0 }" (click)="play(true, collection)" *ngIf="collection.visualizationType === 'velocity'">
+              <li id="play"  [ngClass]="{ active: collection.renderedData && collection.renderedData.length > 0 }" (click)="play(!collection.playing, collection)" *ngIf="collection.visualizationType === 'velocity'">
                 <span class="no-pointer-events" *ngIf="!collection.playing" title="play"><div class="play-arrow no-pointer-events"></div></span>
                 <span class="no-pointer-events" *ngIf="collection.playing" title="stop"><div class="stop-square no-pointer-events"></div></span>
               </li>
@@ -97,12 +98,12 @@
           </div>
 
           <div class="form-row left collection_pid" id="max" *ngIf="collection.visualizationType === 'velocity' && collection.microcontroller && this.motorControlService.width > 550 && collection.effectDataList.length > 0" title="Maximum velocity (rad/s)">
-            <label>max</label>
+            <label>max vel.</label>
             <input type="number" id="collection-PID" name="collection-max-vel" [(ngModel)]="collection.microcontroller.motors[collection.motorID.index].config.velocityLimit" (change)="saveMotorData(collection)">
           </div>
 
           <div class="form-row left collection_pid" id="max" *ngIf="collection.visualizationType === 'torque' && collection.microcontroller && this.motorControlService.width > 400 && collection.effectDataList.length > 0" title="Maximum voltage (V)">
-            <label>max</label>
+            <label>max volt.</label>
             <input type="number" id="collection-PID" name="collection-max-vol" [(ngModel)]="collection.microcontroller.motors[collection.motorID.index].config.voltageLimit" (change)="saveMotorData(collection)">
           </div>
 

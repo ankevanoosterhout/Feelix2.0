@@ -21,6 +21,8 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
 
   draggingListItem = null;
 
+  undefinedVar = null;
+
   scaleOptions = [
     { text: '50%', value: 50 },
     { text: '75%', value: 75 },
@@ -122,16 +124,44 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
       }
     });
 
+    this.electronService.ipcRenderer.on('deleteMicrocontrollerCollections', (event: Event, microcontroller: any) => {
+      for (const collection of this.motorControlService.file.collections) {
+        if (collection.microcontroller && collection.microcontroller.id === microcontroller.id) {
+          collection.microcontroller = null;
+          this.motorControlService.updateCollection(collection);
+        }
+      }
+    });
+
+    this.electronService.ipcRenderer.on('updateStatus', (event: Event, data: any) => {
+      this.hardwareService.updatePlay(data.microcontroller.port.path, data.microcontroller.type, data.connected);
+
+      if (!data.connected) {
+        for (const c of this.motorControlService.file.collections) {
+          if (c.playing && c.microcontroller && c.microcontroller.serialPort.path === data.microcontroller.port.path) {
+            c.playing = false;
+            this.motorControlService.updateCollection(c);
+          }
+        }
+      }
+
+    });
+
+
   }
+
 
   ngOnInit() {
     this.hardwareService.microcontrollerObservable.subscribe(microcontrollers => {
       this.microcontrollers = microcontrollers;
+      console.log(this.microcontrollers);
+      console.log(this.motorControlService.file.collections);
       for (const microcontroller of this.microcontrollers) {
-        const collections = this.motorControlService.file.collections;
-        let microcontrollerCollection = collections.filter(c => c.microcontroller && c.microcontroller.id === microcontroller.id)[0];
-        if (microcontrollerCollection) {
-          microcontrollerCollection = microcontroller;
+        const microcontrollerCollections = this.motorControlService.file.collections.filter(c => c.microcontroller && c.microcontroller.serialPort.path === microcontroller.serialPort.path);
+
+        for (const collection of microcontrollerCollections) {
+          console.log(collection);
+          collection.microcontroller = microcontroller;
         }
       }
       // this.motorControlService.drawCollections();
@@ -208,9 +238,13 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
       if (collection.effectDataList.length > 0) {
         this.electronService.ipcRenderer.send('play_collection', { play: play, motor_id: collection.motorID.name, collection_name: collection.name, port: collection.microcontroller.serialPort.path });
         if (play) {
-          collection.time = 0;
+          if (collection.time > collection.rotation.end || collection.time == undefined) {
+            collection.time = 0;
+          }
           collection.playing = true;
           this.motorControlService.saveCollection(collection);
+        } else {
+          collection.playing = false;
         }
       } else {
         this.upload(collection);
@@ -327,11 +361,13 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
   }
 
   saveCollection(collection: Collection) {
-    if (collection.motorID.name === 'A') { collection.motorID.index = 0; }
-    if (collection.motorID.name === 'B') { collection.motorID.index = 1; }
-    if (collection.motorID.name === 'C') { collection.motorID.index = 2; }
-    if (collection.motorID.name === 'D') { collection.motorID.index = 3; }
-    if (collection.motorID.name === 'E') { collection.motorID.index = 4; }
+    if (collection.microcontroller && collection.microcontroller.id) {
+      if (collection.motorID.name === 'A') { collection.motorID.index = 0; }
+      if (collection.motorID.name === 'B') { collection.motorID.index = 1; }
+      if (collection.motorID.name === 'C') { collection.motorID.index = 2; }
+      if (collection.motorID.name === 'D') { collection.motorID.index = 3; }
+      if (collection.motorID.name === 'E') { collection.motorID.index = 4; }
+    }
     this.motorControlService.updateCollection(collection);
   }
 

@@ -166,20 +166,6 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
       this.fileService.createFileFrom(data);
     });
 
-
-    this.electronService.ipcRenderer.on('updateStatus', (event: Event, data: any) => {
-
-      this.hardwareService.updatePlay(data.microcontroller.port.path, data.connected);
-
-      if (!data.connected) {
-        const collection = this.file.collections.filter(c => c.playing && c.microcontroller && c.microcontroller.serialPort.path == data.microcontroller.port.path)[0];
-        if (collection) {
-          collection.playing = false;
-          this.fileService.updateCollection(collection);
-        }
-      }
-    });
-
     this.electronService.ipcRenderer.on('changeViewSettings', (event: Event, data: any) => {
       this.motorControlService.changeViewSettings();
     });
@@ -188,11 +174,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
       if (this.file.activeEffect) {
         this.fileService.updateActiveEffectData(this.file);
       }
-    })
-
-    this.electronService.ipcRenderer.on('requestObjectSize', () => {
-
-    })
+    });
 
 
   }

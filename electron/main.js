@@ -736,7 +736,6 @@ function createTransform() {
 }
 
 function createConnectToCOM(comPorts) {
-  // console.log("create window" + JSON.stringify(comPorts));
   mainWindow.webContents.send('updateAvailableCOMPorts', comPorts.serialPort);
 
   if (tmpWindow !== null && (activeWindow === 'motor-settings')) {
@@ -890,14 +889,28 @@ ipcMain.on('updateHeightSettings', function (e, height) {
 
 ipcMain.on('listSerialPorts', function (e, data) {
   serialPort.listSerialPorts(createConnectToCOM);
-})
+});
 
 
 ipcMain.on('addMicrocontroller', function (e, data) {
-  // console.log(data);
   serialPort.createConnection(data);
   mainWindow.webContents.send('updateStatus', { microcontroller: data, connected: false, error: false });
-})
+});
+
+// ipcMain.on('updateMicrocontroller', function (e, data) {
+//   mainWindow.webContents.send('updateMicrocontroller', { microcontroller: data, connected: false, error: false });
+// });
+
+ipcMain.on('updateMicrocontrollers', function (e, data) {
+  if (tmpWindow !== null && (activeWindow === 'motor-settings')) {
+    tmpWindow.webContents.send('microcontrollers', data);
+  }
+});
+
+ipcMain.on('deleteMicrocontrollerCollections', function (e, data) {
+  mainWindow.webContents.send('deleteMicrocontrollerCollections', data);
+});
+
 
 ipcMain.on('connectToSerialPort', function (e, data) {
   if (data.connect) {
@@ -905,7 +918,7 @@ ipcMain.on('connectToSerialPort', function (e, data) {
   } else {
     serialPort.closeSerialPort(data.COM);
   }
-})
+});
 
 
 
