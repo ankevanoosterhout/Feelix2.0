@@ -67,7 +67,7 @@ export class UploadService {
         const translatedDataEffect1 = this.cloneService.deepClone(collection.effectDataList.filter(e => e.id === effectData1.id)[0]);
         const translatedDataEffect2 = this.cloneService.deepClone(collection.effectDataList.filter(e => e.id === effectData2.id)[0]);
 
-        for (const el of translatedDataEffect1.data) {
+        for (const el of translatedDataEffect1.data_complete) {
           if (el.x >= d.overlap.x1 * effectData1.size.width - 2 && el.x <= d.overlap.x2 * effectData1.size.width + 2) {
             el.x *= (d.effect1.scale.x / 100);
             el.y *= (d.effect1.scale.y / 100);
@@ -111,8 +111,7 @@ export class UploadService {
       const cw = item.effect1.direction.cw && item.effect2.direction.cw ? true : false;
       const ccw = item.effect1.direction.ccw && item.effect2.direction.ccw ? true : false;
 
-
-      if (cw || ccw) {
+      if ((cw || ccw) || (item.type === 'velocity')) {
         for (let i = item.position.x1; i <= item.position.x2; i++) {
 
           const y1 = this.bezierService.closestY(i, item.points);
@@ -135,7 +134,7 @@ export class UploadService {
             newO = (o2 - o1) / (x2 - x1) * (i - x1) + o1;
           }
 
-          const pointAtNewArray = newArray.filter(n => n.x === i && n.id !== item.id && ((n.direction.cw === cw) || (n.direction.ccw === ccw)))[0];
+          const pointAtNewArray = newArray.filter(n => n.x === i && n.id !== item.id && (((n.direction.cw === cw) || (n.direction.ccw === ccw)) || item.type === 'velocity'))[0];
 
           if (pointAtNewArray) {
             pointAtNewArray.y += (newY);
@@ -160,6 +159,7 @@ export class UploadService {
 
 
   splitDataArray(array: Array<any>) {
+
     if (array.length > 1) {
       let newArray = [];
       let tmpArray = [];
@@ -167,7 +167,7 @@ export class UploadService {
       let i = 0;
       for (const el of array) {
         if (tmpArray.length > 0 && ((el.x - array[i - 1].x > 1) || i === array.length - 1) &&
-          (el.direction.cw === array[i - 1].direction.cw || el.direction.ccw === array[i - 1].direction.ccw)) {
+          (el.type === 'velocity' || el.direction.cw === array[i - 1].direction.cw || el.direction.ccw === array[i - 1].direction.ccw)) {
           newArray.push({ data: tmpArray, direction: el.direction, type: el.type, inf: el.inf, position: { start: startPosition, end: array[i - 1].x } });
           tmpArray = [];
           startPosition = array[i].x;
@@ -208,8 +208,9 @@ export class UploadService {
     let copyEffectList = this.cloneService.deepClone(effectData);
     let multiply = 1;
     if (effectData.grid.xUnit.name === 'radians') { multiply = (180 / Math.PI); }
-    if (effectData.grid.xUnit.name === 'ms') { multiply = (360 / 1000); }
+    if (effectData.grid.xUnit.name === 'ms') { multiply = 1; }
     let data = [];
+    let data_complete = [];
     let start_offset = 0;
     let start_pos = 0;
 
@@ -222,9 +223,13 @@ export class UploadService {
         data.concat(this.translatePositionEffectData(path, multiply, start_offset, collEffect.quality)) :
         data.concat(this.translateTorqueEffectData(path, multiply, effectData.range_y, start_offset, collEffect.quality, start_pos));
 
+      data_complete = effectData.type === 'position' ?
+        data_complete.concat(this.translatePositionEffectData(path, multiply, 0, 1)) :
+        data_complete.concat(this.translateTorqueEffectData(path, multiply, effectData.range_y, 0, 1, start_pos));
+
       start_offset += data[data.length - 1].x + collEffect.quality;
     }
-    return { id: collEffect.effectID, type: effectData.type, size: effectData.size, rotation: effectData.rotation, infinite: collEffect.infinite, yUnit: effectData.grid.yUnit.name, data: data };
+    return { id: collEffect.effectID, type: effectData.type, size: effectData.size, rotation: effectData.rotation, infinite: collEffect.infinite, yUnit: effectData.grid.yUnit.name, data: data, data_complete: data_complete };
   }
 
 
@@ -250,15 +255,16 @@ export class UploadService {
         const range = this.bezierService.getCurveLength(pathSegment);
         const coords = this.bezierService.getAllCoordinates(range[0] * 4, (1 / (range[0] * 4)), pathSegment, multiply, 'force');
 
-        start = offset === 0 ? Math.ceil(pathSegment[0].pos.x * multiply) + offset : Math.round(pathSegment[0].pos.x * multiply) + offset;
+        start = offset === 0 ? Math.ceil(pathSegment[0].pos.x * multiply) : Math.round(pathSegment[0].pos.x * multiply) + offset;
         end = Math.round(pathSegment[pathSegment.length - 1].pos.x * multiply);
+
         for (let m = start; m <= end; m += quality) {
 
           let yValue = this.bezierService.closestY(m, coords);
           if (yValue > effect_range.end) { yValue = effect_range.end; }
           if (yValue < effect_range.start) { yValue = effect_range.start; }
 
-          const inlistValue = translatedData.filter(d => d.x === m - startPos)[0] ? translatedData.filter(d => d.x === m - startPos)[0] : null;
+          const inlistValue = translatedData.filter(d => d.x === (m - startPos) + start_offset)[0] ? translatedData.filter(d => d.x === (m - startPos) + start_offset)[0] : null;
           if (inlistValue) {
             const index = translatedData.indexOf(inlistValue);
             if (index > -1) {
@@ -356,7 +362,7 @@ export class UploadService {
     const original_effect = effectList.filter(e => e.id === collEffect1.effectID)[0];
     let multiply = 1;
     if (original_effect.grid.xUnit.name === 'radians') { multiply = (180 / Math.PI); }
-    if (original_effect.grid.xUnit.name === 'ms') { multiply = 360 / 1000; }
+    // if (original_effect.grid.xUnit.name === 'ms') { multiply = 360 / 1000; }
     const original_effect_x1 = collEffect1.position.x * multiply;
     const width = (original_effect.size.width * (collEffect1.scale.x / 100)) * multiply;
     const original_effect_x2 = (collEffect1.position.x + width) * multiply;
@@ -366,7 +372,7 @@ export class UploadService {
     if (overlay_effect.type === original_effect.type) {
       let multiply_el = 1;
       if (overlay_effect.grid.xUnit.name === 'radians') { multiply_el = (180 / Math.PI); }
-      if (overlay_effect.grid.xUnit.name === 'ms') { multiply_el = 360 / 1000; }
+      // if (overlay_effect.grid.xUnit.name === 'ms') { multiply_el = 360 / 1000; }
       const x1 = collEffect2.position.x * multiply_el;
       const width_el = (overlay_effect.size.width * (collEffect2.scale.x / 100)) * multiply_el;
       const x2 = (collEffect2.position.x * multiply_el) + width_el;
@@ -383,7 +389,11 @@ export class UploadService {
         overlap = { x1: 0, x2: 1 };
       }
       if (overlap) {
-        collection.overlappingData.push({ effect1: collEffect1, effect2: collEffect2, overlap: overlap });
+        collection.overlappingData.push({
+          effect1: collEffect1,
+          effect2: collEffect2,
+          overlap: overlap
+        });
       }
     }
   }
@@ -393,7 +403,7 @@ export class UploadService {
 
   createUploadModel(collection: Collection, microcontroller: MicroController) {
     let model = new UploadModel(collection, microcontroller);
-    console.log(model);
+    // console.log(model);
     return model;
   }
 
@@ -404,7 +414,7 @@ export class UploadService {
     let multiply = 1;
     if (effect.paths.length > 0) {
       if (effect.grid.xUnit.name === 'radians') { multiply = (180 / Math.PI); }
-      if (effect.grid.xUnit.name === 'ms') { multiply = 360 / 1000; }
+      // if (effect.grid.xUnit.name === 'ms') { multiply = 360 / 1000; }
 
       let effect_type = null;
       if (effect.type !== 'velocity') {

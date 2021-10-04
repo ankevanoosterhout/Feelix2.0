@@ -104,9 +104,9 @@ export class EffectsComponent implements OnInit, AfterViewInit {
   ngOnInit(): void {
     this.document.body.classList.add('disable-scroll-body');
 
-    if (this.electronService.isElectronApp) {
-      this.electronService.ipcRenderer.send('getEffects');
-    }
+    // if (this.electronService.isElectronApp) {
+    //   this.electronService.ipcRenderer.send('getEffects');
+    // }
   }
 
   ngAfterViewInit(): void {

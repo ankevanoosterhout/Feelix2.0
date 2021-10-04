@@ -1151,7 +1151,6 @@ export class NodeService {
       translate.vertical *= -1;
     }
     for (const path of this.selectedPaths) {
-      console.log(translate);
       this.translatePath(path, translate);
     }
   }

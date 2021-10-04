@@ -1032,21 +1032,24 @@ export class DrawingService {
   updateEffectType() {
     if (this.file.activeEffect.type === 'velocity' && this.file.activeEffect.grid.yUnit.name === 'voltage (%)') {
       this.file.activeEffect.grid.yUnit = new Unit('velocity (%)', 100);
+      this.file.activeEffect.grid.xUnit = new Unit('ms', 1000);
+      this.file.activeEffect.range.start = 0;
+      this.file.activeEffect.range.end = 1000;
     }
-    if (this.file.activeEffect.type !== 'velocity' && this.file.activeEffect.grid.yUnit.name === 'velocity (%)') {
+    if (this.file.activeEffect.type !== 'velocity') {
       this.file.activeEffect.grid.yUnit = new Unit('voltage (%)', 100);
+      this.file.activeEffect.range.start = 0;
+      this.file.activeEffect.range.end = 360;
     }
-    if (this.file.activeEffect.type !== 'velocity' && this.file.activeEffect.grid.yUnit.name !== 'velocity (%)') {
-      this.file.activeEffect.range_y.start = this.file.activeEffect.type === 'position' ? 0 : -100;
-      this.file.activeEffect.range_y.end = 100;
-    }
+    this.file.activeEffect.range_y.start = this.file.activeEffect.type === 'position' ? 0 : -100;
+    this.file.activeEffect.range_y.end = 100;
+
     if (this.config.editBounds.yMin < 0 && this.file.activeEffect.type === 'position' ) {
       this.scaleActiveEffectFromTorqueToPosition(0.5, 100);
     } else if (this.config.editBounds.yMin >= 0 && this.file.activeEffect.type !== 'position') {
       this.scaleActiveEffectFromTorqueToPosition(2, 100);
     }
     this.dataService.color = this.file.configuration.colors.filter(c => c.type === this.file.activeEffect.type)[0].hash;
-    // this.updateActiveEffect(this.file);
     this.updateConfigActiveFile(this.file.configuration);
 
     this.updateActiveEffect(this.file);

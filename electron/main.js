@@ -318,6 +318,11 @@ const mainMenuTemplate = [
         label: 'Open development tools',
         click() {  mainWindow.webContents.openDevTools(); }
       }
+      // ,
+      // {
+      //   label: 'Clear application data',
+      //   click() { clearCache(); }
+      // }
     ]
   }
 ];
@@ -438,8 +443,6 @@ function createWindow() {
 
   mainMenu = Menu.buildFromTemplate(mainMenuTemplate);
 
-  loadExampleFiles();
-
   Menu.setApplicationMenu(mainMenu);
 
   const promise = localStorage.getItem('ngx-webstorage|showInfo');
@@ -454,6 +457,16 @@ function createWindow() {
     displayStatus('Ready', 'main');
   });
 
+}
+
+
+function clearCache() {
+  const win = BrowserWindow.getAllWindows()[0];
+  const ses = win.webContents.session;
+
+  ses.clearCache(() => {
+    // console.log("Cache cleared!");
+  });
 }
 
 
@@ -748,25 +761,6 @@ function createConnectToCOM(comPorts) {
 
 
 
-function loadExampleFiles() {
-  const exampleFileTabs = ['position-based', 'time-based'];
-
-  for (let i = 0; i < 2; i++) {
-    fs.readdir(path.join(__dirname, '../../example-files/' + exampleFileTabs[i]), (err, files) => {
-      if (files) {
-        files.forEach(file => {
-          mainMenu.items[0].submenu.items[6].submenu.items[i].submenu.append(
-            new MenuItem({
-              label: file.split('.').slice(0, -1).join('.'),
-              click() { openFile(file, exampleFileTabs[i]); }
-            })
-          );
-        });
-      }
-    });
-  }
-}
-
 function openFile(file, tab) {
   const src = path.join(__dirname, '../../example-files/' + tab + '/' + file);
   jsonfile.readFile(src, function (err, obj) {
@@ -995,9 +989,9 @@ ipcMain.on('updateEffects', (event, effectList) => {
   }
 });
 
-ipcMain.on('getEffects', (event) => {
-  mainWindow.webContents.send('getEffects');
-});
+// ipcMain.on('getEffects', (event) => {
+//   mainWindow.webContents.send('getEffects');
+// });
 
 ipcMain.on('updateLayerColors', (event, data) => {
   mainWindow.webContents.send('updateEffectColors', data);

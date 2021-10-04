@@ -30,6 +30,7 @@ import { CloneService } from 'src/app/services/clone.service';
         <span *ngIf="this.drawingService.file.activeEffect.type === 'position'">
           <input type="color" id="color-picker" name="color-picker-2" [(ngModel)]="this.dataService.color2" (change)="updateColor2()">
         </span>
+
         <label class="select color-picker {{ this.drawingService.file.activeEffect.type }}" title="select effect visualization type"></label>
         <select class="form-control" id="select" (change)="this.updateEffectType()" [(ngModel)]="this.drawingService.file.activeEffect.type" name="type" title="select effect visualization type">
             <option *ngFor="let type of typeOptions" [ngValue]="type">{{ type }}</option>

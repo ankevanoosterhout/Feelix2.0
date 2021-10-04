@@ -133,7 +133,7 @@ class newSerialPort {
     this.sp.write(data, function (err) {
         if (err) { return console.log('Error: ', err.message); }
         else {
-           console.log('written ', data);
+          //  console.log('written ', data);
         }
     });
   }
