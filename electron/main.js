@@ -1087,7 +1087,16 @@ ipcMain.on('openEffectInNewFile', (event, effect) => {
 
 ipcMain.on('play_collection', (event, data) => {
   serialPort.play(data.play, data.motor_id, data.collection_name, data.port);
-})
+});
+
+ipcMain.on('update_motor_variable', (event, data) => {
+  serialPort.updateMotorControlVariable(data.char, data.d, data.motor_id, data.port);
+});
+
+ipcMain.on('update_effect_variable', (event, data) => {
+  serialPort.updateEffectData(data.char, data.d, data.effect_index, data.port);
+});
+
 
 
 function updateSerialStatus(status) {

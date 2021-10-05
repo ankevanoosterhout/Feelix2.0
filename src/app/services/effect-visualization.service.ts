@@ -299,22 +299,26 @@ export class EffectVisualizationService {
 
 
     let renderedDataCopy = this.cloneService.deepClone(renderedData.data);
-    if (collEffect.flip.y) {
+
+    if (collEffect.flip.x) {
       renderedDataCopy.reverse();
       let i = 0;
       for (const el of renderedDataCopy) {
-        el.x = i;
+        el.x = i * collEffect.quality;
         i++;
+        if (el.d) {
+          el.o = el.x - (el.d * (180 / Math.PI));
+        }
       }
     }
-    if (collEffect.flip.x) {
+    if (collEffect.flip.y) {
       renderedDataCopy = this.mirrorData(renderedDataCopy, collEffect.position);
     }
 
     const grp = svg.append('g')
       .attr('id', 'grp-render-' + collection.id + '-' + collEffect.id);
 
-    if (renderedData && renderedData.type === collection.visualizationType) {
+    if (renderedData && renderedData.type === collection.visualizationType && (collection.rotation.units_y.name === renderedData.yUnit)) {
       this.drawRenderedData(grp, renderedDataCopy, renderedData.type, collection, collEffect, collEffect.position.x, multiply, offset, color);
 
       for (const repeat of collEffect.repeat.repeatInstances) {

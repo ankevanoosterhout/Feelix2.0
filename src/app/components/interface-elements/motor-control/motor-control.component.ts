@@ -384,17 +384,17 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
     this.motorControlService.updateCollection(collection);
   }
 
-  saveMotorData(collection: Collection) {
+  saveMotorData(collection: Collection, datatype = null, data = null) {
+    if (datatype && data) {
+      this.electronService.ipcRenderer.send('update_motor_variable', { char: datatype, d: data.join(":"), motor_id: collection.motorID, port: collection.microcontroller.serialPort.path });
+    }
     const coll_microcontroller = this.hardwareService.getMicroControllerByCOM(collection.microcontroller.serialPort.path);
     if (coll_microcontroller) {
-      if (collection.visualizationType === 'position') {
-        coll_microcontroller.motors.filter(m => m.id === collection.motorID.name)[0].position_pid = collection.microcontroller.motors[collection.motorID.index].position_pid;
-      } else if (collection.visualizationType === 'velocity') {
-        coll_microcontroller.motors.filter(m => m.id === collection.motorID.name)[0].velocity_pid = collection.microcontroller.motors[collection.motorID.index].velocity_pid;
-        coll_microcontroller.motors.filter(m => m.id === collection.motorID.name)[0].config.velocityLimit = collection.microcontroller.motors[collection.motorID.index].config.velocityLimit;
-      } else {
-        coll_microcontroller.motors.filter(m => m.id === collection.motorID.name)[0].config.voltageLimit = collection.microcontroller.motors[collection.motorID.index].config.voltageLimit;
-      }
+      coll_microcontroller.motors.filter(m => m.id === collection.motorID.name)[0].position_pid = collection.microcontroller.motors[collection.motorID.index].position_pid;
+      coll_microcontroller.motors.filter(m => m.id === collection.motorID.name)[0].velocity_pid = collection.microcontroller.motors[collection.motorID.index].velocity_pid;
+      coll_microcontroller.motors.filter(m => m.id === collection.motorID.name)[0].config.velocityLimit = collection.microcontroller.motors[collection.motorID.index].config.velocityLimit;
+      coll_microcontroller.motors.filter(m => m.id === collection.motorID.name)[0].config.voltageLimit = collection.microcontroller.motors[collection.motorID.index].config.voltageLimit;
+
       this.hardwareService.updateMicroController(coll_microcontroller);
     }
   }

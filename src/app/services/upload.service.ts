@@ -89,6 +89,7 @@ export class UploadService {
                         effect2: d.effect2,
                         inf: translatedDataEffect1.infinite && translatedDataEffect2 ? true : false,
                         type: effectData1.type,
+                        size: effectData1.size,
                         yUnit: effectData1.grid.yUnit.name,
                         id: uuid()
                       };
@@ -114,16 +115,16 @@ export class UploadService {
       if ((cw || ccw) || (item.type === 'velocity')) {
         for (let i = item.position.x1; i <= item.position.x2; i++) {
 
-          const y1 = this.bezierService.closestY(i, item.points);
+          const index = item.effect1.flip.x ? item.position.x2 - i : i;
+          const y1 = this.bezierService.closestY(index, item.points);
           const x1 = item.points.filter(p => p.y === y1)[0].x;
           const d1 = item.type === 'position' ? item.points.filter(p => p.y === y1)[0].d * (180 / Math.PI) : null;
           const o1 = item.type === 'position' ? item.points.filter(p => p.y === y1)[0].o : null;
 
-          const y2 = x1 > i ? this.bezierService.closestY(i - 1, item.points) : this.bezierService.closestY(i + 1, item.points);
+          const y2 = x1 > i ? this.bezierService.closestY(index - 1, item.points) : this.bezierService.closestY(index + 1, item.points);
           const x2 = item.points.filter(p => p.y === y2)[0].x;
           const d2 = item.type === 'position' ? item.points.filter(p => p.y === y2)[0].d * (180 / Math.PI) : null;
           const o2 = item.type === 'position' ? item.points.filter(p => p.y === y2)[0].o : null;
-
 
           let newY = (y2 - y1) / (x2 - x1) * (i - x1) + y1;
 
@@ -137,14 +138,29 @@ export class UploadService {
           const pointAtNewArray = newArray.filter(n => n.x === i && n.id !== item.id && (((n.direction.cw === cw) || (n.direction.ccw === ccw)) || item.type === 'velocity'))[0];
 
           if (pointAtNewArray) {
-            pointAtNewArray.y += (newY);
+            if (!item.effect1.flip.y) {
+              pointAtNewArray.y += (newY);
+            } else {
+              pointAtNewArray.y += this.mirrorData(newY, item.size.height, item.size.y - item.size.height);
+            }
             if (pointAtNewArray.y > 1) { pointAtNewArray.y = 1; }
             if (pointAtNewArray.y < -1) { pointAtNewArray.y = -1; }
             if (pointAtNewArray.d && newD) { pointAtNewArray.d += (newD); }
             // if (pointAtNewArray.o && newO) { console.log(pointAtNewArray.o, newO); }
             pointAtNewArray.n++;
           } else {
-            newArray.push({ x: i, y: newY, d: newD, o: newO, direction: { cw: cw, ccw: ccw }, type: item.type, inf: item.inf, n: 1, effect: item.id });
+            newArray.push({
+              x: index,
+              y: item.effect1.flip.y ? this.mirrorData(newY, item.size.height, item.size.y - item.size.height) : newY,
+              d: newD,
+              o: item.effect1.flip.x ? index - (newD * (180 / Math.PI)) : newO,
+              direction: { cw: cw, ccw: ccw },
+              type: item.type,
+              inf: item.inf,
+              n: 1,
+              effect: item.id,
+              yUnit: item.yUnit
+            });
           }
         }
       }
@@ -154,6 +170,17 @@ export class UploadService {
       }
     }
 
+  }
+
+
+  mirrorData(y: any, height: number, y_bottom: number) {
+
+    const middleLine = ((height) / 2 + y_bottom) / 100;
+
+    let tmp_y = y;
+    y = middleLine + (middleLine - tmp_y);
+
+    return y;
   }
 
 
@@ -168,11 +195,11 @@ export class UploadService {
       for (const el of array) {
         if (tmpArray.length > 0 && ((el.x - array[i - 1].x > 1) || i === array.length - 1) &&
           (el.type === 'velocity' || el.direction.cw === array[i - 1].direction.cw || el.direction.ccw === array[i - 1].direction.ccw)) {
-          newArray.push({ data: tmpArray, direction: el.direction, type: el.type, inf: el.inf, position: { start: startPosition, end: array[i - 1].x } });
+          newArray.push({ data: tmpArray, direction: el.direction, type: el.type, yUnit: el.yUnit, inf: el.inf, position: { start: startPosition, end: array[i - 1].x } });
           tmpArray = [];
           startPosition = array[i].x;
         }
-        tmpArray.push( { x: el.x - startPosition, y: el.y, d: el.d, o: el.o - startPosition });
+        tmpArray.push( { x: el.x - startPosition, y: el.y, d: el.d * (Math.PI / 180), o: el.o - startPosition });
 
         i++;
       }
@@ -237,53 +264,54 @@ export class UploadService {
   translateTorqueEffectData(path: Path, multiply: number, effect_range: any, start_offset: number, quality = 1, start_from = 0) {
     let translatedData = [];
     let offset = 0;
-
-    if (path.nodes[0].pos.x > path.nodes[path.nodes.length - 1].pos.x) {
-      path.nodes.reverse();
-    }
-
-    let i = 0;
-    const nodes = path.nodes.filter(n => n.type === 'node');
-    const startPos = Math.ceil(nodes[0].pos.x * multiply);
-    let start: number;
-    let end: number;
-
-    for (const node of nodes) {
-
-      if (i < nodes.length - 1) {
-        const pathSegment = this.nodeService.getNodesOfPath(node.id + '&&' + nodes[i + 1].id, path);
-        const range = this.bezierService.getCurveLength(pathSegment);
-        const coords = this.bezierService.getAllCoordinates(range[0] * 4, (1 / (range[0] * 4)), pathSegment, multiply, 'force');
-
-        start = offset === 0 ? Math.ceil(pathSegment[0].pos.x * multiply) : Math.round(pathSegment[0].pos.x * multiply) + offset;
-        end = Math.round(pathSegment[pathSegment.length - 1].pos.x * multiply);
-
-        for (let m = start; m <= end; m += quality) {
-
-          let yValue = this.bezierService.closestY(m, coords);
-          if (yValue > effect_range.end) { yValue = effect_range.end; }
-          if (yValue < effect_range.start) { yValue = effect_range.start; }
-
-          const inlistValue = translatedData.filter(d => d.x === (m - startPos) + start_offset)[0] ? translatedData.filter(d => d.x === (m - startPos) + start_offset)[0] : null;
-          if (inlistValue) {
-            const index = translatedData.indexOf(inlistValue);
-            if (index > -1) {
-              translatedData.splice(index, 1);
-            }
-          }
-
-          const coordinates = {
-            x: (m - startPos) + start_offset,
-            y: inlistValue ? (inlistValue.y + (yValue / 100)) / 2 : (yValue / 100),
-            y2: inlistValue ? (inlistValue.y + (yValue / 100)) / 2 - start_from: (yValue / 100) - start_from
-          };
-
-          translatedData.push(coordinates);
-
-        }
+    if (path.nodes) {
+      if (path.nodes[0].pos.x > path.nodes[path.nodes.length - 1].pos.x) {
+        path.nodes.reverse();
       }
-      offset = quality - ((end - start) % quality);
-      i++;
+
+      let i = 0;
+      const nodes = path.nodes.filter(n => n.type === 'node');
+      const startPos = Math.ceil(nodes[0].pos.x * multiply);
+      let start: number;
+      let end: number;
+
+      for (const node of nodes) {
+
+        if (i < nodes.length - 1) {
+          const pathSegment = this.nodeService.getNodesOfPath(node.id + '&&' + nodes[i + 1].id, path);
+          const range = this.bezierService.getCurveLength(pathSegment);
+          const coords = this.bezierService.getAllCoordinates(range[0] * 4, (1 / (range[0] * 4)), pathSegment, multiply, 'force');
+
+          start = offset === 0 ? Math.ceil(pathSegment[0].pos.x * multiply) : Math.round(pathSegment[0].pos.x * multiply) + offset;
+          end = Math.round(pathSegment[pathSegment.length - 1].pos.x * multiply);
+
+          for (let m = start; m <= end; m += quality) {
+
+            let yValue = this.bezierService.closestY(m, coords);
+            if (yValue > effect_range.end) { yValue = effect_range.end; }
+            if (yValue < effect_range.start) { yValue = effect_range.start; }
+
+            const inlistValue = translatedData.filter(d => d.x === (m - startPos) + start_offset)[0] ? translatedData.filter(d => d.x === (m - startPos) + start_offset)[0] : null;
+            if (inlistValue) {
+              const index = translatedData.indexOf(inlistValue);
+              if (index > -1) {
+                translatedData.splice(index, 1);
+              }
+            }
+
+            const coordinates = {
+              x: (m - startPos) + start_offset,
+              y: inlistValue ? (inlistValue.y + (yValue / 100)) / 2 : (yValue / 100),
+              y2: inlistValue ? (inlistValue.y + (yValue / 100)) / 2 - start_from: (yValue / 100) - start_from
+            };
+
+            translatedData.push(coordinates);
+
+          }
+        }
+        offset = quality - ((end - start) % quality);
+        i++;
+      }
     }
     return translatedData;
   }

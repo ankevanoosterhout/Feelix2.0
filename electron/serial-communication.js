@@ -313,13 +313,14 @@ function prepareEffectData(uploadContent, motor, datalist) {
     datalist.unshift('FE' + i + 'R:' + d.pointer);
     let type = 0;
     if (d.type === 'position') { type = 1; }
-    if (d.type === 'velocity') { type = 2; }
+    if (d.type === 'velocity' && d.yUnit !== 'degrees') { type = 2; }
+    if (d.type === 'velocity' && d.yUnit === 'degrees') { type = 3; }
     datalist.unshift('FE' + i + 'T:' + type);
     datalist.unshift('FE' + i + 'Z:' + (d.type === 'position' ? d.data.length * 2 : d.data.length));
 
 
     for (const el of d.data) {
-      if (d.type === 'position') {
+      if (el.d && d.type === 'position') {
         datalist.unshift('FDI:' + (Math.round(el.d) !== el.d ? el.d.toFixed(6) : el.d));
       }
       if (d.type === 'velocity' && d.yUnit === 'degrees') {
@@ -447,18 +448,8 @@ function uploadFromWaitList(receivingPort) {
 }
 
 
-
-// function moveToPos(serialData, pos = 0) {
-//   let str = '*R;' + pos;
-//   sendDataStr(str, serialData);
-//   main.updateSerialProgress({ progress: 100, str: 'Move motor at ' + serialData.port.path + ' to start position' });
-// }
-
-
-
 function play(play, motor_id, collection_name, port) {
-  let str = 'FM' + motor_id + 'K' + (play ? 1 : 0);
-  sendDataStr(str, port);
+  sendDataStr([ 'FM' + motor_id + 'K' + (play ? 1 : 0) ], port);
   main.updateSerialProgress({ progress: 100, str: (play ? 'Play ' + collection_name + ' at ' + port : 'Stop ' + collection_name + ' at ' + port) });
 }
 
@@ -485,32 +476,21 @@ function calibrateMotor(motor_id, microcontroller) {
 }
 
 
-// function saveCalibrationValueToEEPROM(motor, serialData) {
-//   main.updateSerialProgress({ progress: 100, str: 'Save calibration value' });
-//   const str = '*M;' + motor.calibration.value;
-//   sendDataStr(str, serialData);
-// }
+function updateEffectData(char, data, effectIndex, port) {
+  sendDataStr([ 'FE' + char + effectIndex + ':' + data, 'FC' ], port);
+  main.updateSerialProgress({ progress: 100, str: 'sending update effect' });
+}
 
 
-// function updateStartPosition(serialData, position) {
-//   main.updateSerialProgress({ progress: 100, str: 'Update start position' });
-//   const str = '*U;' + position;
-//   sendDataStr(str, serialData);
-// }
-
-
-// function updateEffectData(type, data, effectIndex, serialData) {
-//   if (serialData) {
-//     main.updateSerialProgress({ progress: 100, str: 'send update ' + data });
-//     let str = '&' + type + ';' + effectIndex + ';' + data;
-//     sendDataStr(str, serialData);
-//   }
-// }
+function updateMotorControlVariable(char, data, motor_id, port) {
+  sendDataStr([ 'FM' + motor_id + char + data, 'FC' ], port);
+  main.updateSerialProgress({ progress: 100, str: 'sending update motor control variable' });
+}
 
 
 function sendDataStr(str, port) {
   receivingPort = ports.filter(p => p.COM === port)[0];
-  dataSendWaitList.push({ port: port, data: [str], totalItems: 1 });
+  dataSendWaitList.push({ port: port, data: str, totalItems: 1 });
   uploadFromWaitList(receivingPort);
 }
 
@@ -525,3 +505,5 @@ exports.closeAllSerialPorts = closeAllSerialPorts;
 exports.calibrateMotor = calibrateMotor;
 exports.play = play;
 exports.uploadData = uploadData;
+exports.updateMotorControlVariable = updateMotorControlVariable;
+exports.updateEffectData = updateEffectData;

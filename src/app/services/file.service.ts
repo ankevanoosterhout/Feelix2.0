@@ -243,6 +243,7 @@ export class FileService {
         file.effects.filter(e => e.id === file.activeEffect.id)[0].grid.yUnit = this.cloneService.deepClone(file.activeEffect.grid.yUnit);
         file.effects.filter(e => e.id === file.activeEffect.id)[0].grid.xUnit = this.cloneService.deepClone(file.activeEffect.grid.xUnit);
         file.effects.filter(e => e.id === file.activeEffect.id)[0].type = file.activeEffect.type;
+        file.effects.filter(e => e.id === file.activeEffect.id)[0].rotation = file.activeEffect.rotation;
         file.effects.filter(e => e.id === file.activeEffect.id)[0].range = this.cloneService.deepClone(file.activeEffect.range);
         file.effects.filter(e => e.id === file.activeEffect.id)[0].range_y = this.cloneService.deepClone(file.activeEffect.range_y);
         file.effects.filter(e => e.id === file.activeEffect.id)[0].date.modified = new Date().getTime();

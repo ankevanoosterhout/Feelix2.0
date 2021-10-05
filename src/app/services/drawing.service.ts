@@ -37,7 +37,6 @@ export class DrawingService {
     this.effectVisualizationService.setActiveEffect.subscribe(res => {
       this.setActiveCollectionEffect(res);
     });
-
   }
 
   createPlane() {

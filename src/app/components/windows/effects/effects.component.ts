@@ -88,10 +88,9 @@ export class EffectsComponent implements OnInit, AfterViewInit {
       } else if (this.activeTab === 1) {
         this.drawLibraryEffects();
       } else if (this.activeTab === 2) {
-        // console.log(this.drawingService.file.activeCollectionEffect);
-        // if (this.drawingService.file.activeCollectionEffect) {
-        //   this.effect = this.drawingService.file.effects.filter(e => e.id === this.drawingService.file.activeCollectionEffect.effectID)[0];
-        // }
+        if (this.drawingService.file.activeCollectionEffect) {
+          this.effect = this.drawingService.file.effects.filter(e => e.id === this.drawingService.file.activeCollectionEffect.effectID)[0];
+        }
       }
     });
 
