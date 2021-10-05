@@ -246,15 +246,17 @@ export class UploadService {
         const nodes = path.nodes.filter(n => n.type === 'node');
         start_pos = Math.ceil(nodes[0].pos.y * (Math.PI / 180));
       }
-      data = effectData.type === 'position' ?
-        data.concat(this.translatePositionEffectData(path, multiply, start_offset, collEffect.quality)) :
-        data.concat(this.translateTorqueEffectData(path, multiply, effectData.range_y, start_offset, collEffect.quality, start_pos));
+      if (path && path.nodes) {
+        data = effectData.type === 'position' ?
+          data.concat(this.translatePositionEffectData(path, multiply, start_offset, collEffect.quality)) :
+          data.concat(this.translateTorqueEffectData(path, multiply, effectData.range_y, start_offset, collEffect.quality, start_pos));
 
-      data_complete = effectData.type === 'position' ?
-        data_complete.concat(this.translatePositionEffectData(path, multiply, 0, 1)) :
-        data_complete.concat(this.translateTorqueEffectData(path, multiply, effectData.range_y, 0, 1, start_pos));
+        data_complete = effectData.type === 'position' ?
+          data_complete.concat(this.translatePositionEffectData(path, multiply, 0, 1)) :
+          data_complete.concat(this.translateTorqueEffectData(path, multiply, effectData.range_y, 0, 1, start_pos));
 
-      start_offset += data[data.length - 1].x + collEffect.quality;
+        start_offset += data[data.length - 1].x + collEffect.quality;
+      }
     }
     return { id: collEffect.effectID, type: effectData.type, size: effectData.size, rotation: effectData.rotation, infinite: collEffect.infinite, yUnit: effectData.grid.yUnit.name, data: data, data_complete: data_complete };
   }
@@ -264,54 +266,51 @@ export class UploadService {
   translateTorqueEffectData(path: Path, multiply: number, effect_range: any, start_offset: number, quality = 1, start_from = 0) {
     let translatedData = [];
     let offset = 0;
-    if (path.nodes) {
-      if (path.nodes[0].pos.x > path.nodes[path.nodes.length - 1].pos.x) {
-        path.nodes.reverse();
-      }
+    if (path.nodes[0].pos.x > path.nodes[path.nodes.length - 1].pos.x) {
+      path.nodes.reverse();
+    }
 
-      let i = 0;
-      const nodes = path.nodes.filter(n => n.type === 'node');
-      const startPos = Math.ceil(nodes[0].pos.x * multiply);
-      let start: number;
-      let end: number;
+    let i = 0;
+    const nodes = path.nodes.filter(n => n.type === 'node');
+    const startPos = Math.ceil(nodes[0].pos.x * multiply);
+    let start: number;
+    let end: number;
 
-      for (const node of nodes) {
+    for (const node of nodes) {
 
-        if (i < nodes.length - 1) {
-          const pathSegment = this.nodeService.getNodesOfPath(node.id + '&&' + nodes[i + 1].id, path);
-          const range = this.bezierService.getCurveLength(pathSegment);
-          const coords = this.bezierService.getAllCoordinates(range[0] * 4, (1 / (range[0] * 4)), pathSegment, multiply, 'force');
+      if (i < nodes.length - 1) {
+        const pathSegment = this.nodeService.getNodesOfPath(node.id + '&&' + nodes[i + 1].id, path);
+        const range = this.bezierService.getCurveLength(pathSegment);
+        const coords = this.bezierService.getAllCoordinates(range[0] * 4, (1 / (range[0] * 4)), pathSegment, multiply, 'force');
 
-          start = offset === 0 ? Math.ceil(pathSegment[0].pos.x * multiply) : Math.round(pathSegment[0].pos.x * multiply) + offset;
-          end = Math.round(pathSegment[pathSegment.length - 1].pos.x * multiply);
+        start = offset === 0 ? Math.ceil(pathSegment[0].pos.x * multiply) : Math.round(pathSegment[0].pos.x * multiply) + offset;
+        end = Math.round(pathSegment[pathSegment.length - 1].pos.x * multiply);
 
-          for (let m = start; m <= end; m += quality) {
+        for (let m = start; m <= end; m += quality) {
 
-            let yValue = this.bezierService.closestY(m, coords);
-            if (yValue > effect_range.end) { yValue = effect_range.end; }
-            if (yValue < effect_range.start) { yValue = effect_range.start; }
+          let yValue = this.bezierService.closestY(m, coords);
+          if (yValue > effect_range.end) { yValue = effect_range.end; }
+          if (yValue < effect_range.start) { yValue = effect_range.start; }
 
-            const inlistValue = translatedData.filter(d => d.x === (m - startPos) + start_offset)[0] ? translatedData.filter(d => d.x === (m - startPos) + start_offset)[0] : null;
-            if (inlistValue) {
-              const index = translatedData.indexOf(inlistValue);
-              if (index > -1) {
-                translatedData.splice(index, 1);
-              }
+          const inlistValue = translatedData.filter(d => d.x === (m - startPos) + start_offset)[0] ? translatedData.filter(d => d.x === (m - startPos) + start_offset)[0] : null;
+          if (inlistValue) {
+            const index = translatedData.indexOf(inlistValue);
+            if (index > -1) {
+              translatedData.splice(index, 1);
             }
-
-            const coordinates = {
-              x: (m - startPos) + start_offset,
-              y: inlistValue ? (inlistValue.y + (yValue / 100)) / 2 : (yValue / 100),
-              y2: inlistValue ? (inlistValue.y + (yValue / 100)) / 2 - start_from: (yValue / 100) - start_from
-            };
-
-            translatedData.push(coordinates);
-
           }
+
+          const coordinates = {
+            x: (m - startPos) + start_offset,
+            y: inlistValue ? (inlistValue.y + (yValue / 100)) / 2 : (yValue / 100),
+            y2: inlistValue ? (inlistValue.y + (yValue / 100)) / 2 - start_from: (yValue / 100) - start_from
+          };
+
+          translatedData.push(coordinates);
         }
-        offset = quality - ((end - start) % quality);
-        i++;
       }
+      offset = quality - ((end - start) % quality);
+      i++;
     }
     return translatedData;
   }
