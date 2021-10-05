@@ -136,9 +136,10 @@ export class DrawElementsService {
         .attr('stroke', () =>  type === 'pos' ? this.getEffectColor() : this.file.configuration.colors.filter(c => c.type === 'position2')[0].hash)
         .attr('stroke-width', () => {
           if (type === 'angle') { return 0.3; }
-          else if (this.file.activeEffect.rotation === 'dependent') { return 2.5; }
-          else { return 0.8; }
+          else if (this.file.activeEffect.rotation === 'dependent') { return 2.2; }
+          else { return 4.5; }
         })
+        .attr('stroke-linecap', this.file.activeEffect.rotation === 'dependent' ? 'butt' : 'round')
         .attr('fill', 'transparent')
         .attr('pointer-events', (d: any) =>
           !this.config.zoomable && !this.nodeService.getPath(d.parent).lock ? 'auto' : 'none')
@@ -448,10 +449,10 @@ export class DrawElementsService {
       .append('rect')
       .attr('id', (d: { id: string; path: string }) => 'id_' + d.id + '_' + d.path)
       .attr('class', 'n_' + path + ' node')
-      .attr('width', 3.5)
-      .attr('height', 3.5)
-      .attr('x', (d: { pos: { x: number; y: number; }; }) => this.nodeService.scale.scaleX(d.pos.x) - 1.75)
-      .attr('y', (d: { pos: { x: number; y: number; }; }) => this.nodeService.scale.scaleY(d.pos.y) - 1.75)
+      .attr('width', 4)
+      .attr('height', 4)
+      .attr('x', (d: { pos: { x: number; y: number; }; }) => this.nodeService.scale.scaleX(d.pos.x) - 2)
+      .attr('y', (d: { pos: { x: number; y: number; }; }) => this.nodeService.scale.scaleY(d.pos.y) - 2)
       .attr('pointer-events', (d: any) =>
           !this.config.zoomable && !this.nodeService.getPath(d.path).lock ? 'auto' : 'none')
       .style('fill', (d: { id: string; path: string; }) => {
@@ -515,9 +516,9 @@ export class DrawElementsService {
             this.config.cursor.slug === 'scis' || this.config.cursor.slug === 'thick' || this.config.cursor.slug === 'anchor') {
 
           d3.select('#id_' + d.id + '_' + d.path)
-            .attr('width', 3.5).attr('height', 3.5)
-            .attr('x', this.nodeService.scale.scaleX(d.pos.x) - 1.75)
-            .attr('y', this.nodeService.scale.scaleY(d.pos.y) - 1.75)
+            .attr('width', 4).attr('height', 4)
+            .attr('x', this.nodeService.scale.scaleX(d.pos.x) - 2)
+            .attr('y', this.nodeService.scale.scaleY(d.pos.y) - 2)
             .style('fill', this.getEffectColor())
             .style('stroke', this.getEffectColor())
             .style('stroke-width', 0.5);

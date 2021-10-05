@@ -247,6 +247,13 @@ export class EffectsComponent implements OnInit, AfterViewInit {
     this.fileService.deleteEffect(effectID);
   }
 
+  exportLibEffectItem(libEffectID: string) {
+    const item = this.effectLibraryService.getEffect(libEffectID);
+    if (item) {
+      this.electronService.ipcRenderer.send('export', { effect: item.effect });
+    }
+  }
+
   deleteLibraryItem(libEffectID: string) {
     this.effectLibraryService.deleteEffect(libEffectID);
     this.drawLibraryEffects();

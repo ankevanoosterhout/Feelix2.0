@@ -219,6 +219,9 @@ class newSerialPort {
 
         } else if (d.charAt(0) === 'M') { // receive custom variable
           updateProgress(progress, 'Maximum data size reached');
+
+        } else if (d.charAt(0) === 'V') { // receive custom variable
+          updateProgress(progress, 'Motor stopped automatically because it reached a high velocity');
         }
 
     });
@@ -274,6 +277,7 @@ function prepareMotorData(uploadContent, motor, datalist) {
   // datalist.unshift('FM' + motor.id + 'E' + motor.config.encoder.part_number);
   datalist.unshift('FM' + motor.id + 'O' + motor.state.position.start);
   datalist.unshift('FM' + motor.id + 'C' + motor.config.encoder.clock_speed);
+  datalist.unshift('FM' + motor.id + 'H' + uploadContent.config.loop);
   datalist.unshift('FM' + motor.id + 'D' + (motor.config.encoder.direction === 'CW' ? 1 : -1));
   datalist.unshift('FM' + motor.id + 'T' + uploadContent.config.updateSpeed);
   datalist.unshift('FM' + motor.id + 'J' + Math.round(uploadContent.config.range));
@@ -339,6 +343,7 @@ function prepareEffectData(uploadContent, motor, datalist) {
       datalist.unshift('FE' + i + effect.direction.identifier + ':' + effect.direction.value[0] + ':' + effect.direction.value[1]);
     }
     datalist.unshift('FE' + i + effect.scale.identifier + ':' + effect.scale.value[0] + ':' + effect.scale.value[1]);
+    datalist.unshift('FE' + i + effect.flip.identifier + ':' + effect.flip.value[0] + ':' + effect.flip.value[1] + ':' + effect.flip.value[2]);
     datalist.unshift('FE' + i + effect.angle.identifier + ':' + effect.angle.value);
     datalist.unshift('FE' + i + effect.vis_type.identifier + ':' + effect.vis_type.value);
     if (effect.vis_type !== 'velocity') {
@@ -477,14 +482,16 @@ function calibrateMotor(motor_id, microcontroller) {
 
 
 function updateEffectData(char, data, effectIndex, port) {
-  sendDataStr([ 'FE' + char + effectIndex + ':' + data, 'FC' ], port);
-  main.updateSerialProgress({ progress: 100, str: 'sending update effect' });
+  const datastr = 'FE' + char + effectIndex + ':' + data;
+  sendDataStr([ datastr ], port);
+  main.updateSerialProgress({ progress: 100, str: 'sending update effect to ' + port  });
 }
 
 
 function updateMotorControlVariable(char, data, motor_id, port) {
-  sendDataStr([ 'FM' + motor_id + char + data, 'FC' ], port);
-  main.updateSerialProgress({ progress: 100, str: 'sending update motor control variable' });
+  const datastr = 'FM' + motor_id + char + data;
+  sendDataStr([ datastr ], port);
+  main.updateSerialProgress({ progress: 100, str: 'sending update motor control variable to ' + port });
 }
 
 

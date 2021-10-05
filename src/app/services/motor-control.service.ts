@@ -204,6 +204,28 @@ export class MotorControlService {
       .attr('pointer-events', 'none')
       .attr('transform', () => this.file.configuration.collectionDisplay === 'small' ? 'translate(0, 0)' : 'translate(0, 26)');
 
+    if (collection.effectDataList.length > 0 && collection.visualizationType === 'torque' && collection.microcontroller && collection.motorID) {
+      if (collection.microcontroller.motors[collection.motorID.index].config.voltageLimit) {
+        const voltageLine = (100 / collection.microcontroller.motors[collection.motorID.index].config.supplyVoltage) * collection.microcontroller.motors[collection.motorID.index].config.voltageLimit;
+        const voltageLimitData = [ voltageLine, -voltageLine ];
+
+        const voltageLimitLines = collection.config.svg.selectAll('line.voltagelimit')
+          .data(voltageLimitData)
+          .enter()
+          .append('line')
+          .attr('class', (d, i) =>'voltagelimit-' + i)
+          .attr('x1', 0)
+          .attr('x2', this.width)
+          .attr('y1', (d) => collection.config.newYscale(d))
+          .attr('y2', (d) => collection.config.newYscale(d))
+          .attr('transform', () => this.file.configuration.collectionDisplay === 'small' ? 'translate(0, 0)' : 'translate(0, 26)')
+          .attr('shape-rendering', 'crispEdges')
+          .attr('stroke', '#FF0000')
+          .attr('opacity', 0.6)
+          .attr('stroke-width', 0.5)
+          .attr('fill', 'none');
+      }
+    }
 
     if (this.file.configuration.collectionDisplay !== 'small') {
       this.drawRuler(collection);
@@ -311,6 +333,7 @@ export class MotorControlService {
 
         }
       }
+
       if (collection.renderedData.length > 0 && collection.effectDataList.length > 0) {
         this.effectVisualizationService.drawOverlappingData(effectSVG, collection, 'rgba(255,255,255,1)');
       }
@@ -410,17 +433,20 @@ export class MotorControlService {
 
 
   drawCursor(collection: Collection) {
-    collection.config.svg.selectAll('.cursorIndicator-' + collection.id).remove();
-    let position = 0;
+    if (collection.config.svg) {
+      collection.config.svg.selectAll('.cursorIndicator-' + collection.id).remove();
 
-    if (collection.rotation.units.name === 'ms') {
-      position = collection.config.newXscale(collection.time);
-    } else {
-      position = collection.microcontroller.motors.filter(m => m.id === collection.motorID.name)[0].state.position.current ?
-      collection.config.newXscale(collection.microcontroller.motors.filter(m => m.id === collection.motorID.name)[0].state.position.current) : 0;
+      let position = 0;
+
+      if (collection.rotation.units.name === 'ms') {
+        position = collection.config.newXscale(collection.time);
+      } else {
+        position = collection.microcontroller.motors.filter(m => m.id === collection.motorID.name)[0].state.position.current ?
+        collection.config.newXscale(collection.microcontroller.motors.filter(m => m.id === collection.motorID.name)[0].state.position.current) : 0;
+      }
+
+      this.drawCursorAtPosition(position, collection);
     }
-
-    this.drawCursorAtPosition(position, collection);
   }
 
 

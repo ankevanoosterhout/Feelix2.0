@@ -36,6 +36,7 @@ export class ConfigModel {
   baudrate: number;
   collection: string;
   range: number;
+  loop: number;
 
   constructor(collection: Collection, microcontroller: MicroController) {
     this.serialPort = microcontroller.serialPort;
@@ -45,6 +46,7 @@ export class ConfigModel {
     this.baudrate = microcontroller.baudrate;
     this.collection = collection.id;
     this.range = collection.rotation.end - collection.rotation.start;
+    this.loop = collection.rotation.loop ? 1 : 0;
     if (collection.rotation.units.name === 'radians') {
       this.range *= (Math.PI / 180);
     }

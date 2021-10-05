@@ -12,10 +12,10 @@ import { UploadService } from 'src/app/services/upload.service';
 
       <div class="row">
         <label class="label">Render quality</label>
-        <input type="number" id="quality" name="quality" [(ngModel)]="this.quality" (change)="this.exportEffect(this.effect)">
+        <input type="number" id="quality" name="quality" [(ngModel)]="this.quality" (change)="this.exportEffect(this.effect)" title="increase the value to reduce data points">
       </div>
 
-      <div mat-dialog-content class="row" >
+      <div mat-dialog-content class="row" title="paste the text in the initialization of your Arduino sketch (before the setup function)">
         <textarea id="copyfield">{{ data }}</textarea>
       </div>
       <div class="form-row buttons">
@@ -56,7 +56,7 @@ import { UploadService } from 'src/app/services/upload.service';
       font-size: 11px;
       font-family: 'Courier';
       display: inline-block;
-      width:308px;
+      width:328px;
       height: 120px;
       box-sizing: border-box;
       text-align: left;
@@ -124,7 +124,7 @@ export class ExportDialogComponent implements OnInit {
 
   public selectedDevice: any;
   public effect: any;
-  public quality = 1;
+  public quality = 5;
 
   public useDefault = true;
 

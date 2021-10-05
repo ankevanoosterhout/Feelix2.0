@@ -246,7 +246,8 @@ export class EffectVisualizationService {
               .append('path')
               .attr('d', (d: { svgPath: string }) => d.svgPath)
               .attr('stroke', () => colors.filter(c => c.type === effect.type)[0].hash)
-              .attr('stroke-width', () => effect.rotation === 'dependent' ? 2.2 : 1)
+              .attr('stroke-width', () => effect.rotation === 'dependent' ? 2.0 : 4.0)
+              .attr('stroke-linecap', effect.rotation === 'dependent' ? 'butt' : 'round')
               .attr('class', 'path_' + path.id)
               .attr('fill', 'transparent')
               .attr('pointer-events', 'none');
@@ -260,8 +261,10 @@ export class EffectVisualizationService {
   checkIfXisWithinOverlap(x: number, overlappingEffects: Array<any>) {
 
     for (const el of overlappingEffects) {
-      if (x >= el.position.start - 0.75 && x <= el.position.end + 0.75) {
-        return true;
+      if (el && el.position) {
+        if (x >= el.position.start - 0.75 && x <= el.position.end + 0.75) {
+          return true;
+        }
       }
     }
     return false;
@@ -377,12 +380,12 @@ export class EffectVisualizationService {
 
     let multiply_x = 1;
     if (collection.rotation.units.name === 'radians') { multiply_x = (Math.PI / 180); }
-    // if (collection.rotation.units.name === 'ms') { multiply_x = (1000/360); }
 
     const multiply = { x: multiply_x, y: 100 };
 
     const grp = svg.append('g').attr('id', 'grp-render-overlap-' + collection.id);
     let i = 0;
+
     for (const overlap of collection.renderedData) {
       if (overlap.type === 'velocity' || (collection.layers.filter(l => l.name === 'CW')[0].visible && overlap.direction.cw) || (collection.layers.filter(l => l.name === 'CCW')[0].visible && overlap.direction.ccw)) {
         this.drawRenderedData(grp, overlap.data, overlap.type, collection, { scale: { x: 100, y: 100 }, id: i }, overlap.position.start * multiply.x, multiply, 0, color, false);

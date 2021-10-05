@@ -686,7 +686,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
   showExportWindow(str: string, effect: any, controllers: any) {
 
     const dialogConfig = this.dialog.open(ExportDialogComponent, {
-      width: '350px',
+      width: '390px',
       data: { d: str, e: effect, microcontrollers: controllers   },
       disableClose: true,
       autoFocus: true,

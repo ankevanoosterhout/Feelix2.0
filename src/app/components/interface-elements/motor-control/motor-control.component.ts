@@ -385,9 +385,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
   }
 
   saveMotorData(collection: Collection, datatype = null, data = null) {
-    if (datatype && data) {
-      this.electronService.ipcRenderer.send('update_motor_variable', { char: datatype, d: data.join(":"), motor_id: collection.motorID, port: collection.microcontroller.serialPort.path });
-    }
+
     const coll_microcontroller = this.hardwareService.getMicroControllerByCOM(collection.microcontroller.serialPort.path);
     if (coll_microcontroller) {
       if (collection.visualizationType === 'position' || collection.rotation.units_y.name === 'degrees') {
@@ -402,6 +400,12 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
       }
 
       this.hardwareService.updateMicroController(coll_microcontroller);
+
+      if (datatype && data) {
+        const dataStr = data.length > 1 ? ':' + data.join(":") : data[0];
+        this.electronService.ipcRenderer.send('update_motor_variable', { char: datatype, d: dataStr, motor_id: collection.motorID.name, port: collection.microcontroller.serialPort.path });
+        this.motorControlService.drawCollection(collection);
+      }
     }
   }
 

@@ -39,13 +39,13 @@
             </div>
             <div class="buttonsPlayWindow {{ this.drawingService.file.configuration.libraryViewSettings }}"
                  *ngIf="this.drawingService.file.configuration.libraryViewSettings === 'list'">
-              <div class="buttonPlayWindow delete" (click)="editEffectItem(item.id)">
+              <div class="buttonPlayWindow delete" (click)="editEffectItem(item.id)" title="edit">
                 <img src="./assets/icons/buttons/edit.svg">
               </div>
-              <div class="buttonPlayWindow delete" (click)="exportEffectItem(item.id)">
+              <div class="buttonPlayWindow delete" (click)="exportEffectItem(item.id)" title="export">
                 <img src="./assets/icons/buttons/export.svg">
               </div>
-              <div class="buttonPlayWindow delete" (click)="deleteEffectItem(item.id)">
+              <div class="buttonPlayWindow delete" (click)="deleteEffectItem(item.id)" title="delete">
                 <img src="./assets/icons/buttons/bin.svg">
               </div>
             </div>
@@ -53,13 +53,13 @@
           <div class="row" *ngIf="this.drawingService.file.configuration.libraryViewSettings !== 'list'">
             <div id="effectSVG-{{ item.id }}" class="effectSVG"></div>
             <div class="buttonsPlayWindow">
-              <div class="buttonPlayWindow delete" (click)="editEffectItem(item.id)">
+              <div class="buttonPlayWindow delete" (click)="editEffectItem(item.id)" title="edit">
                 <img src="./assets/icons/buttons/edit.svg">
               </div>
-              <div class="buttonPlayWindow delete" (click)="exportEffectItem(item.id)">
+              <div class="buttonPlayWindow delete" (click)="exportEffectItem(item.id)" title="export">
                 <img src="./assets/icons/buttons/export.svg">
               </div>
-              <div class="buttonPlayWindow delete" (click)="deleteEffectItem(item.id)">
+              <div class="buttonPlayWindow delete" (click)="deleteEffectItem(item.id)" title="delete">
                 <img src="./assets/icons/buttons/bin.svg">
               </div>
             </div>
@@ -80,13 +80,13 @@
             </div>
             <div class="buttonsPlayWindow {{ this.drawingService.file.configuration.libraryViewSettings }}"
                  *ngIf="this.drawingService.file.configuration.libraryViewSettings === 'list'">
-              <!-- <div class="buttonPlayWindow delete" (click)="editLibraryEffectItem(item.id)">
+              <!-- <div class="buttonPlayWindow delete" (click)="editLibraryEffectItem(item.id)" title="edit">
                 <img src="./assets/icons/buttons/edit.svg">
               </div> -->
-              <div class="buttonPlayWindow delete" (click)="exportEffectItem(item.id)">
+              <div class="buttonPlayWindow delete" (click)="exportLibEffectItem(item.id)" title="export">
                 <img src="./assets/icons/buttons/export.svg">
               </div>
-              <div class="buttonPlayWindow delete" (click)="deleteLibraryItem(item.id)">
+              <div class="buttonPlayWindow delete" (click)="deleteLibraryItem(item.id)" title="delete">
                 <img src="./assets/icons/buttons/bin.svg">
               </div>
             </div>
@@ -94,10 +94,10 @@
           <div class="row" *ngIf="this.drawingService.file.configuration.libraryViewSettings !== 'list'">
             <div id="effectSVG-{{ item.effect.id }}" class="effectSVG"></div>
             <div class="buttonsPlayWindow">
-              <div class="buttonPlayWindow delete" (click)="exportEffectItem(item.id)">
+              <div class="buttonPlayWindow delete" (click)="exportLibEffectItem(item.id)" title="export">
                 <img src="./assets/icons/buttons/export.svg">
               </div>
-              <div class="buttonPlayWindow delete" (click)="deleteLibraryItem(item.id)">
+              <div class="buttonPlayWindow delete" (click)="deleteLibraryItem(item.id)" title="delete">
                 <img src="./assets/icons/buttons/bin.svg">
               </div>
             </div>

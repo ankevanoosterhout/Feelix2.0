@@ -441,12 +441,16 @@ export class UploadService {
     let multiply = 1;
     if (effect.paths.length > 0) {
       if (effect.grid.xUnit.name === 'radians') { multiply = (180 / Math.PI); }
-      // if (effect.grid.xUnit.name === 'ms') { multiply = 360 / 1000; }
 
-      let effect_type = null;
+      let effect_type = 'Effect_type::NOTSET';
       if (effect.type !== 'velocity') {
         effect_type = effect.rotation === 'dependent' ? 'Effect_type::DEPENDENT' : 'Effect_type::INDEPENDENT';
       }
+
+      let control_type = 'Control_type::POSITION';
+      if (effect.type === 'torque') { control_type = 'Control_type::TORQUE'; }
+      if (effect.type === 'velocity' && effect.grid.yUnit.name === 'degrees') { control_type = 'Control_type::VELOCITY_ANGLE'; }
+      if (effect.type === 'velocity' && effect.grid.yUnit.name !== 'degrees') { control_type = 'Control_type::VELOCITY'; }
 
       if (multiply) {
         const newDetails = new Details(uuid(), effect.id, effect.name);
@@ -456,7 +460,7 @@ export class UploadService {
         let dataArrayAsString = '{';
 
         for (const item of translatedData.data) {
-          if (item.d) {
+          if (effect.type === 'position') {
             dataArrayAsString += (Math.round(item.d) === item.d ? item.d.toFixed(1) : item.d.toFixed(9)) + ', ' + (Math.round(item.y) === item.y ? item.y.toFixed(1) : item.y.toFixed(9)) + ', '
           } else {
             dataArrayAsString += (Math.round(item.y) === item.y ? item.y.toFixed(1) : item.y.toFixed(9)) + ', '
@@ -467,8 +471,8 @@ export class UploadService {
 
         const newEffectName = effect.name.replace(/-/g, '_');
 
-        data = '/* initialize */ \nEffectConfig_s ' + newEffectName + '_config {\n\t.data_size = ' + (effect.type !== 'position' ? translatedData.data.length : (translatedData.data.length * 2)) + ',\n\t.angle = ' + angle +
-          (effect_type ? ',\n\t.effect_type = ' + effect_type + '\n' : '\n') + '};\r\n\n';
+        data = '/* initialize */ \nEffectConfig_s ' + newEffectName + '_config { \n\t.data_size = ' + (effect.type !== 'position' ? translatedData.data.length : (translatedData.data.length * 2)) + ',\n\t.angle = ' +
+            angle + ',\n\t.quality = ' + quality + ',\n\t.effect_type = ' + effect_type + ',\n\t.control_type = ' + control_type + '\n };\r\n\n';
 
         data += 'float data_' + newEffectName + '[] = ' + dataArrayAsString + ';\r\n';
         data += 'FeelixEffect ' + newEffectName + ' = FeelixEffect(' + newEffectName + '_config, data_' + newEffectName + ');'
