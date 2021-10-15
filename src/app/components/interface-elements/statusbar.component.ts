@@ -12,7 +12,7 @@ import { DOCUMENT } from '@angular/common';
         <div id="progress" class="inner-bar"></div>
       </div>
 
-      <div class="version">version B2.0.3</div>
+      <div class="version">version B2.0.31</div>
       <div class="logo"><img src="./assets/icons/logo/feelix-logo-gray.svg"></div>
     </div>
 

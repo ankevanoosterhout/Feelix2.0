@@ -361,6 +361,18 @@ export class EffectVisualizationService {
         .style('opacity', (d, i) => render && this.checkIfXisWithinOverlap(d.x * (collEffect.scale.x / 100) + (x/multiply.x), collection.renderedData) ? 0 : 0.4);
     }
 
+    grp.selectAll('line.render-' + collection.id + '-' + collEffect.id + '-' + Math.round(x * 1000))
+      .data(dataCopy)
+      .enter()
+      .append('line')
+      .attr('class', 'render-' + collection.id + '-' + collEffect.id + '-' + Math.round(x * 1000))
+      .attr('x1', (d, i) => i < dataCopy.length - 1 ? collection.config.newXscale((d.x * (collEffect.scale.x / 100) * multiply.x) + x) : 0)
+      .attr('x2', (d, i) => i < dataCopy.length - 1 ? collection.config.newXscale((dataCopy[i + 1].x * (collEffect.scale.x / 100) * multiply.x) + x) : 0)
+      .attr('y1', (d, i) => i < dataCopy.length - 1 ? collection.config.newYscale((d.y * multiply.y )) * (collEffect.scale.y / 100) + offset : 0)
+      .attr('y2', (d, i) => i < dataCopy.length - 1 ? collection.config.newYscale((dataCopy[i + 1].y * multiply.y )) * (collEffect.scale.y / 100) + offset : 0)
+      .style('stroke', 'rgba(255,255,255, 0.4)')
+      .style('stroke-width', (d, i) => i < dataCopy.length - 1 ? 1.2 : 0);
+
     grp.selectAll('circle.render-' + collection.id + '-' + collEffect.id + '-' + Math.round(x * 1000))
       .data(dataCopy)
       .enter()
