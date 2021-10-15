@@ -220,7 +220,7 @@ export class FileService {
   }
 
   updateActiveEffectData(file: File) {
-    if (file.activeEffect !== null) {
+    if (file.activeEffect) {
       file.activeEffect.paths = this.nodeService.getAll();
       file.activeEffect.size = this.getPathEffectSize(file.activeEffect);
       for (const collection of file.collections) {
@@ -370,7 +370,7 @@ export class FileService {
           const tabIndex = activeFile.configuration.openTabs.indexOf(openTab);
           activeFile.configuration.openTabs.splice(tabIndex, 1);
         }
-        if (activeFile.activeEffect === null) {
+        if (!activeFile.activeEffect) {
           this.setAnyEffectActive();
         } else {
           this.store();
@@ -509,7 +509,7 @@ export class FileService {
     if (!currentactiveFile) {
       const newactiveFile = this.files[this.files.length - 1];
       newactiveFile.isActive = true;
-      if (newactiveFile.activeEffect === null && newactiveFile.effects.length > 0) {
+      if (!newactiveFile.activeEffect && newactiveFile.effects.length > 0) {
         newactiveFile.activeEffect = this.setAnyEffectActive();
       }
       if (newactiveFile.activeEffect) {
@@ -519,10 +519,10 @@ export class FileService {
       }
       this.store();
     } else {
-      if (currentactiveFile.activeEffect === null && currentactiveFile.effects.length > 0) {
+      if (!currentactiveFile.activeEffect && currentactiveFile.effects.length > 0) {
         currentactiveFile.activeEffect = this.setAnyEffectActive();
       }
-      if (currentactiveFile.activeEffect !== null) {
+      if (currentactiveFile.activeEffect) {
         this.nodeService.loadFile(currentactiveFile.activeEffect.paths);
       } else {
         this.nodeService.reset();

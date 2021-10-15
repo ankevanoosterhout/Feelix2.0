@@ -728,6 +728,12 @@ input.settings {
   margin-top: 1px;
 }
 
+input.settings.inline {
+  margin-left: 0;
+  width: 20px;
+  margin-top: 2px;
+}
+
 input.motor-settings {
   color: #00AEEF;
   vertical-align: top;
@@ -785,6 +791,10 @@ input.large {
 }
 .units.disabled {
   color: #999;
+}
+
+.units.inline {
+  margin-top: 3px;
 }
 
 input:focus {
@@ -1021,13 +1031,22 @@ label.select.playWindowSmall:after {
   margin: 2px 0 0 0;
 }
 
+.checkmark.radio.inline {
+  margin: 5px 5px -3px 10px;
+}
+
+.radio-container.inline {
+  width: 20px;
+  padding: 0 0 0 28px;
+}
+
 .radio-container.motorsettings {
   margin-left: 143px;
   padding-left: 20px !important;
   line-height: 18px;
 }
 .radio-container.details {
-  margin-left: 100px;
+  margin-left: 105px;
   margin-top: 8px;
   margin-bottom: -14px;
   padding-left: 20px !important;
@@ -1476,3 +1495,13 @@ input.html-slider {
   width: auto;
 }
 
+.question-mark {
+  margin-top: 3px;
+  vertical-align: top;
+}
+
+.question-mark.inline {
+  top:0;
+  margin-top: -5px;
+  margin-left: 10px;
+}

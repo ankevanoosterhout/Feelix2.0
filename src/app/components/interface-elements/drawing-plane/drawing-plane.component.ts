@@ -204,7 +204,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
       const differentFile = newFile._id !== this.file._id ? true : false;
 
       if (newFile.activeEffect) {
-        if ((this.file.activeEffect !== null && newFile.activeEffect.id !== this.file.activeEffect.id) || this.file.activeEffect === null) {
+        if ((this.file.activeEffect && newFile.activeEffect.id !== this.file.activeEffect.id) || !this.file.activeEffect) {
           this.loadEffectData(newFile);
         }
         this.dataService.setColor(newFile.configuration.colors.filter(c => c.type === newFile.activeEffect.type)[0].hash, this.file.configuration.colors.filter(c => c.type === 'position2')[0].hash);
@@ -254,7 +254,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
 
 
   ngAfterViewInit(): void {
-    if (this.file.activeEffect !== null) {
+    if (this.file.activeEffect) {
       if (this.electronService.isElectronApp) {
         this.electronService.ipcRenderer.send('updateMenu', {
           visible: this.file.activeEffect.grid.visible,
@@ -306,7 +306,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
   @HostListener('document:mousemove', ['$event'])
   onMouseMove(e: MouseEvent) {
 
-    if (!this.config.zoomable && this.nodeService.scale.scaleX !== null) {
+    if (!this.config.zoomable && this.nodeService.scale.scaleX) {
       // e.stopPropagation();
       // e.preventDefault();
 
@@ -709,7 +709,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
       this.nodeService.smoothenPath();
       let path = this.nodeService.getPath(this.nodeService.selectedPaths[0]);
       const bboxSize = this.bboxService.getBBox(path);
-      if (bboxSize !== null) {
+      if (bboxSize) {
         this.fileService.updateActiveEffectData(this.file);
         path = bboxSize.path;
       }

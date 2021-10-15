@@ -39,7 +39,7 @@
             </ul>
           </div>
 
-          <div id="rangeValues" *ngIf="collection.effectDataList.length === 0 && this.motorControlService.file.configuration.collectionDisplay === 'large' && this.motorControlService.width > 800">
+          <div id="rangeValues" *ngIf="collection.effectDataList.length === 0 && this.motorControlService.file.configuration.collectionDisplay === 'large' && this.motorControlService.width > 600">
             <label>x</label>
             <input type="number" (focus)="this.motorControlService.deselectElements()" *ngIf="collection.rotation.units.name !== 'ms'" id="range-start" name="rotation-start" [(ngModel)]="collection.rotation.start" (change)="this.motorControlService.updateCollection(collection)">
             <input type="number" (focus)="this.motorControlService.deselectElements()" id="range-end" name="rotation-end" [(ngModel)]="collection.rotation.end" (change)="this.motorControlService.updateCollection(collection)">
@@ -121,7 +121,7 @@
             </select>
           </div>
 
-          <div class="form-row left" *ngIf="this.motorControlService.width > 600 && collection.visualizationType !== 'velocity'">
+          <div class="form-row left" *ngIf="this.motorControlService.width > 800 && collection.visualizationType !== 'velocity'">
             <div id="coll-layers-row" *ngFor="let layer of collection.layers">
               <ul id="coll-layers">
                 <li id="visible" [ngClass]="{ active: layer.visible }" (click)="toggleVisibility(collection, layer)"><img class="no-pointer-events" src="./assets/icons/layers/visible-icon.svg" title="toggle visibility {{ layer.name }} layer"></li>

@@ -239,9 +239,23 @@
         <div class="form-group details" *ngIf="this.effect && this.effect.type !== 'velocity'">
           <div class="opencloseArrow" [ngClass]="{ open: detailsVisible }" (click)="detailsVisible = !detailsVisible"><div></div></div>
           <label class="labelRow start nextToArrow">Rotation</label>
+
+          <div class="row-inline" *ngIf="!detailsVisible">
+            <label class="radio-container inline">
+              <input type="checkbox" class="type" id="direction_cw" name="direction_cw"
+              [(ngModel)]="this.drawingService.file.activeCollectionEffect.direction.cw" [checked]="this.drawingService.file.activeCollectionEffect.direction.cw" (change)="updateCollectionEffect()">
+              <span class="checkmark radio inline"></span> cw
+            </label>
+            <label class="radio-container inline">
+              <input type="checkbox" class="type" id="direction_ccw" name="direction_ccw"
+              [(ngModel)]="this.drawingService.file.activeCollectionEffect.direction.ccw" [checked]="this.drawingService.file.activeCollectionEffect.direction.ccw" (change)="updateCollectionEffect()">
+              <span class="checkmark radio inline"></span> ccw
+            </label>
+          </div>
+
           <div *ngIf="detailsVisible">
             <div class="row">
-              <label class="radio-container details">CW <div class="question-mark inline" title="Experience effect in clockwise direction.">?</div>
+              <label class="radio-container details">cw <div class="question-mark inline" title="Experience effect in clockwise direction.">?</div>
                 <input type="checkbox" class="type" id="direction_cw" name="direction_cw"
                 [(ngModel)]="this.drawingService.file.activeCollectionEffect.direction.cw" [checked]="this.drawingService.file.activeCollectionEffect.direction.cw" (change)="updateCollectionEffect()">
                 <span class="checkmark radio"></span>
@@ -249,7 +263,7 @@
             </div>
 
             <div class="row">
-              <label class="radio-container details">CCW <div class="question-mark inline" title="Experience effect in counterclockwise direction.">?</div>
+              <label class="radio-container details">ccw <div class="question-mark inline" title="Experience effect in counterclockwise direction.">?</div>
                 <input type="checkbox" class="type" id="direction_ccw" name="direction_ccw"
                 [(ngModel)]="this.drawingService.file.activeCollectionEffect.direction.ccw" [checked]="this.drawingService.file.activeCollectionEffect.direction.ccw" (change)="updateCollectionEffect()">
                 <span class="checkmark radio"></span>
@@ -257,7 +271,7 @@
             </div>
 
             <div class="row" *ngIf="this.effect && this.effect.rotation !== 'independent'">
-              <label class="radio-container details">Every rotation <div class="question-mark inline" title="Experience effect once or every rotation.">?</div>
+              <label class="radio-container details">every rotation <div class="question-mark inline" title="Experience effect once or every rotation.">?</div>
                 <input type="checkbox" class="type" id="infinite" name="infinite"
                 [(ngModel)]="this.drawingService.file.activeCollectionEffect.infinite" [checked]="this.drawingService.file.activeCollectionEffect.infinite"
                 (change)="updateCollectionEffect()">
@@ -274,6 +288,19 @@
         <div class="form-group details">
           <div class="opencloseArrow" [ngClass]="{ open: reflectVisible }" (click)="reflectVisible = !reflectVisible"><div></div></div>
           <label class="labelRow start nextToArrow">Reflect</label>
+          <div class="row-inline" *ngIf="!reflectVisible">
+            <label class="radio-container inline">
+              <input type="checkbox" class="type" id="reflect-y" name="reflect-y"
+              [(ngModel)]="this.drawingService.file.activeCollectionEffect.flip.y" (change)="updateCollectionEffect()">
+              <span class="checkmark radio inline"></span> h
+            </label>
+            <label class="radio-container inline">
+              <input type="checkbox" class="type" id="reflect-x" name="reflect-x"
+              [(ngModel)]="this.drawingService.file.activeCollectionEffect.flip.x" (change)="updateCollectionEffect()">
+              <span class="checkmark radio inline"></span> v
+            </label>
+          </div>
+
           <div *ngIf="reflectVisible">
             <div class="row">
               <label class="radio-container details">horizontal<div class="question-mark inline" title="Reflect effect horizontally">?</div>
@@ -292,11 +319,40 @@
           </div>
         </div>
 
+        <div class="horizontalSeparator details"></div>
+
+
+        <div class="form-group details">
+          <div class="opencloseArrow" [ngClass]="{ open: qualityVisible }" (click)="qualityVisible = !qualityVisible"><div></div></div>
+          <label class="labelRow start nextToArrow">Quality</label>
+          <div class="row-inline" *ngIf="!qualityVisible">
+            <input type="number" class="settings inline" id="render-quality" [(ngModel)]="this.drawingService.file.activeCollectionEffect.quality" name="render-quality" (change)="updateQuality()"
+            (focusout)="hideCompleteValue()" (focus)="showCompleteValue()">
+            <div class="question-mark" title="Render quality (increase value to reduce number of data points)">?</div>
+          </div>
+
+          <div *ngIf="qualityVisible">
+            <div class="row">
+              <label class="label"><div class="question-mark" title="Render quality (increase value to reduce number of data points)">?</div>Quality</label>
+              <input type="number" class="settings" id="render-quality" [(ngModel)]="this.drawingService.file.activeCollectionEffect.quality" name="render-quality" (change)="updateQuality()"
+              (focusout)="hideCompleteValue()" (focus)="showCompleteValue()">
+            </div>
+          </div>
+        </div>
+
+
         <div class="horizontalSeparator details" *ngIf="this.effect && this.effect.rotation !== 'independent'"></div>
 
-        <div class="form-group details" *ngIf="this.effect && this.effect.rotation !== 'independent'">
+        <div class="form-group details" *ngIf="this.effect && this.effect.rotation !== 'independent' && this.effect.type !== 'velocity'">
           <div class="opencloseArrow" [ngClass]="{ open: repeatVisible }" (click)="repeatVisible = !repeatVisible"><div></div></div>
           <label class="labelRow start nextToArrow">Repeat</label>
+
+          <div class="row-inline" *ngIf="!repeatVisible">
+            <input type="number" class="settings inline" id="repeat-instances" [(ngModel)]="this.drawingService.file.activeCollectionEffect.repeat.instances" name="repeat-instances" (change)="updateEffectRepeat()">
+            <span class="units inline">N</span>
+            <div class="question-mark" title="Repeat the effect N times">?</div>
+          </div>
+
           <div *ngIf="repeatVisible">
             <div class="row">
               <label class="label"><div class="question-mark" title="Repeat the effect N times">?</div>Instances</label>
@@ -314,22 +370,11 @@
           </div>
         </div>
 
-        <div class="horizontalSeparator details"></div>
 
-        <div class="form-group details">
-          <div class="opencloseArrow" [ngClass]="{ open: qualityVisible }" (click)="qualityVisible = !qualityVisible"><div></div></div>
-          <label class="labelRow start nextToArrow">Quality</label>
-          <div *ngIf="qualityVisible">
-            <div class="row">
-              <label class="label"><div class="question-mark" title="Render quality (increase value to reduce number of data points)">?</div>Quality</label>
-              <input type="number" class="settings" id="render-quality" [(ngModel)]="this.drawingService.file.activeCollectionEffect.quality" name="render-quality" (change)="updateQuality()"
-              (focusout)="hideCompleteValue()" (focus)="showCompleteValue()">
-            </div>
-          </div>
-        </div>
+
+
 
       </div>
-
 
     </ul>
   </div>

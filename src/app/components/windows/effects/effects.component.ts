@@ -20,7 +20,7 @@ export class EffectsComponent implements OnInit, AfterViewInit {
   activeEffectDetails = null;
   transformVisible = true;
   positionVisible = true;
-  detailsVisible = false;
+  detailsVisible = true;
   repeatVisible = false;
   reflectVisible = false;
   qualityVisible = false;

@@ -19,7 +19,8 @@ import { CloneService } from 'src/app/services/clone.service';
         <ul class="buttons-list">
           <li id="new" (click)="createNewEffect()"><img src="./assets/icons/tools/collections.svg" title="New effect"></li>
           <li id="settings" (click)="openEffectSettings()"><img src="./assets/icons/tools/settings.svg" title="Effect settings"></li>
-          <li id="save" (click)="saveEffectToLibrary(this.drawingService.file.activeEffect)"><img src="./assets/icons/buttons/save.svg" title="Save effect to library"></li>
+          <li id="save-effect" (click)="saveActiveEffect()"><img src="./assets/icons/buttons/save.svg" title="Save effect"></li>
+          <li id="save-lib-effect" (click)="saveEffectToLibrary()"><img src="./assets/icons/buttons/save-lib.svg" title="Save effect to library"></li>
         </ul>
       </div>
 
@@ -419,6 +420,10 @@ export class FixedToolbarComponent implements OnInit {
     // this.document.getElementById('field-inset').style.cursor = 'wait';
     // this.drawingService.saveEffect();
     this.electronService.ipcRenderer.send('effectSettings', 'effect-update-settings');
+  }
+
+  saveActiveEffect() {
+    this.drawingService.saveEffect();
   }
 
   saveEffectToLibrary() {

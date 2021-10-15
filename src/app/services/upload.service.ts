@@ -255,7 +255,9 @@ export class UploadService {
           data_complete.concat(this.translatePositionEffectData(path, multiply, 0, 1)) :
           data_complete.concat(this.translateTorqueEffectData(path, multiply, effectData.range_y, 0, 1, start_pos));
 
-        start_offset += data[data.length - 1].x + collEffect.quality;
+          if (data.length > 0) {
+            start_offset += data[data.length - 1].x + collEffect.quality;
+          }
       }
     }
     return { id: collEffect.effectID, type: effectData.type, size: effectData.size, rotation: effectData.rotation, infinite: collEffect.infinite, yUnit: effectData.grid.yUnit.name, data: data, data_complete: data_complete };

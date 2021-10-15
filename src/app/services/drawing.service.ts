@@ -48,7 +48,7 @@ export class DrawingService {
       .attr('width', this.config.svgDx)
       .attr('height', this.config.svgDy);
 
-    if (this.file.activeEffect && this.file.activeEffect.scale !== null) {
+    if (this.file.activeEffect && this.file.activeEffect.scale) {
       const t = d3.zoomIdentity.translate(this.file.activeEffect.scale.x, 0).scale(this.file.activeEffect.scale.k);
       this.config.svg.call(this.config.zoom.transform, t);
     }
@@ -180,7 +180,7 @@ export class DrawingService {
       .domain([this.config.editBounds.xMin, this.config.editBounds.xMax])
       .range([0, this.config.chartDx]);
 
-    if (this.file.activeEffect === null || this.file.activeEffect.scale === null) {
+    if (!this.file.activeEffect || (this.file.activeEffect && !this.file.activeEffect.scale)) {
       this.nodeService.setScale(this.config.xScale, this.config.yScale);
     } else {
       const t = d3.zoomIdentity.translate(this.file.activeEffect.scale.x, 0).scale(this.file.activeEffect.scale.k);
@@ -211,7 +211,7 @@ export class DrawingService {
 
   setEditBounds() {
 
-    if (this.file.activeEffect !== null) {
+    if (this.file.activeEffect) {
       this.config.margin.top = this.config.svgDy * 0.4;
       this.config.editBounds = {
         xMin: this.file.activeEffect.range.start,
@@ -271,7 +271,7 @@ export class DrawingService {
 
     const width = this.config.sliderDrawplane.outer.max - this.config.sliderDrawplane.outer.min;
 
-    if (this.file.activeEffect && this.file.activeEffect.scale !== null) {
+    if (this.file.activeEffect && this.file.activeEffect.scale) {
       scale = this.file.activeEffect.scale.k;
       scaleOffset = this.file.activeEffect.scale.x;
     }
@@ -392,7 +392,7 @@ export class DrawingService {
       .attr('y', this.config.svgDy - 8)
       .attr('text-anchor', 'end')
       .text(() => {
-        if (this.file.activeEffect.scale === null) {
+        if (!this.file.activeEffect.scale) {
           const transform = d3.zoomTransform(this.config.svg.node());
           return Math.round(transform.k * 100) + '%';
         } else {
@@ -425,7 +425,7 @@ export class DrawingService {
   }
 
   deselectCollectionEffects() {
-    if (this.file.activeCollectionEffect !== null && this.file.activeCollection) {
+    if (this.file.activeCollectionEffect && this.file.activeCollection) {
       const collection = this.file.collections.filter(c => c.id === this.file.activeCollection.id)[0];
       if (collection) {
         collection.config.svg.selectAll('#coll-effect-' + this.file.activeCollectionEffect.id).style('opacity', 0.3);
