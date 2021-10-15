@@ -348,7 +348,8 @@
           <label class="labelRow start nextToArrow">Repeat</label>
 
           <div class="row-inline" *ngIf="!repeatVisible">
-            <input type="number" class="settings inline" id="repeat-instances" [(ngModel)]="this.drawingService.file.activeCollectionEffect.repeat.instances" name="repeat-instances" (change)="updateEffectRepeat()">
+            <input type="number" class="settings inline" id="repeat-instances" [(ngModel)]="this.drawingService.file.activeCollectionEffect.repeat.instances" name="repeat-instances"
+              (focusout)="hideCompleteValue()" (focus)="showCompleteValue()" (change)="updateEffectRepeat()">
             <span class="units inline">N</span>
             <div class="question-mark" title="Repeat the effect N times">?</div>
           </div>
@@ -356,7 +357,8 @@
           <div *ngIf="repeatVisible">
             <div class="row">
               <label class="label"><div class="question-mark" title="Repeat the effect N times">?</div>Instances</label>
-              <input type="number" class="settings" id="repeat-instances" [(ngModel)]="this.drawingService.file.activeCollectionEffect.repeat.instances" name="repeat-instances" (change)="updateEffectRepeat()">
+              <input type="number" class="settings" id="repeat-instances" [(ngModel)]="this.drawingService.file.activeCollectionEffect.repeat.instances" name="repeat-instances"
+               (focusout)="hideCompleteValue()" (focus)="showCompleteValue()" (change)="updateEffectRepeat()">
               <span class="units">N</span>
             </div>
             <div class="row" *ngFor="let item of this.drawingService.file.activeCollectionEffect.repeat.repeatInstances; let i = index" [attr.data-index]="i">
