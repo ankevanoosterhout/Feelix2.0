@@ -1038,6 +1038,7 @@ label.select.playWindowSmall:after {
 .radio-container.inline {
   width: 20px;
   padding: 0 0 0 28px;
+  margin-bottom: 0;
 }
 
 .radio-container.motorsettings {
