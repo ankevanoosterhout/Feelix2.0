@@ -13,11 +13,17 @@ Run `ng generate component component-name` to generate a new component. You can 
 ## Build
 
 npm install
+
 npm install --save-dev electron-rebuild
+
 ./node_modules/.bin/electron-rebuild
+
 npm run rebuild
+
 ng build
+
 npm run package-mac
+
 node dmg_builder.js
 
 ## Running unit tests
