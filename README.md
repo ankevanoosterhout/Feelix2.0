@@ -12,7 +12,13 @@ Run `ng generate component component-name` to generate a new component. You can 
 
 ## Build
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory. Use the `--prod` flag for a production build.
+npm install
+npm install --save-dev electron-rebuild
+./node_modules/.bin/electron-rebuild
+npm run rebuild
+ng build
+npm run package-mac
+node dmg_builder.js
 
 ## Running unit tests
 
