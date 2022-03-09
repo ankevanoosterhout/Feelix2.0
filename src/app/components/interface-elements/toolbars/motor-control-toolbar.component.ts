@@ -154,6 +154,8 @@ export class MotorControlToolbarComponent implements OnInit {
       this.electronService.ipcRenderer.send('motorSettings');
     } else if (id === 2) {
       this.electronService.ipcRenderer.send('changeViewSettings');
+    } else if (id === 3) {
+      this.electronService.ipcRenderer.send('changeViewTranslation');
     }
   }
 

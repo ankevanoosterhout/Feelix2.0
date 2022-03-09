@@ -1,0 +1,64 @@
+<div class="row">
+
+  <!-- option column -->
+
+  <div class="column fixed-height" id="NN_options" *ngIf="this.ml5jsService.selectedModel === this.ml5jsService.modelSet[0]">
+
+    <div class="form-group">
+      <label class="labelRow">Model</label>
+      <select class="form-control playWindow" id="model_options" name="model_options" [(ngModel)]="this.ml5jsService.selectedModel" (change)="this.ml5jsService.selectModel()">
+        <option *ngFor="let item of this.ml5jsService.modelSet" [ngValue]="item">{{ item.type }}</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="label">Task</label>
+      <select class="form-control playWindow" id="task" name="task" [(ngModel)]="this.ml5jsService.selectedModel.options.NN_task" (change)="this.ml5jsService.saveModel()">
+        <option *ngFor="let item of this.ml5jsService.NN_task_options" [ngValue]="item">{{ item }}</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="radio-container">Debug
+        <input type="checkbox" class="type" id="debug" name="debug" [(ngModel)]="this.ml5jsService.selectedModel.options.debug" [checked]="this.ml5jsService.selectedModel.options.debug">
+        <span class="checkmark radio ml5js"></span>
+      </label>
+    </div>
+
+  </div>
+
+  <!-- inputs column -->
+
+  <div id="inputs" class="column">
+    <label class="labelRow">Inputs</label>
+    <ul>
+      <li *ngFor="let input of this.ml5jsService.selectedModel.inputs">
+        <label class="radio-container">{{ input.name }}
+          <input type="checkbox" class="type" id="{{ input.id }}" name="{{ input.id }}" [(ngModel)]="input.active" [checked]="input.active">
+          <span class="checkmark radio ml5js"></span>
+        </label>
+      </li>
+    </ul>
+  </div>
+
+
+  <!-- output column  -->
+
+  <div id="outputs" class="column">
+    <label class="labelRow">Outputs</label>
+    <ul>
+      <li *ngFor="let output of this.ml5jsService.selectedModel.outputs">
+        <label class="radio-container">{{ output.name }}
+          <input type="checkbox" class="type" id="{{ output.id }}" name="{{ output.id }}" [(ngModel)]="output.active" [checked]="output.active">
+          <span class="checkmark radio ml5js"></span>
+        </label>
+      </li>
+    </ul>
+  </div>
+</div>
+
+
+<div class="row buttons">
+  <button id="classify" (click)="this.classifyAtRunTime()">Classify</button>
+  <button id="initialize" (click)="this.initializeNN_Model(this.ml5jsService.selectedModel)">Train</button>
+</div>

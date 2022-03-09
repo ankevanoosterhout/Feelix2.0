@@ -170,6 +170,10 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
       this.motorControlService.changeViewSettings();
     });
 
+    this.electronService.ipcRenderer.on('changeViewTranslation', (event: Event, data: any) => {
+      this.motorControlService.changeTranslationView();
+    });
+
     this.electronService.ipcRenderer.on('saveData', () => {
       if (this.file.activeEffect) {
         this.fileService.updateActiveEffectData(this.file);

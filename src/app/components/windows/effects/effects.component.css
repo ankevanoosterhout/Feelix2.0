@@ -1031,6 +1031,10 @@ label.select.playWindowSmall:after {
   margin: 2px 0 0 0;
 }
 
+.checkmark.radio.ml5js {
+  margin: 4px 0 0 0;
+}
+
 .checkmark.radio.inline {
   margin: 5px 5px -3px 10px;
 }

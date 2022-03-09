@@ -1,5 +1,5 @@
 import { BrowserModule } from '@angular/platform-browser';
-import { NgModule } from '@angular/core';
+import { NgModule, ɵɵclassMapInterpolate5 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgxWebstorageModule } from 'ngx-webstorage';
 import { NgxFsModule } from 'ngx-fs';
@@ -50,6 +50,11 @@ import { ComponentService } from './services/component.service';
 import { ExportDialogComponent } from './components/windows/export-dialog.component';
 import { CloneService } from './services/clone.service';
 import { GridService } from './services/grid.service';
+import { ML5jsComponent } from './components/ml5js/ml5js.component';
+import { ML5jsService } from './services/ml5js.service';
+import { DataComponent } from './components/ml5js/elements/data.component';
+import { ClassificationComponent } from './components/ml5js/elements/classification.component';
+import { ModelComponent } from './components/ml5js/elements/model.component';
 
 @NgModule({
   declarations: [
@@ -75,7 +80,11 @@ import { GridService } from './services/grid.service';
     MotorSettingsComponent,
     MotorControlComponent,
     MotorControlToolbarInsetComponent,
-    MotorControlToolbarComponent
+    MotorControlToolbarComponent,
+    ML5jsComponent,
+    DataComponent,
+    ClassificationComponent,
+    ModelComponent
   ],
   imports: [
     BrowserModule,
@@ -106,7 +115,8 @@ import { GridService } from './services/grid.service';
     EffectVisualizationService,
     ComponentService,
     MotorControlService,
-    CloneService
+    CloneService,
+    ML5jsService
   ],
   bootstrap: [
     AppComponent

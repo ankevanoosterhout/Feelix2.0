@@ -83,6 +83,7 @@ export class State {
   direction = 1;
   position = new Position();
   sleep = false;
+
 }
 
 export class Motor {
@@ -92,6 +93,7 @@ export class Motor {
   state = new State();
   position_pid = new PID(20.0, 0.0, 0.0);
   velocity_pid = new PID(0.5, 10, .001);
+  record = false;
 
 
   constructor(id: number) {
@@ -129,6 +131,7 @@ export class MicroController {
   updateSpeed = 20;
   baudrate = 115200;
   dataToOtherDevices: Array<any> = [];
+  record = false;
 
   constructor(id: string, serialPort: any, vendor: string) {
     this.id = id;

@@ -1,6 +1,7 @@
 import { Configuration } from './configuration.model';
 import { Collection } from './collection.model';
 import { Details, Effect } from './effect.model';
+import { Model, DataSet } from './ml5js.model';
 
 export class Dates {
   created = new Date().getTime();
@@ -24,6 +25,10 @@ export class File {
   activeEffect: Effect = null;
   activeCollection: Collection = null;
   activeCollectionEffect: Details = null;
+  ml5js: {
+    models: Array<Model>;
+    data: Array<DataSet>;
+  }
 
 
   constructor(name: string, id: string, status: boolean) {

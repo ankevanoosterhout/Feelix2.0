@@ -40,15 +40,19 @@ export class ConfigModel {
 
   constructor(collection: Collection, microcontroller: MicroController) {
     this.serialPort = microcontroller.serialPort;
-    this.motor = microcontroller.motors.filter(m => m.id === collection.motorID.name)[0];
     this.vendor = microcontroller.vendor;
     this.updateSpeed = microcontroller.updateSpeed;
     this.baudrate = microcontroller.baudrate;
-    this.collection = collection.id;
-    this.range = collection.rotation.end - collection.rotation.start;
-    this.loop = collection.rotation.loop ? 1 : 0;
-    if (collection.rotation.units.name === 'radians') {
-      this.range *= (Math.PI / 180);
+    if (collection !== null) {
+      this.motor = microcontroller.motors.filter(m => m.id === collection.motorID.name)[0];
+      this.collection = collection.id;
+      this.range = collection.rotation.end - collection.rotation.start;
+      this.loop = collection.rotation.loop ? 1 : 0;
+      if (collection.rotation.units.name === 'radians') {
+        this.range *= (Math.PI / 180);
+      }
+    } else {
+      this.motor = microcontroller.motors[0];
     }
   }
 }
@@ -139,5 +143,21 @@ export class UploadModel {
     this.data = new DataModel(collection.effectDataList, collection.renderedData);
     this.vendor = microcontroller.vendor;
   }
-
 }
+
+
+
+
+export class ConnectModel {
+
+  config: ConfigModel = null;
+  vendor: string = null;
+
+  constructor(microcontroller: MicroController) {
+
+    this.config = new ConfigModel(null, microcontroller);
+    this.vendor = microcontroller.vendor;
+  }
+}
+
+

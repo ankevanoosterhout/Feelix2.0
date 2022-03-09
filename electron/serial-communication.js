@@ -2,7 +2,6 @@ const SerialPort = require('serialport');
 const main = require('./main');
 
 let activePorts = [];
-let activeDevicePorts = [];
 let ports = [];
 let port;
 let receivingPort = null;
@@ -28,6 +27,8 @@ function listSerialPorts(callback) {
       portsList.push({ serialPort: item, vendor: vendor });
     });
     callback(portsList);
+
+
   })
 };
 
@@ -57,12 +58,6 @@ function closeSerialPort(serialData) {
 function closeAllSerialPorts() {
   for (let COM of activePorts) {
     closeSerialPort(COM);
-  }
-  for (let device of activeDevicePorts) {
-    if (device.sp && device.sp.IsOpen) {
-      device.sp.close();
-    }
-    device.connected = false;
   }
 }
 
@@ -199,9 +194,10 @@ class newSerialPort {
         else if (d.charAt(0) === 'A') {
           const dataArray = d.substr(1).split(':');
           const data = {
-              angle: parseFloat(dataArray[0]),
-              velocity: parseFloat(dataArray[1]),
-              time: parseInt(dataArray[2]),
+              motorID: dataArray[0],
+              angle: parseFloat(dataArray[1]),
+              velocity: parseFloat(dataArray[2]),
+              time: parseInt(dataArray[3]),
               serialPath: this.COM
           };
           main.visualizaMotorData(data);
@@ -382,15 +378,18 @@ function prepareEffectData(uploadContent, motor, datalist) {
 
 
 
-function tryToEstablishConnection(receivingPort, port, vendor, baudrate) {
+function tryToEstablishConnection(receivingPort, uploadContent, callback) {
   if (!receivingPort) {
-    createConnection({ port:port, type: vendor, baudrate: baudrate });
-    receivingPort = ports.filter(p => p.COM === port.path)[0];
+    createConnection({ port: uploadContent.config.serialPort, type: uploadContent.config.vendor, baudrate: uploadContent.config.baudrate });
+    receivingPort = ports.filter(p => p.COM === uploadContent.config.serialPort.path)[0];
   } else if (!receivingPort.sp.IsOpen) {
     receivingPort.sp.open();
-    activePorts.push(receivingPort.COM);
+    if (!activePorts.includes(receivingPort.COM)) {
+      activePorts.push(receivingPort.COM);
+    }
   }
-  return receivingPort;
+  callback(receivingPort, uploadContent);
+  // return receivingPort;
 }
 
 
@@ -399,7 +398,14 @@ function uploadData(uploadContent) {
 
   datalist = [];
 
-  receivingPort = tryToEstablishConnection(receivingPort, uploadContent.config.serialPort, uploadContent.config.vendor, uploadContent.config.baudrate);
+  tryToEstablishConnection(receivingPort, uploadContent, upload_to_receivedPort);
+
+}
+
+
+
+function upload_to_receivedPort(port, uploadContent) {
+  receivingPort = port;
 
   const motor = uploadContent.config.motor;
 
@@ -409,24 +415,35 @@ function uploadData(uploadContent) {
   dataSendWaitList.push({ port: uploadContent.config.serialPort.path, data: datalist, totalItems: datalist.length, collection: uploadContent.config.collection });
   dataSendWaitList.filter(d => d.port === uploadContent.config.serialPort.path)[0].data.unshift('FC');
 
-  setTimeout(() => {
-    uploadFromWaitList(receivingPort);
-  }, 500);
+  uploadFromWaitList(receivingPort);
+}
+
+
+function requestData(data)  {
+  receivingPort = ports.filter(p => p.COM === data.config.serialPort.path)[0];
+
+  tryToEstablishConnection(receivingPort, data, receivedPort);
+
+  sendDataStr([ 'FMQ' ],  data.config.serialPort.path);
 
 }
 
 
-
-
+function receivedPort(port) {
+  receivingPort = port;
+}
 
 
 function uploadFromWaitList(receivingPort) {
-  if (receivingPort && dataSendWaitList.length > 0) {
+  if (receivingPort) {
     const datalist = dataSendWaitList.filter(d => d.port === receivingPort.COM)[0];
 
     if (datalist && datalist.data.length > 0) {
       const item = datalist.data[datalist.data.length - 1];
 
+      if (item.length > 19) {
+        item = item.slice(0, (19 - item.length));
+      }
       receivingPort.writeData(item + '&');
       datalist.data.pop();
 
@@ -458,12 +475,17 @@ function play(play, motor_id, collection_name, port) {
   main.updateSerialProgress({ progress: 100, str: (play ? 'Play ' + collection_name + ' at ' + port : 'Stop ' + collection_name + ' at ' + port) });
 }
 
+function run(motor_id, port) {
+  sendDataStr([ 'FM' + motor_id + 'K1' ], port);
+  main.updateSerialProgress({ progress: 100, str: 'Run motor ' + motor_id + ' at ' + port });
+}
+
 
 function calibrateMotor(motor_id, microcontroller) {
   receivingPort = ports.filter(p => p.COM === microcontroller.serialPort.path)[0];
   motor = microcontroller.motors.filter(m => m.id === motor_id)[0];
 
-  receivingPort = tryToEstablishConnection(receivingPort, microcontroller.serialPort, microcontroller.vendor, microcontroller.baudrate);
+  receivingPort = tryToEstablishConnection(receivingPort, microcontroller);
 
   let datalist = [];
   datalist.unshift('FM' + motor.id + 'I' + motor.id);
@@ -511,6 +533,9 @@ exports.closeSerialPort = closeSerialPort;
 exports.closeAllSerialPorts = closeAllSerialPorts;
 exports.calibrateMotor = calibrateMotor;
 exports.play = play;
+exports.run = run;
 exports.uploadData = uploadData;
 exports.updateMotorControlVariable = updateMotorControlVariable;
 exports.updateEffectData = updateEffectData;
+exports.requestData = requestData;
+

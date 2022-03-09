@@ -1,0 +1,53 @@
+<div id="create_classifiers" class="row" *ngIf="!this.ml5jsService.classify">
+
+  <label class="labelRow auto_width">Classifiers</label>
+
+  <ul id="data_output_list" class="data-list-header">
+    <li *ngFor="let classifier of this.ml5jsService.selectedModel.outputs; let i=index;" class="dataSet">
+      <div class="row inset">
+        <div class="opencloseArrow" [ngClass]="{ open: classifier.open }" (click)="classifier.open = !classifier.open"><div></div></div>
+        <input type="text" class="nextToArrow classifier_input" id="classifier-{{ i }}" value="{{ classifier.name }}" name="classifier-{{ i }}" (change)="this.ml5jsService.updateClassifier(i)">
+
+        <div class="buttonPlayWindow dataSetList" (click)="this.ml5jsService.deleteClassifier(i)" title="delete">
+          <img src="./assets/icons/buttons/bin.svg">
+        </div>
+        <div class="buttonPlayWindow dataSetList" (click)="this.ml5jsService.addCategoryToClassifier(i)" title="add category">
+          +
+        </div>
+
+      </div>
+      <ul *ngIf="classifier.open">
+        <li *ngFor="let category of classifier.categories; let i=index;" class="values" class="data-list-{{ i }}-row">
+          <div class="row flexbox-row-even">
+            <input type="text" class="list-item" id="{{ classifier.name }}-category-{{ i }}" value="{{ category.name }}" name="{{ classifier.name }}-category-{{ i }}" (change)="this.ml5jsService.updateClassifierCategory(classifier.name, i)">
+            <div class="buttonPlayWindow dataSetList text-button" (click)="this.ml5jsService.deleteCategory(classifier.name, i)" title="delete category">
+              -
+            </div>
+          </div>
+        </li>
+      </ul>
+    </li>
+  </ul>
+    <div class="row buttons"><button (click)="this.ml5jsService.addClassifier()" title="add new classifier">Create</button></div>
+</div>
+
+
+
+
+<div id="results" class="row" *ngIf="this.ml5jsService.classify">
+
+  <label class="labelRow auto_width">Results</label>
+
+  <ul id="data_output_list" class="data-list-header">
+    <li *ngFor="let classifier of this.ml5jsService.selectedModel.outputs">
+      <ul>
+        <li *ngFor="let category of classifier; let i=index;">
+          <!-- show confidence levels in graph -->
+          <div class="title">{{ category.name }}</div>
+          <div class="bar-container"><div class="bar" id="{{ classifier.id }}-{{ category.name }}"></div></div>
+        </li>
+      </ul>
+    </li>
+  </ul>
+
+</div>

@@ -10,6 +10,8 @@ const { webContents } = require('electron');
 const { shell } = require('electron');
 
 const serialPort = require('./serial-communication.js');
+global['window'] = fs.wi;
+global['HTMLVideoElement'] = fs.HTMLVideoElement;
 
 let mainWindow, infoWindow = null, effectWindow = null, layerWindow = null, helpWindow = null;
 let toolbars = [];
@@ -18,6 +20,7 @@ let gridSnap = false, gridVisible = false, guidesLock = false;
 let effectDetails = null;
 let tmpWindow = null;
 let activeWindow = null;
+let ml5jsWindow = null;
 
 
 /****** start app *****/
@@ -97,12 +100,6 @@ const mainMenuTemplate = [
         }
       },
       {
-        label: 'Save to Effect Library',
-        click() {
-          mainWindow.webContents.send('saveEffectToLibrary');
-        }
-      },
-      {
         label: 'Effect Settings',
         click() {
           mainWindow.webContents.send('saveData');
@@ -110,9 +107,21 @@ const mainMenuTemplate = [
         }
       },
       {
+        label: 'Save to Effect Library',
+        click() {
+          mainWindow.webContents.send('saveEffectToLibrary');
+        }
+      },
+      {
         label: 'Clear effect library',
         click() {
           mainWindow.webContents.send('clearCache');
+        }
+      },
+      {
+        label: 'Data-driven effects (ml5.js)',
+        click() {
+          createML5jsWindow();
         }
       }
     ]
@@ -327,6 +336,75 @@ const mainMenuTemplate = [
   }
 ];
 
+const ml5_control_menu_template = [
+  {
+    label: 'Script',
+    submenu: [
+      {
+        label: 'Local',
+        click() {
+
+        }
+      },
+      {
+        label: 'Online',
+        click() {
+
+        }
+      },
+    ]
+  },
+  {
+    label: 'Data',
+    submenu: [
+      {
+        label: 'Local',
+        click() {
+
+        }
+      },
+      {
+        label: 'Server',
+        click() {
+
+        }
+      },
+    ]
+  },
+  {
+    label: 'Model',
+    submenu: [
+      {
+        label: 'Train',
+        click() {
+
+        }
+      },
+      {
+        label: 'Run',
+        click() {
+
+        }
+      },
+    ]
+  },
+  {
+    label: 'Help',
+    submenu: [
+      {
+        label: 'Info',
+        click() {
+
+        }
+      },
+      {
+        label: 'Open development tools',
+        click() {  ml5jsWindow.webContents.openDevTools(); }
+      },
+    ]
+  }
+];
+
 
 
 
@@ -457,6 +535,45 @@ function createWindow() {
     displayStatus('Ready', 'main');
   });
 
+}
+
+function createML5jsWindow() {
+  ml5jsWindow = new BrowserWindow({
+    width: 1000,
+    height: 550,
+    title: 'ml5.js',
+    titleBarStyle: 'hidden',
+    backgroundColor: '#333',
+    resizable: true,
+    movable: true,
+    show: false,
+    icon: path.join(__dirname, '../src/assets/icons/png/64x64.png'),
+    parent: mainWindow,
+    webPreferences: {
+      nodeIntegration: true
+    }
+  })
+
+  ml5jsMenu = Menu.buildFromTemplate(ml5_control_menu_template);
+
+  ml5jsWindow.setMenu(ml5jsMenu);
+
+  ml5jsWindow.loadURL(
+    url.format({
+      pathname: path.join(__dirname, `../dist/feelix/index.html`),
+      protocol: "file:",
+      slashes: true,
+      hash: '/ml5js'
+    })
+  );
+
+  ml5jsWindow.once('ready-to-show', () => {
+    ml5jsWindow.show()
+  });
+
+  ml5jsWindow.on('close', function () {
+    ml5jsWindow = null
+  })
 }
 
 
@@ -620,55 +737,6 @@ function createToolbar(hash, width, type) {
 }
 
 
-function createLayerWindow() {
-
-  mainMenu.items[2].submenu.items[5].submenu.items[0].checked = true;
-
-  layerWindow = new BrowserWindow({
-    show: false,
-    minHeight: 93,
-    minWidth: 240,
-    maxWidth: 240,
-    width: 240,
-    height: 93,
-    x: displays[0].bounds.width * 0.9 - 325,
-    y: (displays[0].bounds.height * 0.1) + 100,
-    title: 'Layers',
-    // titleBarStyle: 'hiddenInset',
-    backgroundColor: '#3a3a3a',
-    alwaysOnTop: true,
-    frame: false,
-    resizable: false,
-    center: false,
-    movable: true,
-    parent: mainWindow,
-    icon: path.join(__dirname, '../src/assets/icons/png/64x64.png'),
-    webPreferences: {
-      nodeIntegration: true
-    }
-  })
-
-  layerWindow.loadURL(
-    url.format({
-      pathname: path.join(__dirname, `../dist/feelix/index.html`),
-      protocol: "file:",
-      slashes: true,
-      hash: '/layers'
-    })
-  )
-
-  layerWindow.once('ready-to-show', () => {
-    if (layerWindow) {
-      layerWindow.show();
-    }
-  })
-
-  layerWindow.on('close', function () {
-    layerWindow = null
-    mainMenu.items[2].submenu.items[5].submenu.items[0].checked = false
-  })
-}
-
 
 function createEffectWindow() {
 
@@ -749,6 +817,7 @@ function createTransform() {
 }
 
 function createConnectToCOM(comPorts) {
+
   mainWindow.webContents.send('updateAvailableCOMPorts', comPorts.serialPort);
 
   if (tmpWindow !== null && (activeWindow === 'motor-settings')) {
@@ -756,7 +825,6 @@ function createConnectToCOM(comPorts) {
   } else {
     createMotorSettingsWindow();
   }
-
 }
 
 
@@ -907,12 +975,16 @@ ipcMain.on('deleteMicrocontrollerCollections', function (e, data) {
 
 
 ipcMain.on('connectToSerialPort', function (e, data) {
-  if (data.connect) {
-    serialPort.connectToSerialPort(data.COM);
-  } else {
-    serialPort.closeSerialPort(data.COM);
-  }
+  serialPort.connectToSerialPort(data.COM);
 });
+
+// ipcMain.on('connectToSerialPort', function (e, data) {
+//   if (data.connect) {
+//     serialPort.connectToSerialPort(data.COM);
+//   } else {
+//     serialPort.closeSerialPort(data.COM);
+//   }
+// });
 
 
 
@@ -926,6 +998,10 @@ ipcMain.on('motorSettings', function (e, data) {
 
 ipcMain.on('changeViewSettings', function(e, data) {
   mainWindow.webContents.send('changeViewSettings');
+});
+
+ipcMain.on('changeViewTranslation', function(e, data) {
+  mainWindow.webContents.send('changeViewTranslation');
 });
 
 
@@ -1041,15 +1117,20 @@ ipcMain.on('saveToEffectLibrary', (event, data) => {
 });
 
 
-ipcMain.on('updateMicrocontrollerDetails', (event, microcontrollerDetails) => {
-  mainWindow.webContents.send('updateControllerDetails', microcontrollerDetails);
-})
+// ipcMain.on('updateMicrocontrollerDetails', (event, microcontrollerDetails) => {
+//   mainWindow.webContents.send('updateControllerDetails', microcontrollerDetails);
+// })
 
 
 ipcMain.on('upload', (event, data) => {
+  console.log(data);
   serialPort.uploadData(data);
 });
 
+ipcMain.on('requestData', (event, data) => {
+  console.log(data);
+  serialPort.requestData(data);
+});
 
 
 // ipcMain.on('moveToPos', (event, data) => {
@@ -1089,6 +1170,10 @@ ipcMain.on('play_collection', (event, data) => {
   serialPort.play(data.play, data.motor_id, data.collection_name, data.port);
 });
 
+ipcMain.on('run', (event, data) => {
+  serialPort.run(data.motor_id, data.port);
+});
+
 ipcMain.on('update_motor_variable', (event, data) => {
   serialPort.updateMotorControlVariable(data.char, data.d, data.motor_id, data.port);
 });
@@ -1096,6 +1181,21 @@ ipcMain.on('update_motor_variable', (event, data) => {
 ipcMain.on('update_effect_variable', (event, data) => {
   serialPort.updateEffectData(data.char, data.d, data.effect_index, data.port);
 });
+
+
+
+
+//ML5js communication
+
+// ipcMain.on('NN_createData', (event, data) => {
+//   ml5js.NN_createData(data.d, data.options, data.epochs, data.batchSize); //32, 12
+// });
+
+// ipcMain.on('NN_classify', (event, data) => {
+//   ml5js.NN_classify(data);
+// });
+
+
 
 
 
@@ -1122,6 +1222,9 @@ function displayStatus(data, page) {
 
 function visualizaMotorData(data) {
   mainWindow.webContents.send('playData', data);
+  if (ml5jsWindow !== null) {
+    ml5jsWindow.webContents.send('motorData', data);
+  }
 }
 
 
@@ -1136,7 +1239,6 @@ function updateZeroElectricAngle(data) {
 
 function uploadSuccesful(collection) {
   mainWindow.webContents.send('upload_succesful', collection);
-
 }
 
 

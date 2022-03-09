@@ -1,0 +1,186 @@
+
+  <div class="window-content">
+
+    <div class="row">
+      <label class="labelRow auto_width">Model</label>
+      <select class="form-control playWindow" id="model_options" name="model_options" [(ngModel)]="this.ml5jsService.selectedModel" (change)="this.ml5jsService.selectModel()">
+        <option *ngFor="let item of this.ml5jsService.modelSet" [ngValue]="item">{{ item.type }}</option>
+      </select>
+
+    </div>
+    <div class="form-group flexbox">
+
+      <div class="column" id="NN_options" *ngIf="this.ml5jsService.selectedModel === this.ml5jsService.modelSet[0]">
+        <div class="inputfield">
+          <div class="inputfield-inset">
+            <div class="inputfield-inset-title">NN Options</div>
+            <div class="form-group">
+              <label class="labelRow">Task</label>
+              <select class="form-control playWindow" id="task" name="task" [(ngModel)]="this.ml5jsService.NN_task" (change)="this.ml5jsService.selectNN_task()">
+                <option *ngFor="let item of this.ml5jsService.NN_tasks" [ngValue]="item">{{ item }}</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="radio-container">Debug
+                <input type="checkbox" class="type" id="debug" name="debug" [(ngModel)]="this.ml5jsService.debug" [checked]="this.ml5jsService.debug">
+                <span class="checkmark radio ml5js"></span>
+              </label>
+            </div>
+
+
+            <ul>
+              <li *ngFor="let set of this.ml5jsService.dataSets">
+                 <div class="column">{{ set.name }}</div>
+                 <div class="column" *ngFor="let item of this.ml5jsService.classifiers; let i=index;">
+                  <select class="form-control playWindow" id="{{ set.id }}-output-{{i}}" name="{{ set.id }}-output-{{i}}" (change)="this.ml5jsService.updateOutputDataSet(set.id)">
+                    <option *ngFor="let category of item.categories" [ngValue]="category">{{ category }}</option>
+                  </select>
+                 </div>
+              </li>
+            </ul>
+
+            <button id="initialize" (click)="this.initializeNN_Model()">initialize model</button>
+
+          </div>
+        </div>
+      </div>
+
+      <div class="column" id="kMeans_options" *ngIf="this.ml5jsService.selectedModel === this.ml5jsService.modelSet[2]">
+        <div class="inputfield">
+          <div class="inputfield-inset">
+            <div class="inputfield-inset-title">kMeans options</div>
+              <div class="row" *ngFor="let item of this.ml5jsService.kMeans_options">
+                <label class="labelRow">{{ item.name }}</label>
+                <input type="number" class="playWindow blue" id="item.name" name="item.name" [(ngModel)]="item.value">
+              </div>
+
+              <div class="row">
+
+              </div>
+          </div>
+        </div>
+
+      </div>
+
+
+
+
+
+      <div class="column" id="motor_data">
+        <div class="inputfield">
+          <div class="inputfield-inset">
+            <div class="inputfield-inset-title">Data</div>
+
+            <div class="row">
+              <div class="row flexbox">
+                <label class="labelRow tableHeader">Microcontroller</label>
+                <div class="record-button" (click)="this.record()">
+                  <div class="circle" [ngClass]="{ red: this.ml5jsService.selectedMicrocontroller && this.ml5jsService.selectedMicrocontroller.record }"></div>
+                  <div class="rec-text">rec</div>
+                </div>
+              </div>
+              <select class="form-control playWindow" id="microcontroller" name="microcontroller" [(ngModel)]="this.ml5jsService.selectedMicrocontroller" (change)="this.ml5jsService.selectMicrocontroller()">
+                <option *ngFor="let item of this.hardwareService.microcontrollers" [ngValue]="item">{{ item.name }}</option>
+              </select>
+            </div>
+
+            <div class="row row-padding-10" *ngIf="this.ml5jsService.selectedMicrocontroller">
+              <div class="data-element" *ngFor="let item of this.ml5jsService.selectedMicrocontroller.motors">
+
+                <div class="row flexbox">
+                  <label class="labelRow tableHeader">Motor {{ item.id }} </label>
+                </div>
+
+                <ul id="data_input_list" class="data-list-header-{{ item.id }}">
+                  <li *ngFor="let set of this.ml5jsService.dataSets; let i=index;" class="dataSet">
+                    <div class="row inset">
+                      <div class="opencloseArrow" [ngClass]="{ open: set.open }" (click)="set.open = !set.open"><div></div></div>
+                      <input type="text" class="nextToArrow dataSet" id="dataSet-{{ i }}" value="{{ set.name }}" name="dataSet-{{ i }}" (change)="this.ml5jsService.updateDataSetName(i)">
+                      <!-- <label class="labelRow start nextToArrow">{{ set.name }}</label> -->
+                      <div class="buttonPlayWindow dataSetList" (click)="this.exportDataSet(i)" title="export">
+                        <img src="./assets/icons/buttons/export.svg">
+                      </div>
+                      <!-- <div class="buttonPlayWindow dataSetList" (click)="this.saveDataSet(i)" title="save">
+                        <img src="./assets/icons/buttons/save.svg">
+                      </div> -->
+                      <div class="buttonPlayWindow dataSetList" (click)="this.ml5jsService.deleteDataSet(i)" title="delete">
+                        <img src="./assets/icons/buttons/bin.svg">
+                      </div>
+                    </div>
+                    <ul *ngIf="set.open">
+                      <li class="header">
+                        <div class="row flexbox-row-even">
+                          <span id="angle" class="data_element header" [ngClass]="{ deactivated: !set.angle_recording }" (click)="set.angle_recording = !set.angle_recording" title="click to (de)activate">angle</span>
+                          <span id="angle" class="data_element header" [ngClass]="{ deactivated: !set.velocity_recording }" (click)="set.velocity_recording = !set.velocity_recording" title="click to (de)activate">velocity</span>
+                          <span id="angle" class="data_element header" [ngClass]="{ deactivated: !set.direction_recording }" (click)="set.direction_recording = !set.direction_recording" title="click to (de)activate">direction</span>
+                        </div>
+                      </li>
+
+                      <li *ngFor="let data of set.d.inputs" class="values" class="data-list-{{ item.id }}-{{ this.ml5jsService.selectedMicrocontroller.name }}-row" (click)="this.selectDataRow()">
+                        <div class="row flexbox-row-even">
+                          <span id="angle" class="data_element" *ngIf="data.angle">{{ data.angle }}</span><span id="angle" class="data_element" *ngIf="!data.angle"></span>
+                          <span id="velocity" class="data_element" *ngIf="data.velocity">{{ data.velocity }}</span><span id="velocity" class="data_element" *ngIf="!data.velocity"></span>
+                          <span id="direction" class="data_element" *ngIf="data.direction">{{ data.direction }}</span><span id="direction" class="data_element" *ngIf="!data.direction"></span>
+                        </div>
+                      </li>
+                    </ul>
+                  </li>
+                  <li class="dataSet">
+                    <div class="buttonPlayWindow dataSetList" (click)="this.ml5jsService.addDataSet()" title="add new data set">
+                      +
+                    </div>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="column" *ngIf="(this.ml5jsService.selectedModel === this.ml5jsService.modelSet[0] && this.ml5jsService.NN_task !== 'regression') || this.ml5jsService.selectedModel === this.ml5jsService.modelSet[1]">
+        <div class="inputfield">
+          <div class="inputfield-inset">
+            <div class="inputfield-inset-title">Classifiers</div>
+
+            <ul id="data_output_list" class="data-list-header">
+              <li *ngFor="let classifier of this.ml5jsService.classifiers; let i=index;" class="dataSet">
+                <div class="row inset">
+                  <div class="opencloseArrow" [ngClass]="{ open: classifier.open }" (click)="classifier.open = !classifier.open"><div></div></div>
+                  <input type="text" class="nextToArrow classifier_input" id="classifier-{{ i }}" value="{{ classifier.name }}" name="classifier-{{ i }}" (change)="this.ml5jsService.updateClassifier(i)">
+                  <!-- <div class="buttonPlayWindow dataSetList" (click)="this.saveDataSet(i)" title="save">
+                    <img src="./assets/icons/buttons/save.svg">
+                  </div> -->
+                  <div class="buttonPlayWindow dataSetList" (click)="this.ml5jsService.deleteClassifier(i)" title="delete">
+                    <img src="./assets/icons/buttons/bin.svg">
+                  </div>
+                  <div class="buttonPlayWindow dataSetList" (click)="this.ml5jsService.addCategoryToClassifier(i)" title="add category">
+                    +
+                  </div>
+
+                </div>
+                <ul *ngIf="classifier.open">
+                  <li *ngFor="let category of classifier.categories; let i=index;" class="values" class="data-list-{{ i }}-{{ this.ml5jsService.selectedMicrocontroller.name }}-row" (click)="this.selectDataRow()">
+                    <div class="row flexbox-row-even">
+                      <input type="text" class="list-item" id="{{ classifier.name }}-category-{{ i }}" value="{{ category }}" name="{{ classifier.name }}-category-{{ i }}" (change)="this.ml5jsService.updateClassifierCategory(classifier.name, i)">
+                      <div class="buttonPlayWindow dataSetList" (click)="this.ml5jsService.deleteCategory(classifier.name, i)" title="delete category">
+                        -
+                      </div>
+                    </div>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+            <ul>
+              <li class="dataSet">
+                <div class="row"><button (click)="this.ml5jsService.addClassifier()" title="add new classifier">Create new</button></div>
+                <div class="row"><button (click)="this.classifyAtRunTime()" title="classify">Classify</button></div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+  </div>

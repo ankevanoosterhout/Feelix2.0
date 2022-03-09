@@ -110,6 +110,14 @@
 
       <!-- details tab -->
 
+      <div class="innerContent-details" id="inner" *ngIf="activeTab === 2 && !this.drawingService.file.activeCollectionEffect">
+        <div class="form-group details">
+          <div class="row">
+            <label class="label" style="white-space: nowrap;">No effect selected</label>
+          </div>
+        </div>
+      </div>
+
       <div class="innerContent-details" id="inner" *ngIf="activeTab === 2 && this.drawingService.file.activeCollectionEffect">
         <div class="form-group details">
           <div class="row">
@@ -371,10 +379,6 @@
             </div>
           </div>
         </div>
-
-
-
-
 
       </div>
 

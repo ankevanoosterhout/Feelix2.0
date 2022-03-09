@@ -1,0 +1,183 @@
+<div class="fixed-toolbar" id="fixed-toolbar">
+
+
+  <div class="row">
+    <ul class="buttons-list">
+      <li id="new" (click)="this.ml5jsService.addDataSet()"><img src="./assets/icons/tools/collections.svg" title="New data set"></li>
+      <li id="export_json" (click)="this.ml5jsService.exportDataSet()"><img src="./assets/icons/buttons/export.svg" title="Export datasets as json"></li>
+      <li id="delete" (click)="this.ml5jsService.deleteDataSet()"><img src="./assets/icons/buttons/bin.svg" title="Delete data set"></li>
+    </ul>
+    <div class="record-button" (click)="this.record()" [ngClass]="{ red: this.ml5jsService.recording.active }">
+      <div class="circle"></div>
+      <div class="rec-text">rec</div>
+    </div>
+  </div>
+  <div class="attach-toolbar" id="toggleDrawPlane"><div class="attach-arrow" (click)="toggleDataSection()"></div></div>
+</div>
+
+<div class="columns">
+
+  <div class="column-30">
+    <div class="row">
+      <label class="labelRow tableHeader">Microcontrollers</label>
+
+    </div>
+
+    <div class="form-group">
+      <select class="form-control playWindow" id="microcontroller" name="microcontroller" [(ngModel)]="this.ml5jsService.selectOptionMicrocontroller">
+        <option [ngValue]="" disabled selected>Select microcontroller</option>
+        <option *ngFor="let item of this.hardwareService.microcontrollers" [ngValue]="item">{{ item.name }}</option>
+      </select>
+      <button (click)="this.ml5jsService.addMicrocontroller()" title="add">Add</button>
+    </div>
+
+    <ul>
+      <li *ngFor="let microcontroller of this.ml5jsService.selectedMicrocontrollers">
+        <div class="row">
+          <label class="label">{{ microcontroller.name }}</label>
+          <div class="buttonPlayWindow dataSetList delete" (click)="this.ml5jsService.deleteMicrocontroller(microcontroller.id)" title="delete">
+            <img src="./assets/icons/buttons/bin.svg">
+          </div>
+        </div>
+        <div class="row">
+          <ul class="motor-list">
+            <li *ngFor="let motor of microcontroller.motors">
+              <label class="radio-container">Motor {{ motor.id }}
+                <input type="checkbox" class="type" id="motor-{{ motor.id }}" name="motor-{{ motor.id }}" [(ngModel)]="motor.record" [checked]="motor.record">
+                <span class="checkmark radio ml5js"></span>
+              </label>
+            </li>
+          </ul>
+        </div>
+      </li>
+    </ul>
+
+
+  </div>
+
+
+  <div class="column-50 flexbox">
+
+    <div class="dataset_column">
+      <ul>
+        <li *ngFor="let set of this.ml5jsService.dataSets; let i=index;">
+          <div class="row inset dataset" (click)="this.selectDataSet(i)" [ngClass]="{ active: set.open }">
+            <input type="text" class="nextToArrow dataSet" id="dataSet-{{ i }}" value="{{ set.name }}" name="dataSet-{{ i }}" (change)="this.ml5jsService.updateDataSetName(i)">
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <ul id="data_input_list" class="data-list-header">
+
+      <li id="datalist-header variable_names">
+
+        <div class="row variable_name" class="data_element header" *ngFor="let input of this.ml5jsService.selectedModel.inputs; let i=index;" [ngClass]="{ invisible: !input.active }">
+          <div class="row"><span>{{ input.name }}</span></div>
+          <div class="row" *ngIf="i < 3">
+            <ul class="motor-list">
+              <li *ngFor="let microcontroller of this.ml5jsService.selectedMicrocontrollers">
+                <span *ngFor="let motor of microcontroller.motors"><span *ngIf="motor.record">{{ motor.id }}</span></span>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="row variable_name" class="data_element header" *ngFor="let output of this.ml5jsService.selectedModel.outputs" [ngClass]="{ invisible: !output.active }">
+          <div class="row"><span *ngIf="output.active">{{ output.name }}</span></div>
+        </div>
+      </li>
+    </ul>
+
+    <div *ngFor="let set of this.ml5jsService.dataSets; let i=index;" class="dataSet_data">
+
+      <ul id="data_input_list" class="variable-column">
+        <li *ngFor="let data of set.d.inputs" class="values" class="data-list-row">
+
+          <div class="row flexbox-row-even">
+            <div class="row variables" class="data_element" *ngFor="let input of this.ml5jsService.selectedModel.inputs; let n=index;" [ngClass]="{ invisible: !input.active }">
+              <div class="row" *ngIf="n < 3">
+                <ul class="motor-list">
+                  <li *ngFor="let microcontroller of this.ml5jsService.selectedMicrocontrollers; let c=index">
+                    <span *ngFor="let motor of microcontroller.motors; let q=index">
+                      <span [ngClass]="{ invisible: !motor.record}" *ngIf="data.port === microcontroller.serialPort.path">
+                        {{ data.motors[q][n].data.value }}
+                      </span>
+                    </span>
+                  </li>
+                </ul>
+              </div>
+              <div class="row" *ngIf="n === 3">
+                <span>{{ data.inputdata.value }}</span>
+              </div>
+            </div>
+
+
+            <div class="row variable_name" class="data_element" *ngFor="let output of this.ml5jsService.selectedModel.outputs; let o=index;" [ngClass]="{ invisible: !output.active }">
+              <div class="row">
+                <select class="form-control playWindow table" id="{{ set.id }}-output-{{ o }}" name="{{ set.id }}-output-{{ o }}" (change)="this.ml5jsService.updateOutputDataSet(set.id)">
+                  <option *ngFor="let category of output.categories" [ngValue]="category">{{ category.name }}</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </li>
+      </ul>
+
+    </div>
+
+  </div>
+
+
+  <!-- <div class="column-50 flexbox"> -->
+    <!-- <ul> -->
+      <!-- <li class="flex-item" *ngFor="let input of this.ml5jsService.model.inputs">Data set</li>
+      <li class="flex-item" *ngFor="let input of this.ml5jsService.model.inputs"><span id="input.id">{{ input.name }}</span></li> -->
+    <!-- </ul> -->
+    <!-- <div class="data-element" *ngFor="let item of this.ml5jsService.selectedMicrocontroller.motors"> -->
+<!--
+      <div class="row flexbox">
+        <label class="labelRow tableHeader">Motor {{ item.id }} </label>
+      </div> -->
+      <!-- <ul id="data_input_list" class="data-list-header">
+        <li *ngFor="let set of this.ml5jsService.dataSets; let i=index;" class="dataSet">
+          <div class="row inset">
+            <div class="opencloseArrow" [ngClass]="{ open: set.open }" (click)="set.open = !set.open"><div></div></div>
+            <input type="text" class="nextToArrow dataSet" id="dataSet-{{ i }}" value="{{ set.name }}" name="dataSet-{{ i }}" (change)="this.ml5jsService.updateDataSetName(i)"> -->
+            <!-- <label class="labelRow start nextToArrow">{{ set.name }}</label> -->
+            <!-- <div class="buttonPlayWindow dataSetList" (click)="this.ml5jsService.exportDataSet()" title="export">
+              <img src="./assets/icons/buttons/export.svg">
+            </div> -->
+            <!-- <div class="buttonPlayWindow dataSetList" (click)="this.saveDataSet(i)" title="save">
+              <img src="./assets/icons/buttons/save.svg">
+            </div> -->
+            <!-- <div class="buttonPlayWindow dataSetList" (click)="this.ml5jsService.deleteDataSet(i)" title="delete">
+              <img src="./assets/icons/buttons/bin.svg">
+            </div> -->
+          <!-- </div>
+          <ul *ngIf="set.open">
+            <li class="header">
+              <div class="row flexbox-row-even">
+                <span *ngFor="let input of this.ml5jsService.selectedModel.inputs" id="{{ input.name }}" class="data_element header" [ngClass]="{ deactivated: !input.active }">{{ input.name }}</span>
+              </div>
+            </li>
+
+            <li *ngFor="let data of set.d.inputs" class="values" class="data-list-row">
+              <div class="row flexbox-row-even">
+                <span *ngFor="let input of this.ml5jsService.selectedModel.inputs" id="{{ input.name }}" class="data_element header" [ngClass]="{ deactivated: !input.active }">{{ input.data }}</span>
+
+                <span id="angle" class="data_element" *ngIf="data.angle">{{ data.angle }}</span><span id="angle" class="data_element" *ngIf="!data.angle"></span>
+                <span id="velocity" class="data_element" *ngIf="data.velocity">{{ data.velocity }}</span><span id="velocity" class="data_element" *ngIf="!data.velocity"></span>
+                <span id="direction" class="data_element" *ngIf="data.direction">{{ data.direction }}</span><span id="direction" class="data_element" *ngIf="!data.direction"></span>
+              </div>
+            </li>
+          </ul>
+        </li>
+        <li class="dataSet">
+          <div class="buttonPlayWindow dataSetList" (click)="this.ml5jsService.addDataSet()" title="add new data set">
+            +
+          </div>
+        </li>
+    </ul>
+    </div> -->
+
+</div>

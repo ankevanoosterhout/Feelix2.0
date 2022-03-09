@@ -20,7 +20,9 @@ export class MotorControlService {
     { id: 0, name: 'new collection', slug: 'collection', disabled: false, icon: './assets/icons/tools/collections.svg' },
     { id: 1, name: 'microcontroller and motor settings', slug: 'settings', disabled: false, icon: './assets/icons/buttons/config.svg' },
     { id: 2, name: 'display', slug: 'display', disabled: false,
-      icon: this.file.configuration.collectionDisplay === 'small' ? './assets/icons/buttons/small-display.svg' : './assets/icons/buttons/large-display.svg' }
+      icon: this.file.configuration.collectionDisplay === 'small' ? './assets/icons/buttons/small-display.svg' : './assets/icons/buttons/large-display.svg' },
+    { id: 3, name: 'translation', slug: 'translation', disabled: false,
+      icon: this.file.configuration.collectionDisplayTranslation === 'linear' ? './assets/icons/buttons/translation-circular.svg' : './assets/icons/buttons/translation-linear.svg' }
   ]
 
   width: number;
@@ -33,9 +35,8 @@ export class MotorControlService {
     this.config = this.drawingService.config;
     this.resetWidth();
     this.updateHeight();
-    this.toolList.filter(t => t.name === 'display')[0].icon =
-      this.file.configuration.collectionDisplay === 'small' ? './assets/icons/buttons/large-display.svg' : './assets/icons/buttons/small-display.svg';
-
+    this.updateToolListDisplay(this.file);
+    this.updateToolListTranslation(this.file);
 
     this.effectVisualizationService.updateCollectionEffect.subscribe(res => {
       this.updateCollectionEffect(res.collection, res.collEffect);
@@ -51,16 +52,19 @@ export class MotorControlService {
   updateHeight() {
     if (this.file.configuration.collectionDisplay === 'large') {
       this.height = (window.innerHeight * this.file.configuration.horizontalScreenDivision / 100) - 85;
-      if (this.height > 280) { this.height = 280;}
-      else if (this.height < 180) { this.height = 180;}
+      if (this.file.configuration.collectionDisplayTranslation === 'linear') {
+        if (this.height > 280) { this.height = 280;}
+        else if (this.height < 180) { this.height = 180;}
+      }
     } else {
       this.height = 120;
     }
   }
 
   updateViewSettings(file: File = this.file) {
-    this.toolList.filter(t => t.name === 'display')[0].icon =
-      file.configuration.collectionDisplay === 'small' ? './assets/icons/buttons/large-display.svg' : './assets/icons/buttons/small-display.svg';
+    this.updateToolListDisplay(file);
+    this.updateToolListTranslation(file);
+
     file.configuration.collectionDisplay === 'small' ?
       this.document.getElementById('motor-list').classList.add('small-') : this.document.getElementById('motor-list').classList.remove('small');
     this.updateHeight();
@@ -68,7 +72,7 @@ export class MotorControlService {
     setTimeout(() => {
       this.drawCollections();
 
-      if (file.configuration.collectionDisplay !== 'small' ) {
+      if (file.configuration.collectionDisplay !== 'small' && file.configuration.collectionDisplayTranslation === 'linear') {
         for (const collection of file.collections) {
           this.updateScale(collection);
         }
@@ -76,8 +80,23 @@ export class MotorControlService {
     }, 50);
   }
 
+  updateToolListDisplay(file: File) {
+    this.toolList.filter(t => t.name === 'display')[0].icon =
+      file.configuration.collectionDisplay === 'small' ? './assets/icons/buttons/large-display.svg' : './assets/icons/buttons/small-display.svg';
+  }
+  updateToolListTranslation(file: File) {
+    console.log(file.configuration.collectionDisplayTranslation);
+    this.toolList.filter(t => t.name === 'translation')[0].icon =
+      file.configuration.collectionDisplayTranslation === 'linear' ? './assets/icons/buttons/translation-circular.svg' : './assets/icons/buttons/translation-linear.svg';
+  }
+
   changeViewSettings() {
     this.file.configuration.collectionDisplay = this.file.configuration.collectionDisplay === 'small' ? 'large' : 'small';
+    this.updateViewSettings(this.file);
+  }
+
+  changeTranslationView() {
+    this.file.configuration.collectionDisplayTranslation = this.file.configuration.collectionDisplayTranslation === 'linear' ? 'circular' : 'linear';
     this.updateViewSettings(this.file);
   }
 
@@ -244,9 +263,47 @@ export class MotorControlService {
       //   this.drawStartPosition(collection);
       // }
     }
+  }
 
 
 
+  drawCollectionCircular(collection: Collection) {
+
+    d3.select('#cID-' + collection.id).remove();
+
+    collection.config.svg = d3.select('#col-' + collection.id)
+      .append('svg')
+      .attr('id', 'cID-' + collection.id)
+      .attr('class', 'collection')
+      .attr('width', this.width)
+      .attr('height', this.height);
+
+    const container = d3.arc()
+      .innerRadius(this.height / 2 * 0.36)
+      .outerRadius(this.height / 2 * 0.82)
+      .startAngle(Math.PI * -0.98)
+      .endAngle(Math.PI * 0.98);
+
+    collection.config.svg.append('path')
+      .attr('class', 'container')
+      .attr('d', container)
+      .attr('fill', '#1c1c1c')
+      .attr('transform', 'translate('+ [this.width/2, (this.height / 2)] + ')');
+
+    const middleLine = d3.arc()
+      .innerRadius(this.height / 2 * 0.59)
+      .outerRadius(this.height / 2 * 0.59 + 1)
+      .startAngle(Math.PI * -0.98)
+      .endAngle(Math.PI * 0.98);
+
+    collection.config.svg.append('path')
+      .attr('class', 'middleLine')
+      .attr('d', middleLine)
+      .attr('fill', '#4a4a4a')
+      .attr('transform', 'translate('+ [this.width/2, (this.height / 2)] + ')');
+
+    this.drawCircularRuler(collection);
+    this.drawCircularSlider(collection);
 
   }
 
@@ -255,9 +312,91 @@ export class MotorControlService {
     this.resetWidth();
 
     for (const collection of collections) {
-      this.drawCollection(collection);
+      if (this.file.configuration.collectionDisplayTranslation === 'linear') {
+        this.drawCollection(collection);
+      } else {
+        this.drawCollectionCircular(collection);
+      }
     }
   }
+
+  drawCircularRuler(collection: Collection) {
+    const fontsize = this.height * 0.018 > 8 ? this.height * 0.018 : 8;
+    // const ruler = d3.arc()
+    //   .innerRadius(this.height / 2 * 0.85)
+    //   .outerRadius(this.height / 2 * 0.85 + 1)
+    //   .startAngle(Math.PI * -0.98)
+    //   .endAngle(Math.PI * 0.98);
+
+    // collection.config.svg.append('path')
+    //   .attr('class', 'ruler')
+    //   .attr('d', ruler)
+    //   .attr('shapeRendering', 'geometricPrecision')
+    //   .attr('fill', '#888')
+    //   .attr('transform', 'translate('+ [this.width/2, (this.height / 2)] + ')');
+
+
+    const ticks = collection.config.svg.append('g')
+      .attr('transform', 'translate('+ [this.width/2, (this.height / 2)] + ')');
+
+    for (let i = 0; i < 360; i+= 5) {
+
+      if (i >= 3.6 && i <= 356.4) {
+
+        const ticklength = i % 10 === 0 ? 6 : 3;
+        const tick = ticks.append('line')
+          .attr('stroke', '#000')
+          .attr('stroke-width', ticklength === 6 ? 0.8 : 0.6)
+          .attr('x1', this.height / 2 * 0.85 * Math.sin(i * (Math.PI / 180)))
+          .attr('y1', this.height / 2 * 0.85 * Math.cos(i * (Math.PI / 180)))
+          .attr('x2', (this.height / 2 * 0.85 + ticklength) * Math.sin(i * (Math.PI / 180)))
+          .attr('y2', (this.height / 2 * 0.85 + ticklength) * Math.cos(i * (Math.PI / 180)))
+          .attr('shapeRendering', 'crispEdges');
+
+        if (i % 30 === 0) {
+          const offsetAngle = 180;
+          const textpath = d3.arc()
+            .innerRadius(this.height / 2 * 0.85 + ticklength - 6)
+            .outerRadius(this.height / 2 * 0.85 + ticklength + 5)
+            .startAngle((i - 180) * (Math.PI / 180))
+            .endAngle((i + 180) * (Math.PI / 180));
+
+          ticks.append('path')
+            .attr('id', 'rulerText-' + i) //Unique id of the path
+            .attr('d', textpath) //SVG path
+            .style('fill', 'none');
+
+          //Create an SVG text element and append a textPath element
+          ticks.append('text')
+            .append('textPath') //append a textPath to the text element
+            .attr('xlink:href', '#rulerText-' + i) //place the ID of the path here
+            .style('text-anchor','middle') //place the text halfway on the arc
+            .attr('startOffset', 100 / (360 / (offsetAngle % 360)) + '%')
+            .text(i)
+            .style('font-size', fontsize + 'px')
+            .attr('fill', '#000');
+          }
+      }
+    }
+  }
+
+
+  drawCircularSlider(collection:Collection) {
+    const sliderContainer = d3.arc()
+      .innerRadius(this.height / 2 * 0.3)
+      .outerRadius(this.height / 2 * 0.3 + 2)
+      .startAngle(Math.PI * -0.98)
+      .endAngle(Math.PI * 0.98);
+
+    collection.config.svg.append('path')
+      .attr('class', 'arc')
+      .attr('d', sliderContainer)
+      .attr('fill', '#000')
+      .attr('shapeRendering', 'geometricPrecision')
+      .attr('transform', 'translate('+ [this.width/2, this.height/2] + ')');
+  }
+
+
 
 
   drawRuler(collection: Collection) {
