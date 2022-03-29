@@ -105,11 +105,15 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
     });
 
     this.electronService.ipcRenderer.on('zero_electric_angle', (event: Event, data: any) => {
+      console.log(data);
       const microcontroller = this.hardwareService.getMicroControllerByCOM(data.serialPath);
       if (microcontroller) {
-        microcontroller.motors.filter(m => m.id === data.motorID)[0].config.calibration.value = data.zero_electric_angle;
-        microcontroller.motors.filter(m => m.id === data.motorID)[0].config.calibration.direction = data.direction === 1 ? 'CW' : 'CCW';
-        this.hardwareService.updateMicroController(microcontroller);
+        const motor = microcontroller.motors.filter(m => m.id === data.motorID)[0];
+        if (motor) {
+          motor.config.calibration.value = data.zero_electric_angle;
+          motor.config.calibration.direction = data.direction === 1 ? 'CW' : 'CCW';
+          this.hardwareService.updateMicroController(microcontroller);
+        }
       }
     });
 
@@ -490,7 +494,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
             effectDetails.position.top = tmpEffect.size.top;
             effectDetails.position.bottom = tmpEffect.size.bottom;
             if (tmpEffect.grid.xUnit.name === 'ms') { effectDetails.quality = Math.ceil(effectDetails.position.width / 50); }
-            else { effectDetails.quality = Math.ceil(effectDetails.position.width / 10); }
+            else { effectDetails.quality = Math.ceil(effectDetails.position.width / 50); }
 
             collection.effects.push(effectDetails);
 

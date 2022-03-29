@@ -37,7 +37,6 @@ import { BBoxService } from './services/bbox.service';
 import { DrawElementsService } from './services/draw-elements.service';
 import { HardwareService } from './services/hardware.service';
 import { StatusbarComponent } from './components/interface-elements/statusbar.component';
-import { EaseFunctionLibraryService } from './services/ease-function-library.service';
 import { MotorSettingsComponent } from './components/windows/settings/motor-settings.component';
 import { MotorControlComponent } from './components/interface-elements/motor-control/motor-control.component';
 import { MotorControlToolbarInsetComponent } from './components/interface-elements/toolbars/motor-control-toolbar-inset.component';
@@ -55,6 +54,10 @@ import { ML5jsService } from './services/ml5js.service';
 import { DataComponent } from './components/ml5js/elements/data.component';
 import { ClassificationComponent } from './components/ml5js/elements/classification.component';
 import { ModelComponent } from './components/ml5js/elements/model.component';
+import { DataSetService } from './services/dataset.service';
+import { LoadDataSetsComponent } from './components/ml5js/datasets/load-datasets.component';
+import { ML5ModelService } from './services/ml5-model.service';
+import { FilterService } from './services/filter.service';
 
 @NgModule({
   declarations: [
@@ -84,7 +87,8 @@ import { ModelComponent } from './components/ml5js/elements/model.component';
     ML5jsComponent,
     DataComponent,
     ClassificationComponent,
-    ModelComponent
+    ModelComponent,
+    LoadDataSetsComponent
   ],
   imports: [
     BrowserModule,
@@ -108,7 +112,6 @@ import { ModelComponent } from './components/ml5js/elements/model.component';
     BBoxService,
     DrawElementsService,
     HardwareService,
-    EaseFunctionLibraryService,
     UploadService,
     HistoryService,
     EffectLibraryService,
@@ -116,7 +119,10 @@ import { ModelComponent } from './components/ml5js/elements/model.component';
     ComponentService,
     MotorControlService,
     CloneService,
-    ML5jsService
+    ML5jsService,
+    DataSetService,
+    ML5ModelService,
+    FilterService
   ],
   bootstrap: [
     AppComponent

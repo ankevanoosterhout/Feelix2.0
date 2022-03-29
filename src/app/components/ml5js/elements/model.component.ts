@@ -1,6 +1,8 @@
 
+import { DOCUMENT } from '@angular/common';
 import { Component, Inject } from '@angular/core';
 import { ML5jsService } from 'src/app/services/ml5js.service';
+
 
 @Component({
   selector: 'app-model',
@@ -10,48 +12,70 @@ import { ML5jsService } from 'src/app/services/ml5js.service';
 export class ModelComponent {
 
 
-  constructor(public ml5jsService: ML5jsService) {
+
+
+  constructor(@Inject(DOCUMENT) private document: Document, public ml5jsService: ML5jsService) {
+
+
+
   }
 
 
 
   initializeNN_Model() {
+    if (!this.ml5jsService.processing) {
 
-    let data = [];
+      this.ml5jsService.processing = true;
+      this.ml5jsService.updateProgess('initializing model', 20);
 
-    this.ml5jsService.dataSets.forEach(set => {
-      let outputs = [];
-
-      for (const output of set.d.outputs) {
-        outputs.push('"' + output.classifier + '":"' + output.value + '"');
+      if (this.ml5jsService.dataSets.length === 0) {
+        this.ml5jsService.processing = false;
+        this.ml5jsService.updateProgess('no data', 0);
+        return false;
       }
 
-      const outputstr = outputs.join(',');
-      const outputObject = JSON.parse('{' + outputstr + '}');
+      let data = this.ml5jsService.createJSONfromDataSet(this.ml5jsService.dataSets, true);
 
-      set.d.inputs.forEach(input => {
-        let inputs = [];
-        for (const motor of input.motors) {
-          for (let m = 0; m < motor.length; m++) {
-            inputs.push('"' + motor[m].data.name + '-' + motor[m].motor + '":"' + motor[m].data.value + '"');
-          }
+      const inputLabels = [];
+      const outputLabels = [];
+
+      for (const input of this.ml5jsService.selectedModel.inputs) {
+        if (input.active) { inputLabels.push(input.name); }
+      }
+
+      for (const output of this.ml5jsService.selectedModel.outputs) {
+        for (const label of output.labels) {
+          if (!outputLabels.includes(label.name)) { outputLabels.push(label.name); }
         }
-        inputs.push('"' + input.inputdata.name + '":"' + input.inputdata.value + '"' );
+      }
 
-        const inputstr = inputs.join(',');
-        let inputObject = JSON.parse('{' + inputstr + '}');
+      this.ml5jsService.selectedModel.options.inputs = inputLabels;
+      this.ml5jsService.selectedModel.options.outputs = outputLabels;
 
-        data.push({ inputs: inputObject, outputs: outputObject });
-      });
-    });
-
-    console.log(data);
-    this.ml5jsService.NN_createData(data, { task: this.ml5jsService.selectedModel.options.NN_task, debug: this.ml5jsService.selectedModel.options.debug }, 32, 12);
+      this.ml5jsService.NN_createData(data, this.ml5jsService.selectedModel);
+    }
   }
+
+
+
 
 
 
   classifyAtRunTime() {
-    this.ml5jsService.classify = true;
+    if (this.ml5jsService.selectedModel.model) {
+      if (!this.ml5jsService.classify) {
+        this.ml5jsService.processing = false;
+        this.ml5jsService.classify = true;
+        this.ml5jsService.updateProgess('deploy', 100);
+        this.document.getElementById('record-button').click();
+      } else {
+        this.ml5jsService.processing = false;
+        this.ml5jsService.classify = false;
+        this.ml5jsService.updateProgess('stopped', 0);
+      }
+    }
   }
+
+
+
 }

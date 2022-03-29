@@ -30,7 +30,7 @@ export class Model {
 
 export class ConfigModel {
   serialPort: any;
-  motor: Motor;
+  motors: Array<Motor>;
   vendor: string;
   updateSpeed: number;
   baudrate: number;
@@ -44,7 +44,7 @@ export class ConfigModel {
     this.updateSpeed = microcontroller.updateSpeed;
     this.baudrate = microcontroller.baudrate;
     if (collection !== null) {
-      this.motor = microcontroller.motors.filter(m => m.id === collection.motorID.name)[0];
+      this.motors = [ microcontroller.motors.filter(m => m.id === collection.motorID.name)[0] ];
       this.collection = collection.id;
       this.range = collection.rotation.end - collection.rotation.start;
       this.loop = collection.rotation.loop ? 1 : 0;
@@ -52,7 +52,7 @@ export class ConfigModel {
         this.range *= (Math.PI / 180);
       }
     } else {
-      this.motor = microcontroller.motors[0];
+      this.motors = microcontroller.motors;
     }
   }
 }
@@ -124,6 +124,18 @@ export class DataModel {
   }
 }
 
+export class FilterModel {
+  filters: Array<any> = [];
+  config: ConfigModel = null;
+  vendor: string = null;
+
+  constructor(filters: Array<any>, microcontroller: MicroController) {
+    this.filters = filters;
+    this.config = new ConfigModel(null, microcontroller);
+    this.vendor = microcontroller.vendor;
+  }
+}
+
 
 export class UploadModel {
   effects: Array<EffectModel> = [];
@@ -131,16 +143,20 @@ export class UploadModel {
   vendor: string = null;
   data: DataModel = null;
 
+
   constructor(collection: Collection, microcontroller: MicroController) {
-    for (const collEffect of collection.effects) {
-      const effectData = collection.effectDataList.filter(e => e.id === collEffect.effectID)[0];
-      if (effectData && effectData.data.length > 0) {
-        const effectModel = new EffectModel(collEffect, effectData);
-        this.effects.push(effectModel);
+    if (collection) {
+      for (const collEffect of collection.effects) {
+        const effectData = collection.effectDataList.filter(e => e.id === collEffect.effectID)[0];
+        if (effectData && effectData.data.length > 0) {
+          const effectModel = new EffectModel(collEffect, effectData);
+          this.effects.push(effectModel);
+        }
       }
+      this.data = new DataModel(collection.effectDataList, collection.renderedData);
     }
     this.config = new ConfigModel(collection, microcontroller);
-    this.data = new DataModel(collection.effectDataList, collection.renderedData);
+
     this.vendor = microcontroller.vendor;
   }
 }

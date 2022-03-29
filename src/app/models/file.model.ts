@@ -15,7 +15,7 @@ export class File {
   _id: string;
   name = 'untitled';
   path = '';
-  softwareVersion = '2.0.31';
+  softwareVersion = '2.1.0';
   overwrite = true;
   isActive = false;
   date = new Dates();

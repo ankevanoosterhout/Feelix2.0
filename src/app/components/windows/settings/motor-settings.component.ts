@@ -155,11 +155,25 @@ export class MotorSettingsComponent implements OnInit {
     this.hardwareService.updateMicroController(microcontroller);
   }
 
-  calibrateMotor(microcontroller: any, motorIndex: number) {
-    this.electronService.ipcRenderer.send('calibrateMotor', {
-      motor: motorIndex,
-      microcontroller: { port: microcontroller.serialPort, type: microcontroller.vendor } });
+  updateStartPosition(microcontroller: any, motor_id: string) {
+
+    this.hardwareService.updateMicroController(microcontroller);
+
+    const uploadModel = this.uploadService.createUploadModel(null, this.selectedMicrocontroller);
+    const motor = this.selectedMicrocontroller.motors.filter(m => m.id === motor_id)[0];
+    uploadModel.config.motors = [ motor ];
+    console.log(uploadModel);
+    if (this.selectedMicrocontroller) {
+      this.electronService.ipcRenderer.send('updateMotorSetting', uploadModel);
+    }
   }
+
+  // calibrateMotor(microcontroller: any, motorIndex: number) {
+
+  //   this.electronService.ipcRenderer.send('calibrateMotor', {
+  //     motor: motorIndex,
+  //     microcontroller: { port: microcontroller.serialPort, type: microcontroller.vendor } });
+  // }
 
   compareUnits(unit1: Unit, unit2: Unit) {
     return unit1 && unit2 ? unit1.name === unit2.name : unit1 === unit2;
@@ -172,7 +186,14 @@ export class MotorSettingsComponent implements OnInit {
 
 
   getCalibrationValue(motor_id: string) {
-    this.electronService.ipcRenderer.send('getCalibrationValue', { motor: motor_id, port: this.selectedMicrocontroller });
+    console.log(this.selectedMicrocontroller);
+    const uploadModel = this.uploadService.createUploadModel(null, this.selectedMicrocontroller);
+    const motor = this.selectedMicrocontroller.motors.filter(m => m.id === motor_id)[0];
+    uploadModel.config.motors = [ motor ];
+    console.log(uploadModel);
+    if (this.selectedMicrocontroller) {
+      this.electronService.ipcRenderer.send('getCalibrationValue', uploadModel);
+    }
   }
 
   createencoder(motor_id: string) {
@@ -183,7 +204,7 @@ export class MotorSettingsComponent implements OnInit {
       } else if (motor.config.encoderType === 'Encoder') {
         motor.config.encoder = new Encoder();
       }
-      this.updateMicrocontroller(this.selectMicrocontroller);
+      this.updateMicrocontroller(this.selectedMicrocontroller);
     }
   }
 

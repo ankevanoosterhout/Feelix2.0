@@ -75,7 +75,7 @@
 
             <div class="form-group">
               <label class="labelRow motorsettings inset"><div class="question-mark" title="Offset between encoder and motor poles. Update to (re)calibrate.">?</div>Zero electric angle</label>
-              <input type="number" class="motor-settings" id="calibrationValue-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" name="calibrationValue" [(ngModel)]="motor.config.calibration.value" (change)="updateMicrocontroller(selectedMicrocontroller)">
+              <input type="number" class="motor-settings" id="calibrationValue-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" name="calibrationValue" [(ngModel)]="motor.config.calibration.value" (change)="updateMicrocontroller(this.selectedMicrocontroller)">
               <button (click)="getCalibrationValue(motor.id)">Update</button>
             </div>
 
@@ -86,7 +86,7 @@
 
             <div class="form-group">
               <label class="labelRow motorsettings inset"><div class="question-mark" title="Optional: set a fixed start position.">?</div>Start position</label>
-              <input type="number" class="small motor-settings" id="startPosition" name="startPosition" [(ngModel)]="motor.state.position.start" (change)="updateMicrocontroller(this.selectedMicrocontroller)">
+              <input type="number" class="small motor-settings" id="startPosition" name="startPosition" [(ngModel)]="motor.state.position.start" (change)="updateStartPosition(this.selectedMicrocontroller, motor.id)">
               <div class="units motor-setting">&deg;</div>
             </div>
 

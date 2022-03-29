@@ -338,54 +338,55 @@ const mainMenuTemplate = [
 
 const ml5_control_menu_template = [
   {
-    label: 'Script',
+    label: 'Model',
     submenu: [
       {
-        label: 'Local',
+        label: 'Load',
         click() {
-
+          createLoadDataSetWindow("load-model");
         }
       },
       {
-        label: 'Online',
+        label: 'Save',
         click() {
-
+          ml5jsWindow.webContents.send('save-model');
         }
       },
+      {
+        label: 'Train',
+        click() {
+          ml5jsWindow.webContents.send('train-model');
+        }
+      },
+      {
+        label: 'Deploy',
+        click() {
+          ml5jsWindow.webContents.send('deploy-model');
+        }
+      },
+      {
+        label: 'Export',
+        click() {
+          ml5jsWindow.webContents.send('export-model');
+        }
+      }
     ]
   },
   {
     label: 'Data',
     submenu: [
       {
-        label: 'Local',
+        label: 'Load',
         click() {
-
+          createLoadDataSetWindow("load-dataset");
         }
       },
       {
-        label: 'Server',
+        label: 'Export',
         click() {
-
+          ml5jsWindow.webContents.send('export-dataset-model');
         }
-      },
-    ]
-  },
-  {
-    label: 'Model',
-    submenu: [
-      {
-        label: 'Train',
-        click() {
-
-        }
-      },
-      {
-        label: 'Run',
-        click() {
-
-        }
-      },
+      }
     ]
   },
   {
@@ -538,42 +539,44 @@ function createWindow() {
 }
 
 function createML5jsWindow() {
-  ml5jsWindow = new BrowserWindow({
-    width: 1000,
-    height: 550,
-    title: 'ml5.js',
-    titleBarStyle: 'hidden',
-    backgroundColor: '#333',
-    resizable: true,
-    movable: true,
-    show: false,
-    icon: path.join(__dirname, '../src/assets/icons/png/64x64.png'),
-    parent: mainWindow,
-    webPreferences: {
-      nodeIntegration: true
-    }
-  })
-
-  ml5jsMenu = Menu.buildFromTemplate(ml5_control_menu_template);
-
-  ml5jsWindow.setMenu(ml5jsMenu);
-
-  ml5jsWindow.loadURL(
-    url.format({
-      pathname: path.join(__dirname, `../dist/feelix/index.html`),
-      protocol: "file:",
-      slashes: true,
-      hash: '/ml5js'
+  if (!ml5jsWindow) {
+    ml5jsWindow = new BrowserWindow({
+      width: 1000,
+      height: 550,
+      title: 'ml5.js',
+      titleBarStyle: 'hidden',
+      backgroundColor: '#333',
+      resizable: true,
+      movable: true,
+      show: false,
+      icon: path.join(__dirname, '../src/assets/icons/png/64x64.png'),
+      parent: mainWindow,
+      webPreferences: {
+        nodeIntegration: true
+      }
     })
-  );
 
-  ml5jsWindow.once('ready-to-show', () => {
-    ml5jsWindow.show()
-  });
+    ml5jsMenu = Menu.buildFromTemplate(ml5_control_menu_template);
 
-  ml5jsWindow.on('close', function () {
-    ml5jsWindow = null
-  })
+    ml5jsWindow.setMenu(ml5jsMenu);
+
+    ml5jsWindow.loadURL(
+      url.format({
+        pathname: path.join(__dirname, `../dist/feelix/index.html`),
+        protocol: "file:",
+        slashes: true,
+        hash: '/ml5js'
+      })
+    );
+
+    ml5jsWindow.once('ready-to-show', () => {
+      ml5jsWindow.show()
+    });
+
+    ml5jsWindow.on('close', function () {
+      ml5jsWindow = null
+    });
+  }
 }
 
 
@@ -788,12 +791,14 @@ function createEffectWindow() {
 }
 
 
-function createLayerOptionWindow(layerDetails) {
-  drawTemporaryWindow(380, 290, 'Layer Options', false, 'layer-option', layerDetails);
-}
+
 
 function createFileSettingWindow(filepath) {
   drawTemporaryWindow(380, 180, 'File Settings', false, filepath);
+}
+
+function createLoadDataSetWindow(filepath) {
+  drawTemporaryWindow(300, 350, 'Load Data Sets', false, filepath);
 }
 
 function createEffectSettingWindow(filepath) {
@@ -848,11 +853,11 @@ function openFile(file, tab) {
 ipcMain.on('openExternalLink', function(e, url) {
   if (!['https:', 'http:'].includes(new URL(url).protocol)) return;
   shell.openExternal(url);
-})
+});
 
 ipcMain.on('closeInfoWindow', function() {
   infoWindow.close();
-})
+});
 
 ipcMain.on('attachToolbar', function () {
   const selectedToolbar = toolbars.filter(t => t.type === 'edit')[0];
@@ -860,7 +865,7 @@ ipcMain.on('attachToolbar', function () {
     selectedToolbar.toolbar.close();
     mainWindow.webContents.send('attachToolbar');
   }
-})
+});
 
 ipcMain.on('attachToolbarMotor', function() {
   const selectedToolbar = toolbars.filter(t => t.type === 'motor')[0];
@@ -868,68 +873,69 @@ ipcMain.on('attachToolbarMotor', function() {
     selectedToolbar.toolbar.close();
     mainWindow.webContents.send('attachMotorControlToolbar');
   }
-})
+});
 
 ipcMain.on('showToolbar', function() {
   createToolbar('/toolbar', 321, 'edit');
   mainMenu.items[2].submenu.items[0].checked = true;
-})
+});
 
 ipcMain.on('showToolbarMotor', function() {
   createToolbar('/motor-control-toolbar', 170, 'motor');
-})
+});
 
 ipcMain.on('closeLayerWindow', function () {
   layerWindow.close();
-})
+});
 
 ipcMain.on('closeAlignWindow', function () {
   alignWindow.close();
-})
+});
 
 ipcMain.on('closeEffectWindow', function () {
   effectWindow.close();
-})
+});
 
 ipcMain.on('closeTmpWindow', function () {
   tmpWindow.close();
-})
+});
 
 ipcMain.on('effectSettings', function(e, filepath) {
   createEffectSettingWindow(filepath);
-})
+});
 
 ipcMain.on('export', function (e, data) {
   mainWindow.webContents.send('showExport', data);
-})
+});
 
 ipcMain.on('updateButtonState', function(e, data) {
   mainWindow.webContents.send('updateButtonState', data);
-})
+});
+
+ipcMain.on('load-dataset', function() {
+  createLoadDataSetWindow("load-dataset");
+});
 
 ipcMain.on('transform', function (e, data) {
   mainWindow.webContents.send('transform', data);
   if (!data.tmp) {
     tmpWindow.close();
   }
-})
+});
 
-ipcMain.on('openLayerOptionWindow', function (e, details) {
-  createLayerOptionWindow(details);
-})
+
 
 ipcMain.on('updateCursor', function (e, details) {
   mainWindow.webContents.send('updateCursor', details);
   mainWindow.focus();
-})
+});
 
 ipcMain.on('selectCursor', function (e, acc) {
   const selectedToolbar = toolbars.filter(t => t.type === 'edit')[0];
   if (selectedToolbar) {
     selectedToolbar.toolbar.webContents.send('selectCursor', acc);
   }
-
-})
+});
 
 ipcMain.on('updateToolbarSize', function (e, size) {
   const selectedToolbar = toolbars.filter(t => t.type === 'edit')[0];
@@ -943,7 +949,7 @@ ipcMain.on('updateToolbarSize', function (e, size) {
 
 ipcMain.on('increaseHeightCOMWindow', function (e, height) {
   tmpWindow.setSize(500, height);
-})
+});
 
 ipcMain.on('updateHeightSettings', function (e, height) {
   tmpWindow.setSize(430, height);
@@ -1004,6 +1010,14 @@ ipcMain.on('changeViewTranslation', function(e, data) {
   mainWindow.webContents.send('changeViewTranslation');
 });
 
+
+ipcMain.on('load-datasets', function(e, data) {
+  ml5jsWindow.webContents.send('load-datasets', data);
+});
+
+ipcMain.on('load-model', function(e, data) {
+  ml5jsWindow.webContents.send('load-model', data);
+});
 
 
 ipcMain.on('saveLogFile', function(e, data) {
@@ -1133,12 +1147,24 @@ ipcMain.on('requestData', (event, data) => {
 });
 
 
+ipcMain.on('loadDataSet', (event, data) => {
+  createLoadDataSetWindow("load-dataset");
+});
+
 // ipcMain.on('moveToPos', (event, data) => {
 //   serialPort.moveToPos(data.microcontroller, data.pos);
 // });
 
 ipcMain.on('getCalibrationValue', (event, data) => {
-  serialPort.calibrateMotor(data.motor, data.port);
+  serialPort.calibrateMotor(data);
+});
+
+ipcMain.on('updateFilter', (event, data) => {
+  serialPort.updateFilter(data);
+});
+
+ipcMain.on('updateMotorSetting', (event, data) => {
+  serialPort.updateMotorSetting(data);
 });
 
 ipcMain.on('saveCalibrationValueToEEPROM', (event, data) => {

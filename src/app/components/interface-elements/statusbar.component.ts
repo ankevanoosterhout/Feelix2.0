@@ -9,10 +9,10 @@ import { DOCUMENT } from '@angular/common';
     <div class="statusbar">
       <div class="process-update" id="msg">{{ this._status }}</div>
       <div class="process-uploadbar">
-        <div id="progress" class="inner-bar"></div>
+        <div id="progress" class="inner-bar" [ngStyle]="{'width': (244 * (this._progress/100)) + 'px' }"></div>
       </div>
 
-      <div class="version">version B2.0.31</div>
+      <div class="version">version B2.1.0</div>
       <div class="logo"><img src="./assets/icons/logo/feelix-logo-gray.svg"></div>
     </div>
 
@@ -40,7 +40,7 @@ import { DOCUMENT } from '@angular/common';
       position: relative;
       padding: 0 15px;
       width: 55%;
-      max-width: calc(100% - 350px);
+      max-width: calc(100% - 500px);
       vertical-align:top;
     }
 
@@ -99,10 +99,13 @@ export class StatusbarComponent implements OnInit {
   // tslint:disable-next-line: variable-name
   public _page = '';
 
+  public _progress = 0;
+
   constructor(@Inject(DOCUMENT) private document: Document, private electronService: ElectronService) {
 
     this.electronService.ipcRenderer.on('updateProgress', (event: Event, data: any) => {
-      this.updateProgressBar(data.progress);
+      this._progress = data.progress;
+      this.updateProgressBar(this._progress);
       this._status = data.str;
       this.document.getElementById('msg').innerHTML = this._status;
     });
@@ -111,6 +114,10 @@ export class StatusbarComponent implements OnInit {
       this._status = msg;
       this.document.getElementById('msg').innerHTML = this._status;
     });
+
+    // this.electronService.ipcRenderer.on('updateProgress_ml5', (event: Event, data: any) => {
+    //   this.updateProgressBar(data.progress);
+    // });
   }
 
   private updateProgressBar(progress: number) {
@@ -121,17 +128,32 @@ export class StatusbarComponent implements OnInit {
   ngOnInit(): void { }
 
   @Input()
-  set status(status: string) {
+  set status(status: String) {
     this._status = status && status.trim();
   }
 
-  get status(): string {
+  get status(): String {
     return this._status;
   }
 
+
   @Input()
-  set page(page: string) {
+  set progress(progress: number) {
+    this._progress = progress || 0;
+  }
+
+  get progress(): number {
+    return this._progress;
+  }
+
+
+  @Input()
+  set page(page: String) {
     this._page = (page && page.trim()) || '';
+  }
+
+  updateMessage(msg: String) {
+
   }
 
 

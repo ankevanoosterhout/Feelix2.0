@@ -51,12 +51,12 @@ html, body {
   display: inline-block;
   width: 100%;
   background: #eee;
-  height:40px;
-  line-height: 40px;
+  height:34px;
+  line-height: 34px;
   padding: 0 20px;
   box-sizing: border-box;
   text-transform: capitalize;
-  font-size: 13px;
+  font-size: 12px;
   -webkit-app-region: drag;
   border-top:1px solid #2c2c2c;
   border-right: 1px solid #2c2c2c;
@@ -267,6 +267,7 @@ button {
   background: #333;
   color:#aaa;
   font-size: 13px;
+  user-select: none;
 }
 
 button.disabled {

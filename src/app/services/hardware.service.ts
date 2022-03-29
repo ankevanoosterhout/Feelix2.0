@@ -129,6 +129,7 @@ export class HardwareService {
     if (microcontroller) {
       let controller = this.microcontrollers.filter(m => m.serialPort.path === microcontroller.serialPort.path)[0];
       if (controller) {
+        console.log(controller);
         controller = microcontroller;
         this.store();
       }
@@ -187,6 +188,10 @@ export class HardwareService {
     }
   }
 
+  getDataSendTime(microControllerID: string): number {
+    const microController = this.microcontrollers.filter(m => m.id === microControllerID)[0];
+    return microController.lastDataSend;
+  }
 
 
   updateDataSendTime(microControllerID: string) {
