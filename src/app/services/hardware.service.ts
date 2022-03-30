@@ -129,7 +129,6 @@ export class HardwareService {
     if (microcontroller) {
       let controller = this.microcontrollers.filter(m => m.serialPort.path === microcontroller.serialPort.path)[0];
       if (controller) {
-        console.log(controller);
         controller = microcontroller;
         this.store();
       }

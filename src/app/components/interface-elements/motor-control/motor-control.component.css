@@ -67,6 +67,10 @@ ul {
   height: auto;
 }
 
+.small-font {
+  font-size: 10px;
+  line-height: 16px;
+}
 
 .info {
   display: inline-block;
@@ -467,6 +471,7 @@ select#comport, select#unitsDropdown {
 
 select#unitsDropdown {
   margin: -1px 0 0 5px;
+  width: 55px;
 }
 
 select#motorID {

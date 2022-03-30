@@ -84,7 +84,7 @@ export class ML5ModelService {
 
   store() {
     this.localSt.store('models', this.models);
-    console.log(this.models);
+    // console.log(this.models);
   }
 
 

@@ -105,7 +105,6 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
     });
 
     this.electronService.ipcRenderer.on('zero_electric_angle', (event: Event, data: any) => {
-      console.log(data);
       const microcontroller = this.hardwareService.getMicroControllerByCOM(data.serialPath);
       if (microcontroller) {
         const motor = microcontroller.motors.filter(m => m.id === data.motorID)[0];
@@ -470,44 +469,46 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
 
         if (id) {
           const collection = this.getCollectionFromClassName(id);
-          const multiply = collection.rotation.units.PR / tmpEffect.grid.xUnit.PR;
+          if (collection) {
+            const multiply = collection.rotation.units.PR / tmpEffect.grid.xUnit.PR;
 
-          if (collection && tmpEffect && !(tmpEffect.type === 'velocity' && collection.visualizationType !== 'velocity')) {
+            if (collection && tmpEffect && !(tmpEffect.type === 'velocity' && collection.visualizationType !== 'velocity')) {
 
-            const copyTmpEffect = this.cloneService.deepClone(tmpEffect);
+              const copyTmpEffect = this.cloneService.deepClone(tmpEffect);
 
-            if (tmpEffect.storedIn === 'library') {
-              copyTmpEffect.storedIn = 'file';
-              copyTmpEffect.date.modified = new Date().getTime();
-              copyTmpEffect.id = uuid();
-              const instances = this.motorControlService.file.effects.filter(e => e.name.includes(copyTmpEffect.name + '-copy') && e.date.created === copyTmpEffect.date.created).length;
-              copyTmpEffect.name += instances > 0 ? '-copy-' + instances : '-copy';
+              if (tmpEffect.storedIn === 'library') {
+                copyTmpEffect.storedIn = 'file';
+                copyTmpEffect.date.modified = new Date().getTime();
+                copyTmpEffect.id = uuid();
+                const instances = this.motorControlService.file.effects.filter(e => e.name.includes(copyTmpEffect.name + '-copy') && e.date.created === copyTmpEffect.date.created).length;
+                copyTmpEffect.name += instances > 0 ? '-copy-' + instances : '-copy';
 
-              this.motorControlService.file.effects.push(copyTmpEffect);
-            }
+                this.motorControlService.file.effects.push(copyTmpEffect);
+              }
 
-            const effectDetails = new Details(uuid(), copyTmpEffect.id, copyTmpEffect.name + '-' + collection.name);
-            effectDetails.position.width = tmpEffect.size.width * multiply;
-            effectDetails.position.x = collection.config.newXscale.invert(e.offsetX) - (effectDetails.position.width / 2);
-            effectDetails.position.height = tmpEffect.size.height;
-            effectDetails.position.y = 0;
-            effectDetails.position.top = tmpEffect.size.top;
-            effectDetails.position.bottom = tmpEffect.size.bottom;
-            if (tmpEffect.grid.xUnit.name === 'ms') { effectDetails.quality = Math.ceil(effectDetails.position.width / 50); }
-            else { effectDetails.quality = Math.ceil(effectDetails.position.width / 50); }
+              const effectDetails = new Details(uuid(), copyTmpEffect.id, copyTmpEffect.name + '-' + collection.name);
+              effectDetails.position.width = tmpEffect.size.width * multiply;
+              effectDetails.position.x = collection.config.newXscale.invert(e.offsetX) - (effectDetails.position.width / 2);
+              effectDetails.position.height = tmpEffect.size.height;
+              effectDetails.position.y = 0;
+              effectDetails.position.top = tmpEffect.size.top;
+              effectDetails.position.bottom = tmpEffect.size.bottom;
+              if (tmpEffect.grid.xUnit.name === 'ms') { effectDetails.quality = Math.ceil(effectDetails.position.width / 50); }
+              else { effectDetails.quality = Math.ceil(effectDetails.position.width / 50); }
 
-            collection.effects.push(effectDetails);
+              collection.effects.push(effectDetails);
 
-            collection.renderedData = [];
-            collection.effectDataList = [];
+              collection.renderedData = [];
+              collection.effectDataList = [];
 
-            if (collection.visualizationType === 'velocity' && tmpEffect.type === 'velocity' && tmpEffect.grid.yUnit.name === 'degrees') {
-              if (collection.rotation.start_y > tmpEffect.range_y.start) { collection.rotation.start_y = tmpEffect.range_y.start; }
-              if (collection.rotation.end_y < tmpEffect.range_y.end) { collection.rotation.end_y = tmpEffect.range_y.end; }
+              if (collection.visualizationType === 'velocity' && tmpEffect.type === 'velocity' && tmpEffect.grid.yUnit.name === 'degrees') {
+                if (collection.rotation.start_y > tmpEffect.range_y.start) { collection.rotation.start_y = tmpEffect.range_y.start; }
+                if (collection.rotation.end_y < tmpEffect.range_y.end) { collection.rotation.end_y = tmpEffect.range_y.end; }
 
-              this.motorControlService.drawCollection(collection);
-            } else {
-              this.motorControlService.drawCollectionEffects(collection);
+                this.motorControlService.drawCollection(collection);
+              } else {
+                this.motorControlService.drawCollectionEffects(collection);
+              }
             }
           }
         }

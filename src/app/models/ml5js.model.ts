@@ -54,9 +54,8 @@ export class Model {
       { name: 'angle', active: true },
       { name: 'velocity', active: true },
       { name: 'direction', active: true },
-      { name: 'time', active: false },
-      { name: 'force magnitude', active: false },
-      { name: 'force target', active: false }
+      { name: 'target', active: false },
+      { name: 'time', active: false }
     ]
   }
 }

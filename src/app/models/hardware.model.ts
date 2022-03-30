@@ -83,7 +83,7 @@ export class State {
   direction = 1;
   position = new Position();
   sleep = false;
-
+  target = 0;
 }
 
 export class Motor {
@@ -137,6 +137,9 @@ export class MicroController {
     this.id = id;
     this.serialPort = serialPort;
     this.vendor = vendor;
+    if (this.vendor === 'STM32') {
+      this.updateSpeed = 150;
+    }
     this.lastDataSend = new Date().getTime();
     this.name = serialPort.path + '-' + vendor;
   }

@@ -36,7 +36,6 @@ export class ML5jsComponent implements OnInit {
 
       this.electronService.ipcRenderer.on('motorData', (event: Event, data: any) => {
 
-
         if (data.velocity > 0.1 || data.velocity < -0.1) {
           if (this.ml5jsService.classify && this.ml5jsService.selectedModel.model) {
             let inputList = [];
@@ -47,7 +46,9 @@ export class ML5jsComponent implements OnInit {
                 } else if (input.name === 'velocity') {
                   inputList.push('"velocity-' + data.motorID + '":' + data.velocity);
                 } else if (input.name === 'direction') {
-                  inputList.push('"direction-' + data.motorID + '":' +(data.velocity >= 0.00 ? 1 : 0));
+                  inputList.push('"direction-' + data.motorID + '":' + (data.velocity >= 0.00 ? 1 : 0));
+                } else if (input.name === 'target') {
+                  inputList.push('"target-' + data.motorID + '":' + data.target);
                 }
               }
             }
@@ -70,6 +71,7 @@ export class ML5jsComponent implements OnInit {
             }
 
           } else if (this.ml5jsService.dataSets.length > 0) {
+            
             if (this.ml5jsService.recording.active) {
               let dataset = this.ml5jsService.dataSets.filter(d => d.open)[0];
               for (const microcontroller of this.ml5jsService.selectedMicrocontrollers) {
@@ -83,28 +85,28 @@ export class ML5jsComponent implements OnInit {
                     let dataList = [];
                     for (const input of this.ml5jsService.selectedModel.inputs) {
                         let dataObject = { motor: motor.id, index: m, data: { name: input.name, value: null } }
-                        if (i < 3) {
+                        if (input.name === 'angle' || input.name === 'velocity' || input.name === 'target' || input.name === 'direction') {
 
                           if (motor.id === data.motorID) {
 
-                          if (input.name === 'angle') {
-                            dataObject.data.value = data.angle;
-                          } else if (input.name === 'velocity') {
-                            dataObject.data .value = data.velocity;
-                          } else if (input.name === 'direction') {
-                            dataObject.data.value = (data.velocity >= 0.00 ? 1 : 0);
-                          }
-                          dataList.push(dataObject);
+                            if (input.name === 'angle') {
+                              dataObject.data.value = data.angle;
+                            } else if (input.name === 'velocity') {
+                              dataObject.data.value = data.velocity;
+                            } else if (input.name === 'direction') {
+                              dataObject.data.value = (data.velocity >= 0.00 ? 1 : 0);
+                            } else if (input.name === 'target') {
+                              dataObject.data.value = data.target;
+                            }
+                            dataList.push(dataObject);
 
-                          if (i == 2) {
-                            microcontrollerObject.motors[m] = dataList;
+                            if (i == 2) {
+                              microcontrollerObject.motors[m] = dataList;
+                            }
                           }
-                        }
-
-                        i++;
+                          i++;
                       }
                     }
-
                     m++;
                   }
                   microcontrollerObject.inputdata = { name: "time", value: new Date().getTime() - this.ml5jsService.recording.starttime };
@@ -114,7 +116,6 @@ export class ML5jsComponent implements OnInit {
               }
               const item = this.document.getElementById('dataSetItem-' + dataset.id);
               if (item) { item.click(); }
-              console.log(dataset.d.inputs);
             }
           }
 

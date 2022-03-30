@@ -184,7 +184,7 @@ class newSerialPort {
       });
 
       parser.on('data', (d) => {
-        console.log(d);
+        // console.log(d);
         if (d.charAt(0) === '*') {
           // console.log('received data ', d);
           if (dataSendWaitList.filter(d => d.port === this.COM)) {
@@ -199,6 +199,7 @@ class newSerialPort {
               angle: parseFloat(dataArray[1]),
               velocity: parseFloat(dataArray[2]),
               time: parseInt(dataArray[3]),
+              target: parseFloat(dataArray[4]),
               serialPath: this.COM
           };
           main.visualizaMotorData(data);
@@ -278,6 +279,7 @@ function prepareMotorData(uploadContent, motor, datalist) {
   datalist.unshift('FM' + motor.id + 'D' + (motor.config.encoder.direction === 'CW' ? 1 : -1));
   datalist.unshift('FM' + motor.id + 'T' + uploadContent.config.updateSpeed);
   datalist.unshift('FM' + motor.id + 'J' + Math.round(uploadContent.config.range));
+  datalist.unshift('FM' + motor.id + 'M' + uploadContent.config.constrain_range);
   datalist.unshift('FM' + motor.id + 'A' + ':' + motor.position_pid.p + ':' + motor.position_pid.i + ':' + motor.position_pid.d);
   datalist.unshift('FM' + motor.id + 'Q' + ':' + motor.velocity_pid.p + ':' + motor.velocity_pid.i + ':' + motor.velocity_pid.d);
   // datalist.unshift('FM' + motor.id + 'B' + uploadContent.baudRate);
@@ -380,8 +382,7 @@ function prepareEffectData(uploadContent, motor, datalist) {
 
 
 function tryToEstablishConnection(receivingPort, uploadContent, callback) {
-  console.log("try to establish connection");
-  console.log(receivingPort, uploadContent);
+
   if (!receivingPort && uploadContent && uploadContent.config) {
     createConnection({ port: uploadContent.config.serialPort, type: uploadContent.config.vendor, baudrate: uploadContent.config.baudrate });
     receivingPort = ports.filter(p => p.COM === uploadContent.config.serialPort.path)[0];
@@ -432,7 +433,6 @@ function requestData(data)  {
   tryToEstablishConnection(receivingPort, data, receivedPort);
 
   sendDataStr([ 'FMQ' ],  data.config.serialPort.path);
-
 }
 
 
@@ -451,7 +451,7 @@ function uploadFromWaitList(receivingPort) {
       if (item.length > 19) {
         item = item.slice(0, (19 - item.length));
       }
-      console.log(item);
+      // console.log(item);
       receivingPort.writeData(item + '&');
       datalist.data.pop();
 
@@ -513,7 +513,7 @@ function calibrate_motor(port, uploadContent) {
     datalist.unshift('FM' + motor.id + 'R');
     datalist.unshift('FC');
 
-    console.log('datalist: ' + datalist);
+    // console.log('datalist: ' + datalist);
 
     dataSendWaitList.push({ port: uploadContent.config.serialPort.path, data: datalist, totalItems: datalist.length });
 
@@ -542,15 +542,16 @@ function update_filter(port, uploadContent) {
     datalist = [];
 
     for (const filter of uploadContent.filters) {
-      datalist.unshift('FF' + filter.type + filter.value + ':' + filter.smoothness);
+      datalist.unshift('FF' + filter.type + ':' + filter.value.toFixed(2) + ':' + filter.smoothness);
     }
-    datalist.unshift('FC');
+    // console.log('datalist: ' + datalist);
+    // datalist.unshift('FC');
 
     dataSendWaitList.push({ port: uploadContent.config.serialPort.path, data: datalist, totalItems: datalist.length });
     main.updateSerialProgress({ progress: 0, str: 'Update filter ' + receivingPort.COM });
     uploadFromWaitList(receivingPort);
 
-    console.log('datalist: ' + datalist);
+
 
   } else {
 
@@ -560,10 +561,33 @@ function update_filter(port, uploadContent) {
 }
 
 
+function sendDataString(uploadContent) {
+  if (uploadContent.config) {
+    receivingPort = ports.filter(p => p.COM === uploadContent.config.serialPort.path)[0];
+
+    receivingPort = tryToEstablishConnection(receivingPort, uploadContent, send_data_string);
+  }
+}
+
+function send_data_string(port, uploadContent) {
+  receivingPort = port;
+
+  if (receivingPort) {
+
+    dataSendWaitList.push({ port: uploadContent.config.serialPort.path, data: [uploadContent.dataString], totalItems: 1 });
+    main.updateSerialProgress({ progress: 0, str: 'Send data ' + receivingPort.COM });
+    uploadFromWaitList(receivingPort);
+  } else {
+    main.updateSerialProgress({ progress: 0, str: 'Error: Not able to send data ' + receivingPort.COM });
+  }
+
+}
+
+
 
 
 function updateMotorSetting(uploadContent) {
-  console.log('config: ' + uploadContent.config);
+  // console.log('config: ' + uploadContent.config);
   if (uploadContent.config) {
     receivingPort = ports.filter(p => p.COM === uploadContent.config.serialPort.path)[0];
 
@@ -577,7 +601,7 @@ function updateMotorSettingCallback(port, uploadContent) {
   receivingPort = port;
 
   datalist = [];
-  console.log('config: ' + uploadContent);
+  // console.log('config: ' + uploadContent);
 
   if (uploadContent && uploadContent.config) {
     for (const motor of uploadContent.config.motors) {
@@ -604,6 +628,7 @@ function updateMotorSettingCallback(port, uploadContent) {
       datalist.unshift('FM' + motor.id + 'D' + (motor.config.encoder.direction === 'CW' ? 1 : -1));
       datalist.unshift('FM' + motor.id + 'T' + uploadContent.config.updateSpeed);
       datalist.unshift('FM' + motor.id + 'J' + Math.round(uploadContent.config.range));
+      datalist.unshift('FM' + motor.id + 'M' + uploadContent.config.constrain_range);
       datalist.unshift('FM' + motor.id + 'A' + ':' + motor.position_pid.p + ':' + motor.position_pid.i + ':' + motor.position_pid.d);
       datalist.unshift('FM' + motor.id + 'Q' + ':' + motor.velocity_pid.p + ':' + motor.velocity_pid.i + ':' + motor.velocity_pid.d);
     }
@@ -611,7 +636,7 @@ function updateMotorSettingCallback(port, uploadContent) {
     if (datalist.length > 0) {
       datalist.unshift('FC');
 
-      console.log('datalist: ' + JSON.stringify(datalist));
+      // console.log('datalist: ' + JSON.stringify(datalist));
 
       dataSendWaitList.push({ port: uploadContent.config.serialPort.path, data: datalist, totalItems: datalist.length });
 
@@ -673,4 +698,5 @@ exports.uploadData = uploadData;
 exports.updateMotorControlVariable = updateMotorControlVariable;
 exports.updateEffectData = updateEffectData;
 exports.requestData = requestData;
+exports.sendDataString = sendDataString;
 

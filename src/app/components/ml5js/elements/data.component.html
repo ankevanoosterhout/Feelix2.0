@@ -89,7 +89,7 @@
 
           <div class="row variable_name" class="data_element header" *ngFor="let input of this.ml5jsService.selectedModel.inputs; let i=index;" [ngClass]="{ invisible: !input.active }">
             <div class="row"><span>{{ input.name }}</span></div>
-            <div class="row" *ngIf="i < 3">
+            <div class="row" *ngIf="input.name === 'angle' || input.name === 'velocity' || input.name === 'direction' || input.name === 'target'">
               <ul class="motor-list">
                 <li *ngFor="let microcontroller of this.ml5jsService.selectedMicrocontrollers">
                   <span *ngFor="let motor of microcontroller.motors"><span *ngIf="motor.record">{{ motor.id }}</span></span>
@@ -110,7 +110,7 @@
 
             <div class="row flexbox-row-even">
               <div class="row variables" class="data_element" *ngFor="let input of this.ml5jsService.selectedModel.inputs; let n=index;" [ngClass]="{ invisible: !input.active }">
-                <div class="row" *ngIf="n < 3">
+                <div class="row" *ngIf="input.name === 'angle' || input.name === 'velocity' || input.name === 'direction' || input.name === 'target'">
                   <ul class="motor-list">
                     <li *ngFor="let microcontroller of this.ml5jsService.selectedMicrocontrollers; let c=index">
                       <span *ngFor="let motor of microcontroller.motors; let q=index">
@@ -121,7 +121,7 @@
                     </li>
                   </ul>
                 </div>
-                <div class="row" *ngIf="n === 3">
+                <div class="row" *ngIf="input.name !== 'angle' && input.name !== 'velocity' && input.name !== 'direction' && input.name !== 'target'">
                   <span>{{ data.inputdata.value }}</span>
                 </div>
               </div>

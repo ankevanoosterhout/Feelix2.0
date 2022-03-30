@@ -1,6 +1,7 @@
 
 import { DOCUMENT } from '@angular/common';
 import { Component, Inject } from '@angular/core';
+import { ElectronService } from 'ngx-electron';
 import { ML5jsService } from 'src/app/services/ml5js.service';
 
 
@@ -14,7 +15,7 @@ export class ModelComponent {
 
 
 
-  constructor(@Inject(DOCUMENT) private document: Document, public ml5jsService: ML5jsService) {
+  constructor(@Inject(DOCUMENT) private document: Document, public ml5jsService: ML5jsService, private electronService: ElectronService) {
 
 
 
@@ -72,6 +73,7 @@ export class ModelComponent {
         this.ml5jsService.processing = false;
         this.ml5jsService.classify = false;
         this.ml5jsService.updateProgess('stopped', 0);
+        this.ml5jsService.resetFiltersMicrocontroller();
       }
     }
   }

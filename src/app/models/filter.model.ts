@@ -3,20 +3,21 @@ import { Classifier } from "./ml5js.model";
 
 export class FilterType {
   name: string;
-  type: string;
+  slug: string;
   explanation: string;
   interpolate: number = 10;
 
-  constructor(name: string, type: string, explanation: string) {
+  constructor(name: string, slug: string, explanation: string) {
     this.name = name;
-    this.type = type;
+    this.slug = slug;
+    this.explanation = explanation;
   }
 }
 
 export class VariableObject {
   label: string;
   value: Array<number> = [ 0,0,0,0,0,0,0,0,0,0,0,0 ];
-  prevValue: Array<number> = [ 0,0,0,0,0,0,0,0,0,0,0,0 ];
+  prevValue: number;
   frequency: number;
 }
 

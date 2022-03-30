@@ -9,9 +9,9 @@ import { v4 as uuid } from 'uuid';
 export class FilterService {
 
   public filterTypes = [
-    new FilterType('amplify', '', 'increase or decrease global motor output'),
-    new FilterType('constrain', '', 'constrain global motor output'),
-    new FilterType('noise', '', 'add noise to global motor output')
+    new FilterType('amplify', 'A', 'increase or decrease global motor output'),
+    new FilterType('constrain', 'C', 'constrain global motor output'),
+    new FilterType('noise', 'N', 'add noise to global motor output')
   ];
 
   public controlVariableOptions = [

@@ -51,6 +51,11 @@
             <select class="form-control" *ngIf="collection.visualizationType === 'velocity'" id="unitsDropdown" (focus)="this.oldUnits = collection.rotation.units" [(ngModel)]="collection.rotation.units" (change)="changeUnits(collection)" name="units" [compareWith]="compareName">
               <option *ngFor="let unit of unitOptionsVelocity" [ngValue]="unit">{{ unit.name }}</option>
             </select>
+
+            <label class="radio-container small-font">constrain
+              <input type="checkbox" class="type" id="constrain_range" name="constrain_range" [(ngModel)]="collection.rotation.constrain" [checked]="collection.rotation.constrain">
+              <span class="checkmark radio"></span>
+            </label>
           </div>
 
           <div id="rangeValues" *ngIf="collection.visualizationType === 'velocity' && collection.effectDataList.length === 0 && this.motorControlService.file.configuration.collectionDisplay === 'large' && this.motorControlService.width > 800">
@@ -59,6 +64,11 @@
             <select class="form-control" id="unitsDropdown" [(ngModel)]="collection.rotation.units_y" (change)="changeUnitsY(collection)" name="units" [compareWith]="compareName">
               <option *ngFor="let unit of unitOptionsVelocityY" [ngValue]="unit">{{ unit.name }}</option>
             </select>
+
+            <label class="radio-container small-font">constrain
+              <input type="checkbox" class="type" id="constrain_range" name="constrain_range" [(ngModel)]="collection.rotation.constrain" [checked]="collection.rotation.constrain">
+              <span class="checkmark radio"></span>
+            </label>
           </div>
 
           <div id="buttonsMotorControl" *ngIf="this.motorControlService.width > 350">

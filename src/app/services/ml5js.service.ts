@@ -10,7 +10,7 @@ import { DataSetService } from './dataset.service';
 import { Subject } from 'rxjs';
 import { ML5ModelService } from './ml5-model.service';
 import { Filter, FilterType } from '../models/filter.model';
-import { FilterModel, UploadModel } from '../models/effect-upload.model';
+import { FilterModel, UploadModel, UploadStringModel } from '../models/effect-upload.model';
 import { ElectronService } from 'ngx-electron';
 import { FileSaverService } from 'ngx-filesaver';
 
@@ -49,6 +49,7 @@ export class ML5jsService {
     public recording = { active: false, starttime: null };
 
     loss: any = null;
+    serialPath: any;
 
     updateML5jsProgress: Subject<any> = new Subject();
     reloadPage: Subject<any> = new Subject();
@@ -116,7 +117,7 @@ export class ML5jsService {
 
     itemsSaved = ((error: any) => {
       if (error) {
-        console.log(error);
+        // console.log(error);
         this.updateProgess('not able to save data ' + error, 0);
         return;
       } else {
@@ -287,7 +288,7 @@ export class ML5jsService {
 
 
     whileTraining = ((epoch: any, loss: any) => {
-      console.log(epoch, loss);
+      // console.log(epoch, loss);
       this.loss = loss;
       this.updateProgess('epoch: ' + epoch + ' loss: ' + loss.loss, 80);
     }).bind(this);
@@ -300,13 +301,14 @@ export class ML5jsService {
 
 
 
-    NN_Deploy(input: any, selectedModel: any, serialPath: string) {
+    NN_Deploy(input: any, selectedModel: any, path: string) {
 
+      this.serialPath = path;
       if (selectedModel.options.task === 'classification') {
         if (selectedModel.multiple) {
-          this.selectedModel.model.classify(input, this.handleClassificationResults(serialPath));
+          this.selectedModel.model.classify(input, this.handleClassificationResults);
         } else {
-          this.selectedModel.model.classifyMultiple(input, this.handleClassificationResults(serialPath));
+          this.selectedModel.model.classifyMultiple(input, this.handleClassificationResults);
         }
       } else {
         this.selectedModel.model.predict(input, this.handleRegressionResults);
@@ -335,17 +337,17 @@ export class ML5jsService {
 
 
 
-    handleClassificationResults = ((serialPath: string, error: any, result: any) => {
+    handleClassificationResults = ((error: any, result: any) => {
       if(error){
         this.updateProgess(error, 0);
         this.classify = false;
-        console.error(error);
+        // console.error(error);
         return;
       }
       for (const output of this.selectedModel.outputs) {
         for (const label of output.labels) {
           const result_label = result.filter((r: { label: string; }) => r.label == label.name)[0];
-          console.log(result_label);
+          // console.log(result_label);
           if (result_label) {
             label.confidence = result_label.confidence;
             this.document.getElementById('bar-' + output.name + '-' + label.name).style.width = (label.confidence * 100) + '%';
@@ -355,46 +357,48 @@ export class ML5jsService {
       }
 
       let filterArray = [];
+      let n = 0;
 
       for (const filter of this.selectedModel.filters) {
         const classifier = this.selectedModel.outputs.filter(o => o.name === filter.classifier.name)[0];
         if (classifier && classifier.labels.length > 0) {
           const highestConfidenceLabel = this.getHighestConfidenceLabel(classifier);
-          console.log(highestConfidenceLabel.name);
-          console.log(filter);
+          // console.log(highestConfidenceLabel.name);
           let index = classifier.labels.indexOf(highestConfidenceLabel);
+
           if (index > -1) {
 
 
-            filter.functionVariable.value[index] = filter.functionVariable.value[index] / 100;
+            if ((filter.type.name === 'amplify' || filter.type.name === 'constrain') && filter.functionVariable.value[index] !== filter.functionVariable.prevValue) {
 
-            if (filter.functionVariable.value[index] !== filter.functionVariable.prevValue[index] || filter.type.name === 'noise') {
-              if (filter.type.name === 'amplify' || filter.type.name === 'constrain') {
+              let filterObj = { type: filter.type.slug, value: filter.functionVariable.value[index], smoothness: filter.type.interpolate };
+              filterArray.push(filterObj);
 
-                let filterObj = { type: filter.type.name, value: filter.functionVariable.value[index], smoothness: filter.type.interpolate };
-                filterArray.push(filterObj);
+              filter.functionVariable.prevValue = filter.functionVariable.value[index];
 
-              } else if (filter.type.name === 'noise') {
+            } else if (filter.type.name === 'noise') {
 
-                const newRandom = (Math.floor(Math.random() * (filter.functionVariable.value[index] * 2)) - filter.functionVariable.value[index]) / 100;
-                let filterObj = { type: filter.type.name, value: newRandom, smoothness: filter.type.interpolate };
+              const newRandom = (Math.floor(Math.random() * ((filter.functionVariable.value[index] * 100) * 2)) - (filter.functionVariable.value[index] * 100)) / 100;
+              let filterObj = { type: filter.type.slug, value: newRandom, smoothness: filter.type.interpolate };
 
-                filterArray.push(filterObj);
-              }
+              filterArray.push(filterObj);
             }
-            filter.functionVariable.prevValue[index] = filter.functionVariable.value[index];
-          }
-
-        }
-        if (filterArray.length > 0) {
-          const microcontroller = this.selectedMicrocontrollers.filter(m => m.serialPort.path === serialPath)[0];
-          if (microcontroller) {
-            const newUploadModel = new FilterModel(filterArray, microcontroller);
-            console.log(newUploadModel);
-            this.electronService.ipcRenderer.send('updateFilter', newUploadModel);
           }
         }
+        if (n === this.selectedModel.filters.length - 1) {
+          if (filterArray.length > 0) {
+            console.log('update filter');
+            const microcontroller = this.selectedMicrocontrollers.filter(m => m.serialPort.path === this.serialPath)[0];
+            if (microcontroller) {
+              const filterModel = new FilterModel(filterArray, microcontroller);
+              console.log(filterModel);
+              this.electronService.ipcRenderer.send('updateFilter', filterModel);
+            }
+          }
+        }
+        n++;
       }
+
     }).bind(this);
 
 
@@ -409,6 +413,13 @@ export class ML5jsService {
       return maxConfidence;
     }
 
+
+    resetFiltersMicrocontroller() {
+      for (const microcontroller of this.selectedMicrocontrollers) {
+        const newUploadStringModel = new UploadStringModel(microcontroller, 'FFR');
+        this.electronService.ipcRenderer.send('send_data_str', newUploadStringModel);
+      }
+    }
 
 
 

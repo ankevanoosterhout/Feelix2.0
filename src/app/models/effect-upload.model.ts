@@ -36,6 +36,7 @@ export class ConfigModel {
   baudrate: number;
   collection: string;
   range: number;
+  constrain_range: number;
   loop: number;
 
   constructor(collection: Collection, microcontroller: MicroController) {
@@ -51,6 +52,7 @@ export class ConfigModel {
       if (collection.rotation.units.name === 'radians') {
         this.range *= (Math.PI / 180);
       }
+      this.constrain_range = collection.rotation.constrain ? 1 : 0;
     } else {
       this.motors = microcontroller.motors;
     }
@@ -155,9 +157,22 @@ export class UploadModel {
       }
       this.data = new DataModel(collection.effectDataList, collection.renderedData);
     }
+
     this.config = new ConfigModel(collection, microcontroller);
 
     this.vendor = microcontroller.vendor;
+  }
+}
+
+
+export class UploadStringModel {
+  config: ConfigModel = null;
+  vendor: string = null;
+  dataString: string;
+
+  constructor(microcontroller: MicroController, dataStr: string) {
+    this.dataString = dataStr;
+    this.config = new ConfigModel(null, microcontroller);
   }
 }
 

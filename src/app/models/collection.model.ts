@@ -11,6 +11,7 @@ export class Rotation {
   start_y = -100;
   end_y = 100;
   units_y = new Unit('voltage (%)', 100);
+  constrain = false;
 }
 
 

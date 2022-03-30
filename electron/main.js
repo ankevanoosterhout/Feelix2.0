@@ -76,6 +76,7 @@ const mainMenuTemplate = [
         label: 'Settings',
         click() { createFileSettingWindow("file-update-settings"); }
       },
+
       // {
       //   label: 'Example files',
       //   submenu: []
@@ -116,12 +117,6 @@ const mainMenuTemplate = [
         label: 'Clear effect library',
         click() {
           mainWindow.webContents.send('clearCache');
-        }
-      },
-      {
-        label: 'Data-driven effects (ml5.js)',
-        click() {
-          createML5jsWindow();
         }
       }
     ]
@@ -283,6 +278,12 @@ const mainMenuTemplate = [
           }
         ]
       },
+      {
+        label: 'ML5js Window',
+        click() {
+          createML5jsWindow();
+        }
+      }
     ]
   },
   {
@@ -1137,12 +1138,12 @@ ipcMain.on('saveToEffectLibrary', (event, data) => {
 
 
 ipcMain.on('upload', (event, data) => {
-  console.log(data);
+  // console.log(data);
   serialPort.uploadData(data);
 });
 
 ipcMain.on('requestData', (event, data) => {
-  console.log(data);
+  // console.log(data);
   serialPort.requestData(data);
 });
 
@@ -1208,7 +1209,9 @@ ipcMain.on('update_effect_variable', (event, data) => {
   serialPort.updateEffectData(data.char, data.d, data.effect_index, data.port);
 });
 
-
+ipcMain.on('send_data_str', (event, data) =>  {
+  serialPort.sendDataString(data);
+});
 
 
 //ML5js communication
