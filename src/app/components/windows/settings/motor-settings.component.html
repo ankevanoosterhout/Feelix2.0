@@ -75,26 +75,55 @@
 
             <div class="form-group">
               <label class="labelRow motorsettings inset"><div class="question-mark" title="Offset between encoder and motor poles. Update to (re)calibrate.">?</div>Zero electric angle</label>
-              <input type="number" class="motor-settings" id="calibrationValue-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" name="calibrationValue" [(ngModel)]="motor.config.calibration.value" (change)="updateMicrocontroller(this.selectedMicrocontroller)">
+              <input type="text" class="motor-settings small" id="calibrationValue-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" name="calibrationValue-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}"
+              [(ngModel)]="motor.config.calibration.value" (change)="updateMicrocontroller(this.selectedMicrocontroller)">
               <button (click)="getCalibrationValue(motor.id)">Update</button>
             </div>
 
             <div class="form-group">
               <label class="labelRow motorsettings inset"><div class="question-mark" title="Direction of sensor opposed to motor poles derived from calibration.">?</div>Sensor direction</label>
-              <input type="text" class="small motor-settings text-align-right" id="calibrationDirection-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" name="calibrationDirection" [(ngModel)]="motor.config.calibration.direction" disabled>
+              <input type="text" class="small motor-settings text-align-right" id="calibrationDirection-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" name="calibrationDirection-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" [(ngModel)]="motor.config.calibration.direction" disabled>
             </div>
 
             <div class="form-group">
-              <label class="labelRow motorsettings inset"><div class="question-mark" title="Optional: set a fixed start position.">?</div>Start position</label>
-              <input type="number" class="small motor-settings" id="startPosition" name="startPosition" [(ngModel)]="motor.state.position.start" (change)="updateStartPosition(this.selectedMicrocontroller, motor.id)">
+              <label class="labelRow motorsettings inset"><div class="question-mark" title="Offset sensor: adjust to modify 0 position">?</div>Sensor offset</label>
+              <input type="text" class="small motor-settings" id="sensorOffset-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" name="sensorOffset-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}"
+              [(ngModel)]="motor.config.sensorOffset" (change)="updateStartPosition(this.selectedMicrocontroller, motor.id)">
               <div class="units motor-setting">&deg;</div>
             </div>
 
             <div class="form-group">
+              <label class="labelRow motorsettings inset"><div class="question-mark" title="Optional: Set start position">?</div>Start position</label>
+              <input type="text" class="small motor-settings" id="startPosition-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" name="startPosition-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}"
+              [(ngModel)]="motor.state.position.start" (change)="updateMicrocontroller(this.selectedMicrocontroller)">
+              <div class="units motor-setting">&deg;</div>
+            </div>
+
+            <div class="form-group">
+              <label class="labelRow motorsettings inset"><div class="question-mark" title="Optional: set end position">?</div>End position</label>
+              <input type="text" class="small motor-settings" id="endPosition-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" name="endPosition-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}"
+              [(ngModel)]="motor.state.position.end" (change)="updateMicrocontroller(this.selectedMicrocontroller)">
+              <div class="units motor-setting disabled">&deg;</div>
+            </div>
+
+            <div class="form-group" id="find-range" class="hidden">
+              <div class="message" id="instruction-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}">rotate motor to start position and press 'OK'</div>
+              <div class="row">
+                <button class="inline" (click)="confirmPosition(this.selectedMicrocontroller, motor.id)">Ok</button>
+                <button class="inline" (click)="searchRange = 0">Cancel</button>
+              </div>
+            </div>
+            <div class="form-group" id="find-range-2">
+              <button class="inline" (click)="findRange(this.selectedMicrocontroller, motor.id)">Find moveable range</button>
+            </div>
+
+
+
+            <!-- <div class="form-group">
               <label class="labelRow motorsettings inset"><div class="question-mark" title="Last position read from the motor.">?</div>Current position</label>
               <input type="number" class="small motor-settings" id="currentPosition" name="currentPosition" disabled [(ngModel)]="motor.state.position.current">
               <div class="units motor-setting disabled">&deg;</div>
-            </div>
+            </div> -->
 
 
             <div class="horizontalSeparator"></div>
@@ -120,7 +149,7 @@
               </select>
             </div>
 
-            <div class="form-group" *ngIf="motor.config.encoderType === 'Magnetic sensor'">
+            <!-- <div class="form-group" *ngIf="motor.config.encoderType === 'Magnetic sensor'">
               <label class="labelRow select motorsettings inset">Communication protocol</label>
               <select class="form-control playWindow" id="protocol" [(ngModel)]="motor.config.encoder.protocol" name="protocol" (change)="updateMicrocontroller(this.selectedMicrocontroller)">
                 <option *ngFor="let type of communicationType" [ngValue]="type.name">{{ type.name }}</option>
@@ -135,16 +164,8 @@
             <div class="form-group" *ngIf="motor.config.encoderType === 'Magnetic sensor'">
               <label class="labelRow motorsettings inset">Clock speed</label>
               <input type="number" class="motor-settings" id="clock_speed" name="clock_speed" [(ngModel)]="motor.config.encoder.clock_speed">
-            </div>
+            </div> -->
 
-            <div class="form-group" *ngIf="motor.config.encoderType === 'Encoder'">
-
-              <!-- <label class="labelRow select motorsettings inset"></label>
-              <select class="form-control playWindow" id="encoder" [(ngModel)]="motor.config.encoderType" name="encoder" (change)="updateMicrocontroller(this.selectedMicrocontroller)">
-                <option *ngFor="let type of encoderTypes" [ngValue]="type.name">{{ type.name }}</option>
-              </select> -->
-
-            </div>
 
             <div class="horizontalSeparator"></div>
 
@@ -170,17 +191,31 @@
               <input type="number" class="motor-settings" id="velocity-limit" name="velocity-limit" [(ngModel)]="motor.config.velocityLimit" (change)="updateMicrocontroller(selectedMicrocontroller)"><span class="units motor-settings">rad/s</span>
             </div>
 
-            <div class="horizontalSeparator"></div>
+            <div class="horizontalSeparator" *ngIf="selectedMicrocontroller && selectedMicrocontroller.vendor !== 'ESP8266'"></div>
 
-
-            <div class="form-group">
+            <div class="form-group" *ngIf="selectedMicrocontroller && selectedMicrocontroller.vendor !== 'ESP8266'">
               <div class="row">
-              <label class="radio-container motorsettings">Inline current sensing <div class="question-mark" title="Optional: enables Field Oriented Control (FOC). Can only be used when current sensors are included on the board">?</div>
-                <input type="checkbox" class="type" id="inline-current-sensing" name="inline-current-sensing" [(ngModel)]="motor.config.inlineCurrentSensing" [checked]="motor.config.inlineCurrentSensing">
-                <span class="checkmark radio playwindow"></span>
-              </label>
+                <label class="radio-container motorsettings">Inline current sensing <div class="question-mark" title="Optional: enables Field Oriented Control (FOC) and overheat protection. Can only be used when current sensors are included on the board">?</div>
+                  <input type="checkbox" class="type" id="inline-current-sensing" name="inline-current-sensing" [(ngModel)]="motor.config.inlineCurrentSensing" [checked]="motor.config.inlineCurrentSensing" (change)="updateMicrocontroller(selectedMicrocontroller)">
+                  <span class="checkmark radio playwindow"></span>
+                </label>
+              </div>
+              <div class="row" *ngIf="motor.config.overheatProtection !== undefined && motor.config.inlineCurrentSensing">
+                <label class="radio-container motorsettings">Overheat protection <div class="question-mark" title="Can only be used when current sensors are included on the board">?</div>
+                  <input type="checkbox" class="type" id="overheat-protection" name="overheat-protection" [(ngModel)]="motor.config.overheatProtection" [checked]="motor.config.overheatProtection" (change)="updateMicrocontroller(selectedMicrocontroller)">
+                  <span class="checkmark radio playwindow"></span>
+                </label>
+              </div>
+              <div class="row" *ngIf="motor.config.calibration.value !== 0.0">
+                <label class="labelRow motorsettings inset"><div class="question-mark" title="The motor will move during current sense calibration. Make sure the supply voltage is correct.">?</div>Current sense</label>
+                <input type="text" class="motor-settings small" id="currentSenseCalibrationValue-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" name="currentSenseCalibrationValue"
+                [(ngModel)]="motor.config.current_sense_calibration" (change)="updateMicrocontroller(this.selectedMicrocontroller)">
+
+                <button (click)="getCurrentSenseCalibrationValue(motor.id)">Calibrate</button>
               </div>
             </div>
+
+            <div class="horizontalSeparator"></div>
 
             <!-- <div class="form-group">
               <label class="labelRow select motorsettings inset"><div class="question-mark" title="Motion control type">?</div>Motion control</label>

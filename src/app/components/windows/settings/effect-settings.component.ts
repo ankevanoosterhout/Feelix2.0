@@ -80,20 +80,20 @@ export class EffectSettingsComponent implements OnInit {
   buttonText = 'Create';
 
   unitOptionsRadial = [
-    { name: 'degrees', PR: 360 },
-    { name: 'radians', PR: (2 * Math.PI) }
+    { name: 'deg', PR: 360 },
+    { name: 'rad', PR: (2 * Math.PI) }
   ];
 
   unitOptions = [
-    // { name: 'degrees', PR: 360 },
-    // { name: 'radians', PR: (2 * Math.PI) },
+    // { name: 'deg', PR: 360 },
+    // { name: 'rad', PR: (2 * Math.PI) },
     { name: 'ms', PR: 1000 }
   ];
 
   controlTypes = ['position', 'velocity', 'torque' ];
 
-  prevUnits = { name: 'degrees', PR: 360 };
-  initialUnits = { name: 'degrees', PR: 360 };
+  prevUnits = { name: 'deg', PR: 360 };
+  initialUnits = { name: 'deg', PR: 360 };
 
 
   // tslint:disable-next-line: variable-name
@@ -125,14 +125,14 @@ export class EffectSettingsComponent implements OnInit {
       this.updateRotationRange();
     } else if (this.effect.type !== 'velocity' && this.effect.grid.xUnit.name === 'ms') {
       this.prevUnits = { name: 'ms', PR: 1000 };
-      this.effect.grid.xUnit = { name: 'degrees', PR: 360 };
+      this.effect.grid.xUnit = { name: 'deg', PR: 360 };
       this.updateRotationRange();
     }
   }
 
   public submit() {
 
-    if (this.effect.type === 'velocity' && this.effect.grid.yUnit.name === 'voltage (%)') { this.effect.grid.yUnit = new Unit('velocity (%)', 1000); }
+    if (this.effect.type === 'velocity' && this.effect.grid.yUnit.name === '%') { this.effect.grid.yUnit = new Unit('%', 100); }
 
     if (!this.updateMode) {
       this.fileService.addEffect(this.effect);

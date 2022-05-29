@@ -38,7 +38,7 @@ import { File } from 'src/app/models/file.model';
 export class TransformComponent implements OnInit {
 
   file: File;
-  units = { name: 'degrees', PR: 360 };
+  units = { name: 'deg', PR: 360 };
   moved = false;
 
   parameters = {

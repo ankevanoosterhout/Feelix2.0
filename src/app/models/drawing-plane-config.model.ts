@@ -110,10 +110,10 @@ export class DrawingPlaneConfig {
   tmpEffect: any = null;
   newGuide = false;
   dataLoggingEnabled = false;
-  xAxisOptions = [ new Unit('degrees', 360), new Unit('radians', 2*Math.PI) ];
+  xAxisOptions = [ new Unit('deg', 360), new Unit('rad', 2*Math.PI) ];
   xAxisOptions_velocity = [ new Unit('ms', 1000) ];
-  yAxisOptions = [ new Unit('voltage (%)', 100) ];
-  yAxisOptions_velocity = [ new Unit('velocity (%)', 100), new Unit('degrees', 360) ];
+  yAxisOptions = [ new Unit('%', 100) ];
+  yAxisOptions_velocity = [ new Unit('%', 100), new Unit('deg', 360) ];
 }
 
 

@@ -9,8 +9,7 @@ import ml5 from 'ml5';
 import { DataSetService } from './dataset.service';
 import { Subject } from 'rxjs';
 import { ML5ModelService } from './ml5-model.service';
-import { Filter, FilterType } from '../models/filter.model';
-import { FilterModel, UploadModel, UploadStringModel } from '../models/effect-upload.model';
+import { FilterModel, UploadStringModel } from '../models/effect-upload.model';
 import { ElectronService } from 'ngx-electron';
 import { FileSaverService } from 'ngx-filesaver';
 

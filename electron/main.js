@@ -742,54 +742,54 @@ function createToolbar(hash, width, type) {
 
 
 
-function createEffectWindow() {
+// function createEffectWindow() {
 
-  mainMenu.items[2].submenu.items[5].submenu.items[1].checked = true
+//   mainMenu.items[2].submenu.items[5].submenu.items[1].checked = true
 
-  effectWindow = new BrowserWindow({
-    width: 240,
-    height: 250,
-    minWidth: 240,
-    maxWidth: 240,
-    minHeight: 120,
-    x: displays[0].bounds.width * 0.9 - 325,
-    y: (displays[0].bounds.height * 0.1) + 193,
-    title: 'Effects',
-    backgroundColor: '#3a3a3a',
-    alwaysOnTop: true,
-    frame: false,
-    resizable: true,
-    center: false,
-    movable: true,
-    show: false,
-    parent: mainWindow,
-    icon: path.join(__dirname, '../src/assets/icons/png/64x64.png'),
-    webPreferences: {
-      nodeIntegration: true,
-      enableDragOut: true
-    }
-  })
+//   effectWindow = new BrowserWindow({
+//     width: 240,
+//     height: 250,
+//     minWidth: 240,
+//     maxWidth: 240,
+//     minHeight: 120,
+//     x: displays[0].bounds.width * 0.9 - 325,
+//     y: (displays[0].bounds.height * 0.1) + 193,
+//     title: 'Effects',
+//     backgroundColor: '#3a3a3a',
+//     alwaysOnTop: true,
+//     frame: false,
+//     resizable: true,
+//     center: false,
+//     movable: true,
+//     show: false,
+//     parent: mainWindow,
+//     icon: path.join(__dirname, '../src/assets/icons/png/64x64.png'),
+//     webPreferences: {
+//       nodeIntegration: true,
+//       enableDragOut: true
+//     }
+//   })
 
-  effectWindow.loadURL(
-    url.format({
-      pathname: path.join(__dirname, `../dist/feelix/index.html`),
-      protocol: "file:",
-      slashes: true,
-      hash: '/effects'
-    })
-  );
+//   effectWindow.loadURL(
+//     url.format({
+//       pathname: path.join(__dirname, `../dist/feelix/index.html`),
+//       protocol: "file:",
+//       slashes: true,
+//       hash: '/effects'
+//     })
+//   );
 
-  effectWindow.once('ready-to-show', () => {
-    effectWindow.show()
-  });
+//   effectWindow.once('ready-to-show', () => {
+//     effectWindow.show()
+//   });
 
-  // effectWindow.webContents.openDevTools();
+//   // effectWindow.webContents.openDevTools();
 
-  effectWindow.on('close', function () {
-    effectWindow = null
-    mainMenu.items[2].submenu.items[5].submenu.items[1].checked = false;
-  })
-}
+//   effectWindow.on('close', function () {
+//     effectWindow = null
+//     mainMenu.items[2].submenu.items[5].submenu.items[1].checked = false;
+//   })
+// }
 
 
 
@@ -1065,14 +1065,14 @@ ipcMain.on('ondragstartLib', (event, data) => {
   mainWindow.webContents.send('addHapticLibEffect', data);
 })
 
-ipcMain.on('showHapticEffectDetails', (event, details) => {
-  effectDetails = details;
-  if (effectWindow === null) {
-    createEffectWindow();
-  } else {
-    effectWindow.webContents.send('showEffectDetails', details);
-  }
-})
+// ipcMain.on('showHapticEffectDetails', (event, details) => {
+//   effectDetails = details;
+//   if (effectWindow === null) {
+//     createEffectWindow();
+//   } else {
+//     effectWindow.webContents.send('showEffectDetails', details);
+//   }
+// })
 
 ipcMain.on('updateEffects', (event, effectList) => {
   if (effectWindow !== null) {
@@ -1089,14 +1089,14 @@ ipcMain.on('updateLayerColors', (event, data) => {
 });
 
 
-ipcMain.on('update', (event, details) => {
-  effectDetails = details;
-  if (effectWindow === null) {
-    createEffectWindow();
-  } else {
-    effectWindow.webContents.send('showEffectDetails', details);
-  }
-});
+// ipcMain.on('update', (event, details) => {
+//   effectDetails = details;
+//   if (effectWindow === null) {
+//     createEffectWindow();
+//   } else {
+//     effectWindow.webContents.send('showEffectDetails', details);
+//   }
+// });
 
 ipcMain.on('updateToolbar', (event, data) => {
   const selectedToolbar = toolbars.filter(t => t.type === 'edit')[0];
@@ -1160,6 +1160,10 @@ ipcMain.on('getCalibrationValue', (event, data) => {
   serialPort.calibrateMotor(data);
 });
 
+ipcMain.on('getCurrentSenseCalibrationValue', (event, data) => {
+  serialPort.calibrateCurrentSense(data);
+});
+
 ipcMain.on('updateFilter', (event, data) => {
   serialPort.updateFilter(data);
 });
@@ -1197,8 +1201,12 @@ ipcMain.on('play_collection', (event, data) => {
   serialPort.play(data.play, data.motor_id, data.collection_name, data.port);
 });
 
+ipcMain.on('return_to_start', (event, data) => {
+  serialPort.returnToStart(data.motor_id, data.collection_name, data.port);
+});
+
 ipcMain.on('run', (event, data) => {
-  serialPort.run(data.motor_id, data.port);
+  serialPort.run(data.motor_id, data.port, data.run);
 });
 
 ipcMain.on('update_motor_variable', (event, data) => {
@@ -1211,6 +1219,10 @@ ipcMain.on('update_effect_variable', (event, data) => {
 
 ipcMain.on('send_data_str', (event, data) =>  {
   serialPort.sendDataString(data);
+});
+
+ipcMain.on('getValue', (event, data) => {
+  serialPort.getValue(data.motor_id, data.port, data.char);
 });
 
 
@@ -1232,7 +1244,6 @@ function updateSerialStatus(status) {
   if (status.microcontroller) {
     mainWindow.webContents.send('updateStatus', status);
   }
-
 }
 
 function updateSerialProgress(progress) {
@@ -1270,6 +1281,24 @@ function uploadSuccesful(collection) {
   mainWindow.webContents.send('upload_succesful', collection);
 }
 
+function updateCurrentSenseCalibration(data) {
+  mainWindow.webContents.send('updateCurrentSenseCalibration', data);
+
+  if (tmpWindow !== null && (activeWindow === 'motor-settings')) {
+    tmpWindow.webContents.send('updateCurrentSenseCalibration', data);
+  }
+}
+
+function showMessageConfirmation(data) {
+  mainWindow.webContents.send('showMessageConfirmation', data);
+}
+
+function returnData(data) {
+  if (tmpWindow !== null && (activeWindow === 'motor-settings')) {
+    tmpWindow.webContents.send('receiveData', data);
+  }
+}
+
 
 
 
@@ -1280,3 +1309,6 @@ exports.visualizaMotorData = visualizaMotorData;
 exports.updateSerialProgress = updateSerialProgress;
 exports.updateZeroElectricAngle = updateZeroElectricAngle;
 exports.uploadSuccesful = uploadSuccesful;
+exports.updateCurrentSenseCalibration = updateCurrentSenseCalibration;
+exports.showMessageConfirmation = showMessageConfirmation;
+exports.returnData = returnData;

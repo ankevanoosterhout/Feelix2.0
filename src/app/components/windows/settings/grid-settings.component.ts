@@ -35,8 +35,8 @@ import { DrawingService } from 'src/app/services/drawing.service';
           <div class="form-row">
               <label>grid line every</label>
               <input type="number" [(ngModel)]="file.activeEffect.grid.settings.spacingY" name="grid-spacingY">
-              <span class="span-text" *ngIf="file.activeEffect.grid.yUnit.name !== 'degrees'"> %</span>
-              <span class="span-text" *ngIf="file.activeEffect.grid.yUnit.name === 'degrees'"> degrees</span>
+              <span class="span-text" *ngIf="file.activeEffect.grid.yUnit.name !== 'deg'"> %</span>
+              <span class="span-text" *ngIf="file.activeEffect.grid.yUnit.name === 'deg'"> deg</span>
           </div>
           <div class="form-row">
               <label>subdivision</label>
@@ -69,8 +69,8 @@ export class GridSettingsComponent implements OnInit {
   file: File;
 
   units = [
-    { name: 'degrees', PR: 360 },
-    { name: 'radians', PR: (2 * Math.PI) },
+    { name: 'deg', PR: 360 },
+    { name: 'rad', PR: (2 * Math.PI) },
     { name: 'mm', PR: 100 },
     { name: 'cm', PR: 10 },
   ];

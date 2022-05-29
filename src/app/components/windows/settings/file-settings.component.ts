@@ -45,7 +45,7 @@ export class FileSettingsComponent implements OnInit {
   newFileCount = 1;
 
   buttonText = 'Create';
-  initialUnits = { name: 'degrees', PR: 360 };
+  initialUnits = { name: 'deg', PR: 360 };
 
 
   // tslint:disable-next-line: variable-name

@@ -25,6 +25,7 @@ export class Calibration {
 
 export class Position {
   start = 0.0;
+  end: number;
   current = 0;
 }
 
@@ -59,6 +60,16 @@ export class PID {
   }
 }
 
+export class CurrentSense {
+  name: string;
+  value: number;
+
+  constructor(name: string, value: number) {
+    this.name = name;
+    this.value = value;
+  }
+}
+
 
 export class Config {
   polepairs: number = 14;
@@ -70,10 +81,14 @@ export class Config {
   inlineCurrentSensing = false;
   encoderType: string = 'Magnetic sensor';
   encoder: any = new MagneticSensor();
+  sensorOffset = 0.0;
   calibration = new Calibration();
   rotation = new Rotation();
   transmission = 1;
   frequency = 50000;
+  current_sense = [ new CurrentSense('a', 0.0), new CurrentSense('b', 0.0) ];
+  current_sense_calibration: number;
+  overheatProtection = false;
 }
 
 
@@ -94,6 +109,7 @@ export class Motor {
   position_pid = new PID(20.0, 0.0, 0.0);
   velocity_pid = new PID(0.5, 10, .001);
   record = false;
+
 
 
   constructor(id: number) {

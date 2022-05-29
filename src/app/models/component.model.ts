@@ -125,7 +125,7 @@ export class Value {
   unitOptions: Array<Unit> = [];
 
   constructor(val: number, unitOptions =
-    [ new Unit('', ''), new Unit('percentages', '&percnt;'), new Unit('degrees', '&deg;'), new Unit('points per revolution', 'ppr') ]) {
+    [ new Unit('', ''), new Unit('percentages', '&percnt;'), new Unit('deg', '&deg;'), new Unit('points per revolution', 'ppr') ]) {
     this.val = val;
     this.unitOptions = unitOptions;
   }

@@ -291,10 +291,10 @@ export class EffectVisualizationService {
       y: number
     }
     let multiply_x = 1;
-    if (collection.rotation.units.name === 'radians') { multiply_x = (Math.PI / 180); }
+    if (collection.rotation.units.name === 'rad') { multiply_x = (Math.PI / 180); }
     if (collection.rotation.units.name === 'ms') { multiply_x = 1; }
 
-    // const multiply = { x: multiply_x, y: collection.rotation.units_y.name === 'degrees' ? collection.rotation.end_y - collection.rotation.start_y : 100 };
+    // const multiply = { x: multiply_x, y: collection.rotation.units_y.name === 'deg' ? collection.rotation.end_y - collection.rotation.start_y : 100 };
     const multiply = { x: multiply_x, y: 100 };
 
     const offset = renderedData && renderedData.type === 'position' ? pixHeight * ((100-collEffect.scale.y)/100) - (pixHeight * (collEffect.position.y / 100)) :
@@ -391,7 +391,7 @@ export class EffectVisualizationService {
     d3.selectAll('#grp-render-overlap-' + collection.id).remove();
 
     let multiply_x = 1;
-    if (collection.rotation.units.name === 'radians') { multiply_x = (Math.PI / 180); }
+    if (collection.rotation.units.name === 'rad') { multiply_x = (Math.PI / 180); }
 
     const multiply = { x: multiply_x, y: 100 };
 

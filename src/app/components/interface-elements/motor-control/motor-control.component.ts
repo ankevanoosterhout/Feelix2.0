@@ -48,22 +48,22 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
   ];
 
   unitOptions = [
-    { name: 'degrees', PR: 360 },
-    { name: 'radians', PR: 2*Math.PI }
+    { name: 'deg', PR: 360 },
+    { name: 'rad', PR: 2*Math.PI }
   ];
 
   unitOptionsVelocity = [
     { name: 'ms', PR: 1000 },
-    // { name: 'degrees', PR: 360 },
-    // { name: 'radians', PR: 2*Math.PI }
+    // { name: 'deg', PR: 360 },
+    // { name: 'rad', PR: 2*Math.PI }
   ];
 
   unitOptionsVelocityY = [
-    { name: 'velocity (%)', PR: 100 },
-    { name: 'degrees', PR: 360 }
+    { name: '%', PR: 100 },
+    { name: 'deg', PR: 360 }
   ];
 
-  oldUnits = { name: 'degrees', PR: 360 };
+  oldUnits = { name: 'deg', PR: 360 };
 
   constructor(@Inject(DOCUMENT) private document: Document, public motorControlService: MotorControlService, public hardwareService: HardwareService,
               private cloneService: CloneService, private uploadService: UploadService, private electronService: ElectronService) {
@@ -73,12 +73,12 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
     this.electronService.ipcRenderer.on('playData', (event: Event, data: any) => {
       const selectedCollection = this.motorControlService.file.collections.filter(c => c.microcontroller && c.microcontroller.serialPort.path === data.serialPath && c.playing)[0];
       if (selectedCollection) {
-        let angle = selectedCollection.rotation.units.name === 'degrees' ? data.angle * (180/Math.PI) : data.angle;
+        let angle = selectedCollection.rotation.units.name === 'deg' ? data.angle * (180/Math.PI) : data.angle;
         if (selectedCollection.rotation.loop) {
           const range = selectedCollection.rotation.end - selectedCollection.rotation.start;
           angle = this.fmod(data.angle * (180/Math.PI), range);
           if (angle < 0) {
-            if (selectedCollection.rotation.units.name === 'degrees') {
+            if (selectedCollection.rotation.units.name === 'deg') {
               angle += range;
             } else {
               angle += (range * (Math.PI/180));
@@ -86,7 +86,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
           }
         }
 
-        const velocity = selectedCollection.rotation.units.name === 'degrees' ? data.velocity * (180/Math.PI) : data.velocity;
+        const velocity = selectedCollection.rotation.units.name === 'deg' ? data.velocity * (180/Math.PI) : data.velocity;
 
         selectedCollection.microcontroller.motors.filter(m => m.id === selectedCollection.motorID.name)[0].state.position.current = angle;
         selectedCollection.microcontroller.motors.filter(m => m.id === selectedCollection.motorID.name)[0].state.speed = velocity;
@@ -96,11 +96,25 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
             (this.document.getElementById('position-' + selectedCollection.id) as HTMLElement).innerHTML = (Math.round(angle * 100) / 100) + ' ';
           }
         }
-        (this.document.getElementById('speed-' + selectedCollection.id) as HTMLElement).innerHTML = (Math.round(velocity * 100) / 100) + ' ';
-        if (selectedCollection.rotation.units.name === 'ms') {
-          (this.document.getElementById('time-' + selectedCollection.id) as HTMLElement).innerHTML = selectedCollection.time + ' ';
+        if (this.document.getElementById('speed-' + selectedCollection.id) !== null) {
+          (this.document.getElementById('speed-' + selectedCollection.id) as HTMLElement).innerHTML = (Math.round(velocity * 100) / 100) + ' ';
+        }
+        if (this.document.getElementById('time-' + selectedCollection.id) !== null) {
+          if (selectedCollection.rotation.units.name === 'ms') {
+            (this.document.getElementById('time-' + selectedCollection.id) as HTMLElement).innerHTML = selectedCollection.time + ' ';
+          }
         }
         this.motorControlService.drawCursor(selectedCollection);
+
+        const microcontroller = this.microcontrollers.filter(m => m.serialPort.path === data.serialPath)[0];
+        if (microcontroller && selectedCollection.microcontroller.motors.filter(m => m.id === selectedCollection.motorID.name)[0].config.inlineCurrentSensing) {
+          if (this.document.getElementById('current_sense_a-' + selectedCollection.id) !== null) {
+            const current_a = (Math.round(data.current_a * 100) / 100);
+            const current_b = (Math.round(data.current_b * 100) / 100);
+            (this.document.getElementById('current_sense_a-' + selectedCollection.id) as HTMLElement).innerHTML = current_a === 0 ? 'a: 0.00' : 'a: ' + current_a + ' ';
+            (this.document.getElementById('current_sense_b-' + selectedCollection.id) as HTMLElement).innerHTML = current_b === 0 ? 'b: 0.00' : 'b: ' + current_b + ' ';
+          }
+        }
       }
     });
 
@@ -115,6 +129,19 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
         }
       }
     });
+
+    // this.electronService.ipcRenderer.on('updateCurrentSenseCalibration', (event: Event, data: any) => {
+    //   const microcontroller = this.hardwareService.getMicroControllerByCOM(data.serialPath);
+    //   if (microcontroller) {
+    //     const motor = microcontroller.motors.filter(m => m.id === data.motorID)[0];
+    //     if (motor) {
+    //       motor.config.current_sense_calibration = data.current_sense_calibration;
+    //       this.hardwareService.updateMicroController(microcontroller);
+    //     }
+    //   }
+    // });
+
+
 
     this.electronService.ipcRenderer.on('upload_succesful', (event: Event, collection: any) => {
       const selectedCollection = this.motorControlService.file.collections.filter(c => c.id === collection)[0];
@@ -148,6 +175,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
       }
 
     });
+
   }
 
 
@@ -190,9 +218,9 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
 
   render(collection: Collection, upload = false) {
     let time = 0;
-    if (collection.rotation.units.name === 'radians' && collection.effectDataList.length === 0) {
+    if (collection.rotation.units.name === 'rad' && collection.effectDataList.length === 0) {
       time = 200;
-      collection.rotation.units = { name: 'degrees', PR: 360 };
+      collection.rotation.units = { name: 'deg', PR: 360 };
       this.changeUnits(collection);
     }
 
@@ -249,6 +277,14 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
     }
   }
 
+  returnToStart(collection: Collection) {
+    if (collection && collection.microcontroller) {
+      if (collection.motorID.name) {
+        this.electronService.ipcRenderer.send('return_to_start', { motor_id: collection.motorID.name, collection_name: collection.name, port: collection.microcontroller.serialPort.path });
+      }
+    }
+  }
+
   loop(collectionID: string) {
     const collection = this.motorControlService.file.collections.filter(c => c.id === collectionID)[0];
     collection.rotation.loop = !collection.rotation.loop;
@@ -260,6 +296,12 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
     this.motorControlService.updateCollection(collection);
   }
 
+  constrain(collectionID: string) {
+    const collection = this.motorControlService.file.collections.filter(c => c.id === collectionID)[0];
+    collection.rotation.constrain = !collection.rotation.constrain;
+    this.motorControlService.drawCollection(collection);
+    this.motorControlService.updateCollection(collection);
+  }
 
 
   delete(collection: Collection) {
@@ -295,10 +337,10 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
 
 
   changeUnitsY(collection: Collection) {
-    if (collection.rotation.units_y.name === 'velocity (%)') {
+    if (collection.rotation.units_y.name === '%') {
       collection.rotation.start_y = -100;
       collection.rotation.end_y = 100;
-    } else if (collection.rotation.units_y.name === 'degrees') {
+    } else if (collection.rotation.units_y.name === 'deg') {
       for (const collEffect of collection.effects) {
         const effect = this.motorControlService.file.effects.filter(e => e.id === collEffect.effectID)[0];
         if (effect) {
@@ -345,10 +387,10 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
 
       if (collection.rotation.units.name === 'ms') {
         this.oldUnits = collection.rotation.units;
-        collection.rotation.units = { name: 'degrees', PR: 360 };
+        collection.rotation.units = { name: 'deg', PR: 360 };
         this.changeUnits(collection);
 
-        collection.rotation.units_y = { name: 'voltage (%)', PR: 100 };
+        collection.rotation.units_y = { name: '%', PR: 100 };
         // this.changeUnitsY(collection);
       }
     }
@@ -357,10 +399,10 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
       collection.rotation.end_y = 100;
       if (collection.rotation.units.name === 'ms') {
         this.oldUnits = collection.rotation.units;
-        collection.rotation.units = { name: 'degrees', PR: 360 };
+        collection.rotation.units = { name: 'deg', PR: 360 };
         this.changeUnits(collection);
 
-        collection.rotation.units_y = { name: 'voltage (%)', PR: 100 };
+        collection.rotation.units_y = { name: '%', PR: 100 };
         // this.changeUnitsY(collection);
       }
     }
@@ -370,7 +412,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
       this.oldUnits = collection.rotation.units;
       collection.rotation.units = { name: 'ms', PR: 1000 };
       this.changeUnits(collection);
-      collection.rotation.units_y = { name: 'velocity (%)', PR: 100 };
+      collection.rotation.units_y = { name: '%', PR: 100 };
       this.changeUnitsY(collection);
     }
     this.motorControlService.drawCollection(collection);
@@ -391,10 +433,10 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
 
     const coll_microcontroller = this.hardwareService.getMicroControllerByCOM(collection.microcontroller.serialPort.path);
     if (coll_microcontroller) {
-      if (collection.visualizationType === 'position' || collection.rotation.units_y.name === 'degrees') {
+      if (collection.visualizationType === 'position' || collection.rotation.units_y.name === 'deg') {
         coll_microcontroller.motors.filter(m => m.id === collection.motorID.name)[0].position_pid = collection.microcontroller.motors[collection.motorID.index].position_pid;
       }
-      if (collection.visualizationType === 'velocity' && collection.rotation.units_y.name !== 'degrees') {
+      if (collection.visualizationType === 'velocity' && collection.rotation.units_y.name !== 'deg') {
         coll_microcontroller.motors.filter(m => m.id === collection.motorID.name)[0].velocity_pid = collection.microcontroller.motors[collection.motorID.index].velocity_pid;
         coll_microcontroller.motors.filter(m => m.id === collection.motorID.name)[0].config.velocityLimit = collection.microcontroller.motors[collection.motorID.index].config.velocityLimit;
       }
@@ -501,7 +543,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
               collection.renderedData = [];
               collection.effectDataList = [];
 
-              if (collection.visualizationType === 'velocity' && tmpEffect.type === 'velocity' && tmpEffect.grid.yUnit.name === 'degrees') {
+              if (collection.visualizationType === 'velocity' && tmpEffect.type === 'velocity' && tmpEffect.grid.yUnit.name === 'deg') {
                 if (collection.rotation.start_y > tmpEffect.range_y.start) { collection.rotation.start_y = tmpEffect.range_y.start; }
                 if (collection.rotation.end_y < tmpEffect.range_y.end) { collection.rotation.end_y = tmpEffect.range_y.end; }
 

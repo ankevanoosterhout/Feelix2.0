@@ -1,6 +1,5 @@
 import { DOCUMENT } from '@angular/common';
 import { Component, OnInit, Inject, HostListener } from '@angular/core';
-import { Router } from '@angular/router';
 import { ElectronService } from 'ngx-electron';
 import { Classifier, DataSet } from 'src/app/models/ml5js.model';
 import { HardwareService } from 'src/app/services/hardware.service';
@@ -8,7 +7,6 @@ import { ML5jsService } from 'src/app/services/ml5js.service';
 import { MotorControlService } from 'src/app/services/motor-control.service';
 import { UploadService } from 'src/app/services/upload.service';
 import { v4 as uuid } from 'uuid';
-import '../../../../electron/elements/ml5_sketch.js';
 
 @Component({
   selector: 'app-ml5js',
@@ -71,7 +69,7 @@ export class ML5jsComponent implements OnInit {
             }
 
           } else if (this.ml5jsService.dataSets.length > 0) {
-            
+
             if (this.ml5jsService.recording.active) {
               let dataset = this.ml5jsService.dataSets.filter(d => d.open)[0];
               for (const microcontroller of this.ml5jsService.selectedMicrocontrollers) {

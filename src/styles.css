@@ -13,6 +13,7 @@ html, body {
 
 .no-pointer-events {
   pointer-events: none;
+  user-select: none;
 }
 
 .disable-scroll-body {

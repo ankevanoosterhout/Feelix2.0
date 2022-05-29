@@ -190,7 +190,8 @@ export class MotorControlService {
         .attr('transform', () => this.file.configuration.collectionDisplay === 'small' ? 'translate(0, 0)' : 'translate(0, 26)')
         .attr('fill', '#1c1c1c');
 
-    } else {
+    }
+    if (collection.rotation.loop || (collection.rotation.constrain && collection.visualizationType !== 'velocity')) {
       const lineData = [collection.rotation.start, collection.rotation.end];
 
       const lines = collection.config.svg.selectAll('line.range-line')
@@ -204,8 +205,8 @@ export class MotorControlService {
         .attr('y2', this.height - 39)
         .attr('transform', () => this.file.configuration.collectionDisplay === 'small' ? 'translate(0, 0)' : 'translate(0, 26)')
         .attr('shape-rendering', 'crispEdges')
-        .attr('stroke', '#999')
-        .attr('stroke-width', 0.5)
+        .attr('stroke', !collection.rotation.loop ? '#FF9100' : '#999')
+        .attr('stroke-width', collection.rotation.constrain ? 1 : 0.5)
         .attr('fill', 'none');
     }
 
@@ -223,13 +224,17 @@ export class MotorControlService {
       .attr('pointer-events', 'none')
       .attr('transform', () => this.file.configuration.collectionDisplay === 'small' ? 'translate(0, 0)' : 'translate(0, 26)');
 
-    if (collection.effectDataList.length > 0 && collection.visualizationType === 'torque' && collection.microcontroller && collection.motorID) {
-      if (collection.microcontroller.motors[collection.motorID.index].config.voltageLimit) {
-        const voltageLine = (100 / collection.microcontroller.motors[collection.motorID.index].config.supplyVoltage) * collection.microcontroller.motors[collection.motorID.index].config.voltageLimit;
-        const voltageLimitData = [ voltageLine, -voltageLine ];
+    if ((collection.effectDataList.length > 0 && collection.visualizationType === 'torque' && collection.microcontroller && collection.motorID) ||
+        (collection.rotation.constrain && collection.rotation.units_y.name === 'deg' && collection.visualizationType === 'velocity')) {
+      if (collection.microcontroller.motors[collection.motorID.index].config.voltageLimit || collection.visualizationType === 'velocity') {
+        let value: number;
+        if (collection.visualizationType === 'torque') {
+          value = (100 / collection.microcontroller.motors[collection.motorID.index].config.supplyVoltage) * collection.microcontroller.motors[collection.motorID.index].config.voltageLimit;
+        }
+        const limitData = collection.visualizationType === 'torque' ? [ value, -value ] : [ collection.rotation.start_y, collection.rotation.end_y ];
 
-        const voltageLimitLines = collection.config.svg.selectAll('line.voltagelimit')
-          .data(voltageLimitData)
+        const limitLines = collection.config.svg.selectAll('line.limit')
+          .data(limitData)
           .enter()
           .append('line')
           .attr('class', (d, i) =>'voltagelimit-' + i)
@@ -239,12 +244,13 @@ export class MotorControlService {
           .attr('y2', (d) => collection.config.newYscale(d))
           .attr('transform', () => this.file.configuration.collectionDisplay === 'small' ? 'translate(0, 0)' : 'translate(0, 26)')
           .attr('shape-rendering', 'crispEdges')
-          .attr('stroke', '#FF0000')
+          .attr('stroke', collection.visualizationType === 'torque' ? '#FF0000' : '#FF9100')
           .attr('opacity', 0.6)
           .attr('stroke-width', 0.5)
           .attr('fill', 'none');
       }
     }
+
 
     if (this.file.configuration.collectionDisplay !== 'small') {
       this.drawRuler(collection);
@@ -442,39 +448,41 @@ export class MotorControlService {
 
   drawCollectionEffects(collection: Collection) {
 
-    d3.select('#coll-effect-svg-' + collection.id).remove();
+    if (collection) {
+      d3.select('#coll-effect-svg-' + collection.id).remove();
 
-    const offset = this.file.configuration.collectionDisplay === 'small' ? 0 : 26;
+      const offset = this.file.configuration.collectionDisplay === 'small' ? 0 : 26;
 
-    if (collection.config.svg._parents[0] instanceof HTMLElement) {
-      const effectSVG = collection.config.svg.append('g')
-        .attr('id', 'coll-effect-svg-' + collection.id)
-        .attr('clip-path', 'url(#clipCollection)')
-        .attr('transform', 'translate('+ [0, offset] + ')');
+      if (collection.config.svg._parents[0] instanceof HTMLElement) {
+        const effectSVG = collection.config.svg.append('g')
+          .attr('id', 'coll-effect-svg-' + collection.id)
+          .attr('clip-path', 'url(#clipCollection)')
+          .attr('transform', 'translate('+ [0, offset] + ')');
 
-      for (const collectionEffect of collection.effects) {
-        if (this.checkVisibility(collectionEffect.direction, collection.layers)) {
+        for (const collectionEffect of collection.effects) {
+          if (this.checkVisibility(collectionEffect.direction, collection.layers)) {
 
-          const effect = this.file.effects.filter(e => e.id === collectionEffect.effectID)[0];
-          if (effect && effect.paths.length > 0) {
+            const effect = this.file.effects.filter(e => e.id === collectionEffect.effectID)[0];
+            if (effect && effect.paths.length > 0) {
 
-            this.effectVisualizationService.drawCollectionEffect(effectSVG, collection, collectionEffect, effect, (this.height - 39),
-              this.file.activeCollectionEffect, this.file.configuration.colors);
-          } else {
-            this.removeCollectionsEffect(collection, collectionEffect);
+              this.effectVisualizationService.drawCollectionEffect(effectSVG, collection, collectionEffect, effect, (this.height - 39),
+                this.file.activeCollectionEffect, this.file.configuration.colors);
+            } else {
+              this.removeCollectionsEffect(collection, collectionEffect);
+            }
+
+            if (collection.effectDataList.length > 0) {
+              const effectData = collection.effectDataList.filter(e => e.id === effect.id)[0];
+              // console.log(effectData);
+              this.effectVisualizationService.drawRenderedCollectionData(effectSVG, collection, collectionEffect, effectData, (this.height - 39), 'rgba(255,255,255,1)');
+            }
+
           }
-
-          if (collection.effectDataList.length > 0) {
-            const effectData = collection.effectDataList.filter(e => e.id === effect.id)[0];
-            // console.log(effectData);
-            this.effectVisualizationService.drawRenderedCollectionData(effectSVG, collection, collectionEffect, effectData, (this.height - 39), 'rgba(255,255,255,1)');
-          }
-
         }
-      }
 
-      if (collection.renderedData.length > 0 && collection.effectDataList.length > 0) {
-        this.effectVisualizationService.drawOverlappingData(effectSVG, collection, 'rgba(255,255,255,1)');
+        if (collection.renderedData.length > 0 && collection.effectDataList.length > 0) {
+          this.effectVisualizationService.drawOverlappingData(effectSVG, collection, 'rgba(255,255,255,1)');
+        }
       }
     }
   }
@@ -687,9 +695,10 @@ export class MotorControlService {
       collection.config.xAxisSmallThicks.call(collection.config.xAxisSmall.scale(collection.config.newXscale));
     }
 
-    if (collection.rotation.loop) {
+    if (collection.rotation.loop || (collection.rotation.constrain && collection.visualizationType !== 'velocity')) {
       collection.config.svg.selectAll('.range-line').attr('x1', (d) => collection.config.newXscale(d)).attr('x2', (d) => collection.config.newXscale(d));
-    } else {
+    }
+    if (!collection.rotation.loop && collection.visualizationType !== 'velocity') {
       collection.config.svg.selectAll('.inner-container')
         .attr('x', collection.config.newXscale(collection.rotation.start))
         .attr('width', collection.config.newXscale(collection.rotation.end) - collection.config.newXscale(collection.rotation.start));

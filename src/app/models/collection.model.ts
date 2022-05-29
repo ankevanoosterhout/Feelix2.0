@@ -5,12 +5,12 @@ import { MicroController, Unit } from './hardware.model';
 export class Rotation {
   start = 0;
   end = 360;
-  units = new Unit('degrees', 360);
+  units = new Unit('deg', 360);
   linear = false;
   loop = false;
   start_y = -100;
   end_y = 100;
-  units_y = new Unit('voltage (%)', 100);
+  units_y = new Unit('%', 100);
   constrain = false;
 }
 

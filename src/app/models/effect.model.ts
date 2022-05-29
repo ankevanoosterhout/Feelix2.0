@@ -59,9 +59,9 @@ export class Grid {
   visible = false;
   settings = new GridSettings();
   translation = 1.0;
-  // units = new Unit('degrees', 360);
-  xUnit = new Unit('degrees', 360);
-  yUnit = new Unit('voltage (%)', 100);
+  // units = new Unit('deg', 360);
+  xUnit = new Unit('deg', 360);
+  yUnit = new Unit('%', 100);
   guides: Array<Guide> = [];
   guidesVisible = true;
   lockGuides = false;

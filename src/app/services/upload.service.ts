@@ -234,7 +234,7 @@ export class UploadService {
   translateEffectData(collEffect: Details, effectData: Effect) {
     let copyEffectList = this.cloneService.deepClone(effectData);
     let multiply = 1;
-    if (effectData.grid.xUnit.name === 'radians') { multiply = (180 / Math.PI); }
+    if (effectData.grid.xUnit.name === 'rad') { multiply = (180 / Math.PI); }
     if (effectData.grid.xUnit.name === 'ms') { multiply = 1; }
     let data = [];
     let data_complete = [];
@@ -242,7 +242,7 @@ export class UploadService {
     let start_pos = 0;
 
     for (const path of copyEffectList.paths) {
-      if (effectData.type === 'velocity' && effectData.grid.yUnit.name === 'degrees') {
+      if (effectData.type === 'velocity' && effectData.grid.yUnit.name === 'deg') {
         const nodes = path.nodes.filter(n => n.type === 'node');
         start_pos = Math.ceil(nodes[0].pos.y * (Math.PI / 180));
       }
@@ -390,7 +390,7 @@ export class UploadService {
   calculateOverlay(collection: Collection, effectList: Array<Effect>, collEffect1: Details, collEffect2: Details) {
     const original_effect = effectList.filter(e => e.id === collEffect1.effectID)[0];
     let multiply = 1;
-    if (original_effect.grid.xUnit.name === 'radians') { multiply = (180 / Math.PI); }
+    if (original_effect.grid.xUnit.name === 'rad') { multiply = (180 / Math.PI); }
     // if (original_effect.grid.xUnit.name === 'ms') { multiply = 360 / 1000; }
     const original_effect_x1 = collEffect1.position.x * multiply;
     const width = (original_effect.size.width * (collEffect1.scale.x / 100)) * multiply;
@@ -400,7 +400,7 @@ export class UploadService {
 
     if (overlay_effect.type === original_effect.type) {
       let multiply_el = 1;
-      if (overlay_effect.grid.xUnit.name === 'radians') { multiply_el = (180 / Math.PI); }
+      if (overlay_effect.grid.xUnit.name === 'rad') { multiply_el = (180 / Math.PI); }
       // if (overlay_effect.grid.xUnit.name === 'ms') { multiply_el = 360 / 1000; }
       const x1 = collEffect2.position.x * multiply_el;
       const width_el = (overlay_effect.size.width * (collEffect2.scale.x / 100)) * multiply_el;
@@ -442,7 +442,7 @@ export class UploadService {
     let translatedData: any;
     let multiply = 1;
     if (effect.paths.length > 0) {
-      if (effect.grid.xUnit.name === 'radians') { multiply = (180 / Math.PI); }
+      if (effect.grid.xUnit.name === 'rad') { multiply = (180 / Math.PI); }
 
       let effect_type = 'Effect_type::NOTSET';
       if (effect.type !== 'velocity') {
@@ -451,8 +451,8 @@ export class UploadService {
 
       let control_type = 'Control_type::POSITION';
       if (effect.type === 'torque') { control_type = 'Control_type::TORQUE'; }
-      if (effect.type === 'velocity' && effect.grid.yUnit.name === 'degrees') { control_type = 'Control_type::VELOCITY_ANGLE'; }
-      if (effect.type === 'velocity' && effect.grid.yUnit.name !== 'degrees') { control_type = 'Control_type::VELOCITY'; }
+      if (effect.type === 'velocity' && effect.grid.yUnit.name === 'deg') { control_type = 'Control_type::VELOCITY_ANGLE'; }
+      if (effect.type === 'velocity' && effect.grid.yUnit.name !== 'deg') { control_type = 'Control_type::VELOCITY'; }
 
       if (multiply) {
         const newDetails = new Details(uuid(), effect.id, effect.name);

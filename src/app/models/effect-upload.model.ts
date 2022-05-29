@@ -49,7 +49,7 @@ export class ConfigModel {
       this.collection = collection.id;
       this.range = collection.rotation.end - collection.rotation.start;
       this.loop = collection.rotation.loop ? 1 : 0;
-      if (collection.rotation.units.name === 'radians') {
+      if (collection.rotation.units.name === 'rad') {
         this.range *= (Math.PI / 180);
       }
       this.constrain_range = collection.rotation.constrain ? 1 : 0;
@@ -98,7 +98,7 @@ export class EffectModel {
     } else if (effect.type === 'position') {
       this.vis_type = new Model('T', 1);
     } else if (effect.type === 'velocity') {
-      if (effect.yUnit === 'degrees') {
+      if (effect.yUnit === 'deg') {
         this.vis_type = new Model('T', 3);
       } else {
         this.vis_type = new Model('T', 2);

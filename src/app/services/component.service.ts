@@ -7,22 +7,22 @@ export class ComponentService {
 
   value = new ComponentObject(
           new ValueComponent(new Value(1,
-        [ new Unit('', ''), new Unit('percentages', '&percnt;'), new Unit('degrees', '&deg;'),
+        [ new Unit('', ''), new Unit('percentages', '&percnt;'), new Unit('deg', '&deg;'),
           new Unit('points per revolution', 'ppr'), new Unit('milliseconds', 'ms'), new Unit('seconds', 's'),
           new Unit('RPM', 'rpm'), new Unit('cm', 'cm'), new Unit('mm', 'mm') ]), null,
           new Unit('', ''), 0), 'value', 'value.svg', [],
         [ new ParameterDetails('value', '', 'right', [], new ValueComponent(new Value(1,
-        [ new Unit('', ''), new Unit('percentages', '&percnt;'), new Unit('degrees', '&deg;'),
+        [ new Unit('', ''), new Unit('percentages', '&percnt;'), new Unit('deg', '&deg;'),
           new Unit('points per revolution', 'ppr'), new Unit('milliseconds', 'ms'), new Unit('seconds', 's'),
           new Unit('RPM', 'rpm'), new Unit('cm', 'cm'), new Unit('mm', 'mm') ]), null, new Unit('', ''), 0)) ]);
 
   slider = new ComponentObject(
            new ValueComponent(new Value3(0, 100, 50,
-         [ new Unit('', ''), new Unit('percentages', '&percnt;'), new Unit('degrees', '&deg;'), new Unit('points per revolution', 'ppr'),
+         [ new Unit('', ''), new Unit('percentages', '&percnt;'), new Unit('deg', '&deg;'), new Unit('points per revolution', 'ppr'),
            new Unit('milliseconds', 'ms'), new Unit('seconds', 's'), new Unit('RPM', 'rpm'), new Unit('cm', 'cm'), new Unit('mm', 'mm') ]),
            null, new Unit('', ''), 0), 'slider', 'slider.svg', [],
          [ new ParameterDetails('value', '', 'right', [], new ValueComponent(new Value3(0, 100, 50,
-         [ new Unit('', ''), new Unit('percentages', '&percnt;'), new Unit('degrees', '&deg;'), new Unit('points per revolution', 'ppr'),
+         [ new Unit('', ''), new Unit('percentages', '&percnt;'), new Unit('deg', '&deg;'), new Unit('points per revolution', 'ppr'),
            new Unit('milliseconds', 'ms'), new Unit('seconds', 's'), new Unit('RPM', 'rpm'), new Unit('cm', 'cm'), new Unit('mm', 'mm') ]),
            null, new Unit('', ''), 0)) ]);
 
@@ -44,17 +44,17 @@ export class ComponentService {
             new ValueComponent(null, new Category('false', 'Value', ['true', 'false']),
             new Unit('category', 'boolean'), null)) ]);
 
-  position = new ComponentObject(new ValueComponent(new Value(0, [ new Unit('degrees', '&deg;'),
-             new Unit('points per revolution', 'ppr')]), null, new Unit('degrees', '&deg;'), null), 'position', 'pos.svg', [],
-           [ new ParameterDetails('position', '', 'right', [ new Unit('degrees', '&deg;') ],
-             new ValueComponent(new Value(0, [ new Unit('degrees', '&deg;'),
-             new Unit('points per revolution', 'ppr')]), null, new Unit('degrees', '&deg;'), 0)) ]);
+  position = new ComponentObject(new ValueComponent(new Value(0, [ new Unit('deg', '&deg;'),
+             new Unit('points per revolution', 'ppr')]), null, new Unit('deg', '&deg;'), null), 'position', 'pos.svg', [],
+           [ new ParameterDetails('position', '', 'right', [ new Unit('deg', '&deg;') ],
+             new ValueComponent(new Value(0, [ new Unit('deg', '&deg;'),
+             new Unit('points per revolution', 'ppr')]), null, new Unit('deg', '&deg;'), 0)) ]);
 
-  angle = new ComponentObject(new ValueComponent(new Value(90, [ new Unit('degrees', '&deg;'),
-            new Unit('points per revolution', 'ppr') ]), null, new Unit('degrees', '&deg;'), 0), 'angle', 'range.svg', [],
+  angle = new ComponentObject(new ValueComponent(new Value(90, [ new Unit('deg', '&deg;'),
+            new Unit('points per revolution', 'ppr') ]), null, new Unit('deg', '&deg;'), 0), 'angle', 'range.svg', [],
           [ new ParameterDetails('angle', '', 'right', [],
-            new ValueComponent(new Value(90, [ new Unit('degrees', '&deg;'),
-            new Unit('points per revolution', 'ppr') ]), null, new Unit('degrees', '&deg;'), 0)) ]);
+            new ValueComponent(new Value(90, [ new Unit('deg', '&deg;'),
+            new Unit('points per revolution', 'ppr') ]), null, new Unit('deg', '&deg;'), 0)) ]);
 
   timer = new ComponentObject(new ValueComponent(new Value(2000, [new Unit('milliseconds', 'ms')]), null,
             new Unit('milliseconds', 'ms'), null), 'timer', 'timer.svg',
@@ -70,13 +70,13 @@ export class ComponentService {
   arithmetic = new ComponentObject(new Operator(new Unit('plus', '&#43;'), [ new Unit('plus', '&plus;'), new Unit('minus', '&minus;'),
                new Unit('multiply', '&times;'), new Unit('divide', '&divide;')], new Unit('', '')), 'arithmetic', 'operator.svg',
                [ new ParameterDetails('', '', 'left', [],
-                 new ValueComponent(new Value(0, [ new Unit('', ''), new Unit('degrees', '&deg;'), new Unit('points per revolution', 'ppr'),
+                 new ValueComponent(new Value(0, [ new Unit('', ''), new Unit('deg', '&deg;'), new Unit('points per revolution', 'ppr'),
                  new Unit('milliseconds', 'ms'), new Unit('seconds', 's')]), null, new Unit('', ''), null)),
                  new ParameterDetails('', '', 'left', [],
-                 new ValueComponent(new Value(0, [ new Unit('', ''), new Unit('degrees', '&deg;'), new Unit('points per revolution', 'ppr'),
+                 new ValueComponent(new Value(0, [ new Unit('', ''), new Unit('deg', '&deg;'), new Unit('points per revolution', 'ppr'),
                  new Unit('milliseconds', 'ms'), new Unit('seconds', 's')]), null, new Unit('', ''), null)) ],
                [ new ParameterDetails('Out', '', 'right', [],
-                 new ValueComponent(new Value(0, [ new Unit('', ''), new Unit('degrees', '&deg;'), new Unit('points per revolution', 'ppr'),
+                 new ValueComponent(new Value(0, [ new Unit('', ''), new Unit('deg', '&deg;'), new Unit('points per revolution', 'ppr'),
                  new Unit('milliseconds', 'ms'), new Unit('seconds', 's')]), null, new Unit('', ''), null)) ]);
 
   operator = new ComponentObject(new Operator(new Unit('equal', '&equals;&equals;'),
@@ -86,10 +86,10 @@ export class ComponentService {
               new Unit('and', '&&'), new Unit('or', '||')],
               new Unit('category', 'boolean')), 'operator', 'operator2.svg',
               [ new ParameterDetails('inputOne', '', 'left', [],
-                new ValueComponent(new Value(0, [ new Unit('', ''), new Unit('degrees', '&deg;'), new Unit('points per revolution', 'ppr'),
+                new ValueComponent(new Value(0, [ new Unit('', ''), new Unit('deg', '&deg;'), new Unit('points per revolution', 'ppr'),
                 new Unit('milliseconds', 'ms'), new Unit('seconds', 's')]), null, new Unit('', ''), null)),
                 new ParameterDetails('inputTwo', '', 'left', [],
-                new ValueComponent(new Value(0, [ new Unit('', ''), new Unit('degrees', '&deg;'), new Unit('points per revolution', 'ppr'),
+                new ValueComponent(new Value(0, [ new Unit('', ''), new Unit('deg', '&deg;'), new Unit('points per revolution', 'ppr'),
                 new Unit('milliseconds', 'ms'), new Unit('seconds', 's')]), null, new Unit('', ''), null)) ],
               [ new ParameterDetails('category', '', 'right', [ new Unit('category', 'boolean') ],
                 new ValueComponent(null, new Category(null, 'Value', ['true', 'false']), new Unit('category', 'boolean'), null)) ]);
@@ -109,37 +109,37 @@ export class ComponentService {
   constrain = new ComponentObject(
         new Operator(new Unit('', ''), [new Unit('', '')], new Unit('', '')), 'constrain', 'constrain.svg',
       [ new ParameterDetails('Min input', '', 'top', [new Unit('', '')],
-        new ValueComponent(new Value(0, [new Unit('', ''), new Unit('degrees', '&deg;'), new Unit('points per revolution', 'ppr'),
+        new ValueComponent(new Value(0, [new Unit('', ''), new Unit('deg', '&deg;'), new Unit('points per revolution', 'ppr'),
         new Unit('milliseconds', 'ms'), new Unit('seconds', 's')]), null, new Unit('', ''), 0)),
         new ParameterDetails('Input', '', 'left', [new Unit('', '')],
-        new ValueComponent(new Value(0, [new Unit('', ''), new Unit('degrees', '&deg;'), new Unit('points per revolution', 'ppr'),
+        new ValueComponent(new Value(0, [new Unit('', ''), new Unit('deg', '&deg;'), new Unit('points per revolution', 'ppr'),
         new Unit('milliseconds', 'ms'), new Unit('seconds', 's')]), null, new Unit('', ''), 0)),
         new ParameterDetails('Max input', '', 'bottom', [new Unit('', '')],
-        new ValueComponent(new Value(0, [new Unit('', ''), new Unit('degrees', '&deg;'), new Unit('points per revolution', 'ppr'),
+        new ValueComponent(new Value(0, [new Unit('', ''), new Unit('deg', '&deg;'), new Unit('points per revolution', 'ppr'),
         new Unit('milliseconds', 'ms'), new Unit('seconds', 's')]), null, new Unit('', ''), 0)) ],
       [ new ParameterDetails('value', '', 'right', [new Unit('', '')],
-        new ValueComponent(new Value(0, [new Unit('', ''), new Unit('degrees', '&deg;'), new Unit('points per revolution', 'ppr'),
+        new ValueComponent(new Value(0, [new Unit('', ''), new Unit('deg', '&deg;'), new Unit('points per revolution', 'ppr'),
         new Unit('milliseconds', 'ms'), new Unit('seconds', 's')]), null, new Unit('', ''), 0)) ]);
 
   map = new ComponentObject(
         new Operator(new Unit('', ''), [new Unit('', '')], new Unit('', '')), 'map', 'map.svg',
       [ new ParameterDetails('Min input', '', 'top', [],
-        new ValueComponent(new Value(0, [new Unit('', ''), new Unit('degrees', '&deg;'), new Unit('points per revolution', 'ppr'),
+        new ValueComponent(new Value(0, [new Unit('', ''), new Unit('deg', '&deg;'), new Unit('points per revolution', 'ppr'),
         new Unit('milliseconds', 'ms'), new Unit('seconds', 's')]), null, new Unit('', ''), 0)),
         new ParameterDetails('Input', '', 'left', [],
-        new ValueComponent(new Value(0, [new Unit('', ''), new Unit('degrees', '&deg;'), new Unit('points per revolution', 'ppr'),
+        new ValueComponent(new Value(0, [new Unit('', ''), new Unit('deg', '&deg;'), new Unit('points per revolution', 'ppr'),
         new Unit('milliseconds', 'ms'), new Unit('seconds', 's')]), null, new Unit('', ''), 0)),
         new ParameterDetails('Max input', '', 'bottom', [],
-        new ValueComponent(new Value(0, [new Unit('', ''), new Unit('degrees', '&deg;'), new Unit('points per revolution', 'ppr'),
+        new ValueComponent(new Value(0, [new Unit('', ''), new Unit('deg', '&deg;'), new Unit('points per revolution', 'ppr'),
         new Unit('milliseconds', 'ms'), new Unit('seconds', 's')]), null, new Unit('', ''), 0)),
         new ParameterDetails('Min output', '', 'top', [],
-        new ValueComponent(new Value(0, [new Unit('', ''), new Unit('degrees', '&deg;'), new Unit('points per revolution', 'ppr'),
+        new ValueComponent(new Value(0, [new Unit('', ''), new Unit('deg', '&deg;'), new Unit('points per revolution', 'ppr'),
         new Unit('milliseconds', 'ms'), new Unit('seconds', 's')]), null, new Unit('', ''), 0)),
         new ParameterDetails('Max output', '', 'bottom', [],
-        new ValueComponent(new Value(0, [new Unit('', ''), new Unit('degrees', '&deg;'), new Unit('points per revolution', 'ppr'),
+        new ValueComponent(new Value(0, [new Unit('', ''), new Unit('deg', '&deg;'), new Unit('points per revolution', 'ppr'),
         new Unit('milliseconds', 'ms'), new Unit('seconds', 's')]), null, new Unit('', ''), 0))],
       [ new ParameterDetails('value', '', 'right', [],
-        new ValueComponent(new Value(0, [new Unit('', ''), new Unit('degrees', '&deg;'), new Unit('points per revolution', 'ppr'),
+        new ValueComponent(new Value(0, [new Unit('', ''), new Unit('deg', '&deg;'), new Unit('points per revolution', 'ppr'),
         new Unit('milliseconds', 'ms'), new Unit('seconds', 's')]), null, new Unit('', ''), 0))]);
 
   repeat = new ComponentObject(
@@ -149,9 +149,9 @@ export class ComponentService {
         new Unit('category', 'time'), null), true),
         new ParameterDetails('Even spacing', 'E', 'left', [ new Unit('category', 'boolean') ],
         new ValueComponent(null, new Category('true', 'Even spacing', ['true', 'false']), new Unit('category', 'boolean'), null), true),
-        new ParameterDetails('Spacing', 'S', 'left', [ new Unit('degrees', '&deg;'), new Unit('points per revolution', 'ppr')],
-        new ValueComponent(new Value(0, [ new Unit('degrees', '&deg;'), new Unit('points per revolution', 'ppr')]), null,
-        new Unit('degrees', '&deg;'), 0))],
+        new ParameterDetails('Spacing', 'S', 'left', [ new Unit('deg', '&deg;'), new Unit('points per revolution', 'ppr')],
+        new ValueComponent(new Value(0, [ new Unit('deg', '&deg;'), new Unit('points per revolution', 'ppr')]), null,
+        new Unit('deg', '&deg;'), 0))],
       [ new ParameterDetails('repeat', '', 'right', [new Unit('repeat', '&part;')],
         new ValueComponent(new Value(1, [ new Unit('repeat', '&part;') ]), null, new Unit('repeat', '&part;'), null)) ]);
 
@@ -160,9 +160,9 @@ export class ComponentService {
       [ new ParameterDetails('Speed', '', 'left', [ new Unit('RPM', 'rpm') ],
         new ValueComponent(new Value3(0, 50, 0,
         [ new Unit('RPM', 'rpm') ]), null, new Unit('RPM', 'rpm'), null), false),
-        new ParameterDetails('Position', '', 'left', [ new Unit('degrees', '&deg;') ],
+        new ParameterDetails('Position', '', 'left', [ new Unit('deg', '&deg;') ],
         new ValueComponent(new Value3(0, 50, 0,
-        [ new Unit('points per revolution', 'ppr'), new Unit('degrees', '&deg;') ]), null, new Unit('degrees', '&deg;'), null), true),
+        [ new Unit('points per revolution', 'ppr'), new Unit('deg', '&deg;') ]), null, new Unit('deg', '&deg;'), null), true),
         // new ParameterDetails('Custom', '', 'left', [ new Unit('', '') ],
         // new ValueComponent(new Value3(0, 100, 0,
         // [ new Unit('', '') ]), null, new Unit('', ''), null), true)
@@ -175,9 +175,9 @@ export class ComponentService {
   custom = new ComponentObject(new ValueComponent(new Value(0, [ new Unit('', '') ]), null,
           new Unit('int', 'int'), 0), 'custom', 'custom2.svg', [],
         [ new ParameterDetails('value', '', 'right', [ new Unit('', ''), new Unit('percentages', '&percnt;'),
-          new Unit('degrees', '&deg;'), new Unit('points per revolution', 'ppr'), new Unit('milliseconds', 'ms'), new Unit('seconds', 's'),
+          new Unit('deg', '&deg;'), new Unit('points per revolution', 'ppr'), new Unit('milliseconds', 'ms'), new Unit('seconds', 's'),
           new Unit('RPM', 'rpm'), new Unit('cm', 'cm'), new Unit('mm', 'mm') ],
-          new ValueComponent(new Value(0, [ new Unit('', ''), new Unit('percentages', '&percnt;'), new Unit('degrees', '&deg;'),
+          new ValueComponent(new Value(0, [ new Unit('', ''), new Unit('percentages', '&percnt;'), new Unit('deg', '&deg;'),
           new Unit('points per revolution', 'ppr'), new Unit('milliseconds', 'ms'), new Unit('seconds', 's'),
           new Unit('RPM', 'rpm'), new Unit('cm', 'cm'), new Unit('mm', 'mm') ]),
           new Category('int', 'Type', ['int', 'float', 'boolean']), new Unit('', ''), null)) ]);

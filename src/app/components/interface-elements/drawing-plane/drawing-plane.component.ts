@@ -161,6 +161,9 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
       this.showMessage('Are you sure you want to clear all microcontroller data?', 'verification', 'resetCOMList');
     });
 
+    this.electronService.ipcRenderer.on('showMessageConfirmation', (event: Event, data: any) => {
+      this.showMessage(data.msg, data.type, data.action, data.d);
+    });
 
     this.electronService.ipcRenderer.on('openEffectInNewFile', (event: Event, data: any) => {
       this.fileService.createFileFrom(data);
@@ -550,18 +553,19 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
           }
         }
       } else if (key === 'a' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
         this.nodeService.selectAll();
         this.nodeService.selectedNodes = [];
         if (this.nodeService.selectedPaths.length > 0) {
           this.bboxService.drawBoundingBox();
         }
       } else if (key === 'c' && (e.ctrlKey || e.metaKey)) {
-
+        e.preventDefault();
         this.config.clipboard.empty = this.nodeService.copySelected();
         this.config.clipboard.guides = this.dataService.activeSelection();
 
       } else if (key === 'v' && (e.ctrlKey || e.metaKey)) {
-
+        e.preventDefault();
         if (!this.config.clipboard.empty) {
           this.config.clipboard.empty = true;
 
@@ -679,10 +683,14 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
             } else if (action === 'deleteEffect') {
               this.fileService.deleteEffect(d);
             }
-          } else {
-            return false;
+          } else if (type === 'message') {
+            if (action === 'updateVersion' && d) {
+              const microcontroller = this.hardwareService.deleteMicroController(d);
+            }
           }
+          return false;
         }
+
     );
   }
 

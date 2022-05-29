@@ -153,11 +153,11 @@
           <div class="row-inline" *ngIf="!positionVisible">
             <input type="number" class="settings" id="position-x" value="{{ this.drawingService.file.activeCollectionEffect.position.x }}"
             (focusout)="hideCompleteValue('position-x')" (focus)="showCompleteValue('position-x')" (change)="updateValue('position-x')" name="position-x">
-            <span class="units" *ngIf="this.drawingService.file.activeCollection.rotation.units.name === 'degrees'">&deg;</span>
-            <span class="units" *ngIf="this.drawingService.file.activeCollection.rotation.units.name === 'radians'">rad</span>
+            <span class="units" *ngIf="this.drawingService.file.activeCollection.rotation.units.name === 'deg'">&deg;</span>
+            <span class="units" *ngIf="this.drawingService.file.activeCollection.rotation.units.name === 'rad'">rad</span>
             <span class="units" *ngIf="this.drawingService.file.activeCollection.rotation.units.name === 'ms'">ms</span>
 
-            <span *ngIf="this.drawingService.file.activeCollection.rotation.units_y.name !== 'degrees'">
+            <span *ngIf="this.drawingService.file.activeCollection.rotation.units_y.name !== 'deg'">
               <input type="number" class="settings" id="position-y" value="{{ this.drawingService.file.activeCollectionEffect.position.y }}"
               (focusout)="hideCompleteValue('position-y')" (focus)="showCompleteValue('position-y')" (change)="updateValue('position-y')" name="position-y">
             </span>
@@ -167,11 +167,11 @@
               <label class="label" for="name"><div class="question-mark" title="Start angle effect measured from left">?</div>X</label>
               <input type="number" class="settings" id="position-x" value="{{ this.drawingService.file.activeCollectionEffect.position.x }}"
                (focusout)="hideCompleteValue('position-x')" (focus)="showCompleteValue('position-x')" (change)="updateValue('position-x')" name="position-x">
-              <span class="units" *ngIf="this.drawingService.file.activeCollection.rotation.units.name === 'degrees'">&deg;</span>
-              <span class="units" *ngIf="this.drawingService.file.activeCollection.rotation.units.name === 'radians'">rad</span>
+              <span class="units" *ngIf="this.drawingService.file.activeCollection.rotation.units.name === 'deg'">&deg;</span>
+              <span class="units" *ngIf="this.drawingService.file.activeCollection.rotation.units.name === 'rad'">rad</span>
               <span class="units" *ngIf="this.drawingService.file.activeCollection.rotation.units.name === 'ms'">ms</span>
             </div>
-            <div class="row" *ngIf="this.drawingService.file.activeCollection.rotation.units_y.name !== 'degrees'">
+            <div class="row" *ngIf="this.drawingService.file.activeCollection.rotation.units_y.name !== 'deg'">
               <label class="label" for="name"><div class="question-mark" title="Vertical translation on the Y axis in relation to the original position of the effect">?</div>Y</label>
               <input type="number" class="settings" id="position-y" value="{{ this.drawingService.file.activeCollectionEffect.position.y }}"
                (focusout)="hideCompleteValue('position-y')" (focus)="showCompleteValue('position-y')" (change)="updateValue('position-y')" name="position-y">
@@ -180,8 +180,8 @@
               <label class="label" for="name"><div class="question-mark" title="Effect angle (width)">?</div>Width</label>
               <input type="number" class="settings" id="position-width" value="{{ this.drawingService.file.activeCollectionEffect.position.width }}"
                (focusout)="hideCompleteValue('position-width')" (focus)="showCompleteValue('position-width')" (change)="updateValue('position-width')" name="position-width">
-              <span class="units" *ngIf="this.drawingService.file.activeCollection.rotation.units.name === 'degrees'">&deg;</span>
-              <span class="units" *ngIf="this.drawingService.file.activeCollection.rotation.units.name === 'radians'">rad</span>
+              <span class="units" *ngIf="this.drawingService.file.activeCollection.rotation.units.name === 'deg'">&deg;</span>
+              <span class="units" *ngIf="this.drawingService.file.activeCollection.rotation.units.name === 'rad'">rad</span>
               <span class="units" *ngIf="this.drawingService.file.activeCollection.rotation.units.name === 'ms'">ms</span>
             </div>
             <div class="row">
@@ -373,8 +373,8 @@
               <label class="label" for="name"><div class="question-mark" title="Start angle effect measured from left for instance">?</div>X n{{ i + 2 }}</label>
               <input type="number" class="settings" id="r-{{ item.id }}" value="{{ item.x | number:'1.2-2' }}" name="r-{{ item.id }}" (change)="updateRepeatInstanceXValue(item.id)"
                (focusout)="hideCompleteValue()" (focus)="showCompleteValue()">
-              <span class="units" *ngIf="this.drawingService.file.activeCollection.rotation.units.name === 'degrees'">&deg;</span>
-              <span class="units" *ngIf="this.drawingService.file.activeCollection.rotation.units.name === 'radians'">rad</span>
+              <span class="units" *ngIf="this.drawingService.file.activeCollection.rotation.units.name === 'deg'">&deg;</span>
+              <span class="units" *ngIf="this.drawingService.file.activeCollection.rotation.units.name === 'rad'">rad</span>
               <span class="units" *ngIf="this.drawingService.file.activeCollection.rotation.units.name === 'ms'">ms</span>
             </div>
           </div>

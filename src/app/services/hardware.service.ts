@@ -167,10 +167,12 @@ export class HardwareService {
 
   deleteMicroController(COM: string) {
     const microController = this.microcontrollers.filter(m => m.serialPort.path === COM)[0];
-    const index = this.microcontrollers.indexOf(microController);
-    if (index > -1) {
-      this.microcontrollers.splice(index, 1);
-      this.store();
+    if (microController) {
+      const index = this.microcontrollers.indexOf(microController);
+      if (index > -1) {
+        this.microcontrollers.splice(index, 1);
+        this.store();
+      }
     }
   }
 
@@ -273,6 +275,8 @@ export class HardwareService {
     this.availableCOMPortList = portlist;
     this.store();
   }
+
+
 
   getAvailableCOMPorts(): Array<any> {
     return this.availableCOMPortList;

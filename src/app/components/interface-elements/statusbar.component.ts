@@ -12,7 +12,7 @@ import { DOCUMENT } from '@angular/common';
         <div id="progress" class="inner-bar" [ngStyle]="{'width': (244 * (this._progress/100)) + 'px' }"></div>
       </div>
 
-      <div class="version">version B2.1.0</div>
+      <div class="version">version B2.2.0</div>
       <div class="logo"><img src="./assets/icons/logo/feelix-logo-gray.svg"></div>
     </div>
 

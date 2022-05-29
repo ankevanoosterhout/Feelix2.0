@@ -1029,14 +1029,14 @@ export class DrawingService {
   }
 
   updateEffectType() {
-    if (this.file.activeEffect.type === 'velocity' && this.file.activeEffect.grid.yUnit.name === 'voltage (%)') {
-      this.file.activeEffect.grid.yUnit = new Unit('velocity (%)', 100);
+    if (this.file.activeEffect.type === 'velocity' && this.file.activeEffect.grid.yUnit.name === '%') {
+      this.file.activeEffect.grid.yUnit = new Unit('%', 100);
       this.file.activeEffect.grid.xUnit = new Unit('ms', 1000);
       this.file.activeEffect.range.start = 0;
       this.file.activeEffect.range.end = 1000;
     }
     if (this.file.activeEffect.type !== 'velocity') {
-      this.file.activeEffect.grid.yUnit = new Unit('voltage (%)', 100);
+      this.file.activeEffect.grid.yUnit = new Unit('%', 100);
       this.file.activeEffect.range.start = 0;
       this.file.activeEffect.range.end = 360;
     }

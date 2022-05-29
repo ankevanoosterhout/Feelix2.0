@@ -54,14 +54,14 @@ import { CloneService } from 'src/app/services/clone.service';
         </select>
       </div>
 
-      <div class="form-row" *ngIf="this.drawingService.file.activeEffect && this.drawingService.file.activeEffect.type !== 'velocity'" title="select units y-axis">
+      <div class="form-row" *ngIf="this.drawingService.file.activeEffect && this.drawingService.file.activeEffect.type !== 'velocity'" title="units y-axis: % of max voltage">
         <label class="select axes">y </label>
         <select class="form-control" id="select" [(ngModel)]="this.drawingService.file.activeEffect.grid.yUnit" name="y-axis" [compareWith]="compareUnits">
             <option *ngFor="let type of this.drawingService.config.yAxisOptions" [ngValue]="type">{{ type.name }}</option>
         </select>
       </div>
 
-      <div class="form-row" *ngIf="this.drawingService.file.activeEffect && this.drawingService.file.activeEffect.type === 'velocity'" title="select units y-axis">
+      <div class="form-row" *ngIf="this.drawingService.file.activeEffect && this.drawingService.file.activeEffect.type === 'velocity'" title="units y-axis: degrees or % of max velocity">
         <label class="select axes">y </label>
         <select class="form-control" id="select" [(ngModel)]="this.drawingService.file.activeEffect.grid.yUnit" name="y-axis" [compareWith]="compareUnits">
             <option *ngFor="let type of this.drawingService.config.yAxisOptions_velocity" [ngValue]="type">{{ type.name }}</option>
@@ -77,8 +77,8 @@ import { CloneService } from 'src/app/services/clone.service';
       </div>
 
 
-      <div class="form-row range" *ngIf="this.drawingService.file.activeEffect && this.drawingService.file.activeEffect.type === 'velocity' && (this.drawingService.file.activeEffect.grid.yUnit.name === 'radians' || this.drawingService.file.activeEffect.grid.yUnit.name === 'degrees')"
-        title="specify range y-axis (degrees)">
+      <div class="form-row range" *ngIf="this.drawingService.file.activeEffect && this.drawingService.file.activeEffect.type === 'velocity' && (this.drawingService.file.activeEffect.grid.yUnit.name === 'rad' || this.drawingService.file.activeEffect.grid.yUnit.name === 'deg')"
+        title="specify range y-axis (deg)">
         <label>range</label>
         <input type="number" class="small" id="range-start" name="range-start" [(ngModel)]="this.drawingService.file.activeEffect.range_y.start" (change)="updateRange()">
         <input type="number" class="small" id="range-end" name="range-end" [(ngModel)]="this.drawingService.file.activeEffect.range_y.end" (change)="updateRange()">
@@ -164,8 +164,8 @@ export class FixedToolbarComponent implements OnInit {
   returnToStart = false;
 
   type = 'torque';
-  xAxis = 'degrees';
-  yAxis = 'voltage (%)';
+  xAxis = 'deg';
+  yAxis = '%';
   rotationType = 'dependent';
 
   transformData: object;

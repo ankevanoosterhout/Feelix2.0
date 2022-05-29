@@ -10,6 +10,8 @@ let progress = 0;
 let dataSendWaitList = [];
 let datalist = [];
 
+const softwareVersion = { major: 2, minor: 2, patch: 0 };
+
 
 function listSerialPorts(callback) {
   let portsList = [];
@@ -175,6 +177,7 @@ class newSerialPort {
           this.sp.close();
         } else {
           updateProgress(100, (this.COM + ' has been added'));
+          sendDataStr([ 'FS' ],  this.COM);
           this.connected = true;
           main.updateSerialStatus({ microcontroller: this.portData, connected: this.connected });
           if (!activePorts.includes(this.COM)) {
@@ -194,15 +197,29 @@ class newSerialPort {
 
         else if (d.charAt(0) === 'A') {
           const dataArray = d.substr(1).split(':');
-          const data = {
+          let incomingData;
+          if (dataArray.length <= 5) {
+            incomingData = {
+                motorID: dataArray[0],
+                angle: parseFloat(dataArray[1]),
+                velocity: parseFloat(dataArray[2]),
+                time: parseInt(dataArray[3]),
+                target: parseFloat(dataArray[4]),
+                serialPath: this.COM
+            };
+          } else {
+            incomingData = {
               motorID: dataArray[0],
               angle: parseFloat(dataArray[1]),
               velocity: parseFloat(dataArray[2]),
               time: parseInt(dataArray[3]),
               target: parseFloat(dataArray[4]),
+              current_a: parseFloat(dataArray[5]),
+              current_b: parseFloat(dataArray[6]),
               serialPath: this.COM
-          };
-          main.visualizaMotorData(data);
+            };
+          }
+          main.visualizaMotorData(incomingData);
 
         } else if (d.charAt(0) === 'Z') { // receive custom variable
 
@@ -215,11 +232,46 @@ class newSerialPort {
           };
           main.updateZeroElectricAngle(data);
 
+        } else if (d.charAt(0) === 'C') { // receive custom variable
+          const dataArray = d.substr(1).split(':');
+          const data = {
+              motorID: dataArray[0],
+              current_sense_calibration: dataArray[1],
+              serialPath: this.COM
+          };
+          main.updateCurrentSenseCalibration(data);
+
         } else if (d.charAt(0) === 'M') { // receive custom variable
           updateProgress(progress, 'Maximum data size reached');
 
         } else if (d.charAt(0) === 'V') { // receive custom variable
           updateProgress(progress, 'Motor stopped automatically because it reached a high velocity');
+
+        } else if (d.charAt(0) === 'O') { // receive custom variable
+          updateProgress(progress, 'Overheat protection activitated');
+
+        } else if (d.charAt(0) === 'S') { // receive custom variable
+          const dataArray = d.substr(1).split('.');
+          const data = {
+              major: parseInt(dataArray[0]),
+              minor: parseInt(dataArray[1]),
+              patch: parseInt(dataArray[2]),
+          };
+          if (data.major !== softwareVersion.major || data.minor !== softwareVersion.minor || data.patch !== softwareVersion.patch) {
+            main.showMessageConfirmation({ msg: "The software version of Feelix does not match the software version on the microcontroller (v"
+              + (data.major + '.' + data.minor + '.' + data.patch) + "), please update to v" + (softwareVersion.major + '.' + softwareVersion.minor + '.' + softwareVersion.patch), action:"updateVersion", type: "message", d: this.COM });
+                          this.sp.close();
+          }
+        } else if (d.charAt(0) === 'R') {
+          const dataArray = d.substr(1).split(':');
+          const data = {
+            motorID: dataArray[0],
+            type: dataArray[1],
+            value: parseFloat(dataArray[2]),
+            serialPath: this.COM
+          }
+          main.returnData(data);
+          main.updateSerialProgress({ progress: 100, str: 'value received' });
         }
 
     });
@@ -255,7 +307,8 @@ function updateProgress(_progress, _str) {
 
 function prepareMotorData(uploadContent, motor, datalist) {
 
-  datalist.unshift('FM' + motor.id + 'F');
+  // datalist.unshift('FM' + motor.id + 'F');
+
   datalist.unshift('FM' + motor.id + 'I' + motor.id);
   if (motor.config.supplyVoltage) {
     datalist.unshift('FM' + motor.id + 'S' + motor.config.supplyVoltage);
@@ -273,7 +326,9 @@ function prepareMotorData(uploadContent, motor, datalist) {
     datalist.unshift('FM' + motor.id + 'N' + (motor.config.calibration.direction === 'CW' ? 1 : -1));
   }
   // datalist.unshift('FM' + motor.id + 'E' + motor.config.encoder.part_number);
-  datalist.unshift('FM' + motor.id + 'O' + (motor.state.position.start * (Math.PI / 180)).toFixed(12));
+  if (motor.config.sensorOffset !== undefined) {
+    datalist.unshift('FM' + motor.id + 'O' + (motor.config.sensorOffset * (Math.PI / 180)).toFixed(12));
+  }
   datalist.unshift('FM' + motor.id + 'C' + motor.config.encoder.clock_speed);
   datalist.unshift('FM' + motor.id + 'H' + uploadContent.config.loop);
   datalist.unshift('FM' + motor.id + 'D' + (motor.config.encoder.direction === 'CW' ? 1 : -1));
@@ -282,8 +337,13 @@ function prepareMotorData(uploadContent, motor, datalist) {
   datalist.unshift('FM' + motor.id + 'M' + uploadContent.config.constrain_range);
   datalist.unshift('FM' + motor.id + 'A' + ':' + motor.position_pid.p + ':' + motor.position_pid.i + ':' + motor.position_pid.d);
   datalist.unshift('FM' + motor.id + 'Q' + ':' + motor.velocity_pid.p + ':' + motor.velocity_pid.i + ':' + motor.velocity_pid.d);
-  // datalist.unshift('FM' + motor.id + 'B' + uploadContent.baudRate);
+  datalist.unshift('FM' + motor.id + 'G' + (motor.config.inlineCurrentSensing ? 1 : 0));
+  if (motor.config.calibrateCurrentSense) {
+    datalist.unshift('FM' + motor.id + 'Y' + motor.config.calibrateCurrentSense.toFixed(5));
+  }
+  datalist.unshift('FM' + motor.id + 'X' + (motor.config.overheatProtection ? 1 : 0));
 
+  // datalist.unshift('FM' + motor.id + 'B' + uploadContent.baudRate);
   return datalist;
 }
 
@@ -316,8 +376,8 @@ function prepareEffectData(uploadContent, motor, datalist) {
     datalist.unshift('FE' + i + 'R:' + d.pointer);
     let type = 0;
     if (d.type === 'position') { type = 1; }
-    if (d.type === 'velocity' && d.yUnit !== 'degrees') { type = 2; }
-    if (d.type === 'velocity' && d.yUnit === 'degrees') { type = 3; }
+    if (d.type === 'velocity' && d.yUnit !== 'deg') { type = 2; }
+    if (d.type === 'velocity' && d.yUnit === 'deg') { type = 3; }
     datalist.unshift('FE' + i + 'T:' + type);
     datalist.unshift('FE' + i + 'Z:' + (d.type === 'position' ? d.data.length * 2 : d.data.length));
 
@@ -326,7 +386,7 @@ function prepareEffectData(uploadContent, motor, datalist) {
       if (el.d && d.type === 'position') {
         datalist.unshift('FDI:' + (Math.round(el.d) !== el.d ? el.d.toFixed(6) : el.d));
       }
-      if (d.type === 'velocity' && d.yUnit === 'degrees') {
+      if (d.type === 'velocity' && d.yUnit === 'deg') {
         datalist.unshift('FDI:' + ((el.y2 * 100) * (Math.PI / 180)).toFixed(6));
       } else {
         datalist.unshift('FDI:' + (Math.round(el.y) !== el.y ? el.y.toFixed(6) : el.y));
@@ -367,7 +427,7 @@ function prepareEffectData(uploadContent, motor, datalist) {
       if (d.type === 'position') {
         datalist.unshift('FDI:' + (Math.round(el.d) !== el.d ? el.d.toFixed(6) : el.d));
       }
-      if (d.type === 'velocity' && d.yUnit === 'degrees') {
+      if (d.type === 'velocity' && d.yUnit === 'deg') {
         datalist.unshift('FDI:' + ((el.y * 100) * (Math.PI / 180)).toFixed(6));
       } else {
         datalist.unshift('FDI:' + (Math.round(el.y) !== el.y ? el.y.toFixed(6) : el.y));
@@ -414,6 +474,7 @@ function upload_to_receivedPort(port, uploadContent) {
   receivingPort = port;
 
   for (const motor of uploadContent.config.motors) {
+    datalist.unshift('FM' + motor.id + 'F');
     datalist = prepareMotorData(uploadContent, motor, datalist);
     if (uploadContent.data) {
       datalist = prepareEffectData(uploadContent, motor, datalist);
@@ -483,9 +544,55 @@ function play(play, motor_id, collection_name, port) {
   main.updateSerialProgress({ progress: 100, str: (play ? 'Play ' + collection_name + ' at ' + port : 'Stop ' + collection_name + ' at ' + port) });
 }
 
-function run(motor_id, port) {
-  sendDataStr([ 'FM' + motor_id + 'K1' ], port);
+function run(motor_id, port, run) {
+  sendDataStr([ 'FM' + motor_id + 'K'  + run], port);
   main.updateSerialProgress({ progress: 100, str: 'Run motor ' + motor_id + ' at ' + port });
+}
+
+function returnToStart(motor_id, collection_name, port) {
+  sendDataStr([ 'FM' + motor_id + 'W0' ], port);
+  main.updateSerialProgress({ progress: 100, str: (play ? 'Return to start ' + collection_name + ' at ' + port : 'Stop ' + collection_name + ' at ' + port) });
+}
+
+function calibrateCurrentSense(uploadContent) {
+  // sendDataStr([ 'FM' + motor_id + 'U' ], port);
+  // main.updateSerialProgress({ progress: 100, str: 'Calibrate current sensors motor ' + motor_id + ' at ' + port });
+  if (uploadContent.config) {
+    receivingPort = ports.filter(p => p.COM === uploadContent.config.serialPort.path)[0];
+    // motor = microcontroller.motors.filter(m => m.id === motor_id)[0];
+
+    receivingPort = tryToEstablishConnection(receivingPort, uploadContent, calibrate_current_sense);
+
+  }
+}
+
+function calibrate_current_sense(port, uploadContent) {
+  receivingPort = port;
+
+  const motor = uploadContent.config.motors[0];
+
+  if (motor) {
+
+    datalist = [];
+
+    datalist.unshift('FM' + motor.id + 'I' + motor.id);
+    datalist.unshift('FM' + motor.id + 'S' + motor.config.supplyVoltage);
+    datalist.unshift('FM' + motor.id + 'P' + motor.config.polepairs);
+    datalist.unshift('FM' + motor.id + 'Z' + motor.config.calibration.value.toFixed(12));
+    datalist.unshift('FM' + motor.id + 'N' + (motor.config.calibration.direction === 'CW' ? 1 : -1));
+    datalist.unshift('FM' + motor.id + 'U');
+    // datalist.unshift('FC');
+
+    dataSendWaitList.push({ port: uploadContent.config.serialPort.path, data: datalist, totalItems: datalist.length });
+
+    main.updateSerialProgress({ progress: 0, str: 'Calibrate current sensors motor ' + motor.id + ' at ' + receivingPort.COM });
+
+    uploadFromWaitList(receivingPort);
+
+    // sendDataStr([ 'FM' + motor.id + 'U' ], uploadContent.config.serialPort.path);
+  } else {
+    main.updateSerialProgress({ progress: 0, str: 'Error: Not able to calibrate motor at ' + receivingPort.COM });
+  }
 }
 
 
@@ -551,8 +658,6 @@ function update_filter(port, uploadContent) {
     main.updateSerialProgress({ progress: 0, str: 'Update filter ' + receivingPort.COM });
     uploadFromWaitList(receivingPort);
 
-
-
   } else {
 
     main.updateSerialProgress({ progress: 0, str: 'Error: Not able update filter at ' + receivingPort.COM });
@@ -601,42 +706,15 @@ function updateMotorSettingCallback(port, uploadContent) {
   receivingPort = port;
 
   datalist = [];
-  // console.log('config: ' + uploadContent);
 
   if (uploadContent && uploadContent.config) {
     for (const motor of uploadContent.config.motors) {
-      datalist.unshift('FM' + motor.id + 'I' + motor.id);
-      if (motor.config.supplyVoltage) {
-        datalist.unshift('FM' + motor.id + 'S' + motor.config.supplyVoltage);
-      }
-      if (motor.config.polepairs) {
-        datalist.unshift('FM' + motor.id + 'P' + motor.config.polepairs);
-      }
-      datalist.unshift('FM' + motor.id + 'L' + (motor.config.voltageLimit || motor.config.supplyVoltage));
-
-      if (motor.config.velocityLimit) {
-        datalist.unshift('FM' + motor.id + 'V' + motor.config.velocityLimit);
-      }
-      if (motor.config.calibration.value && motor.config.calibration.value !== 0.0  && motor.config.calibration.value !== -12345.0 && motor.config.calibration.direction) {
-        datalist.unshift('FM' + motor.id + 'Z' + motor.config.calibration.value.toFixed(12));
-        datalist.unshift('FM' + motor.id + 'N' + (motor.config.calibration.direction === 'CW' ? 1 : -1));
-      }
-      // datalist.unshift('FM' + motor.id + 'E' + motor.config.encoder.part_number);
-      datalist.unshift('FM' + motor.id + 'O' + (motor.state.position.start * (Math.PI / 180)).toFixed(12));
-      datalist.unshift('FM' + motor.id + 'C' + motor.config.encoder.clock_speed);
-      datalist.unshift('FM' + motor.id + 'H' + uploadContent.config.loop);
-      datalist.unshift('FM' + motor.id + 'D' + (motor.config.encoder.direction === 'CW' ? 1 : -1));
-      datalist.unshift('FM' + motor.id + 'T' + uploadContent.config.updateSpeed);
-      datalist.unshift('FM' + motor.id + 'J' + Math.round(uploadContent.config.range));
-      datalist.unshift('FM' + motor.id + 'M' + uploadContent.config.constrain_range);
-      datalist.unshift('FM' + motor.id + 'A' + ':' + motor.position_pid.p + ':' + motor.position_pid.i + ':' + motor.position_pid.d);
-      datalist.unshift('FM' + motor.id + 'Q' + ':' + motor.velocity_pid.p + ':' + motor.velocity_pid.i + ':' + motor.velocity_pid.d);
+      prepareMotorData(uploadContent, motor, datalist);
     }
+
 
     if (datalist.length > 0) {
       datalist.unshift('FC');
-
-      // console.log('datalist: ' + JSON.stringify(datalist));
 
       dataSendWaitList.push({ port: uploadContent.config.serialPort.path, data: datalist, totalItems: datalist.length });
 
@@ -674,6 +752,12 @@ function updateMotorControlVariable(char, data, motor_id, port) {
   main.updateSerialProgress({ progress: 100, str: 'sending update motor control variable to ' + port });
 }
 
+function getValue(motor_id, port, char) {
+  const datastr = 'FG' + motor_id + char;
+  sendDataStr([ datastr ], port);
+  main.updateSerialProgress({ progress: 50, str: 'request value' });
+}
+
 
 function sendDataStr(str, port) {
   receivingPort = ports.filter(p => p.COM === port)[0];
@@ -690,13 +774,15 @@ exports.connectToSerialPort = connectToSerialPort;
 exports.closeSerialPort = closeSerialPort;
 exports.closeAllSerialPorts = closeAllSerialPorts;
 exports.calibrateMotor = calibrateMotor;
+exports.calibrateCurrentSense = calibrateCurrentSense;
 exports.updateFilter = updateFilter;
 exports.updateMotorSetting = updateMotorSetting;
 exports.play = play;
 exports.run = run;
+exports.returnToStart = returnToStart;
 exports.uploadData = uploadData;
 exports.updateMotorControlVariable = updateMotorControlVariable;
 exports.updateEffectData = updateEffectData;
 exports.requestData = requestData;
 exports.sendDataString = sendDataString;
-
+exports.getValue = getValue;
