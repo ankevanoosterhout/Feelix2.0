@@ -197,6 +197,9 @@ export class MotorSettingsComponent implements OnInit {
 
     const uploadModel = this.uploadService.createUploadModel(null, this.selectedMicrocontroller);
     const motor = this.selectedMicrocontroller.motors.filter(m => m.id === motor_id)[0];
+    const sensorOffset = motor.config.sensorOffset;
+    if (motor.state.position.start != 0) { motor.state.position.start -= sensorOffset; }
+    if (motor.state.position.end != 0) { motor.state.position.end -= sensorOffset; }
     uploadModel.config.motors = [ motor ];
     if (this.selectedMicrocontroller) {
       this.electronService.ipcRenderer.send('updateMotorSetting', uploadModel);

@@ -386,11 +386,11 @@ export class ML5jsService {
         }
         if (n === this.selectedModel.filters.length - 1) {
           if (filterArray.length > 0) {
-            console.log('update filter');
+            // console.log('update filter');
             const microcontroller = this.selectedMicrocontrollers.filter(m => m.serialPort.path === this.serialPath)[0];
             if (microcontroller) {
               const filterModel = new FilterModel(filterArray, microcontroller);
-              console.log(filterModel);
+              // console.log(filterModel);
               this.electronService.ipcRenderer.send('updateFilter', filterModel);
             }
           }
@@ -440,12 +440,12 @@ export class ML5jsService {
 
     loadModel(id: String) {
       const model = this.ml5ModelService.getModel(id);
-      console.log(model);
+      // console.log(model);
       const modelStr = JSON.stringify(model.model);
       if (model) {
         this.selectedModel = model;
         this.selectedModel.model = JSON.parse(modelStr);
-        console.log(this.selectedModel.model);
+        // console.log(this.selectedModel.model);
         this.updateModelSettings(this.selectedModel);
         this.updateProgess('Model loaded', 100);
       } else {
