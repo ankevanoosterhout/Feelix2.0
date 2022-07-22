@@ -58,6 +58,8 @@ import { DataSetService } from './services/dataset.service';
 import { LoadDataSetsComponent } from './components/ml5js/datasets/load-datasets.component';
 import { ML5ModelService } from './services/ml5-model.service';
 import { FilterService } from './services/filter.service';
+import { KinematicsComponent } from './components/kinematics/kinematics.component';
+import { KinematicService } from './services/kinematic.service';
 
 @NgModule({
   declarations: [
@@ -88,7 +90,8 @@ import { FilterService } from './services/filter.service';
     DataComponent,
     ClassificationComponent,
     ModelComponent,
-    LoadDataSetsComponent
+    LoadDataSetsComponent,
+    KinematicsComponent
   ],
   imports: [
     BrowserModule,
@@ -122,7 +125,8 @@ import { FilterService } from './services/filter.service';
     ML5jsService,
     DataSetService,
     ML5ModelService,
-    FilterService
+    FilterService,
+    KinematicService
   ],
   bootstrap: [
     AppComponent

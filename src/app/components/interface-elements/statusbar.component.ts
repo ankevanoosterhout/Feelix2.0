@@ -6,7 +6,7 @@ import { DOCUMENT } from '@angular/common';
   selector: 'app-statusbar',
   template: `
 
-    <div class="statusbar">
+    <div class="statusbar {{ this._page }}">
       <div class="process-update" id="msg">{{ this._status }}</div>
       <div class="process-uploadbar">
         <div id="progress" class="inner-bar" [ngStyle]="{'width': (244 * (this._progress/100)) + 'px' }"></div>
@@ -33,6 +33,11 @@ import { DOCUMENT } from '@angular/common';
       font-size: 9px;
       line-height: 17px;
       user-select:none;
+    }
+
+    .statusbar.Kinematics {
+      border-top: none!important;
+      width: calc(100% + 1px)!important;
     }
 
     .process-update {

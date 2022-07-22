@@ -1,0 +1,102 @@
+
+<div id="canvas"></div>
+
+<div id="controls">
+  <div class="attach-toolbar"><div class="attach-arrow" [ngClass]="{ hidden: !visible[0] }" (click)="visible[0] = !visible[0]"></div><div class="label title">controls</div></div>
+
+  <ul class="menu" [ngClass]="{ open: visible[0] }">
+
+    <li id="model-item">
+      <div class="opencloseArrow" [ngClass]="{ open: visible[4] }" (click)="visible[4] = !visible[4]"><div></div></div>
+      <label class="label header">models</label>
+
+      <ul class="content" [ngClass]="{ open: visible[4] }">
+        <div class="row">
+          <ul id="models">
+            <li *ngFor="let model of this.kinematicService.models">
+              <div id="item-{{ model.id }}" class="model-item" (click)="addModel(model)"><img src="./assets/images/models_png/{{ model.thumbnail }}"></div>
+            </li>
+          </ul>
+        </div>
+      </ul>
+    </li>
+
+    <li id="component-item">
+      <div class="opencloseArrow" [ngClass]="{ open: visible[1] }" (click)="visible[1] = !visible[1]"><div></div></div>
+
+      <label class="label header">components</label>
+
+      <ul class="content" [ngClass]="{ open: visible[1] }">
+        <div class="joint-details" *ngIf="this.kinematicService.selectedJoints.length === 1">
+          <div class="row">
+            <div class="label">position</div>
+            <div class="values">
+              <p>x </p><input type="number" class="small" id="pos_x" name="pos_x" [(ngModel)]="this.kinematicService.selectedJoints[0].object3D.position.x" (change)="updateJoint(this.kinematicService.selectedJoints[0])">
+              <p>y </p><input type="number" class="small" id="pos_y" name="pos_y" [(ngModel)]="this.kinematicService.selectedJoints[0].object3D.position.y" (change)="updateJoint(this.kinematicService.selectedJoints[0])">
+              <p>z </p><input type="number" class="small" id="pos_z" name="pos_z" [(ngModel)]="this.kinematicService.selectedJoints[0].object3D.position.z" (change)="updateJoint(this.kinematicService.selectedJoints[0])">
+            </div>
+          </div>
+          <div class="row">
+            <div class="label">rotation</div>
+            <div class="values">
+              <p>x </p><input type="number" class="small" id="rot_x" name="rot_x" [(ngModel)]="this.kinematicService.selectedJoints[0].object3D.rotation.x" (change)="updateJoint(this.kinematicService.selectedJoints[0])">
+              <p>y </p><input type="number" class="small" id="rot_y" name="rot_y" [(ngModel)]="this.kinematicService.selectedJoints[0].object3D.rotation.y" (change)="updateJoint(this.kinematicService.selectedJoints[0])">
+              <p>z </p><input type="number" class="small" id="rot_z" name="rot_z" [(ngModel)]="this.kinematicService.selectedJoints[0].object3D.rotation.z" (change)="updateJoint(this.kinematicService.selectedJoints[0])">
+            </div>
+          </div>
+
+          <div class="row">
+            <label class="radio-container inline">
+              <input type="checkbox" class="type" id="joint_active" name="joint_active"
+              [(ngModel)]="this.kinematicService.selectedJoints[0].active" [checked]="this.kinematicService.selectedJoints[0].active" (change)="updateJoint(this.kinematicService.selectedJoints[0])">
+              <span class="checkmark radio inline"></span> active
+            </label>
+          </div>
+
+          <div class="row">
+            <label class="radio-container inline">
+              <input type="checkbox" class="type" id="joint_active" name="joint_active"
+              [(ngModel)]="this.kinematicService.selectedJoints[0].grounded" [checked]="this.kinematicService.selectedJoints[0].grounded" (change)="updateJoint(this.kinematicService.selectedJoints[0])">
+              <span class="checkmark radio inline"></span> lock position
+            </label>
+          </div>
+
+          <div class="row" *ngIf="this.kinematicService.selectedJoints[0].contol">
+            <div class="label">encoder</div>
+            <input type="number" class="small" id="encoder" name="encoder" [(ngModel)]="this.kinematicService.selectedJoints[0].control.motors[this.kinematicService.selectedJoints[0].motor].state.position.current" (change)="updateJoint(this.kinematicService.selectedJoints[0])">
+          </div>
+
+          <div class="row" *ngIf="this.kinematicService.selectedJoints[0].contol">
+            <div class="label">constraints</div>
+            <div class="values">
+              <p>min </p><input type="number" class="small" id="range_start" name="range_start" [(ngModel)]="this.kinematicService.selectedJoints[0].control.motors[this.kinematicService.selectedJoints[0].motor].rotation.start" (change)="updateJoint(this.kinematicService.selectedJoints[0])">
+              <p>max </p><input type="number" class="small" id="range_end" name="range_end" [(ngModel)]="this.kinematicService.selectedJoints[0].control.motors[this.kinematicService.selectedJoints[0].motor].rotation.end" (change)="updateJoint(this.kinematicService.selectedJoints[0])">
+            </div>
+          </div>
+        </div>
+      </ul>
+    </li>
+
+    <li id="state-item">
+      <div class="opencloseArrow" [ngClass]="{ open: visible[2] }" (click)="visible[2] = !visible[2]"><div></div></div>
+      <label class="label header">states</label>
+
+      <ul class="content" [ngClass]="{ open: visible[2] }">
+      </ul>
+    </li>
+
+    <li id="expression-item">
+      <div class="opencloseArrow" [ngClass]="{ open: visible[3] }" (click)="visible[3] = !visible[3]"><div></div></div>
+      <label class="label header">expressions</label>
+
+      <ul class="content" [ngClass]="{ open: visible[3] }">
+      </ul>
+    </li>
+
+
+  </ul>
+</div>
+
+
+<app-statusbar [page]="this.page" [status]="this.status" [progress]="this.progress"></app-statusbar>
+

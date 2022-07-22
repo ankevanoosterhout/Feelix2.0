@@ -13,7 +13,7 @@ const serialPort = require('./serial-communication.js');
 global['window'] = fs.wi;
 global['HTMLVideoElement'] = fs.HTMLVideoElement;
 
-let mainWindow, infoWindow = null, effectWindow = null, layerWindow = null, helpWindow = null;
+let mainWindow, infoWindow = null, effectWindow = null, layerWindow = null, helpWindow = null, kinematicWindow = null;
 let toolbars = [];
 let mainMenu, displays;
 let gridSnap = false, gridVisible = false, guidesLock = false;
@@ -279,6 +279,13 @@ const mainMenuTemplate = [
         ]
       },
       {
+        label: 'Kinematic Design',
+        accelerator: process.platform == 'darwin' ? 'Command+K' : 'Ctrl+K',
+        click() {
+          createKinematicsWindow();
+        }
+      },
+      {
         label: 'ML5js Window',
         click() {
           createML5jsWindow();
@@ -289,6 +296,7 @@ const mainMenuTemplate = [
   {
     label: 'Hardware',
     submenu: [
+
       {
         label: 'Microcontroller settings',
         accelerator: process.platform == 'darwin' ? 'Command+M' : 'Ctrl+M',
@@ -336,6 +344,8 @@ const mainMenuTemplate = [
     ]
   }
 ];
+
+
 
 const ml5_control_menu_template = [
   {
@@ -407,6 +417,26 @@ const ml5_control_menu_template = [
   }
 ];
 
+
+const kinematics_menu_template = [
+  {
+    label: 'File',
+    submenu: [
+      {
+        label: 'Load',
+        click() { }
+      },
+      {
+        label: 'Save',
+        click() { }
+      },
+      {
+        label: 'Examples',
+        click() { }
+      }
+    ]
+  }
+];
 
 
 
@@ -557,7 +587,7 @@ function createML5jsWindow() {
       }
     })
 
-    ml5jsMenu = Menu.buildFromTemplate(ml5_control_menu_template);
+    const ml5jsMenu = Menu.buildFromTemplate(ml5_control_menu_template);
 
     ml5jsWindow.setMenu(ml5jsMenu);
 
@@ -740,56 +770,46 @@ function createToolbar(hash, width, type) {
 
 }
 
+function createKinematicsWindow() {
+  kinematicWindow = new BrowserWindow({
+    width: 800,
+    height: 600,
+    title: 'Kinematics',
+    titleBarStyle: 'hidden',
+    backgroundColor: '#e0e0e0',
+    resizable: true,
+    movable: true,
+    show: false,
+    icon: path.join(__dirname, '../src/assets/icons/png/64x64.png'),
+    parent: mainWindow,
+    webPreferences: {
+      nodeIntegration: true
+    }
+  })
 
+  const kinematicsMenu = Menu.buildFromTemplate(kinematics_menu_template);
 
-// function createEffectWindow() {
+  kinematicWindow.setMenu(kinematicsMenu);
 
-//   mainMenu.items[2].submenu.items[5].submenu.items[1].checked = true
+  kinematicWindow.loadURL(
+    url.format({
+      pathname: path.join(__dirname, `../dist/feelix/index.html`),
+      protocol: "file:",
+      slashes: true,
+      hash: '/kinematics'
+    })
+  );
 
-//   effectWindow = new BrowserWindow({
-//     width: 240,
-//     height: 250,
-//     minWidth: 240,
-//     maxWidth: 240,
-//     minHeight: 120,
-//     x: displays[0].bounds.width * 0.9 - 325,
-//     y: (displays[0].bounds.height * 0.1) + 193,
-//     title: 'Effects',
-//     backgroundColor: '#3a3a3a',
-//     alwaysOnTop: true,
-//     frame: false,
-//     resizable: true,
-//     center: false,
-//     movable: true,
-//     show: false,
-//     parent: mainWindow,
-//     icon: path.join(__dirname, '../src/assets/icons/png/64x64.png'),
-//     webPreferences: {
-//       nodeIntegration: true,
-//       enableDragOut: true
-//     }
-//   })
+  kinematicWindow.once('ready-to-show', () => {
+    kinematicWindow.show()
+  });
 
-//   effectWindow.loadURL(
-//     url.format({
-//       pathname: path.join(__dirname, `../dist/feelix/index.html`),
-//       protocol: "file:",
-//       slashes: true,
-//       hash: '/effects'
-//     })
-//   );
+  kinematicWindow.webContents.openDevTools();
 
-//   effectWindow.once('ready-to-show', () => {
-//     effectWindow.show()
-//   });
-
-//   // effectWindow.webContents.openDevTools();
-
-//   effectWindow.on('close', function () {
-//     effectWindow = null
-//     mainMenu.items[2].submenu.items[5].submenu.items[1].checked = false;
-//   })
-// }
+  kinematicWindow.on('close', function () {
+    kinematicWindow = null
+  })
+}
 
 
 

@@ -756,7 +756,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
         if (this.nodeService.selectedPaths.length > 0 && this.nodeService.selectedNodes.length === 0 && this.config.cursor.slug === 'sel') {
           this.bboxService.drawBoundingBox();
         }
-        d3.selectAll('.cpSVG, .nodesSVG').raise();
+        d3.selectAll('.cpSVG, .nodesSVG, .zeroLine').raise();
       }
     }
 

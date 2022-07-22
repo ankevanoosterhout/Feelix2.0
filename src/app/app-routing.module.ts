@@ -18,6 +18,7 @@ import { MotorSettingsComponent } from './components/windows/settings/motor-sett
 import { EffectListComponent } from './components/file/effect-list.component';
 import { ML5jsComponent } from './components/ml5js/ml5js.component';
 import { LoadDataSetsComponent } from './components/ml5js/datasets/load-datasets.component';
+import { KinematicsComponent } from './components/kinematics/kinematics.component';
 
 
 const routes: Routes = [
@@ -40,7 +41,8 @@ const routes: Routes = [
     { path: 'motor-control-toolbar', component: MotorControlToolbarComponent },
     { path: 'motor-settings', component: MotorSettingsComponent },
     { path: 'load-dataset', component: LoadDataSetsComponent },
-    { path: 'load-model', component: LoadDataSetsComponent }
+    { path: 'load-model', component: LoadDataSetsComponent },
+    { path: 'kinematics', component: KinematicsComponent }
   ];
 
 @NgModule({
