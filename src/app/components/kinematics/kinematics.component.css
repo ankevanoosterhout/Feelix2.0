@@ -17,7 +17,7 @@
   background: #4a4a4a;
   z-index: 3;
   padding-bottom: 20px;
-  font-size: 12px;
+  font-size: 11px;
   font-family: Arial, Helvetica, sans-serif;
   border: 1px solid #202020;
 }
@@ -26,6 +26,7 @@ p {
   display: inline;
   padding: 0 1px 0 6px;
   color: #bebebe;
+  font-size: 11px;
   line-height: 18px;
 }
 
@@ -39,6 +40,7 @@ ul {
 ul.menu, ul.content {
   display: none;
   width: 100%;
+  color: #bebebe;
 }
 
 ul.menu {
@@ -52,14 +54,19 @@ ul.open {
 }
 
 ul.menu li, ul.content li {
-  width: 100%;
+  width: calc(100% - 10px);
   display: inline-block;
   height: auto;
+  margin: 0 5px;
+  padding: 1px 0;
+  border-bottom: 1px solid #3a3a3a;
 }
+
 
 ul.menu li {
   min-height: 20px;
-  border-bottom: 1px solid #666;
+  border-bottom: 1px solid rgb(85, 85, 85);
+  padding: 3px 0;
 }
 ul.menu li:last-child {
   border-bottom: none;
@@ -68,25 +75,29 @@ ul.menu li:last-child {
 .values {
   width: calc(100% - 60px);
   display: inline-block;
+  vertical-align: top;
+  top: 0;
+  margin: -5px 0 3px;
+  position: relative;
 }
 
 .label {
   display: inline-block;
   font-family: Arial, Helvetica, sans-serif;
-  font-size: 12px;
-  line-height: 13px;
-  color: #bebebe;
+  line-height: 11px;
+  /* color: #bebebe; */
   width: 60px;
 }
 
 .header {
   font-weight: 500;
-  padding: 4px 10px;
+  padding: 4px 3px;
+  color: #ddd;
 }
 
 .title {
   font-weight: 500;
-  padding: 4px 18px;
+  margin: 4px 10px;
   color: #ddd;
 }
 
@@ -95,7 +106,7 @@ ul.menu li:last-child {
   width: 100%;
   position: relative;
   box-sizing: border-box;
-  padding: 5px 10px;
+  padding: 3px 0 0;
 }
 
 
@@ -103,8 +114,8 @@ ul.menu li:last-child {
   display:inline-block;
   position: relative;
   padding: 2px 0 2px 4px;
-  left: 5px;
-  top: 1px;
+  left: 2px;
+  top: 3px!important;
 }
 
 .opencloseArrow div {
@@ -118,7 +129,6 @@ ul.menu li:last-child {
 
 .opencloseArrow.open {
   transform: rotate(90deg);
-  top: 0;
 }
 
 
@@ -137,7 +147,7 @@ ul.menu li:last-child {
 
 .attach-toolbar .attach-arrow {
   position: absolute;
-  margin: 6px 5px 0;
+  margin: 7px 5px 0;
   width: 0;
   height: 0;
   border-left: 3px solid transparent;
@@ -159,6 +169,7 @@ ul.menu li:last-child {
 input {
   display: inline-block;
   width: 25px;
+  max-width: 25px!important;
   -webkit-appearance: none;
   background: #3a3a3a;
   padding: 2px 4px;
@@ -179,6 +190,34 @@ input:focus, select:focus {
   border: 1px solid #df9b08;
 }
 
+input[type=text] {
+  width: 100px;
+  max-width: none!important;
+  border: none;
+  background:  transparent;
+}
+
+input.wide {
+  width: 100px;
+  text-align: left;
+}
+
+input.wide.input-column {
+   margin-top: -6px;
+}
+
+select {
+  padding-right: 8px;
+}
+
+select.small {
+  width: 30px!important;
+  margin-left:5px;
+}
+
+.blue {
+  color: #00AEEF!important;
+}
 
 .button {
   position:relative;
@@ -199,7 +238,6 @@ input:focus, select:focus {
 ul#models {
   width: 100%;
   display: inline-block;
-  margin: 0 0 15px;
   position: relative;
   top:0;
   border: none;
@@ -207,11 +245,11 @@ ul#models {
 
 ul#models li {
   display: inline-block;
-  width: 50%;
+  width: 45%;
   height: 0;
   left: 0;
   top:0;
-  padding-bottom: calc(50% + 5px);
+  padding-bottom: 50%;
   box-sizing: border-box;
   vertical-align: top;
   border: none;
@@ -234,6 +272,31 @@ ul#models li img {
 }
 
 
-.checkmark.radio {
-  margin-top: 1px;
+
+.checkmark.radio.inline {
+  margin-top: 4px;
 }
+
+.radio-container.inline {
+  width: 70px;
+}
+
+.buttons {
+  position: relative;
+  float: right;
+}
+
+.svg-button {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  padding: 4px;
+  margin: 0 2px;
+  border:none;
+  background: none;
+}
+.svg-button img {
+  width: 100%;
+  height: auto;
+}
+

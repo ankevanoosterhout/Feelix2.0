@@ -19,6 +19,8 @@ import { EffectListComponent } from './components/file/effect-list.component';
 import { ML5jsComponent } from './components/ml5js/ml5js.component';
 import { LoadDataSetsComponent } from './components/ml5js/datasets/load-datasets.component';
 import { KinematicsComponent } from './components/kinematics/kinematics.component';
+import { KinematicsToolbarComponent } from './components/interface-elements/toolbars/kinematics-toolbar.component';
+import { KinematicsControlComponent } from './components/kinematics/control/kinematics-controls.component';
 
 
 const routes: Routes = [
@@ -42,7 +44,9 @@ const routes: Routes = [
     { path: 'motor-settings', component: MotorSettingsComponent },
     { path: 'load-dataset', component: LoadDataSetsComponent },
     { path: 'load-model', component: LoadDataSetsComponent },
-    { path: 'kinematics', component: KinematicsComponent }
+    { path: 'kinematics', component: KinematicsComponent },
+    { path: 'kinematics-control', component: KinematicsControlComponent},
+    { path: 'kinematics-toolbar', component: KinematicsToolbarComponent }
   ];
 
 @NgModule({

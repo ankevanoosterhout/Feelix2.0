@@ -11,7 +11,7 @@ import { MotorControlService } from 'src/app/services/motor-control.service';
     template: `
       <div class="wrapper">
         <div class="window-body"></div>
-        <div class="toolbar-menu-section" id="toolbar-motor-control">
+        <div class="toolbar-menu-section" id="toolbar-kinematics">
           <div class="attach-toolbar"><div class="attach-arrow" (click)="attachToolbar()"></div><div class="draggable"></div></div>
           <ul class="toolbar-menu">
             <li *ngFor="let item of this.motorControlService.toolList" (click)="selectTool(item.id)">

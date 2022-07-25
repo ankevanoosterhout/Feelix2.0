@@ -1,6 +1,9 @@
 import { Injectable, Inject } from '@angular/core';
+import { Subject } from 'rxjs';
 import { v4 as uuid } from 'uuid';
-import { Joint, Object3D } from '../models/kinematic.model';
+import { Joint, Object3D, Model } from '../models/kinematic.model';
+import { KinematicsConfig } from '../models/kinematics-config.model';
+import { Cursor } from '../models/tool.model';
 
 
 
@@ -12,26 +15,17 @@ export class KinematicService {
   selectedJoints = [];
 
 
-  models = [
-    { modeltype: 'joint', thumbnail: 'active_joint.png', id: 0 },
-    { modeltype: 'joint', thumbnail: 'passive_joint.png', id: 1 },
-    { modeltype: 'translation', thumbnail: 'translation.png', id: 2 },
-    { modeltype: 'translation', thumbnail: 'translation_z.png', id: 3 },
-    { modeltype: 'arm', thumbnail: 'arm.png', id: 4 },
-    { modeltype: 'arm', thumbnail: 'arm.png', id: 5 }
-  ]
-
   constructor() {}
 
-  addJoint() {
-    const joint = new Joint(uuid(), 'A');
-    joint.active = true;
-    joint.grounded = false;
-    joint.object3D.OBJ = 'active_joint.obj';
+  addJoint(model: any): Joint {
+    const objectsInScene = this.joints.filter(j => j.type === model.type);
+    const joint = new Joint(uuid(), model.type + '-' + (objectsInScene.length + 1), model.type, model.active, model.objectUrl, model.color);
     this.joints.push(joint);
+    return joint;
   }
 
   deleteJoint(id: string) {
+    this.deselectJoint(id);
     const joint = this.joints.filter(j => j.id === id)[0];
     if (joint) {
       const index = this.joints.indexOf(joint);
@@ -57,6 +51,7 @@ export class KinematicService {
     const joint = this.selectedJoints.filter(j => j.id === id)[0];
     if (joint) {
       const index = this.selectedJoints.indexOf(joint);
+      this.joints.filter(j => j.id === id)[0].selected = false;
       if (index > -1) {
         this.selectedJoints.splice(index, 1);
       }
@@ -65,7 +60,10 @@ export class KinematicService {
 
   selectJoint(id: string) {
     const joint = this.joints.filter(j => j.id === id)[0];
-    this.selectedJoints.push(joint);
+    if (joint) {
+      joint.selected = true;
+      this.selectedJoints.push(joint);
+    }
   }
 
   updateJointVisualization(id: string, object3D: Object3D) {
@@ -73,8 +71,18 @@ export class KinematicService {
     if (joint) {
       joint.object3D = object3D;
     }
-    console.log(this.joints);
   }
+
+  getJointColor(id: string): number {
+    const joint = this.joints.filter(j => j.id === id)[0];
+    if (joint) {
+      return joint.object3D.color;
+    }
+    return;
+  }
+
+
+
 
 
 }

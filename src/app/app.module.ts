@@ -60,6 +60,9 @@ import { ML5ModelService } from './services/ml5-model.service';
 import { FilterService } from './services/filter.service';
 import { KinematicsComponent } from './components/kinematics/kinematics.component';
 import { KinematicService } from './services/kinematic.service';
+import { KinematicsToolbarComponent } from './components/interface-elements/toolbars/kinematics-toolbar.component';
+import { KinematicsControlComponent } from './components/kinematics/control/kinematics-controls.component';
+import { KinematicsDrawingService } from './services/kinematics-drawing.service';
 
 @NgModule({
   declarations: [
@@ -91,7 +94,9 @@ import { KinematicService } from './services/kinematic.service';
     ClassificationComponent,
     ModelComponent,
     LoadDataSetsComponent,
-    KinematicsComponent
+    KinematicsComponent,
+    KinematicsControlComponent,
+    KinematicsToolbarComponent
   ],
   imports: [
     BrowserModule,
@@ -126,7 +131,8 @@ import { KinematicService } from './services/kinematic.service';
     DataSetService,
     ML5ModelService,
     FilterService,
-    KinematicService
+    KinematicService,
+    KinematicsDrawingService
   ],
   bootstrap: [
     AppComponent

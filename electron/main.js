@@ -15,9 +15,8 @@ global['HTMLVideoElement'] = fs.HTMLVideoElement;
 
 let mainWindow, infoWindow = null, effectWindow = null, layerWindow = null, helpWindow = null, kinematicWindow = null;
 let toolbars = [];
-let mainMenu, displays;
+let mainMenu, displays, kinematicsMenu;
 let gridSnap = false, gridVisible = false, guidesLock = false;
-let effectDetails = null;
 let tmpWindow = null;
 let activeWindow = null;
 let ml5jsWindow = null;
@@ -435,6 +434,106 @@ const kinematics_menu_template = [
         click() { }
       }
     ]
+  },
+  {
+    label: 'View',
+    submenu: [
+      {
+        label: 'Hide grid',
+        visible: true,
+        click() {
+          kinematicsMenu.items[1].submenu.items[0].visible = false;
+          kinematicsMenu.items[1].submenu.items[1].visible = true;
+          kinematicWindow.webContents.send('gridVisible', false);
+        }
+      },
+      {
+        label: 'Show grid',
+        visible: false,
+        click() {
+          kinematicsMenu.items[1].submenu.items[0].visible = true;
+          kinematicsMenu.items[1].submenu.items[1].visible = false;
+          kinematicWindow.webContents.send('gridVisible', true);
+        }
+      },
+      {
+        label: 'Show tools',
+        visible: false,
+        click() {
+          kinematicsMenu.items[1].submenu.items[2].visible = true;
+          kinematicsMenu.items[1].submenu.items[3].visible = false;
+          kinematicWindow.webContents.send('toolsVisible', true);
+        }
+      },
+      {
+        label: 'Hide tools',
+        visible: true,
+        click() {
+          kinematicsMenu.items[1].submenu.items[2].visible = true;
+          kinematicsMenu.items[1].submenu.items[3].visible = false;
+          kinematicWindow.webContents.send('toolsVisible', true);
+        }
+      },
+      {
+        label: 'Show controls',
+        visible: false,
+        click() {
+          kinematicsMenu.items[1].submenu.items[4].visible = true;
+          kinematicsMenu.items[1].submenu.items[5].visible = false;
+          kinematicWindow.webContents.send('controlsVisible', true);
+        }
+      },
+      {
+        label: 'Hide controls',
+        visible: true,
+        click() {
+          kinematicsMenu.items[1].submenu.items[4].visible = true;
+          kinematicsMenu.items[1].submenu.items[5].visible = false;
+          kinematicWindow.webContents.send('controlsVisible', true);
+        }
+      },
+      {
+        label: 'Edit',
+        submenu: [
+          {
+            label: 'Undo',
+            accelerator: process.platform == 'darwin' ? 'Command+Z' : 'Ctrl+Z',
+            click() {
+              kinematicWindow.webContents.send('undo', false);
+            }
+          },
+          {
+            label: 'Redo',
+            accelerator: process.platform === 'darwin' ? 'Command+Shift+Z' : 'Ctrl+Shift+Z',
+            click() {
+              kinematicWindow.webContents.send('redo', false);
+            }
+          },
+          {
+            label: 'Deselect',
+            accelerator: process.platform === 'darwin' ? 'Command+D' : 'Ctrl+D',
+            click() {
+              kinematicWindow.webContents.send('deselect');
+            }
+          },
+        ]
+      },
+      {
+        label: 'Help',
+        submenu: [
+          {
+            label: 'Info',
+            click() {
+
+            }
+          },
+          {
+            label: 'Open development tools',
+            click() {  kinematicWindow.webContents.openDevTools(); }
+          },
+        ]
+      }
+    ]
   }
 ];
 
@@ -787,7 +886,7 @@ function createKinematicsWindow() {
     }
   })
 
-  const kinematicsMenu = Menu.buildFromTemplate(kinematics_menu_template);
+  kinematicsMenu = Menu.buildFromTemplate(kinematics_menu_template);
 
   kinematicWindow.setMenu(kinematicsMenu);
 
@@ -1085,14 +1184,6 @@ ipcMain.on('ondragstartLib', (event, data) => {
   mainWindow.webContents.send('addHapticLibEffect', data);
 })
 
-// ipcMain.on('showHapticEffectDetails', (event, details) => {
-//   effectDetails = details;
-//   if (effectWindow === null) {
-//     createEffectWindow();
-//   } else {
-//     effectWindow.webContents.send('showEffectDetails', details);
-//   }
-// })
 
 ipcMain.on('updateEffects', (event, effectList) => {
   if (effectWindow !== null) {
@@ -1100,23 +1191,11 @@ ipcMain.on('updateEffects', (event, effectList) => {
   }
 });
 
-// ipcMain.on('getEffects', (event) => {
-//   mainWindow.webContents.send('getEffects');
-// });
 
 ipcMain.on('updateLayerColors', (event, data) => {
   mainWindow.webContents.send('updateEffectColors', data);
 });
 
-
-// ipcMain.on('update', (event, details) => {
-//   effectDetails = details;
-//   if (effectWindow === null) {
-//     createEffectWindow();
-//   } else {
-//     effectWindow.webContents.send('showEffectDetails', details);
-//   }
-// });
 
 ipcMain.on('updateToolbar', (event, data) => {
   const selectedToolbar = toolbars.filter(t => t.type === 'edit')[0];
