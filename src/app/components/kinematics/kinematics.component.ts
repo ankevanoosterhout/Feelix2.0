@@ -38,6 +38,10 @@ export class KinematicsComponent implements OnInit {
       this.kinematicsDrawingService.deselectAllObjects();
     });
 
+    this.electronService.ipcRenderer.on('delete', (event: Event) => {
+      this.kinematicsDrawingService.deleteSelectedJoints();
+    });
+
 
     this.kinematicsDrawingService.selectObjectFromScene.subscribe(res => {
       this.kinematicsDrawingService.selectObject(res);
@@ -85,6 +89,7 @@ export class KinematicsComponent implements OnInit {
 
   @HostListener('document:mousemove', ['$event'])
   onMouseMove(e: MouseEvent) {
+    e.preventDefault();
     this.kinematicsDrawingService.animate();
   }
 
@@ -103,7 +108,7 @@ export class KinematicsComponent implements OnInit {
 
   @HostListener('document:mouseup', ['$event'])
   onMouseUp(e:MouseEvent) {
-    console.log(e);
+    e.preventDefault();
     this.config.mousePosition.x = (e.clientX / this.config.width) * 2 - 1;
     this.config.mousePosition.y = - (e.clientY / this.config.height) * 2 + 1;
 
@@ -112,46 +117,52 @@ export class KinematicsComponent implements OnInit {
 
   @HostListener('window:keydown', ['$event'])
   onKeyDown(e: KeyboardEvent) {
-    // const key = e.key;
-    if (e.shiftKey) {
-      console.log('keydown', e.shiftKey);
-      this.config.shift = true;
-      this.config.control.setTranslationSnap( 10 );
-      this.config.control.setRotationSnap( THREE.MathUtils.degToRad(15) );
-      this.config.control.setScaleSnap( 0.25 );
+      // const key = e.key;
+    if (!this.config.inputActive) {
+      if (e.shiftKey && !this.config.shift) {
+        this.config.shift = true;
+        this.config.control.setTranslationSnap( undefined );
+        this.config.control.setRotationSnap( undefined );
+        this.config.control.setScaleSnap( undefined );
+      }
     }
   }
 
   @HostListener('window:keyup', ['$event'])
   onKeyUp(e: KeyboardEvent) {
-    const key = e.key;
-    if (!e.shiftKey) {
-      this.config.shift = false;
-    }
+    if (!this.config.inputActive) {
+      const key = e.key;
+      if (!e.shiftKey) {
+        this.config.shift = false;
+        this.config.control.setTranslationSnap( 10 );
+        this.config.control.setRotationSnap( THREE.MathUtils.degToRad(15) );
+        this.config.control.setScaleSnap( 0.25 );
+      }
 
-    if (key === 'Delete' || key === 'Backspace') {
-      this.kinematicsDrawingService.deleteSelectedJoints();
+      if (key === 'Delete' || key === 'Backspace') {
+        this.kinematicsDrawingService.deleteSelectedJoints();
 
-    // } else if (key === 'd') {
-    //   this.deselectAllObjects();
-    } else if (key === 'r') {
-      this.config.control.setMode( 'rotate' );
-    } else if (key === 's') {
-      this.config.control.setMode( 'scale' );
-    } else if (key === 't') {
-      this.config.control.setMode( 'translate' );
-    } else if (key === 'c') {
-      const position = this.config.currentCamera.position.clone();
+      } else if (key === 'd') {
+        this.kinematicsDrawingService.deselectAllObjects();
+      } else if (key === 'r') {
+        this.config.control.setMode( 'rotate' );
+      } else if (key === 's') {
+        this.config.control.setMode( 'scale' );
+      } else if (key === 't') {
+        this.config.control.setMode( 'translate' );
+      } else if (key === 'c') {
+        const position = this.config.currentCamera.position.clone();
 
-      this.config.currentCamera = this.config.currentCamera.isPerspectiveCamera ? this.config.cameraOrtho : this.config.cameraPersp;
-      this.config.currentCamera.position.copy( position );
+        this.config.currentCamera = this.config.currentCamera.isPerspectiveCamera ? this.config.cameraOrtho : this.config.cameraPersp;
+        this.config.currentCamera.position.copy( position );
 
-      this.config.orbit.object = this.config.currentCamera;
-      this.config.control.camera = this.config.currentCamera;
+        this.config.orbit.object = this.config.currentCamera;
+        this.config.control.camera = this.config.currentCamera;
 
-      this.config.currentCamera.lookAt( this.config.orbit.target.x, this.config.orbit.target.y, this.config.orbit.target.z );
-      this.onWindowResize();
+        this.config.currentCamera.lookAt( this.config.orbit.target.x, this.config.orbit.target.y, this.config.orbit.target.z );
+        this.onWindowResize();
 
+      }
     }
   }
 

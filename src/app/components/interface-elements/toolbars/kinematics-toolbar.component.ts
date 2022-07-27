@@ -182,6 +182,7 @@ export class KinematicsToolbarComponent implements OnInit {
 
   selectTool(id: number) {
     if (id === 0) {
+      this.kinematicsDrawingService.joinObjects();
     } else if (id === 1) {
       this.kinematicsDrawingService.groupObjects();
     } else if (id === 2) {

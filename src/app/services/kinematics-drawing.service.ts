@@ -1,7 +1,7 @@
 import { Injectable, Inject } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { Subject } from 'rxjs';
-import { Joint } from '../models/kinematic.model';
+import { Connector, ConnectorGroup, Joint } from '../models/kinematic.model';
 import { KinematicsConfig } from '../models/kinematics-config.model';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
@@ -66,17 +66,31 @@ export class KinematicsDrawingService {
     this.config.orbit.update();
 
     this.config.control = new TransformControls( this.config.currentCamera, this.config.renderer.domElement );
-    this.config.control.addEventListener( 'change', () => this.animate );
+    this.config.control.addEventListener( 'change', (event: any) => {
+      if (this.kinematicService.selectedJoints.length === 1) {
+        const sceneObject = this.config.scene.getObjectByName(this.kinematicService.selectedJoints[0].id);
+        if (sceneObject) { this.updatePosition(sceneObject, this.kinematicService.selectedJoints[0]); }
+      }
+    });
 
     this.config.control.addEventListener( 'dragging-changed', ( event: any ) => {
       this.config.orbit.enabled = !event.value;
 
-
       // if (this.kinematicService.selectedJoints.length === 1) {
-      //   this.updatePosition(this.config.scene.getObjectByName(this.kinematicService.selectedJoints[0].id), this.kinematicService.selectedJoints[0]);
+      //   const sceneObject = this.config.scene.getObjectByName(this.kinematicService.selectedJoints[0].id);
+      //   if (sceneObject) { this.updatePosition(sceneObject, this.kinematicService.selectedJoints[0]); }
       // }
-    } );
-    // this.config.orbit.screenSpacePanning = false;
+    });
+
+    // this.config.control.addEventListener( '', ( event: any ) => {
+    //   console.log(event);
+
+
+    // });
+
+    this.config.control.setTranslationSnap( 10 );
+    this.config.control.setRotationSnap( THREE.MathUtils.degToRad(15) );
+    this.config.control.setScaleSnap( 0.25 );
 
     this.config.scene.add( this.config.control );
 
@@ -124,82 +138,109 @@ export class KinematicsDrawingService {
 
 
   getIntersects(shift: boolean) {
+
     this.config.rayCaster.setFromCamera(this.config.mousePosition, this.config.currentCamera);
     const intersects = this.config.rayCaster.intersectObjects(this.config.scene.children);
     for (const intersect of intersects) {
-      const sceneObject = this.config.sceneObjects.filter(s => s.id === intersect.object.parent.id)[0];
-      if (sceneObject) {
-        this.selectObject(sceneObject, shift);
-        this.animate();
+      // console.log(intersect);
+      // console.log(intersect.object);
+      if (!intersect.isTransformControlsPlane) {
+        const sceneObject = this.config.sceneObjects.filter(s => s.id === intersect.object.parent.id || (intersect.object.parent.parent && s.id === intersect.object.parent.parent.id))[0];
+        // console.log(sceneObject);
+        if (sceneObject) {
+          // console.log(sceneObject.id === intersect.object.id, sceneObject.id === intersect.object.parent.id);
+          this.selectObject(sceneObject, shift);
+          this.animate();
+        }
       }
     }
   }
 
-  selectface() {
 
-  }
 
   selectObject(object: any, shift = false) {
+    console.log(object);
 
     const joint = this.kinematicService.joints.filter(j => j.id === object.name)[0];
     if (joint) {
       const isSelectedIndex = this.kinematicService.selectedJoints.indexOf(joint);
       if (isSelectedIndex > -1) {
         this.deselectObject(object);
-        if (this.kinematicService.selectedJoints.length === 1) {
-          const sceneObject = this.config.scene.getObjectByName(this.kinematicService.selectedJoints[0].id);
-          if (sceneObject) { this.config.control.attach(sceneObject); }
-        }
+        this.config.control.detach();
+
       } else {
         if (!shift && this.kinematicService.selectedJoints.length > 0) {
           this.deselectAllObjects();
         } else if (shift && this.kinematicService.selectedJoints.length === 1) {
-          const sceneObject = this.config.scene.getObjectByName(this.kinematicService.selectedJoints[0].id);
-          if (sceneObject) { this.config.control.detach(sceneObject); }
+          this.config.control.detach();
         }
-
-        this.kinematicService.selectJoint(joint.id);
-        this.setObjectColor(object, 0xfc7f03);
-        if (this.kinematicService.selectedJoints.length === 1) {
-          this.config.control.attach(object);
+        if (object.isGroup) {
+          this.kinematicService.selectJoint(joint.id);
+          this.setObjectColor(object, 0xfc7f03);
+          // console.log(object);
+          if (this.kinematicService.selectedJoints.length === 1) {
+            this.config.control.attach(object);
+          }
         }
       }
     }
   }
 
 
-  setObjectColor(object: any, color: number) {
+  setObjectColor(object: any, color = null) {
     object.traverse( ( child: any ) => {
-      if ( child instanceof THREE.Mesh ) {
-          child.material = new THREE.MeshStandardMaterial({ color: color });
+      if (child.isGroup) {
+        for (const childEl of child) {
+          if ( childEl instanceof THREE.Mesh ){
+            this.updateColor(childEl, color);
+          }
+        }
+      } else if ( child instanceof THREE.Mesh ) {
+        this.updateColor(child, color);
       }
     });
   }
 
-
-  deselectAllObjects() {
-    if (this.kinematicService.selectedJoints.length === 1) {
-      const sceneObject = this.config.sceneObjects.filter(s => s.name === this.kinematicService.selectedJoints[0].id)[0];
-      if (sceneObject) {
-        this.config.control.detach(sceneObject);
+  updateColor(child: any, color:any) {
+    const child_color = child.name.split(":");
+    if (color) {
+      child.material = new THREE.MeshStandardMaterial({ color: color });
+    } else {
+      if (child_color[0] === 'Red') {
+        child.material = new THREE.MeshStandardMaterial({ color: 0xf70505 });
+      } else if (child_color[0] === 'Blue') {
+        child.material = new THREE.MeshStandardMaterial({ color: 0x53d7f5 });
+      } else if (child_color[0] === 'Yellow' || child_color[0] === 'Connector') {
+        child.material = new THREE.MeshStandardMaterial({ color: 0xfcba03 });
+      } else if (child_color[0] === 'Gray') {
+        child.material = new THREE.MeshStandardMaterial({ color: 0x333333 });
+      } else {
+        child.material = new THREE.MeshStandardMaterial({ color: 0x666666 });
       }
     }
+  }
+
+
+  deselectAllObjects() {
+    this.config.control.detach();
     this.kinematicService.deselectAll();
 
     for (const object of this.config.sceneObjects) {
       this.deselectObject(object);
     }
-
+    this.animate();
   }
 
   deselectObject(object: any) {
     this.kinematicService.deselectJoint(object.name);
-    const objectColor = this.kinematicService.getJointColor(object.name);
-    this.setObjectColor(object, objectColor);
+    this.setObjectColor(object);
   }
 
   deleteSelectedJoints() {
     if (this.kinematicService.selectedJoints.length > 0) {
+      if (this.kinematicService.selectedJoints.length === 1) {
+        this.config.control.detach();
+      }
       for (const joint of this.kinematicService.selectedJoints) {
         this.deleteObjectFromScene(joint.id);
         this.kinematicService.deleteJoint(joint.id);
@@ -226,7 +267,6 @@ export class KinematicsDrawingService {
     if (object) {
 
       if (model) {
-
         model.object3D.rotation.x = object.rotation.x * (180 / Math.PI);
         model.object3D.rotation.y = object.rotation.y * (180 / Math.PI);
         model.object3D.rotation.z = object.rotation.z * (180 / Math.PI);
@@ -253,23 +293,26 @@ export class KinematicsDrawingService {
 
 
   groupObjects() {
-    console.log(this.kinematicService.selectedJoints);
     if (this.kinematicService.selectedJoints.length > 0) {
       const group = new THREE.Group();
 
       for (const joint of this.kinematicService.selectedJoints) {
         const object = this.config.scene.getObjectByName(joint.id);
-        console.log(object);
         group.add(object);
         // this.deleteObjectFromScene(object.name);
       }
-      console.log(group);
       this.deselectAllObjects();
       this.config.scene.add( group );
-      console.log(this.config.scene);
-      // this.selectObject(group);
+      // console.log(this.config.scene);
+      this.selectObject(group);
     }
   }
+
+
+  joinObjects() {
+
+  }
+
 
 }
 

@@ -77,14 +77,14 @@ ul.menu li:last-child {
   display: inline-block;
   vertical-align: top;
   top: 0;
-  margin: -5px 0 3px;
+  margin: 0 0 3px;
   position: relative;
 }
 
 .label {
   display: inline-block;
   font-family: Arial, Helvetica, sans-serif;
-  line-height: 11px;
+  line-height: 20px;
   /* color: #bebebe; */
   width: 60px;
 }
@@ -93,12 +93,14 @@ ul.menu li:last-child {
   font-weight: 500;
   padding: 4px 3px;
   color: #ddd;
+  width: auto;
 }
 
 .title {
   font-weight: 500;
   margin: 4px 10px;
   color: #ddd;
+  line-height: 11px;
 }
 
 .row {
@@ -115,7 +117,7 @@ ul.menu li:last-child {
   position: relative;
   padding: 2px 0 2px 4px;
   left: 2px;
-  top: 3px!important;
+  top: 8px!important;
 }
 
 .opencloseArrow div {
@@ -230,7 +232,7 @@ select.small {
   font-family: Arial, Helvetica, sans-serif;
   font-size: 12px;
   border: 1px solid #2c2c2c;
-  background: #1c1c1c;
+  background: #3a3a3a;
 }
 
 

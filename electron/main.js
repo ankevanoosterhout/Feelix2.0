@@ -491,48 +491,53 @@ const kinematics_menu_template = [
           kinematicsMenu.items[1].submenu.items[5].visible = false;
           kinematicWindow.webContents.send('controlsVisible', true);
         }
-      },
-      {
-        label: 'Edit',
-        submenu: [
-          {
-            label: 'Undo',
-            accelerator: process.platform == 'darwin' ? 'Command+Z' : 'Ctrl+Z',
-            click() {
-              kinematicWindow.webContents.send('undo', false);
-            }
-          },
-          {
-            label: 'Redo',
-            accelerator: process.platform === 'darwin' ? 'Command+Shift+Z' : 'Ctrl+Shift+Z',
-            click() {
-              kinematicWindow.webContents.send('redo', false);
-            }
-          },
-          {
-            label: 'Deselect',
-            accelerator: process.platform === 'darwin' ? 'Command+D' : 'Ctrl+D',
-            click() {
-              kinematicWindow.webContents.send('deselect');
-            }
-          },
-        ]
-      },
-      {
-        label: 'Help',
-        submenu: [
-          {
-            label: 'Info',
-            click() {
-
-            }
-          },
-          {
-            label: 'Open development tools',
-            click() {  kinematicWindow.webContents.openDevTools(); }
-          },
-        ]
       }
+    ]
+  },
+  {
+    label: 'Edit',
+    submenu: [
+      {
+        label: 'Undo',
+        accelerator: process.platform == 'darwin' ? 'Command+Z' : 'Ctrl+Z',
+        click() {
+          kinematicWindow.webContents.send('undo', false);
+        }
+      },
+      {
+        label: 'Redo',
+        accelerator: process.platform === 'darwin' ? 'Command+Shift+Z' : 'Ctrl+Shift+Z',
+        click() {
+          kinematicWindow.webContents.send('redo', false);
+        }
+      },
+      {
+        label: 'Deselect all',
+        click() {
+          kinematicWindow.webContents.send('deselect');
+        }
+      },
+      {
+        label: 'Delete',
+        click() {
+          kinematicWindow.webContents.send('delete');
+        }
+      },
+    ]
+  },
+  {
+    label: 'Help',
+    submenu: [
+      {
+        label: 'Info',
+        click() {
+
+        }
+      },
+      {
+        label: 'Open development tools',
+        click() {  kinematicWindow.webContents.openDevTools(); }
+      },
     ]
   }
 ];

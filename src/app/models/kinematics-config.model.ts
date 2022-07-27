@@ -6,7 +6,7 @@ import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader';
 
 export class KinematicsConfig {
   canvas: any;
-  
+
   height = window.innerHeight;
   width = window.innerWidth;
   aspect = this.width/this.height;
@@ -27,5 +27,6 @@ export class KinematicsConfig {
   mousedown = false;
   shift = false;
   gridVisible = true;
+  inputActive = false;
 }
 
