@@ -90,15 +90,46 @@ export class KinematicsComponent implements OnInit {
   @HostListener('document:mousemove', ['$event'])
   onMouseMove(e: MouseEvent) {
     e.preventDefault();
+
+    this.config.mousePosition.x = (e.clientX / this.config.width) * 2 - 1;
+    this.config.mousePosition.y = - (e.clientY / this.config.height) * 2 + 1;
+
+    if (this.config.draggableObject) {
+      this.kinematicsDrawingService.getIntersects(this.config.shift);
+      this.config.rayCaster.setFromCamera(this.config.mousePosition, this.config.currentCamera);
+      this.config.rayCaster.ray.intersectPlane(this.config.plane, this.config.intersectPoint);
+
+      const matrix = new THREE.Matrix4();
+      const finalPosition = this.config.intersectPoint.clone();
+      finalPosition.x = -this.config.intersectPoint.y;
+      finalPosition.y = this.config.intersectPoint.x;
+      console.log(this.config.intersectPoint);
+      matrix.lookAt(
+        finalPosition,
+        new THREE.Vector3(0, 0, 0),
+        new THREE.Vector3(0, 0, 1)
+      );
+      console.log(matrix);
+      if (this.config.draggableObject) {
+        this.config.draggableObject.quaternion.setFromRotationMatrix(matrix);
+        this.config.draggableObject.rotateX(Math.PI/2);
+      }
+    }
+
     this.kinematicsDrawingService.animate();
   }
 
-  // @HostListener('document:mousedown', ['$event'])
-  // onMouseDown(e: MouseEvent) {
-  //   this.config.mousedown = true;
-  //   this.config.mousePosition.x = (e.clientX / this.config.width) * 2 - 1;
-  //   this.config.mousePosition.y = - (e.clientY / this.config.height) * 2 + 1;
-  // }
+  @HostListener('document:mousedown', ['$event'])
+  onMouseDown(e: MouseEvent) {
+    this.config.mousedown = true;
+    // this.config.mousePosition.x = (e.clientX / this.config.width) * 2 - 1;
+    // this.config.mousePosition.y = - (e.clientY / this.config.height) * 2 + 1;
+    this.kinematicsDrawingService.getIntersects(this.config.shift);
+
+    if (this.config.draggableObject) {
+      this.config.orbit.enabled = false;
+    }
+  }
 
   // @HostListener('document:mouseup', ['$event'])
   // onMouseUp(e: MouseEvent) {
@@ -109,10 +140,14 @@ export class KinematicsComponent implements OnInit {
   @HostListener('document:mouseup', ['$event'])
   onMouseUp(e:MouseEvent) {
     e.preventDefault();
-    this.config.mousePosition.x = (e.clientX / this.config.width) * 2 - 1;
-    this.config.mousePosition.y = - (e.clientY / this.config.height) * 2 + 1;
 
-    this.kinematicsDrawingService.getIntersects(this.config.shift);
+    if (this.config.draggableObject) {
+      console.log('deselect draggable object');
+      this.config.draggableObject = undefined;
+      this.config.orbit.enabled = true;
+    }
+
+
   }
 
   @HostListener('window:keydown', ['$event'])

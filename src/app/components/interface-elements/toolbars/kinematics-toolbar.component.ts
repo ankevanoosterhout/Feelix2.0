@@ -168,7 +168,7 @@ export class KinematicsToolbarComponent implements OnInit {
 
 
   toolList = [
-    // new Cursor(0, 'align', 'align', false, '', 'a', 'revolute.svg'),
+    new Cursor(0, 'connect', 'connect', false, 'bind.svg', 'a', ''),
     new Cursor(0, 'revolute', 'revolute', false, 'revolute.svg', 'j', ''),
     new Cursor(1, 'group', 'group', false, 'group.svg', 'g', '')
   ];

@@ -26,9 +26,8 @@ export class KinematicsControlComponent {
     new Model(2, 'joint', 1, false, 'passive_joint_1.png', [{ g:'B', url:'passive_joint_1_base.obj'}, { g:'Z', url: 'passive_joint_connector_Z.obj' }], 0x02a3d9 ),
     new Model(3, 'joint', 2,false, 'passive_joint_2.png', [{ g:'B', url:'passive_joint_2_base.obj'}, { g:'Z', url: 'passive_joint_connector_Z.obj' }], 0x02a3d9 ),
     new Model(4, 'arm', 0, false, 'arm.png', [{ g:'C', url:'arm.obj'} ], 0x333333),
-    new Model(5, 'connector', 0,false, 'cube.png', [{ g:'C', url:'arm.obj'}], 0x333333)
+    new Model(5, 'connector', 0,false, 'cube.png', [{ g:'C', url:'cube.obj'}], 0x333333)
   ];
-
 
 //this.kinematicService.selectedJoints[0].type === 'motor' && this.kinematicService.selectedJoints[0].subtype === 'b' && type === 'i'
 
@@ -43,6 +42,15 @@ export class KinematicsControlComponent {
 
     this.kinematicService.importOBJModelToObjectGroup.subscribe(res => {
       this.importOBJModelToGroup(res);
+    });
+
+    this.kinematicsDrawingService.updateModelPosition.subscribe(res => {
+      this.updateModel(res);
+    });
+
+    this.kinematicsDrawingService.loadOBJ.subscribe(res => {
+      this.importOBJModel(res.url, res.name);
+
     });
   }
 
@@ -76,54 +84,59 @@ export class KinematicsControlComponent {
   }
 
 
+  deletePoint(id: string, axis: string, point_id: string) {
+    const joint = this.kinematicService.joints.filter(j => j.id === id)[0];
+    if (joint) {
+      const connectorGroup = joint.connectors.filter(c => c.axis === axis)[0];
+      if (connectorGroup) {
+        const point = connectorGroup.points.filter(p => p.id === point_id)[0];
+
+        if (point) {
+          this.removeConnectorImage(point.id);
+          const index = connectorGroup.points.indexOf(point);
+          if (index > -1) { connectorGroup.points.splice(index, 1); }
+        }
+      }
+    }
+  }
+
+
 
   addModel(model: any) {
     const modelObject = this.kinematicService.addJoint(model);
-    this.loadModel(modelObject);
+    this.loadOBJModel(modelObject);
   }
 
-
-  loadModel(model: any) {
-    this.loadOBJModel(model);
-  }
 
   loadOBJModel(model: any) {
     const group = new THREE.Group();
     group.name = model.id;
-    for (const objectUrl of model.object3D.objectUrls) {
-        this.config.loader.load('./assets/models/' + objectUrl.url, (object: any) => {   // called when resource is loaded
 
-          object.name = objectUrl.g;
+    for (const object of model.object3D.objectUrls) {
+      this.config.loader.load('./assets/models/' + object.url, (object: any) => {   // called when resource is loaded
 
-          object.traverse( ( child: any ) => {
-              if ( child instanceof THREE.Mesh ) {
-                const child_color = child.name.split(":");
-                if (child_color[0] === 'Red') {
-                  child.material = new THREE.MeshStandardMaterial({ color: 0xf70505 });
-                } else if (child_color[0] === 'Blue') {
-                  child.material = new THREE.MeshStandardMaterial({ color: 0x53d7f5 });
-                } else if (child_color[0] === 'Yellow') {
-                  child.material = new THREE.MeshStandardMaterial({ color: 0xfcba03 });
-                } else if (child_color[0] === 'Gray') {
-                  child.material = new THREE.MeshStandardMaterial({ color: 0x333333 });
-                } else {
-                  child.material = new THREE.MeshStandardMaterial({ color: 0x666666 });
-                }
-              }
-          });
-          group.add(object);
+        object.name = model.g;
 
-        }, (xhr: any) => {
-          console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
-        }, (error: any) => {
-          console.log( 'Error loading model' );
-        }
-      );
+        object.traverse( ( child: any ) => {
+            if ( child instanceof THREE.Mesh ) {
+              this.kinematicsDrawingService.updateColor(child);
+            }
+        });
+
+        group.add(object);
+
+      }, (xhr: any) => {
+        console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
+      }, (error: any) => {
+        console.log( 'Error loading model' );
+      });
+
     }
-    console.log(group);
     this.config.sceneObjects.push(group);
     this.config.scene.add( group );
+
   }
+
 
 
   importOBJModelToGroup(point: Connector) {
@@ -131,29 +144,57 @@ export class KinematicsControlComponent {
 
     if (sceneObject && sceneObject.isGroup && point) {
       const imageUrl = (this.kinematicService.selectedJoints[0].active ? 'active':'passive') + '_joint_' + this.kinematicService.selectedJoints[0].modelType + '_connector_' + point.type + '.obj';
-      console.log(imageUrl);
+      // console.log(imageUrl);
       this.config.loader.load('./assets/models/' + imageUrl, (object: any) => {   // called when resource is loaded
-        console.log(point.id);
         object.name = point.id;
-        console.log(object.name);
 
         object.traverse( ( child: any ) => {
             if ( child instanceof THREE.Mesh ) {
-              child.material = new THREE.MeshStandardMaterial({ color: 0xfcba03 });
+              child.material = new THREE.MeshStandardMaterial({ color: this.config.selectColor });
             }
         });
         object.rotation.z = point.angle * (Math.PI/180);
         sceneObject.add(object);
-        console.log(sceneObject);
+        // console.log(sceneObject);
 
       }, (xhr: any) => {
         console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
       }, (error: any) => {
         console.log( 'Error loading model' );
-      }
-    );
+      });
     }
   }
+
+
+  importOBJModel(url: string, name: string) {
+    this.config.rotaryControls = new THREE.Group();
+    this.config.rotaryControls.name = name;
+    this.config.loader.load('./assets/models/' + url, (object: any) => {   // called when resource is loaded
+      object.name = name;
+
+      object.traverse( ( child: any ) => {
+          if ( child instanceof THREE.Mesh ) {
+            this.kinematicsDrawingService.updateColor(child);
+          }
+      });
+      object.visible = false;
+      this.config.rotaryControls.add(object);
+      this.config.rotaryControls.draggable = true;
+      this.config.scene.add(this.config.rotaryControls);
+
+
+
+
+      this.kinematicsDrawingService.animate();
+
+    }, (xhr: any) => {
+      console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
+    }, (error: any) => {
+      console.log( 'Error loading model' );
+    });
+  }
+
+
 
   updatePointAngle(point: Connector) {
     const sceneObject = this.config.scene.getObjectByName(this.kinematicService.selectedJoints[0].id);
@@ -218,7 +259,20 @@ export class KinematicsControlComponent {
 
 
 
-  selectConnectionPoint(point: any) {
+  changeSize(element: Joint) {
+    const sceneObject = this.config.scene.getObjectByName(element.id);
+    const newScale = element.size / 40;
+    if (sceneObject) {
+      sceneObject.traverse( ( child: any ) => {
+        if ( child.name === 'Gray:A' ) {
+          child.scale.z = newScale;
+        } else if( child.name === 'Yellow:Z:1') {
+          child.position.z = (newScale * 20) - 20;
+        } else if( child.name === 'Yellow:Z:-1') {
+          child.position.z = (newScale * -20) + 20;
+        }
+      });
+    }
 
   }
 

@@ -72,11 +72,12 @@
             </div>
           </div>
 
+
           <div class="row" *ngIf="this.kinematicService.selectedJoints[0].type === 'motor' || this.kinematicService.selectedJoints[0].type === 'joint'">
             <div class="row" *ngFor="let connectorGroup of this.kinematicService.selectedJoints[0].connectors">
               <div class="row" *ngIf="connectorGroup.axis !== 'Z'">
                 <div class="opencloseArrow" [ngClass]="{ open: connectorGroup.visible }" (click)="connectorGroup.visible = !connectorGroup.visible"><div></div></div>
-                <label class="label header">Connection points {{ connectorGroup.axis }}</label>
+                <label class="label header">Connection points</label>
               </div>
               <div class="row" *ngIf="connectorGroup.axis !== 'Z'">
                 <ul class="content" [ngClass]="{ open: connectorGroup.visible }">
@@ -90,7 +91,7 @@
                         <div id="bottom" class="svg-button" *ngIf="point.type === 'b'"  (click)="this.updatePointType(this.kinematicService.selectedJoints[0].id, connectorGroup.axis, point)"><img src="./assets/icons/buttons/bottom.svg"></div>
                         <div id="outside" class="svg-button" *ngIf="point.type === 'o'"  (click)="this.updatePointType(this.kinematicService.selectedJoints[0].id, connectorGroup.axis, point)"><img src="./assets/icons/buttons/outside.svg"></div>
                         <div id="inside" class="svg-button" *ngIf="point.type === 'i'"  (click)="this.updatePointType(this.kinematicService.selectedJoints[0].id, connectorGroup.axis, point)"><img src="./assets/icons/buttons/inside.svg"></div>
-                        <div id="delete" class="svg-button" (click)="this.kinematicService.deletePoint(this.kinematicService.selectedJoints[0].id, connectorGroup.axis, point.name)"><img src="./assets/icons/buttons/bin.svg"></div>
+                        <div id="delete" class="svg-button" (click)="this.deletePoint(this.kinematicService.selectedJoints[0].id, connectorGroup.axis, point.id)"><img src="./assets/icons/buttons/bin.svg"></div>
                       </div>
                     </div>
                   </li>
@@ -102,18 +103,15 @@
             </div>
           </div>
 
-          <!-- <div class="row">
-            <label class="radio-container inline" *ngIf="this.kinematicService.selectedJoints[0].type === 'joint'">
-              <input type="checkbox" class="type" id="joint_active" name="joint_active"
-              [(ngModel)]="this.kinematicService.selectedJoints[0].active" [checked]="this.kinematicService.selectedJoints[0].active" (change)="updateModel(this.kinematicService.selectedJoints[0])">
-              <span class="checkmark radio inline"></span> active
-            </label>
+          <div class="row">
             <label class="radio-container inline">
               <input type="checkbox" class="type" id="joint_active" name="joint_active"
               [(ngModel)]="this.kinematicService.selectedJoints[0].grounded" [checked]="this.kinematicService.selectedJoints[0].grounded" (change)="updateModel(this.kinematicService.selectedJoints[0])">
-              <span class="checkmark radio inline"></span> lock position
+              <span class="checkmark radio inline"></span> grounded
             </label>
-          </div> -->
+          </div>
+
+
 
           <div class="row" *ngIf="this.kinematicService.selectedJoints[0].type === 'joint' && this.kinematicService.selectedJoints[0].active">
             <select class="form-control playWindow microcontroller" id="microcontroller" name="microcontroller" [(ngModel)]="this.kinematicService.selectedJoints[0].control"
@@ -130,7 +128,8 @@
 
           <div class="row" *ngIf="this.kinematicService.selectedJoints[0].control">
             <div class="label">encoder</div>
-            <input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="encoder" name="encoder" [(ngModel)]="this.kinematicService.selectedJoints[0].control.motors[0].state.position.current" (change)="updateModel(this.kinematicService.selectedJoints[0])">
+            <input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="encoder" name="encoder"
+            [(ngModel)]="this.kinematicService.selectedJoints[0].control.motors[0].state.position.current" (change)="updateModel(this.kinematicService.selectedJoints[0])">
           </div>
 
           <div class="row" *ngIf="this.kinematicService.selectedJoints[0].control">
@@ -140,6 +139,14 @@
               <p>max </p><input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="range_end" name="range_end" [(ngModel)]="this.kinematicService.selectedJoints[0].control.motors[0].state.position.end" (change)="updateModel(this.kinematicService.selectedJoints[0])">
             </div>
           </div>
+
+
+          <div class="row" *ngIf="this.kinematicService.selectedJoints[0].type === 'arm'">
+            <div class="label">length</div>
+            <input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="size{{ this.kinematicService.selectedJoints[0].id }}"
+              name="size_{{ this.kinematicService.selectedJoints[0].id }}" [(ngModel)]="this.kinematicService.selectedJoints[0].size" (change)="this.changeSize(this.kinematicService.selectedJoints[0])">
+          </div>
+
         </li>
       </ul>
     </li>

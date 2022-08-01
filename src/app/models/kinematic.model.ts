@@ -77,6 +77,7 @@ export class Joint {
   modelType: number;
   active: boolean;
   grounded: boolean;
+  size: number;
   control: MicroController;
   motor: number;
   object3D = new Object3D();
@@ -108,6 +109,10 @@ export class Joint {
       connectorGroupZ.points.push(Z_connector_a, Z_connector_b);
 
       this.connectors.push(connectorGroupZ);
+    } else if (model.type === 'arm') {
+      this.size = 40;
+    } else if (model.type === 'cube') {
+      this.size = 15;
     }
   }
 }
@@ -121,5 +126,16 @@ export class Arm {
 
   constructor(id: string) {
     this.id = id;
+  }
+}
+
+
+export class connectionPoint {
+  parent: any;
+  point: any;
+
+  constructor(parent: any, point: any) {
+    this.parent = parent;
+    this.point = point;
   }
 }

@@ -36,6 +36,7 @@
     "@tensorflow/tfjs": "^3.13.0",
     "@types/uuid": "^3.4.7",
     "d3": "^5.15.0",
+    "drag-controls": "^1.0.4",
     "electron-browser-storage": "^1.0.6",
     "file-saver": "^2.0.2",
     "file-system": "^2.2.2",
