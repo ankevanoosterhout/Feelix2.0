@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { ElectronService } from 'ngx-electron';
 import * as THREE from 'three';
 import { KinematicService } from 'src/app/services/kinematic.service';
-import { Connector, Joint, Model } from 'src/app/models/kinematic.model';
+import { Connector, JointLink, Model } from 'src/app/models/kinematic.model';
 import { HardwareService } from 'src/app/services/hardware.service';
 
 import { KinematicsConfig } from 'src/app/models/kinematics-config.model';
@@ -55,7 +55,7 @@ export class KinematicsControlComponent {
   }
 
 
-  updateModel(model: Joint) {
+  updateModel(model: JointLink) {
     if (model) {
       const object = this.config.scene.getObjectByName(model.id);
 
@@ -71,12 +71,12 @@ export class KinematicsControlComponent {
     }
   }
 
-  updateJoint(joint: Joint) {
+  updateJoint(joint: JointLink) {
     this.kinematicService.updateJointVisualization(joint.id, joint.object3D);
     this.updateModel(this.kinematicService.getJoint(joint.id));
   }
 
-  selectJointObject(object: Joint) {
+  selectJointObject(object: JointLink) {
     const sceneObject = this.config.scene.getObjectByName(object.id);
     if (sceneObject) {
       this.kinematicsDrawingService.selectSceneObject(sceneObject);
@@ -84,18 +84,16 @@ export class KinematicsControlComponent {
   }
 
 
-  deletePoint(id: string, axis: string, point_id: string) {
+  deletePoint(id: string, point_id: string) {
     const joint = this.kinematicService.joints.filter(j => j.id === id)[0];
     if (joint) {
-      const connectorGroup = joint.connectors.filter(c => c.axis === axis)[0];
-      if (connectorGroup) {
-        const point = connectorGroup.points.filter(p => p.id === point_id)[0];
 
-        if (point) {
-          this.removeConnectorImage(point.id);
-          const index = connectorGroup.points.indexOf(point);
-          if (index > -1) { connectorGroup.points.splice(index, 1); }
-        }
+      const point = joint.connectors.filter(p => p.id === point_id)[0];
+
+      if (point) {
+        this.removeConnectorImage(point.id);
+        const index = joint.connectors.indexOf(point);
+        if (index > -1) { joint.connectors.splice(index, 1); }
       }
     }
   }
@@ -120,6 +118,13 @@ export class KinematicsControlComponent {
         object.traverse( ( child: any ) => {
             if ( child instanceof THREE.Mesh ) {
               this.kinematicsDrawingService.updateColor(child);
+              const child_color = child.name.split(":");
+              console.log(child_color);
+              if (child_color[0] === "Yellow") {
+                console.log(model.id);
+                this.kinematicService.updateSelectionPointID(model.id, child.name, child.uuid);
+              }
+
             }
         });
 
@@ -139,11 +144,12 @@ export class KinematicsControlComponent {
 
 
 
+
   importOBJModelToGroup(point: Connector) {
     const sceneObject = this.config.scene.getObjectByName(this.kinematicService.selectedJoints[0].id);
 
     if (sceneObject && sceneObject.isGroup && point) {
-      const imageUrl = (this.kinematicService.selectedJoints[0].active ? 'active':'passive') + '_joint_' + this.kinematicService.selectedJoints[0].modelType + '_connector_' + point.type + '.obj';
+      const imageUrl = (this.kinematicService.selectedJoints[0].active ? 'active':'passive') + '_joint_' + this.kinematicService.selectedJoints[0].modelType + '_connector_' + point.plane + '.obj';
       // console.log(imageUrl);
       this.config.loader.load('./assets/models/' + imageUrl, (object: any) => {   // called when resource is loaded
         object.name = point.id;
@@ -212,17 +218,17 @@ export class KinematicsControlComponent {
 
 
 
-  updatePointType(id: string, axis: string, point: Connector) {
+  updatePointType(id: string, point: Connector) {
     const joint = this.kinematicService.joints.filter(j => j.id === id)[0];
     if (joint) {
-      const connectorGroup = joint.connectors.filter(g => g.axis === axis)[0];
-      if (connectorGroup) {
-        if (point.type === 'i') point.type = 'o';
-        else if (point.type === 'o') point.type = 'i';
-        else if (point.type === 't') point.type = 'b';
-        else if (point.type === 'b') point.type = 't';
-      }
-      this.kinematicService.selectedJoints[0] = this.kinematicService.updateConnectionPoint(id, axis, point);
+      // const connectorGroup = joint.connectors.filter(g => g.axis === axis)[0];
+      // if (connectorGroup) {
+        // if (point.type === 'i') point.type = 'o';
+        // else if (point.type === 'o') point.type = 'i';
+        // else if (point.type === 't') point.type = 'b';
+        // else if (point.type === 'b') point.type = 't';
+      // }
+      // this.kinematicService.selectedJoints[0] = this.kinematicService.updateConnectionPoint(id, axis, point);
       this.removeConnectorImage(point.id);
       this.importOBJModelToGroup(point);
       this.kinematicsDrawingService.animate();
@@ -259,7 +265,7 @@ export class KinematicsControlComponent {
 
 
 
-  changeSize(element: Joint) {
+  changeSize(element: JointLink) {
     const sceneObject = this.config.scene.getObjectByName(element.id);
     const newScale = element.size / 40;
     if (sceneObject) {

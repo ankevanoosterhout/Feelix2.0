@@ -1,18 +1,18 @@
 import { Injectable } from '@angular/core';
 import { Subject } from 'rxjs';
 import { v4 as uuid } from 'uuid';
-import { Joint, Object3D, Model, ConnectorGroup, Connector, connectionPoint } from '../models/kinematic.model';
-
+import { JointLink, Object3D, Model, ConnectorGroup, Connector, Point } from '../models/kinematic.model';
+import * as THREE from 'three';
 
 
 @Injectable()
 export class KinematicService {
 
-  joints: Array<Joint> = [];
+  joints: Array<JointLink> = [];
 
   selectedJoints = [];
 
-  selectedConnectionPoints: Array<connectionPoint> = [];
+  selConnPoints: Array<Point> = [];
 
   kinematicChain: Array<any> = [];
   kinematicChainList: Array<any> = [];
@@ -22,9 +22,9 @@ export class KinematicService {
 
   constructor() {}
 
-  addJoint(model: any): Joint {
+  addJoint(model: any): JointLink {
     const objectsInScene = this.joints.filter(j => j.type === model.type);
-    const joint = new Joint(uuid(), model.type + '-' + (objectsInScene.length + 1), model, [ uuid(), uuid(), uuid(), uuid() ]);
+    const joint = new JointLink(uuid(), model.type + '-' + (objectsInScene.length + 1), model);
 
     this.joints.push(joint);
 
@@ -43,8 +43,8 @@ export class KinematicService {
   }
 
   anySelected(): boolean {
-    if (this.selectedConnectionPoints.length > 0 || this.selectedJoints.length > 0) {
-      console.log(this.selectedConnectionPoints, this.selectedJoints);
+    if (this.selConnPoints.length > 0 || this.selectedJoints.length > 0) {
+      console.log(this.selConnPoints, this.selectedJoints);
       return true;
     }
     return false;
@@ -53,29 +53,70 @@ export class KinematicService {
 
   deselectAll() {
     this.selectedJoints = [];
-    this.selectedConnectionPoints = [];
+    this.selConnPoints = [];
   }
 
-  getSelectionPoint(parent_id: string, point_id: string): connectionPoint {
-    return this.selectedConnectionPoints.filter(p => p.parent.id === parent_id && p.point.uuid === point_id)[0];
+  // getSelectionPoint(parent_id: string, point_id: string): connectionPoint {
+  //   return this.selConnPoints.filter(p => p.parent.id === parent_id && p.point.uuid === point_id)[0];
+  // }
+
+  getSelectionPoint(parent_id: string, id: string) {
+    console.log(parent_id, id);
+
+    const joint = this.joints.filter(j => j.id === parent_id)[0];
+    console.log(joint);
+
+    if (joint) {
+      for (const item of joint.connectors) {
+        console.log(item.id, id);
+        if (item.id === id) {
+          console.log(item);
+          return item;
+        }
+      }
+    }
+    return;
   }
 
-  deleteSelectionPoint(parent_id: string, point_id: string) {
-    const point = this.getSelectionPoint(parent_id, point_id);
-    if (point) {
-      const index = this.selectedConnectionPoints.indexOf(point);
-      if (index > -1) {
-        this.selectedConnectionPoints.splice(index, 1);
+  checkIfPointIsSelected(parent_id: string, id: string) {
+    return this.selConnPoints.filter(p => p.parent_id === parent_id && p.id === id)[0] ? true : false;
+  }
+
+  updateSelectionPointID(model_id: string, name: string, id: string) {
+
+    const joint = this.joints.filter(j => j.id === model_id)[0];
+    console.log(joint);
+
+    if (joint) {
+      for (const item of joint.connectors) {
+        console.log(item);
+        if (item.name === name) {
+          item.id = id;
+
+          console.log(item);
+          return;
+        }
       }
     }
   }
 
 
-  getJoint(id: string): Joint {
+  deleteSelectionPoint(parent_id: string, point_id: string) {
+    const selectedPoint = this.selConnPoints.filter(p => p.id === point_id && p.parent_id === parent_id)[0];
+    if (selectedPoint) {
+      const index = this.selConnPoints.indexOf(selectedPoint);
+      if (index > -1) {
+        this.selConnPoints.splice(index, 1);
+      }
+    }
+  }
+
+
+  getJoint(id: string): JointLink {
     return this.joints.filter(j => j.id === id)[0];
   }
 
-  getAllJoints(): Array<Joint> {
+  getAllJoints(): Array<JointLink> {
     return this.joints;
   }
 
@@ -99,7 +140,7 @@ export class KinematicService {
   }
 
 
-  updateJointVisualization(id: string, object3D: Object3D) : Joint {
+  updateJointVisualization(id: string, object3D: Object3D) : JointLink {
     const joint = this.joints.filter(j => j.id === id)[0];
     console.log(joint.object3D);
     if (joint) {
@@ -118,15 +159,12 @@ export class KinematicService {
   }
 
 
-  updateConnectionPoint(id: string, axis: string, point_: Connector): Joint {
+  updateConnectionPoint(id: string, axis: string, point_: Connector): JointLink {
     const joint = this.joints.filter(j => j.id === id)[0];
     if (joint) {
-      const group = joint.connectors.filter(g => g.axis === axis)[0];
-      if (group) {
-        let point = group.points.filter(p => p.id === point_.id)[0];
-        if (point) {
-          point = point;
-        }
+      let point = joint.connectors.filter(p => p.id === point_.id)[0];
+      if (point) {
+        point = point;
       }
       return joint;
     }
@@ -137,29 +175,19 @@ export class KinematicService {
 
 
 
-  addPoint(id: string, axis: string) {
+  addPoint(id: string) {
     const joint = this.joints.filter(j => j.id === id)[0];
     if (joint) {
-      const connectorGroup = joint.connectors.filter(c => c.axis === axis)[0];
-      if (connectorGroup) {
-        const angle = connectorGroup.points.length === 0 ? 0 : connectorGroup.points[connectorGroup.points.length - 1].angle + 60;
-        const numberOfType1Items = connectorGroup.points.filter(p => p.type === 'i' || p.type === 't').length;
-        const type = connectorGroup.points.length - numberOfType1Items < numberOfType1Items ? 1 : 2;
 
-        // console.log(type, angle);
+      const angle = joint.connectors.length === 0 ? 0 : joint.connectors[joint.connectors.length - 1].angle + 60;
+      const vector = new THREE.Vector3(Math.cos((angle * Math.PI/180)),0,0);
+      console.log(angle, vector);
 
-        if (connectorGroup.axis === 'Z') {
-          const point = new Connector(uuid(), 'point ' + (connectorGroup.points.length + 1), angle, type === 1 ? 't' : 'b');
-          // console.log(point);
-          connectorGroup.points.push(point);
-          this.importOBJModelToObjectGroup.next(point);
-        } else {
-          const point = new Connector(uuid(), 'point ' + (connectorGroup.points.length + 1), angle, type === 1 ? 'i' : 'o');
-          // console.log(point);
-          connectorGroup.points.push(point);
-          this.importOBJModelToObjectGroup.next(point);
-        }
-      }
+      const point = new Connector(uuid(),'Yellow:XY:' + joint.connectors.length, angle, 'XY', vector);
+      // console.log(point);
+      joint.connectors.push(point);
+
+      this.importOBJModelToObjectGroup.next(point);
     }
   }
 

@@ -1,8 +1,9 @@
-import { Component, OnInit, HostListener } from '@angular/core';
+import { Component, OnInit, HostListener, Inject } from '@angular/core';
 import { ElectronService } from 'ngx-electron';
 import * as THREE from 'three';
 import { KinematicsConfig } from 'src/app/models/kinematics-config.model';
 import { KinematicsDrawingService } from 'src/app/services/kinematics-drawing.service';
+import { DOCUMENT } from '@angular/common';
 
 @Component({
     selector: 'app-kinematics',
@@ -19,7 +20,7 @@ export class KinematicsComponent implements OnInit {
 
 
   // tslint:disable-next-line: variable-name
-  constructor(private kinematicsDrawingService: KinematicsDrawingService, private electronService: ElectronService) {
+  constructor(@Inject(DOCUMENT) private document: Document, private kinematicsDrawingService: KinematicsDrawingService, private electronService: ElectronService) {
 
     this.config = this.kinematicsDrawingService.config;
 
@@ -46,6 +47,20 @@ export class KinematicsComponent implements OnInit {
     this.kinematicsDrawingService.selectObjectFromScene.subscribe(res => {
       this.kinematicsDrawingService.selectObject(res);
     });
+
+    this.kinematicsDrawingService.updateCameraView.subscribe(res => {
+      this.updateCamera();
+    });
+
+
+    this.kinematicsDrawingService.updateKinematicsProgress.subscribe(data => {
+      this.progress = data.progress;
+      this.status = data.status;
+      this.document.getElementById('msg').innerHTML = this.status;
+      const width = 244 * (this.progress / 100);
+      this.document.getElementById('progress').style.width = width + 'px';
+    });
+
   }
 
 
@@ -180,29 +195,34 @@ export class KinematicsComponent implements OnInit {
       } else if (key === 'd') {
         this.kinematicsDrawingService.deselectAllObjects();
       } else if (key === 'r') {
-        this.config.control.setMode( 'rotate' );
-      } else if (key === 's') {
-        this.config.control.setMode( 'scale' );
-      } else if (key === 't') {
-        this.config.control.setMode( 'translate' );
+        // this.config.control.setMode( 'rotate' );
+        this.kinematicsDrawingService.selectControlMode('rotate');
+      }
+      // else if (key === 's') {
+      //   this.config.control.setMode( 'scale' );
+      // }
+      else if (key === 't') {
+        // this.config.control.setMode( 'translate' );
+        this.kinematicsDrawingService.selectControlMode('translate');
       } else if (key === 'c') {
-        const position = this.config.currentCamera.position.clone();
-
-        this.config.currentCamera = this.config.currentCamera.isPerspectiveCamera ? this.config.cameraOrtho : this.config.cameraPersp;
-        this.config.currentCamera.position.copy( position );
-
-        this.config.orbit.object = this.config.currentCamera;
-        this.config.control.camera = this.config.currentCamera;
-
-        this.config.currentCamera.lookAt( this.config.orbit.target.x, this.config.orbit.target.y, this.config.orbit.target.z );
-        this.onWindowResize();
+        this.kinematicsDrawingService.selectCamera();
 
       }
     }
   }
 
+  updateCamera() {
+    const position = this.config.currentCamera.position.clone();
 
+    this.config.currentCamera = this.config.currentCamera.isPerspectiveCamera ? this.config.cameraOrtho : this.config.cameraPersp;
+    this.config.currentCamera.position.copy( position );
 
+    this.config.orbit.object = this.config.currentCamera;
+    this.config.control.camera = this.config.currentCamera;
+
+    this.config.currentCamera.lookAt( this.config.orbit.target.x, this.config.orbit.target.y, this.config.orbit.target.z );
+    this.onWindowResize();
+  }
 
 
 

@@ -21,6 +21,7 @@ import { LoadDataSetsComponent } from './components/ml5js/datasets/load-datasets
 import { KinematicsComponent } from './components/kinematics/kinematics.component';
 import { KinematicsToolbarComponent } from './components/interface-elements/toolbars/kinematics-toolbar.component';
 import { KinematicsControlComponent } from './components/kinematics/control/kinematics-controls.component';
+import { KinematicsCursorComponent } from './components/kinematics/control/kinematics-cursor.component';
 
 
 const routes: Routes = [
@@ -46,7 +47,8 @@ const routes: Routes = [
     { path: 'load-model', component: LoadDataSetsComponent },
     { path: 'kinematics', component: KinematicsComponent },
     { path: 'kinematics-control', component: KinematicsControlComponent},
-    { path: 'kinematics-toolbar', component: KinematicsToolbarComponent }
+    { path: 'kinematics-toolbar', component: KinematicsToolbarComponent },
+    { path: 'kinematics-cursor', component: KinematicsCursorComponent }
   ];
 
 @NgModule({

@@ -63,6 +63,7 @@ import { KinematicService } from './services/kinematic.service';
 import { KinematicsToolbarComponent } from './components/interface-elements/toolbars/kinematics-toolbar.component';
 import { KinematicsControlComponent } from './components/kinematics/control/kinematics-controls.component';
 import { KinematicsDrawingService } from './services/kinematics-drawing.service';
+import { KinematicsCursorComponent } from './components/kinematics/control/kinematics-cursor.component';
 
 @NgModule({
   declarations: [
@@ -96,7 +97,8 @@ import { KinematicsDrawingService } from './services/kinematics-drawing.service'
     LoadDataSetsComponent,
     KinematicsComponent,
     KinematicsControlComponent,
-    KinematicsToolbarComponent
+    KinematicsToolbarComponent,
+    KinematicsCursorComponent
   ],
   imports: [
     BrowserModule,

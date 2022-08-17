@@ -1,7 +1,7 @@
 import { Injectable, Inject } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { Subject } from 'rxjs';
-import { connectionPoint, Connector, ConnectorGroup, Joint } from '../models/kinematic.model';
+import { Point, JointLink } from '../models/kinematic.model';
 import { KinematicsConfig } from '../models/kinematics-config.model';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
@@ -17,7 +17,10 @@ export class KinematicsDrawingService {
   updateModelPosition: Subject<any> = new Subject();
 
   loadOBJ: Subject<any> = new Subject();
-
+  updateKinematicsProgress: Subject<any> = new Subject();
+  selectControl: Subject<any> = new Subject();
+  updateCameraView: Subject<any> = new Subject();
+  selectCameraView: Subject<any> = new Subject();
 
   constructor(@Inject(DOCUMENT) private document: Document, private kinematicService: KinematicService) {
     this.config = new KinematicsConfig();
@@ -29,6 +32,27 @@ export class KinematicsDrawingService {
     this.selectObjectFromScene.next(object);
   }
 
+  updateProgess(_status: String, _progress: number) {
+    this.updateKinematicsProgress.next({ status: _status, progress: _progress });
+  }
+
+
+  updateCamera() {
+    this.updateCameraView.next();
+  }
+  selectCamera() {
+    this.selectCameraView.next();
+  }
+
+  updateControlMode(name: string) {
+    if (name !== 'rotateAxis') {
+      this.config.control.setMode( name );
+    }
+  }
+
+  selectControlMode(name: string) {
+    this.selectControl.next(name);
+  }
 
   init() {
     this.config.canvas = this.document.getElementById('canvas');
@@ -119,6 +143,15 @@ export class KinematicsDrawingService {
     this.config.scene.add( arrowHelper );
   }
 
+
+  drawArrowHelper(origin : THREE.Vector3, dir: THREE.Vector3, color: number) {
+    //normalize the direction vector (convert to vector of length 1)
+    dir.normalize();
+    const length = 20;
+
+    const arrowHelper = new THREE.ArrowHelper( dir, origin, length, color );
+    this.config.scene.add( arrowHelper );
+  }
 
 
   drawGrid() {
@@ -311,24 +344,33 @@ export class KinematicsDrawingService {
 
 
   selectConnectionElement(object: any, shift = false) {
-    // console.log(object);
+    console.log(object);
     if (object && object.parent) {
       const sceneObject = this.config.sceneObjects.filter(s => s.id === object.parent.id || (object.parent.parent && s.id === object.parent.parent.id))[0];
       // console.log(sceneObject);
       if (sceneObject) {
         const parent = this.kinematicService.joints.filter(j => j.id === sceneObject.name)[0];
-        // console.log(parent);
-        const isSelected = this.kinematicService.getSelectionPoint(parent.id, object.uuid) ? true : false;
-        if (isSelected) {
-          // console.log('is selected');
-          this.config.shift ? this.deselectSelectionPoint(sceneObject.id, object) : this.deselectAllObjects();
+        console.log(parent);
+
+
+        if (this.kinematicService.checkIfPointIsSelected(parent.id, object.uuid)) {
+          console.log('is selected');
+          shift ? this.deselectSelectionPoint(sceneObject.id, object) : this.deselectAllObjects();
         } else {
-          const point = new connectionPoint(sceneObject, object);
-          shift ? this.kinematicService.selectedConnectionPoints.push(point) : this.kinematicService.selectedConnectionPoints = [ point ];
+          // const point = new connectionPoint(sceneObject, object);
+          // shift ? this.kinematicService.selConnPoints.push(point) : this.kinematicService.selConnPoints = [ point ];
+          const point = new Point(parent.id, object.uuid);
+          if (!shift) {
+            this.deselectAllObjects();
+            this.kinematicService.selConnPoints = [ point ];
+          } else {
+            this.kinematicService.selConnPoints.push(point)
+          }
           this.updateColor(object, this.config.selectColor);
+
           // this.setObjectColor(object, this.config.selectColor);
           // console.log(object);
-          // console.log(this.kinematicService.selectedConnectionPoints);
+          // console.log(this.kinematicService.selConnPoints);
         }
       }
     }
@@ -412,8 +454,8 @@ export class KinematicsDrawingService {
 
   deselectAllObjects() {
 
-    console.log(this.kinematicService.anySelected);
-    if (this.kinematicService.anySelected) {
+    console.log(this.kinematicService.anySelected());
+    if (this.kinematicService.anySelected()) {
       console.log('deselect draggable object');
       this.config.draggableObject = undefined;
       this.toggleRotationCircle(false);
@@ -422,8 +464,11 @@ export class KinematicsDrawingService {
       for (const object of this.config.sceneObjects) {
         this.deselectObject(object);
       }
-      for (const item of this.kinematicService.selectedConnectionPoints) {
-        this.updateColor(item.point);
+      for (const item of this.kinematicService.selConnPoints) {
+        const sceneObject = this.config.scene.getObjectByName(item.parent_id);
+        if (sceneObject) {
+          this.setObjectColor(sceneObject);
+        }
       }
       this.kinematicService.deselectAll();
       this.animate();
@@ -465,7 +510,7 @@ export class KinematicsDrawingService {
   }
 
 
-  updatePosition(object: any, model: Joint) {
+  updatePosition(object: any, model: JointLink) {
     if (object) {
 
       if (model) {
@@ -481,7 +526,7 @@ export class KinematicsDrawingService {
   }
 
 
-  hideObject(model: Joint) {
+  hideObject(model: JointLink) {
     const sceneObject = this.config.sceneObjects.filter(s => s.name === model.id)[0];
     if (sceneObject) {
       if (model.object3D.hidden) {
@@ -528,17 +573,19 @@ export class KinematicsDrawingService {
 
     object_target.rotation.set(object_origin.rotation.x, object_origin.rotation.y, object_origin.rotation.y);
     // object_target.updateMatrix();
-    this.animate();
+    // this.animate();
 
     if (point_origin[1] !== point_target[1]) {
       // console.log(point_origin[1], point_target[1]);
       const rotation = this.getRotation(point_origin[1], point_target[1]);
-      object_target.rotateOnAxis(rotation, Math.PI/2);
+      if (rotation.x) {
+        object_target.rotateOnAxis(rotation, Math.PI/2);
+      }
       // object_target.updateMatrix();
 
       console.log(rotation);
 
-      this.animate();
+      // this.animate();
     }
     return object_target;
   }
@@ -547,70 +594,99 @@ export class KinematicsDrawingService {
   getBBox(obj: any) {
     const pointBBox = new THREE.Box3(new THREE.Vector3(), new THREE.Vector3());
     pointBBox.setFromObject(obj);
-    const helper = new THREE.BoxHelper(obj, 0xff0000);
-    helper.update();
-    this.config.scene.add(helper);
-
+    // const helper = new THREE.BoxHelper(obj, 0xff0000);
+    // helper.update();
+    // this.config.scene.add(helper);
     return pointBBox;
   }
 
 
+  getDirectionVector(object: any, vector: THREE.Vector3): THREE.Vector3 {
+
+    const worldDirection = new THREE.Vector3();
+    object.getWorldDirection(worldDirection);
+    // console.log(worldDirection);
+    // this.drawArrowHelper(object.position, worldDirection, 0x2121d8);
+
+    const updatedWorldDirect = new THREE.Vector3();
+    updatedWorldDirect.multiplyVectors(worldDirection, vector);
+    // console.log(updatedWorldDirect);
+    // this.drawArrowHelper(object.position, updatedWorldDirect, 0xff2200);
+
+    return updatedWorldDirect;
+  }
+
+
+  getBBoxPnt(object: any, name: string): THREE.Vector3 {
+    let boxCenterPointTarget = new THREE.Vector3();
+    object.traverse( ( child: any ) => {
+      if ( child instanceof THREE.Mesh ) {
+        if (child.name === name) {
+          const box = this.getBBox(child);
+          box.getCenter(boxCenterPointTarget);
+          // console.log(boxCenterPointTarget);
+        }
+      }
+    });
+    return boxCenterPointTarget;
+  }
+
 
   joinObjects() {
 
-    if (this.kinematicService.selectedConnectionPoints.length === 2) {
+    if (this.kinematicService.selConnPoints.length === 2) {
+      if (this.kinematicService.selConnPoints[0].parent_id === this.kinematicService.selConnPoints[1].parent_id) {
+        this.updateProgess('selection points are from the same object', 0);
+        return;
+      }
 
-      let boxCenterPointTarget;
-      let boxCenterPointOrigin;
-      const connectionPointOrigin = this.kinematicService.selectedConnectionPoints[0].point.name.split(":");
-      const connectionPointTarget = this.kinematicService.selectedConnectionPoints[1].point.name.split(":");
+      console.log(this.kinematicService.selConnPoints);
 
-      const updatedTarget = this.alignOrientation(this.kinematicService.selectedConnectionPoints[0].parent, this.kinematicService.selectedConnectionPoints[1].parent, connectionPointOrigin, connectionPointTarget);
+      const joint_origin = this.kinematicService.getJoint(this.kinematicService.selConnPoints[0].parent_id);
+      const joint_target = this.kinematicService.getJoint(this.kinematicService.selConnPoints[1].parent_id);
+      const sceneObject_origin = this.config.scene.getObjectByName(this.kinematicService.selConnPoints[0].parent_id);
+      const sceneObject_target = this.config.scene.getObjectByName(this.kinematicService.selConnPoints[1].parent_id);
 
-      updatedTarget.traverse( ( child: any ) => {
-        if ( child instanceof THREE.Mesh ) {
-          if (child.name === this.kinematicService.selectedConnectionPoints[1].point.name) {
-            const box = this.getBBox(child);
-            console.log('b');
-            boxCenterPointTarget = new THREE.Vector3();
-            box.getCenter(boxCenterPointTarget);
-          }
-        }
-      });
+      sceneObject_target.rotation.set(sceneObject_origin.rotation.x, sceneObject_origin.rotation.y, sceneObject_origin.rotation.y);
 
-      const bboxOrigin = this.getBBox(this.kinematicService.selectedConnectionPoints[0].point);
-      boxCenterPointOrigin = new THREE.Vector3();
-      bboxOrigin.getCenter(boxCenterPointOrigin);
+      const connPoint_origin = this.kinematicService.getSelectionPoint(joint_origin.id, this.kinematicService.selConnPoints[0].id);
+      const connPoint_target = this.kinematicService.getSelectionPoint(joint_target.id, this.kinematicService.selConnPoints[1].id);
 
+      const pnt_dir_origin = this.getDirectionVector(sceneObject_origin, connPoint_origin.vector3);
+      const pnt_dir_target = this.getDirectionVector(sceneObject_target, connPoint_target.vector3);
 
-      console.log(boxCenterPointOrigin, boxCenterPointTarget);
+      const quaternion = new THREE.Quaternion(); // create one and reuse it
+      const reverseOrigin = new THREE.Vector3();
+      reverseOrigin.multiplyVectors(pnt_dir_origin, new THREE.Vector3(-1,-1,-1));
+      quaternion.setFromUnitVectors( reverseOrigin, pnt_dir_target);
+      const matrix = new THREE.Matrix4(); // create one and reuse it
+      matrix.makeRotationFromQuaternion( quaternion );
+      sceneObject_target.applyMatrix4( matrix );
 
-      const distance = { x: boxCenterPointTarget.x - boxCenterPointOrigin.x, y: boxCenterPointTarget.y - boxCenterPointOrigin.y, z: boxCenterPointTarget.z - boxCenterPointOrigin.z };
-
-      console.log(distance);
-      updatedTarget.position.set(updatedTarget.position.x - distance.x, updatedTarget.position.y - distance.y, updatedTarget.position.z - distance.z);
-      updatedTarget.updateMatrix();
-      updatedTarget.lookAt(boxCenterPointOrigin);
+      sceneObject_target.updateMatrix();
 
       this.animate();
 
-    } else if (this.kinematicService.selectedConnectionPoints.length > 2) {
-      console.log('too many items selected');
-    } else if (this.kinematicService.selectedConnectionPoints.length < 2) {
-      console.log('select two connection points');
+      let centerPntOrigin = this.getBBoxPnt(sceneObject_origin, connPoint_origin.name);
+      let centerPntTarget = this.getBBoxPnt(sceneObject_target, connPoint_target.name);
+
+      const translationMatrix = new THREE.Matrix4();
+      translationMatrix.makeTranslation(centerPntOrigin.x - centerPntTarget.x, centerPntOrigin.y - centerPntTarget.y, centerPntOrigin.z - centerPntTarget.z);
+      sceneObject_target.applyMatrix4( translationMatrix );
+
+      this.animate();
+
+    } else if (this.kinematicService.selConnPoints.length > 2) {
+      this.updateProgess('too many items selected', 0);
+      // console.log('too many items selected');
+    } else if (this.kinematicService.selConnPoints.length < 2) {
+      this.updateProgess('select two points', 0);
+      // console.log('select two connection points');
     }
 
 
   }
 
-
-
-//   alignAxes(q: ) {
-// //     Quaternion q;
-// // vector a = crossproduct(v1, v2);
-// // q.xyz = a;
-// // q.w = sqrt((v1.Length ^ 2) * (v2.Length ^ 2)) + dotproduct(v1, v2);
-//   }
 
 
   /* load svg image */
