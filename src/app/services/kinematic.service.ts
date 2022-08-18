@@ -68,9 +68,9 @@ export class KinematicService {
 
     if (joint) {
       for (const item of joint.connectors) {
-        console.log(item.id, id);
+        // console.log(item.id, id);
         if (item.id === id) {
-          console.log(item);
+          // console.log(item);
           return item;
         }
       }
@@ -78,22 +78,24 @@ export class KinematicService {
     return;
   }
 
+
   checkIfPointIsSelected(parent_id: string, id: string) {
     return this.selConnPoints.filter(p => p.parent_id === parent_id && p.id === id)[0] ? true : false;
   }
 
-  updateSelectionPointID(model_id: string, name: string, id: string) {
 
+
+  updateSelectionPointID(model_id: string, name: string, id: string) {
+    // console.log(name);
     const joint = this.joints.filter(j => j.id === model_id)[0];
-    console.log(joint);
+    // console.log(joint);
 
     if (joint) {
       for (const item of joint.connectors) {
-        console.log(item);
+        // console.log(item);
         if (item.name === name) {
           item.id = id;
-
-          console.log(item);
+          // console.log(item);
           return;
         }
       }
@@ -179,15 +181,20 @@ export class KinematicService {
     const joint = this.joints.filter(j => j.id === id)[0];
     if (joint) {
 
-      const angle = joint.connectors.length === 0 ? 0 : joint.connectors[joint.connectors.length - 1].angle + 60;
-      const vector = new THREE.Vector3(Math.cos((angle * Math.PI/180)),0,0);
-      console.log(angle, vector);
+      const axis = joint.connectors.filter(p => p.plane === 'X').length > joint.connectors.filter(p => p.plane === 'Y').length ? 'Y' : 'X';
+      const connectorsWidthAxis = joint.connectors.filter(p => p.plane === axis);
+      const angle = connectorsWidthAxis.length === 0 ? 0 : connectorsWidthAxis[connectorsWidthAxis.length - 1].angle + 60;
+      const vector = new THREE.Vector3(Math.cos((angle * Math.PI/180)), Math.sin((angle * Math.PI/180)),0);
 
-      const point = new Connector(uuid(),'Yellow:XY:' + joint.connectors.length, angle, 'XY', vector);
-      // console.log(point);
+      console.log(angle, vector, axis);
+
+      const point = new Connector(uuid(),'Yellow:' + axis + ':' + joint.connectors.length, angle, axis, vector);
+      console.log(point);
       joint.connectors.push(point);
 
-      this.importOBJModelToObjectGroup.next(point);
+      console.log(joint);
+
+      this.importOBJModelToObjectGroup.next({ pnt: point, model_id: joint.id });
     }
   }
 

@@ -601,17 +601,39 @@ export class KinematicsDrawingService {
   }
 
 
-  getDirectionVector(object: any, vector: THREE.Vector3): THREE.Vector3 {
+  getDirectionVector(object: any, axis:any): THREE.Vector3 {
 
     const worldDirection = new THREE.Vector3();
     object.getWorldDirection(worldDirection);
     // console.log(worldDirection);
-    // this.drawArrowHelper(object.position, worldDirection, 0x2121d8);
+    this.drawArrowHelper(object.position, worldDirection, 0x2121d8);
 
-    const updatedWorldDirect = new THREE.Vector3();
-    updatedWorldDirect.multiplyVectors(worldDirection, vector);
+    // const updatedWorldDirect = new THREE.Vector3();
+    // updatedWorldDirect.multiplyVectors(worldDirection, axis.vector3);
     // console.log(updatedWorldDirect);
     // this.drawArrowHelper(object.position, updatedWorldDirect, 0xff2200);
+
+    // const updatedWorldDirect2 = worldDirection.clone();
+
+   // const quaternion = new THREE.Quaternion();
+    // const angle = axis.plane === 'Z' ? Math.PI : Math.PI / 2;
+    // console.log(angle);
+    // quaternion.setFromAxisAngle( axis.vector3, angle );
+
+    // updatedWorldDirect2.applyQuaternion( quaternion );
+     // const angle = axis.plane === 'Z' ? Math.PI : Math.PI / 2;
+
+    // const matrix = new THREE.Matrix4();
+    // matrix.compose(object.position, object.quaternion, new THREE.Vector3(1,1,1));
+
+    // const updatedWorldDirect2 = worldDirection.clone();
+    // updatedWorldDirect2.projectOnVector(axis.vector3);
+    // updatedWorldDirect2.applyAxisAngle( axis.vector3, angle );
+
+    const updatedWorldDirect = axis.vector3.clone();
+    updatedWorldDirect.applyQuaternion(object.quaternion);
+
+    this.drawArrowHelper(object.position, updatedWorldDirect, 0x000000);
 
     return updatedWorldDirect;
   }
@@ -647,20 +669,28 @@ export class KinematicsDrawingService {
       const sceneObject_origin = this.config.scene.getObjectByName(this.kinematicService.selConnPoints[0].parent_id);
       const sceneObject_target = this.config.scene.getObjectByName(this.kinematicService.selConnPoints[1].parent_id);
 
+      sceneObject_target.updateMatrix();
+      sceneObject_origin.updateMatrix();
+
       sceneObject_target.rotation.set(sceneObject_origin.rotation.x, sceneObject_origin.rotation.y, sceneObject_origin.rotation.y);
 
       const connPoint_origin = this.kinematicService.getSelectionPoint(joint_origin.id, this.kinematicService.selConnPoints[0].id);
       const connPoint_target = this.kinematicService.getSelectionPoint(joint_target.id, this.kinematicService.selConnPoints[1].id);
 
-      const pnt_dir_origin = this.getDirectionVector(sceneObject_origin, connPoint_origin.vector3);
-      const pnt_dir_target = this.getDirectionVector(sceneObject_target, connPoint_target.vector3);
+      console.log(connPoint_origin, connPoint_target);
+
+      const pnt_dir_origin = this.getDirectionVector(sceneObject_origin, connPoint_origin);
+      const pnt_dir_target = this.getDirectionVector(sceneObject_target, connPoint_target);
+
+      console.log(pnt_dir_origin, pnt_dir_target);
 
       const quaternion = new THREE.Quaternion(); // create one and reuse it
       const reverseOrigin = new THREE.Vector3();
-      reverseOrigin.multiplyVectors(pnt_dir_origin, new THREE.Vector3(-1,-1,-1));
-      quaternion.setFromUnitVectors( reverseOrigin, pnt_dir_target);
+      reverseOrigin.multiplyVectors(pnt_dir_target, new THREE.Vector3(-1,-1,-1));
+      quaternion.setFromUnitVectors(pnt_dir_origin, reverseOrigin);
       const matrix = new THREE.Matrix4(); // create one and reuse it
       matrix.makeRotationFromQuaternion( quaternion );
+      console.log(quaternion);
       sceneObject_target.applyMatrix4( matrix );
 
       sceneObject_target.updateMatrix();

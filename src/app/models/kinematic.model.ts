@@ -97,24 +97,27 @@ export class JointLink {
     this.object3D.color = model.color;
 
 
-      const Z_connector_a = new Connector(null, 'Yellow:Z:1', 0, 'Z', new THREE.Vector3(1,1,1));
-      const Z_connector_b = new Connector(null, 'Yellow:Z:-1', 0, 'Z', new THREE.Vector3(-1,-1,-1));
+      // const Z_connector_a = new Connector(null, 'Yellow:Z:1', 0, 'Z', new THREE.Vector3(1,1,1));
+      // const Z_connector_b = new Connector(null, 'Yellow:Z:-1', 0, 'Z', new THREE.Vector3(-1,-1,-1));
+      const Z_connector_a = new Connector(null, 'Yellow:Z:1', 0, 'Z', new THREE.Vector3(0,0,1));
+      const Z_connector_b = new Connector(null, 'Yellow:Z:-1', 0, 'Z', new THREE.Vector3(0,0,-1));
 
       this.connectors.push(Z_connector_a, Z_connector_b);
 
-      if (model.type === 'arm') {
+    if (model.type === 'arm') {
       this.size = 40;
-    } else if (model.type === 'cube') {
-      this.size = 15;
     }
+    // else if (model.type === 'cube') {
+    //   this.size = 15;
+    // }
 
-    if (model.type === 'cube') {
+    if (model.type === 'connector') {
       this.size = 15;
 
-      const X_connector_a = new Connector(null, 'Yellow:X:1', 0, 'Z', new THREE.Vector3(1,1,1));
-      const X_connector_b = new Connector(null, 'Yellow:X:-1', 0, 'Z', new THREE.Vector3(-1,1,-1));
-      const Y_connector_a = new Connector(null, 'Yellow:Y:1', 0, 'Z', new THREE.Vector3(1,1,1));
-      const Y_connector_b = new Connector(null, 'Yellow:Y:-1', 0, 'Z', new THREE.Vector3(1,-1,-1));
+      const X_connector_a = new Connector(null, 'Yellow:X:1', 0, 'X', new THREE.Vector3(1,0,0));
+      const X_connector_b = new Connector(null, 'Yellow:X:-1', 0, 'X', new THREE.Vector3(-1,0,0));
+      const Y_connector_a = new Connector(null, 'Yellow:Y:1', 0, 'Y', new THREE.Vector3(0,1,0));
+      const Y_connector_b = new Connector(null, 'Yellow:Y:-1', 0, 'Y', new THREE.Vector3(0,-1,0));
 
       this.connectors.push(X_connector_a, X_connector_b, Y_connector_a, Y_connector_b);
     }

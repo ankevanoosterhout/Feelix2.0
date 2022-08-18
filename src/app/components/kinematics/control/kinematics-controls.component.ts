@@ -41,7 +41,7 @@ export class KinematicsControlComponent {
     });
 
     this.kinematicService.importOBJModelToObjectGroup.subscribe(res => {
-      this.importOBJModelToGroup(res);
+      this.importOBJModelToGroup(res.pnt, res.model_id);
     });
 
     this.kinematicsDrawingService.updateModelPosition.subscribe(res => {
@@ -91,7 +91,7 @@ export class KinematicsControlComponent {
       const point = joint.connectors.filter(p => p.id === point_id)[0];
 
       if (point) {
-        this.removeConnectorImage(point.id);
+        this.removeConnectorImage(point.name);
         const index = joint.connectors.indexOf(point);
         if (index > -1) { joint.connectors.splice(index, 1); }
       }
@@ -119,9 +119,9 @@ export class KinematicsControlComponent {
             if ( child instanceof THREE.Mesh ) {
               this.kinematicsDrawingService.updateColor(child);
               const child_color = child.name.split(":");
-              console.log(child_color);
+              // console.log(child_color);
               if (child_color[0] === "Yellow") {
-                console.log(model.id);
+                // console.log(model.id);
                 this.kinematicService.updateSelectionPointID(model.id, child.name, child.uuid);
               }
 
@@ -145,18 +145,25 @@ export class KinematicsControlComponent {
 
 
 
-  importOBJModelToGroup(point: Connector) {
+  importOBJModelToGroup(point: Connector, model_id: string) {
+    // console.log(point);
     const sceneObject = this.config.scene.getObjectByName(this.kinematicService.selectedJoints[0].id);
 
     if (sceneObject && sceneObject.isGroup && point) {
       const imageUrl = (this.kinematicService.selectedJoints[0].active ? 'active':'passive') + '_joint_' + this.kinematicService.selectedJoints[0].modelType + '_connector_' + point.plane + '.obj';
       // console.log(imageUrl);
       this.config.loader.load('./assets/models/' + imageUrl, (object: any) => {   // called when resource is loaded
-        object.name = point.id;
+        object.name = point.name;
 
         object.traverse( ( child: any ) => {
             if ( child instanceof THREE.Mesh ) {
               child.material = new THREE.MeshStandardMaterial({ color: this.config.selectColor });
+              const child_color = child.name.split(":");
+              // console.log(child_color);
+              if (child_color[0] === "Yellow") {
+                // console.log(model_id);
+                this.kinematicService.updateSelectionPointID(model_id, point.name, child.uuid);
+              }
             }
         });
         object.rotation.z = point.angle * (Math.PI/180);
@@ -204,9 +211,10 @@ export class KinematicsControlComponent {
 
   updatePointAngle(point: Connector) {
     const sceneObject = this.config.scene.getObjectByName(this.kinematicService.selectedJoints[0].id);
+    console.log(sceneObject, point);
     if (sceneObject && sceneObject.isGroup) {
 
-      const group = sceneObject.children.filter(c => c.name === point.id)[0];
+      const group = sceneObject.children.filter(c => c.name === point.name)[0];
       console.log(sceneObject, group, point.id);
       if (group) {
         group.rotation.z = point.angle * (Math.PI/180);
@@ -229,17 +237,18 @@ export class KinematicsControlComponent {
         // else if (point.type === 'b') point.type = 't';
       // }
       // this.kinematicService.selectedJoints[0] = this.kinematicService.updateConnectionPoint(id, axis, point);
-      this.removeConnectorImage(point.id);
-      this.importOBJModelToGroup(point);
+      this.removeConnectorImage(point.name);
+      this.importOBJModelToGroup(point, joint.id);
       this.kinematicsDrawingService.animate();
     }
   }
 
 
-  removeConnectorImage(id: string) {
+  removeConnectorImage(name: string) {
+    console.log(name);
     const sceneObject = this.config.scene.getObjectByName(this.kinematicService.selectedJoints[0].id);
     if (sceneObject && sceneObject.isGroup) {
-      const group = sceneObject.children.filter(c => c.name === id)[0];
+      const group = sceneObject.children.filter(c => c.name === name)[0];
       if (group) {
         sceneObject.remove(group);
       }
