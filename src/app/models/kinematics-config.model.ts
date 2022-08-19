@@ -39,5 +39,6 @@ export class KinematicsConfig {
   intersectPoint = new THREE.Vector3();
   plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
 
+  rootActive = false;
 }
 

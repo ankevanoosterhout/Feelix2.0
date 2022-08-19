@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Subject } from 'rxjs';
 import { v4 as uuid } from 'uuid';
-import { JointLink, Object3D, Model, ConnectorGroup, Connector, Point } from '../models/kinematic.model';
+import { JointLink, Object3D, Connector, Point } from '../models/kinematic.model';
 import * as THREE from 'three';
 
 
@@ -44,7 +44,6 @@ export class KinematicService {
 
   anySelected(): boolean {
     if (this.selConnPoints.length > 0 || this.selectedJoints.length > 0) {
-      console.log(this.selConnPoints, this.selectedJoints);
       return true;
     }
     return false;
@@ -61,10 +60,10 @@ export class KinematicService {
   // }
 
   getSelectionPoint(parent_id: string, id: string) {
-    console.log(parent_id, id);
+    // console.log(parent_id, id);
 
     const joint = this.joints.filter(j => j.id === parent_id)[0];
-    console.log(joint);
+    // console.log(joint);
 
     if (joint) {
       for (const item of joint.connectors) {
@@ -96,10 +95,11 @@ export class KinematicService {
         if (item.name === name) {
           item.id = id;
           // console.log(item);
-          return;
+          return item;
         }
       }
     }
+    return;
   }
 
 
@@ -144,7 +144,6 @@ export class KinematicService {
 
   updateJointVisualization(id: string, object3D: Object3D) : JointLink {
     const joint = this.joints.filter(j => j.id === id)[0];
-    console.log(joint.object3D);
     if (joint) {
       joint.object3D = object3D;
     }
@@ -161,7 +160,7 @@ export class KinematicService {
   }
 
 
-  updateConnectionPoint(id: string, axis: string, point_: Connector): JointLink {
+  updateConnectionPoint(id: string, point_: Connector): JointLink {
     const joint = this.joints.filter(j => j.id === id)[0];
     if (joint) {
       let point = joint.connectors.filter(p => p.id === point_.id)[0];
@@ -174,7 +173,16 @@ export class KinematicService {
   }
 
 
-
+  getPoint(joint_id: string, point_id: string): Connector {
+    const joint = this.joints.filter(j => j.id === joint_id)[0];
+    if (joint) {
+      const point = joint.connectors.filter(p => p.id === point_id)[0];
+      if (point) {
+        return point;
+      }
+    }
+    return;
+  }
 
 
   addPoint(id: string) {
@@ -182,17 +190,13 @@ export class KinematicService {
     if (joint) {
 
       const axis = joint.connectors.filter(p => p.plane === 'X').length > joint.connectors.filter(p => p.plane === 'Y').length ? 'Y' : 'X';
-      const connectorsWidthAxis = joint.connectors.filter(p => p.plane === axis);
-      const angle = connectorsWidthAxis.length === 0 ? 0 : connectorsWidthAxis[connectorsWidthAxis.length - 1].angle + 60;
-      const vector = new THREE.Vector3(Math.cos((angle * Math.PI/180)), Math.sin((angle * Math.PI/180)),0);
+      const connectorsWithAxis = joint.connectors.filter(p => p.plane === axis);
+      const angle = connectorsWithAxis.length === 0 ? 0 : connectorsWithAxis[connectorsWithAxis.length - 1].angle + 60;
+      const vector = new THREE.Vector3(-Math.cos(angle * Math.PI/180 + (Math.PI / 2)), -Math.sin(angle * Math.PI/180 + (Math.PI / 2)),0);
+      vector.normalize();
 
-      console.log(angle, vector, axis);
-
-      const point = new Connector(uuid(),'Yellow:' + axis + ':' + joint.connectors.length, angle, axis, vector);
-      console.log(point);
+      const point = new Connector(null,'Yellow:' + axis + ':' + connectorsWithAxis.length, angle, axis, vector);
       joint.connectors.push(point);
-
-      console.log(joint);
 
       this.importOBJModelToObjectGroup.next({ pnt: point, model_id: joint.id });
     }

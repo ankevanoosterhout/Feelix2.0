@@ -44,23 +44,14 @@ export class Object3D {
   lock = false;
 }
 
-export class ConnectorGroup {
-  axis: string;
-  visible: boolean;
-  points: Array<Connector> = [];
-  limit: number;
 
-  constructor(axis: string, visible: boolean) {
-    this.axis = axis;
-    this.visible = visible;
-  }
-}
 
 export class Connector {
   id: string;
   name: string;
   angle: number;
   plane: string;
+  connected = false;
   vector3 = new THREE.Vector3(0,0,0);
 
   constructor(id: string, name:string, angle: number, plane: string, vector3: THREE.Vector3) {
@@ -82,6 +73,7 @@ export class JointLink {
   size: number;
   control: MicroController;
   motor: number;
+  rotaryPosition = 0;
   object3D = new Object3D();
   selected = false;
   connectors: Array<Connector> = [];
@@ -106,12 +98,7 @@ export class JointLink {
 
     if (model.type === 'arm') {
       this.size = 40;
-    }
-    // else if (model.type === 'cube') {
-    //   this.size = 15;
-    // }
-
-    if (model.type === 'connector') {
+    } else if (model.type === 'connector') {
       this.size = 15;
 
       const X_connector_a = new Connector(null, 'Yellow:X:1', 0, 'X', new THREE.Vector3(1,0,0));
@@ -136,16 +123,6 @@ export class Arm {
   }
 }
 
-
-// export class connectionPoint {
-//   parent: any;
-//   point: any;
-
-//   constructor(parent: any, point: any) {
-//     this.parent = parent;
-//     this.point = point;
-//   }
-// }
 
 export class Point {
   id: string;

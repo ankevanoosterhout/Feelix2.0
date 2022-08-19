@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { KinematicsConfig } from 'src/app/models/kinematics-config.model';
 import { KinematicsDrawingService } from 'src/app/services/kinematics-drawing.service';
 import { DOCUMENT } from '@angular/common';
+import { ClosedChainIKService } from 'src/app/services/closed-chain-ik.service';
 
 @Component({
     selector: 'app-kinematics',
@@ -18,9 +19,16 @@ export class KinematicsComponent implements OnInit {
   public status = 'Ready';
   public progress = 0;
 
+  params = {
+    controls: 'translate',
+    solvePosition: true,
+    solveRotation: false,
+  };
+
 
   // tslint:disable-next-line: variable-name
-  constructor(@Inject(DOCUMENT) private document: Document, private kinematicsDrawingService: KinematicsDrawingService, private electronService: ElectronService) {
+  constructor(@Inject(DOCUMENT) private document: Document, private kinematicsDrawingService: KinematicsDrawingService,
+              private electronService: ElectronService, private closedChainService: ClosedChainIKService) {
 
     this.config = this.kinematicsDrawingService.config;
 
@@ -83,6 +91,7 @@ export class KinematicsComponent implements OnInit {
   @HostListener('window:resize', ['$event'])
   onResize(e: Event) {
     this.onWindowResize();
+    this.closedChainService.updateResolution(window.innerWidth, window.innerHeight);
   }
 
 
@@ -163,6 +172,13 @@ export class KinematicsComponent implements OnInit {
     }
 
 
+    if (this.config.rootActive) {
+
+      this.closedChainService.updateRoot();
+
+    }
+
+
   }
 
   @HostListener('window:keydown', ['$event'])
@@ -197,6 +213,7 @@ export class KinematicsComponent implements OnInit {
       } else if (key === 'r') {
         // this.config.control.setMode( 'rotate' );
         this.kinematicsDrawingService.selectControlMode('rotate');
+        this.params.controls = 'rotate';
       }
       // else if (key === 's') {
       //   this.config.control.setMode( 'scale' );
@@ -204,6 +221,7 @@ export class KinematicsComponent implements OnInit {
       else if (key === 't') {
         // this.config.control.setMode( 'translate' );
         this.kinematicsDrawingService.selectControlMode('translate');
+        this.params.controls = 'translate';
       } else if (key === 'c') {
         this.kinematicsDrawingService.selectCamera();
 

@@ -64,6 +64,7 @@ import { KinematicsToolbarComponent } from './components/interface-elements/tool
 import { KinematicsControlComponent } from './components/kinematics/control/kinematics-controls.component';
 import { KinematicsDrawingService } from './services/kinematics-drawing.service';
 import { KinematicsCursorComponent } from './components/kinematics/control/kinematics-cursor.component';
+import { ClosedChainIKService } from './services/closed-chain-ik.service';
 
 @NgModule({
   declarations: [
@@ -134,7 +135,8 @@ import { KinematicsCursorComponent } from './components/kinematics/control/kinem
     ML5ModelService,
     FilterService,
     KinematicService,
-    KinematicsDrawingService
+    KinematicsDrawingService,
+    ClosedChainIKService
   ],
   bootstrap: [
     AppComponent

@@ -5,8 +5,9 @@ import { Point, JointLink } from '../models/kinematic.model';
 import { KinematicsConfig } from '../models/kinematics-config.model';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
+import { TransformControls } from 'three/examples/jsm/controls/TransformControls';
 import { KinematicService } from './kinematic.service';
+import { ClosedChainIKService } from './closed-chain-ik.service';
 
 @Injectable()
 export class KinematicsDrawingService {
@@ -22,11 +23,15 @@ export class KinematicsDrawingService {
   updateCameraView: Subject<any> = new Subject();
   selectCameraView: Subject<any> = new Subject();
 
-  constructor(@Inject(DOCUMENT) private document: Document, private kinematicService: KinematicService) {
+
+
+  constructor(@Inject(DOCUMENT) private document: Document, private kinematicService: KinematicService, private closedChainIKService: ClosedChainIKService) {
     this.config = new KinematicsConfig();
+
+    this.closedChainIKService.addToScene.subscribe(res => {
+      this.addObjectToScene(res);
+    });
   }
-
-
 
   public selectSceneObject( object: any ) {
     this.selectObjectFromScene.next(object);
@@ -114,6 +119,9 @@ export class KinematicsDrawingService {
     this.config.control.setRotationSnap( THREE.MathUtils.degToRad(15) );
     this.config.control.setScaleSnap( 0.25 );
 
+    this.config.pivotPoint = new THREE.Object3D();
+    this.config.scene.add(this.config.pivotPoint);
+
     this.config.scene.add( this.config.control );
     this.addRotationCircle();
     // this.config.rotaryControls.addEventListener( 'dragging-changed', ( event: any ) => {
@@ -124,9 +132,13 @@ export class KinematicsDrawingService {
 
     this.config.orbit.update();
 
-
   };
 
+
+  addObjectToScene(object: any) {
+    console.log(object);
+    this.config.scene.add(object);
+  }
 
 
 
@@ -171,6 +183,8 @@ export class KinematicsDrawingService {
     this.config.orbit.update();
     requestAnimationFrame( () => this.animate );
 
+    this.closedChainIKService.render();
+
     this.config.renderer.render(this.config.scene, this.config.currentCamera);
   }
 
@@ -190,7 +204,7 @@ export class KinematicsDrawingService {
         // console.log(intersect);
 
 
-        if (!intersect.isTransformControlsPlane) {
+        // if (!intersect.isTransformControlsPlane) {
 
 
           if (intersects && intersect.object.parent.name === 'rotary_control') {
@@ -200,12 +214,10 @@ export class KinematicsDrawingService {
             this.config.pivotPoint.rotation.z = this.getAngleRotaryElement();
             break;
 
-          } else if (intersect.object && intersect.object.isMesh) {
+          } else if (intersect.object && intersect.object instanceof THREE.Mesh) {
             const selectedElement = this.getObjectDetailsFromName(intersect.object.name);
             if (selectedElement) {
-              // console.log('selected element', selectedElement);
               if (selectedElement.color === 'Yellow') {
-                // console.log('select ', selectedElement.type);
                 this.selectConnectionElement(intersect.object, shift);
                 break;
               } else if (selectedElement.color === 'Gray' && selectedElement.axis === 'M') {
@@ -224,9 +236,9 @@ export class KinematicsDrawingService {
             break;
           }
 
-        } else {
-          break;
-        }
+        // } else {
+          // break;
+        // }
       }
     // }
   }
@@ -239,14 +251,18 @@ export class KinematicsDrawingService {
       const v1 = sceneObject.position;
       const v2 = this.config.intersects;
       const crossproduct = v1.dot(v2);
-      console.log(v1, v2, crossproduct);
+      // console.log(v1, v2, crossproduct);
 
       let magnitude_v1 = Math.sqrt(Math.pow(v1.x, 2) + Math.pow(v1.y, 2) + Math.pow(v1.z, 2));
       if (magnitude_v1 === 0) { magnitude_v1 = 0.01; }
       let magnitude_v2 = Math.sqrt(Math.pow(v2.x, 2) + Math.pow(v2.y, 2) + Math.pow(v2.z, 2));
       if (magnitude_v2 === 0) { magnitude_v2 = 0.01; }
 
-      return (crossproduct / magnitude_v1) / magnitude_v2;
+      const angle = (crossproduct / magnitude_v1) / magnitude_v2;
+      // console.log(sceneObject);
+      sceneObject.rotation.z = angle;
+
+      return angle;
     }
     return 0;
   }
@@ -310,7 +326,7 @@ export class KinematicsDrawingService {
 
 
   setObjectColor(object: any, color = null) {
-    object.traverse( ( child: any ) => {
+    object.traverseVisible( ( child: any ) => {
       if (child.isGroup) {
         for (const childEl of child) {
           if ( childEl instanceof THREE.Mesh ){
@@ -344,18 +360,18 @@ export class KinematicsDrawingService {
 
 
   selectConnectionElement(object: any, shift = false) {
-    console.log(object);
+    // console.log(object);
     if (object && object.parent) {
       const sceneObject = this.config.sceneObjects.filter(s => s.id === object.parent.id || (object.parent.parent && s.id === object.parent.parent.id))[0];
       // console.log(sceneObject);
       if (sceneObject) {
         const parent = this.kinematicService.joints.filter(j => j.id === sceneObject.name)[0];
-        console.log(parent);
+        // console.log(parent);
 
 
         if (this.kinematicService.checkIfPointIsSelected(parent.id, object.uuid)) {
-          console.log('is selected');
-          shift ? this.deselectSelectionPoint(sceneObject.id, object) : this.deselectAllObjects();
+          // console.log('is selected');
+          shift ? this.deselectSelectionPoint(sceneObject.uuid, object) : this.deselectAllObjects();
         } else {
           // const point = new connectionPoint(sceneObject, object);
           // shift ? this.kinematicService.selConnPoints.push(point) : this.kinematicService.selConnPoints = [ point ];
@@ -378,29 +394,33 @@ export class KinematicsDrawingService {
 
   selectMovableElement(object: any) {
     if (object && object.parent) {
-      // this.deselectAllObjects();
       const sceneObject = this.config.sceneObjects.filter(s => s.id === object.parent.id || (object.parent.parent && s.id === object.parent.parent.id))[0];
 
       // console.log(sceneObject);
+
       const joint = this.kinematicService.getJoint(sceneObject.name);
+      // console.log(joint);
+
       if (sceneObject && joint) {
         this.deselectAllObjects();
         this.kinematicService.selectedJoints = [joint];
         // this.config.control.detach();
         this.setObjectColor(object, this.config.selectColor);
 
-        console.log(sceneObject);
+        // console.log(sceneObject);
         const circlePosition = sceneObject.position.clone();
+        circlePosition.z + 15;
         const circleOrientation = sceneObject.quaternion.clone()
         this.updateRotation(circlePosition, circleOrientation);
         this.toggleRotationCircle(true);
-        this.config.pivotPoint = new THREE.Object3D();
-        this.config.scene.add(this.config.pivotPoint);
+
         this.config.pivotPoint.rotation.set(0,0,0);
         const parent = object.parent;
         object.parent.getWorldPosition(this.config.pivotPoint.position);
         this.config.pivotPoint.attach(object);
-        this.config.pivotPoint.rotation.z = this.getAngleRotaryElement();
+        // this.config.pivotPoint.rotation.z = this.getAngleRotaryElement();
+        this.config.pivotPoint.rotation.z = object.rotation.z;
+
         parent.attach(object);
       }
     }
@@ -413,7 +433,7 @@ export class KinematicsDrawingService {
   updateRotation(p: THREE.Vector3, q: THREE.Quaternion) {
     // this.loadSVGImage('./assets/images/svg/rotary_control.svg', 'rotary_control', p, q, angle);
     const circle = this.config.scene.getObjectByName('rotary_control');
-    console.log(circle);
+    // console.log(circle);
     if (circle) {
       circle.position.set(p.x, p.y, p.z);
       circle.quaternion.set(q.x, q.y, q.z, q.w);
@@ -423,7 +443,7 @@ export class KinematicsDrawingService {
 
 
   updateRotaryAngle(angle: number) {
-    console.log(angle * (180/Math.PI));
+    // console.log(angle * (180/Math.PI));
     const circle = this.config.scene.getObjectByName('rotary_control');
     if (circle) {
       circle.rotation.z = angle;
@@ -434,7 +454,7 @@ export class KinematicsDrawingService {
 
   toggleRotationCircle(visible: boolean) {
     const circle = this.config.scene.getObjectByName('rotary_control');
-    console.log(circle, visible);
+    // console.log(circle, visible);
 
     circle.traverse( ( child: any ) => {
       child.visible = visible;
@@ -453,10 +473,8 @@ export class KinematicsDrawingService {
 
 
   deselectAllObjects() {
-
-    console.log(this.kinematicService.anySelected());
     if (this.kinematicService.anySelected()) {
-      console.log('deselect draggable object');
+      // console.log('deselect draggable object');
       this.config.draggableObject = undefined;
       this.toggleRotationCircle(false);
       this.config.control.detach();
@@ -478,10 +496,12 @@ export class KinematicsDrawingService {
     }
   }
 
+
   deselectObject(object: any) {
     this.kinematicService.deselectJoint(object.name);
     this.setObjectColor(object);
   }
+
 
   deleteSelectedJoints() {
     if (this.kinematicService.selectedJoints.length > 0) {
@@ -569,27 +589,6 @@ export class KinematicsDrawingService {
   }
 
 
-  alignOrientation(object_origin: any, object_target: any, point_origin: any, point_target: any) {
-
-    object_target.rotation.set(object_origin.rotation.x, object_origin.rotation.y, object_origin.rotation.y);
-    // object_target.updateMatrix();
-    // this.animate();
-
-    if (point_origin[1] !== point_target[1]) {
-      // console.log(point_origin[1], point_target[1]);
-      const rotation = this.getRotation(point_origin[1], point_target[1]);
-      if (rotation.x) {
-        object_target.rotateOnAxis(rotation, Math.PI/2);
-      }
-      // object_target.updateMatrix();
-
-      console.log(rotation);
-
-      // this.animate();
-    }
-    return object_target;
-  }
-
 
   getBBox(obj: any) {
     const pointBBox = new THREE.Box3(new THREE.Vector3(), new THREE.Vector3());
@@ -605,36 +604,10 @@ export class KinematicsDrawingService {
 
     const worldDirection = new THREE.Vector3();
     object.getWorldDirection(worldDirection);
-    // console.log(worldDirection);
-    this.drawArrowHelper(object.position, worldDirection, 0x2121d8);
-
-    // const updatedWorldDirect = new THREE.Vector3();
-    // updatedWorldDirect.multiplyVectors(worldDirection, axis.vector3);
-    // console.log(updatedWorldDirect);
-    // this.drawArrowHelper(object.position, updatedWorldDirect, 0xff2200);
-
-    // const updatedWorldDirect2 = worldDirection.clone();
-
-   // const quaternion = new THREE.Quaternion();
-    // const angle = axis.plane === 'Z' ? Math.PI : Math.PI / 2;
-    // console.log(angle);
-    // quaternion.setFromAxisAngle( axis.vector3, angle );
-
-    // updatedWorldDirect2.applyQuaternion( quaternion );
-     // const angle = axis.plane === 'Z' ? Math.PI : Math.PI / 2;
-
-    // const matrix = new THREE.Matrix4();
-    // matrix.compose(object.position, object.quaternion, new THREE.Vector3(1,1,1));
-
-    // const updatedWorldDirect2 = worldDirection.clone();
-    // updatedWorldDirect2.projectOnVector(axis.vector3);
-    // updatedWorldDirect2.applyAxisAngle( axis.vector3, angle );
-
+    // this.drawArrowHelper(object.position, worldDirection, 0x2121d8);
     const updatedWorldDirect = axis.vector3.clone();
     updatedWorldDirect.applyQuaternion(object.quaternion);
-
-    this.drawArrowHelper(object.position, updatedWorldDirect, 0x000000);
-
+    // this.drawArrowHelper(object.position, updatedWorldDirect, 0x000000);
     return updatedWorldDirect;
   }
 
@@ -655,14 +628,13 @@ export class KinematicsDrawingService {
 
 
   joinObjects() {
+    console.log(this.kinematicService.selConnPoints);
 
     if (this.kinematicService.selConnPoints.length === 2) {
       if (this.kinematicService.selConnPoints[0].parent_id === this.kinematicService.selConnPoints[1].parent_id) {
         this.updateProgess('selection points are from the same object', 0);
         return;
       }
-
-      console.log(this.kinematicService.selConnPoints);
 
       const joint_origin = this.kinematicService.getJoint(this.kinematicService.selConnPoints[0].parent_id);
       const joint_target = this.kinematicService.getJoint(this.kinematicService.selConnPoints[1].parent_id);
@@ -677,20 +649,15 @@ export class KinematicsDrawingService {
       const connPoint_origin = this.kinematicService.getSelectionPoint(joint_origin.id, this.kinematicService.selConnPoints[0].id);
       const connPoint_target = this.kinematicService.getSelectionPoint(joint_target.id, this.kinematicService.selConnPoints[1].id);
 
-      console.log(connPoint_origin, connPoint_target);
-
       const pnt_dir_origin = this.getDirectionVector(sceneObject_origin, connPoint_origin);
       const pnt_dir_target = this.getDirectionVector(sceneObject_target, connPoint_target);
 
-      console.log(pnt_dir_origin, pnt_dir_target);
-
-      const quaternion = new THREE.Quaternion(); // create one and reuse it
+      const quaternion = new THREE.Quaternion();
       const reverseOrigin = new THREE.Vector3();
       reverseOrigin.multiplyVectors(pnt_dir_target, new THREE.Vector3(-1,-1,-1));
       quaternion.setFromUnitVectors(pnt_dir_origin, reverseOrigin);
-      const matrix = new THREE.Matrix4(); // create one and reuse it
+      const matrix = new THREE.Matrix4();
       matrix.makeRotationFromQuaternion( quaternion );
-      console.log(quaternion);
       sceneObject_target.applyMatrix4( matrix );
 
       sceneObject_target.updateMatrix();
@@ -706,6 +673,16 @@ export class KinematicsDrawingService {
 
       this.animate();
 
+      connPoint_origin.connected = true;
+      connPoint_target.connected = true;
+
+      this.kinematicService.updateConnectionPoint(joint_origin.id, connPoint_origin);
+      this.kinematicService.updateConnectionPoint(joint_target.id, connPoint_target);
+
+      console.log('connectObjects');
+
+      this.closedChainIKService.connectObjects( [{ frame: joint_origin, point: connPoint_origin }, { frame: joint_target, point: connPoint_target }]);
+
     } else if (this.kinematicService.selConnPoints.length > 2) {
       this.updateProgess('too many items selected', 0);
       // console.log('too many items selected');
@@ -713,52 +690,9 @@ export class KinematicsDrawingService {
       this.updateProgess('select two points', 0);
       // console.log('select two connection points');
     }
-
-
   }
 
 
 
-  /* load svg image */
-
-
-  // loadSVGImage(url: string, name: string, p: any, q: any, angle: number) {
-  //   this.config.SVGloader.load(url, (data: any) => {// called when the resource is loaded
-  //       console.log(data);
-  //       const paths = data.paths;
-  //       const group = new THREE.Group();
-  //       group.name = name;
-  //       group.scale.multiplyScalar( 0.1 );
-
-  //       for ( let i = 0; i < paths.length; i ++ ) {
-  //           let path = paths[ i ];
-  //           let material = new THREE.MeshStandardMaterial({ color: path.color, side: THREE.DoubleSide, depthWrite: false });
-  //           let shapes = path.toShapes( true );
-  //           for ( var j = 0; j < shapes.length; j ++ ) {
-  //             var shape = shapes[ j ];
-  //             var geometry = new THREE.ShapeBufferGeometry( shape );
-  //             geometry.applyMatrix4(new THREE.Matrix4().makeScale ( 1, 1, -1 )) // <-- this
-  //             var mesh = new THREE.Mesh( geometry, material );
-  //             group.add( mesh );
-  //         }
-  //       }
-  //       console.log(group);
-  //       group.isDraggable = true;
-  //       group.position.set(p.x,p.y,p.z);
-  //       group.quaternion.set(q.x,q.y,q.z,q.w);
-  //       group.rotateZ(angle);
-
-  //       this.config.scene.add( group );
-  //     },
-  //     // called when loading is in progresses
-  //     ( xhr: any ) => {
-  //       console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
-  //     },
-  //     // called when loading has errors
-  //     ( error: any ) => {
-  //       console.log( 'Error loading SVG ' + error );
-  //     }
-  //   );
-  // }
 }
 
