@@ -73,8 +73,7 @@
           </div>
 
 
-          <div class="row" *ngIf="this.kinematicService.selectedJoints[0].type === 'motor' || this.kinematicService.selectedJoints[0].type === 'joint'">
-            <!-- <div class="row" *ngFor="let connectorGroup of this.kinematicService.selectedJoints[0].connectors"> -->
+          <div class="row">
               <div class="row">
                 <div class="opencloseArrow" [ngClass]="{ open: visible[6] }" (click)="visible[6] = !visible[6]"><div></div></div>
                 <label class="label header">Connection points</label>
@@ -84,24 +83,22 @@
                   <li *ngFor="let point of this.kinematicService.selectedJoints[0].connectors">
                     <div class="row">
                       <div class="label">{{ point.plane }}</div>
-                      <span *ngIf="point.plane !== 'Z'">
+                      <span *ngIf="point.plane !== 'Z' && this.kinematicService.selectedJoints[0].isJoint">
                         <input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="angle_{{ point.id }}" name="angle_{{ point.id }}" [(ngModel)]="point.angle" (change)="this.updatePointAngle(point)">
-                        <div class="buttons">
-                          <!-- <div id="top" class="svg-button" *ngIf="point.plane === 'Z'" (click)="this.updatePointType(this.kinematicService.selectedJoints[0].id, point)"><img src="./assets/icons/buttons/top.svg"></div> -->
-                          <!-- <div id="bottom" class="svg-button" *ngIf="point.plane === 'Z'"  (click)="this.updatePointType(this.kinematicService.selectedJoints[0].id, point)"><img src="./assets/icons/buttons/bottom.svg"></div> -->
-                          <div id="outside" class="svg-button" *ngIf="point.plane === 'Y'"  (click)="this.updatePointType(this.kinematicService.selectedJoints[0].id, point)"><img src="./assets/icons/buttons/outside.svg"></div>
-                          <div id="inside" class="svg-button" *ngIf="point.plane === 'X'"  (click)="this.updatePointType(this.kinematicService.selectedJoints[0].id, point)"><img src="./assets/icons/buttons/inside.svg"></div>
-                          <div id="delete" class="svg-button" (click)="this.deletePoint(this.kinematicService.selectedJoints[0].id, point.id)"><img src="./assets/icons/buttons/bin.svg"></div>
-                        </div>
                       </span>
+                      <div class="buttons" *ngIf="this.kinematicService.selectedJoints[0].isJoint">
+                        <div id="linked" class="svg-button" [ngClass]="{ active: point.connected }"><img src="./assets/icons/effects/link-icon.svg"></div>
+                        <div id="outside" class="svg-button" *ngIf="point.plane === 'Y'" (click)="this.updatePointType(this.kinematicService.selectedJoints[0].id, point)"><img src="./assets/icons/buttons/outside.svg"></div>
+                        <div id="inside" class="svg-button" *ngIf="point.plane === 'X'" (click)="this.updatePointType(this.kinematicService.selectedJoints[0].id, point)"><img src="./assets/icons/buttons/inside.svg"></div>
+                        <div id="delete" class="svg-button" *ngIf="point.plane !== 'Z'" (click)="this.deletePoint(this.kinematicService.selectedJoints[0].id, point.id)"><img src="./assets/icons/buttons/bin.svg"></div>
+                      </div>
                     </div>
                   </li>
-                  <li>
+                  <li *ngIf="this.kinematicService.selectedJoints[0].isJoint">
                     <div class="button" (click)="this.kinematicService.addPoint(this.kinematicService.selectedJoints[0].id)">add</div>
                   </li>
                 </ul>
               </div>
-            <!-- </div> -->
           </div>
 
           <div class="row">
@@ -142,7 +139,7 @@
           </div>
 
 
-          <div class="row" *ngIf="this.kinematicService.selectedJoints[0].type === 'arm'">
+          <div class="row" *ngIf="!this.kinematicService.selectedJoints[0].isJoint && this.kinematicService.selectedJoints[0].connectors.length === 2">
             <div class="label">length</div>
             <input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="size{{ this.kinematicService.selectedJoints[0].id }}"
               name="size_{{ this.kinematicService.selectedJoints[0].id }}" [(ngModel)]="this.kinematicService.selectedJoints[0].size" (change)="this.changeSize(this.kinematicService.selectedJoints[0])">

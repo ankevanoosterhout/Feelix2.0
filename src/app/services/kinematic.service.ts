@@ -23,9 +23,9 @@ export class KinematicService {
   constructor() {}
 
   addJoint(model: any): JointLink {
-    const objectsInScene = this.joints.filter(j => j.type === model.type);
-    const joint = new JointLink(uuid(), model.type + '-' + (objectsInScene.length + 1), model);
-
+    const joint = new JointLink(uuid(), model);
+    const similarObjects = this.joints.filter(j => j.isMotor === joint.isMotor && j.isJoint === joint.isJoint).length;
+    joint.name += '-' + (similarObjects + 1);
     this.joints.push(joint);
 
     return joint;

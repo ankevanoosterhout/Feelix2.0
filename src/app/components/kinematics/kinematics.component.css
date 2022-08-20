@@ -296,9 +296,15 @@ ul#models li img {
   margin: 0 2px;
   border:none;
   background: none;
+  vertical-align: top;
 }
 .svg-button img {
   width: 100%;
   height: auto;
+}
+
+.svg-button.active {
+  border: 1px solid #00AEEF;
+  margin: -1px 2px;
 }
 

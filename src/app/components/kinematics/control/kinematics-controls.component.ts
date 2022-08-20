@@ -107,6 +107,7 @@ export class KinematicsControlComponent {
 
 
   loadOBJModel(model: any) {
+    // const modelGroup = new THREE.Group();
     const group = new THREE.Group();
     group.name = model.id;
 

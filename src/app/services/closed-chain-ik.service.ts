@@ -50,7 +50,7 @@ export class ClosedChainIKService {
     let linkObject: any = null;
 
     for (const object of objects) {
-      if (object.frame.type === 'joint' || object.frame.type === 'motor') {
+      if (object.frame.isJoint) {
         // let inRoot = this.ikRoot.filter(i => i.name === object.frame.id)[0];
         newJoint = this.createNewJoint(object.frame.object3D.position, DOF.EZ, Math.PI * 0.8);
         newJoint.name = object.frame.id;
@@ -149,6 +149,7 @@ export class ClosedChainIKService {
         c.material.color.set( 0xe91e63 ).convertSRGBToLinear();
       }
     });
+    console.log(this.ikHelper);
     this.addToScene.next(this.ikHelper);
   }
 
