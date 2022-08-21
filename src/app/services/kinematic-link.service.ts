@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { KeyConstruct, KinematicConnection, KinematicConnectionList } from '../models/kinematic-connections.model';
 import { v4 as uuid } from 'uuid';
+import { ClosedChainIKService } from './closed-chain-ik.service';
 
 
 @Injectable()
@@ -10,7 +11,7 @@ export class KinematicLinkService {
   connections: Array<KinematicConnectionList> = [];
 
 
-  constructor() {}
+  constructor(private closedChainIKService: ClosedChainIKService) {}
 
 
   createNewConnection(objects: any) {
@@ -53,6 +54,8 @@ export class KinematicLinkService {
       connList.list.push(kinematicConnection);
       this.connections.push(connList);
     }
+
+    this.closedChainIKService.connectObjects(objects);
 
     console.log(this.connections);
   }

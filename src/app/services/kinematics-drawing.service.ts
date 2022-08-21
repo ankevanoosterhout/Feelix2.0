@@ -731,9 +731,7 @@ export class KinematicsDrawingService {
 
       this.kinematicLinkService.createNewConnection([{ frame: models[0], point: connPnts[0] }, { frame: models[1], point: connPnts[1] }]);
 
-      this.closedChainIKService.connectObjects( [{ frame: models[0], point: connPnts[0] }, { frame: models[1], point: connPnts[1] }]);
-
-      // this.updateConnectedObjects(models[1]);
+      // this.closedChainIKService.connectObjects( [{ frame: models[0], point: connPnts[0] }, { frame: models[1], point: connPnts[1] }]);
 
 
     } else if (this.kinematicService.selConnPoints.length > 2) {

@@ -105,13 +105,13 @@
             <label class="radio-container inline">
               <input type="checkbox" class="type" id="joint_active" name="joint_active"
               [(ngModel)]="this.kinematicService.selectedJoints[0].grounded" [checked]="this.kinematicService.selectedJoints[0].grounded" (change)="updateModel(this.kinematicService.selectedJoints[0])">
-              <span class="checkmark radio inline"></span> grounded
+              <span class="checkmark radio inline"></span> lock position
             </label>
           </div>
 
 
 
-          <div class="row" *ngIf="this.kinematicService.selectedJoints[0].type === 'joint' && this.kinematicService.selectedJoints[0].active">
+          <div class="row" *ngIf="this.kinematicService.selectedJoints[0].isMotor && this.kinematicService.selectedJoints[0].active">
             <select class="form-control playWindow microcontroller" id="microcontroller" name="microcontroller" [(ngModel)]="this.kinematicService.selectedJoints[0].control"
               (change)="updateModel(this.kinematicService.selectedJoints[0])">
               <option class="placeholder" value="" selected>-- select microcontroller --</option>

@@ -9,8 +9,6 @@ import * as THREE from 'three';
 @Injectable()
 export class ClosedChainIKService {
 
-  structure = [];
-
   // TODO: why is the solve stalling so frequently? Only when goal is set with rotation.
   // Matching rotation goal doesn't seem to work.
   solverOptions = {
@@ -23,6 +21,8 @@ export class ClosedChainIKService {
     rotationConvergeThreshold: 1e-3,
     restPoseFactor: 0.001,
   };
+
+  ikRoots = [];
 
   solver: any;
   ikHelper: any;
@@ -40,62 +40,130 @@ export class ClosedChainIKService {
     this.addToScene.next(this.targetObject);
   }
 
-
-
-  connectObjects(objects: Array<any>, callback: void) {
+  connectObjects(objects: Array<any>) {
     console.log(objects);
-
-    let newJoint: Joint = null;
-    let newLink: Link = null;
-    let linkObject: any = null;
 
     for (const object of objects) {
       if (object.frame.isJoint) {
-        // let inRoot = this.ikRoot.filter(i => i.name === object.frame.id)[0];
-        newJoint = this.createNewJoint(object.frame.object3D.position, DOF.EZ, Math.PI * 0.8);
-        newJoint.name = object.frame.id;
-        // }
-        console.log(newJoint);
-      } else {
-        newLink = new Link();
-        linkObject = object.frame;
-        console.log(linkObject);
-      }
 
-      console.log(newLink, newJoint);
-      if (newLink !== null && newJoint !== null) {
-        newLink.addChild( newJoint );
+        const jointInRoot = this.checkIfJointIsInRoot(object.frame);
+
+        const newLink = new Link();
         console.log(newLink);
-        console.log(this.currRoot, this.ikRoot);
+        const newJoint = this.createNewJoint(object.frame.object3D.position, DOF.EZ, Math.PI * 2, object.frame.object3D.rotation.z);
+        newJoint.name = object.frame.id;
+
+        newJoint.setMinLimits( - 0.9 * Math.PI );
+		    newJoint.setMaxLimits( 0.9 * Math.PI );
+
+        newLink.addChild(newJoint);
 
         if ( this.currRoot ) {
           this.currRoot.addChild( newLink );
-          console.log(this.currRoot);
         }
 
         if ( this.ikRoot === null ) {
           this.ikRoot = newLink;
-          console.log(this.ikRoot);
         }
 
         this.currRoot = newJoint;
-        console.log(this.currRoot);
 
-
-        if (linkObject) {
-          console.log(linkObject.object3D.position);
-          this.addFinalLink(linkObject.object3D.position);
-          this.createRootsHelper();
-        }
+        console.log("link", newLink);
+        console.log("joint", newJoint);
+        console.log("currRoot", this.currRoot);
+        console.log("ikRoot", this.ikRoot);
       }
     }
   }
+
+  checkIfJointIsInRoot(joint: any) {
+    console.log(joint);
+    if (this.ikRoot) {
+      const jointInRoot = this.ikRoot.children.filter(c => c.name === joint.id)[0];
+      //check joint in root
+      console.log(jointInRoot);
+      console.log(jointInRoot.DoF);
+      return jointInRoot;
+    }
+  }
+  // connectObjects(objects: Array<any>) {
+  //   console.log(objects);
+
+  //   let newJoint: Joint = null;
+  //   let newLink: Link = null;
+  //   let linkObject: any = null;
+
+  //   for (const object of objects) {
+  //     if (object.frame.isJoint) {
+  //       // let inRoot = this.ikRoot.filter(i => i.name === object.frame.id)[0];
+  //       newJoint = this.createNewJoint(object.frame.object3D.position, DOF.EZ, Math.PI * 2);
+  //       newJoint.name = object.frame.id;
+  //       // }
+  //       console.log(newJoint);
+
+  //       newLink = new Link();
+  //       linkObject = object.frame;
+  //       console.log(linkObject);
+
+  //       newLink.addChild( newJoint );
+  //       console.log(newLink);
+  //       console.log(this.currRoot, this.ikRoot);
+
+  //       if ( this.currRoot ) {
+  //         this.currRoot.addChild( newLink );
+  //         console.log(this.currRoot);
+  //       }
+
+  //       if ( this.ikRoot === null ) {
+  //         this.ikRoot = newLink;
+  //         console.log(this.ikRoot);
+  //       }
+
+  //       this.currRoot = newJoint;
+  //       console.log(this.currRoot);
+  //     }
+
+  //     // console.log(newLink, newJoint);
+  //     // if (newJoint) {
+  //     //   newLink.addChild( newJoint );
+  //     //   console.log(newLink);
+  //     //   console.log(this.currRoot, this.ikRoot);
+
+  //     //   if ( this.currRoot ) {
+  //     //     this.currRoot.addChild( newLink );
+  //     //     console.log(this.currRoot);
+  //     //   }
+
+  //     //   if ( this.ikRoot === null ) {
+  //     //     this.ikRoot = newLink;
+  //     //     console.log(this.ikRoot);
+  //     //   }
+
+  //     //   this.currRoot = newJoint;
+  //     //   console.log(this.currRoot);
+
+
+  //       // if (linkObject) {
+  //         // console.log(linkObject.object3D.position);
+  //         // this.addFinalLink(linkObject.object3D.position);
+  //         // this.createRootsHelper();
+  //       // }
+  //     // }
+  //   }
+  //   this.createRootsHelper();
+  // }
 
 
   updateModelOnMoveTarget(targetObject: any) {
 
   }
 
+
+  updateJointLimits(joint_id: any, limitMin: number, limitMax: number) {
+    //get joint
+    // joint.setMinLimits( limitMin );
+		// joint.setMaxLimits( limitMax );
+  }
 
 
   addFinalLink(position: any) {
@@ -107,11 +175,13 @@ export class ClosedChainIKService {
   }
 
 
-  createNewJoint(position: any, DoF: any, DoFValue: number ) {
+  createNewJoint(position: any, DoF: any, DoFValue: number, restPosition: number) {
     const joint = new Joint();
     joint.setDoF( DoF ); //DOF.EZ
     joint.setPosition( position.x, position.y, position.z ); //0, 1, 0
     joint.setDoFValues( DoFValue ); //Math.PI / 4
+    joint.setRestPoseValues(restPosition);
+    joint.restPoseSet = true;
     console.log('new joint ', joint);
     return joint;
   }
