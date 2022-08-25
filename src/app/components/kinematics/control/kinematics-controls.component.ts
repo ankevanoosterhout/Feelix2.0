@@ -132,13 +132,15 @@ export class KinematicsControlComponent {
         group.add(object);
 
       }, (xhr: any) => {
-        console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
+        // console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
       }, (error: any) => {
-        console.log( 'Error loading model' );
+        // console.log( 'Error loading model' );
       });
 
     }
-    this.config.sceneObjects.push(group);
+    this.kinematicService.joints.filter(j => j.id === model.id)[0].sceneObject = group;
+
+    // this.config.sceneObjects.push(group);
     this.config.scene.add( group );
 
   }
@@ -153,18 +155,9 @@ export class KinematicsControlComponent {
       const imageUrl = (this.kinematicService.selectedJoints[0].active ? 'active':'passive') + '_joint_' + this.kinematicService.selectedJoints[0].modelType + '_connector_' + point.plane + '.obj';
 
       this.config.loader.load('./assets/models/' + imageUrl, (object: any) => {   // called when resource is loaded
+        console.log(object);
+        object = this.kinematicService.updateObjectDetails(object, model_id, point.name, this.config.selectColor);
 
-        object.traverseVisible( ( child: any ) => {
-            if ( child instanceof THREE.Mesh ) {
-              child.material = new THREE.MeshStandardMaterial({ color: this.config.selectColor });
-              const child_color = child.name.split(":");
-              if (child_color[0] === "Yellow") {
-                child.name = point.name;
-                const updatedPoint = this.kinematicService.updateSelectionPointID(model_id, point.name, child.uuid);
-                if (updatedPoint) { object.name = updatedPoint.id; }
-              }
-            }
-        });
         object.rotation.z = point.angle * (Math.PI/180);
         sceneObject.add(object);
 
@@ -231,6 +224,7 @@ export class KinematicsControlComponent {
       const connector = joint.connectors.filter(p => p.id === point.id)[0];
       if (connector) {
         connector.plane = connector.plane === 'X' ? 'Y' : 'X';
+        connector.size = this.kinematicService.getConnectorSize(connector.plane, joint.modelType, joint.isMotor);
       }
       this.kinematicService.selectedJoints[0] = this.kinematicService.updateConnectionPoint(id, point);
       this.removeConnectorImage(point);
@@ -238,6 +232,7 @@ export class KinematicsControlComponent {
       this.kinematicsDrawingService.animate();
     }
   }
+
 
 
   removeConnectorImage(point: Connector) {
@@ -277,6 +272,32 @@ export class KinematicsControlComponent {
 
 
 
+  updatePointSize(joint_id: string, point: Connector) {
+    const sceneObject = this.config.scene.getObjectByName(joint_id);
+    const joint = this.kinematicService.joints.filter(j => j.id === joint_id)[0];
+    if (joint) {
+      const connector = joint.connectors.filter(c => c.id === point.id)[0];
+      connector.size.scale = point.size.value / point.size.original;
+      connector.size.value = point.size.value;
+      // console.log(point);
+      if (sceneObject) {
+        sceneObject.traverseVisible( ( child: any ) => {
+          if (child.uuid === point.block_id ) {
+            child.scale.y = connector.size.scale;
+            child.position.y = -point.size.offset * (connector.size.scale - 1);
+            // console.log(child.position);
+          } else if( child.uuid === point.id) {
+            child.position.y = connector.size.value - 2;
+          }
+        });
+        joint.sceneObject = sceneObject;
+        this.kinematicService.selectedJoints = [ joint ];
+      }
+      this.kinematicsDrawingService.animate();
+    }
+  }
+
+
   changeSize(element: JointLink) {
     const sceneObject = this.config.scene.getObjectByName(element.id);
     const newScale = element.size / 40;
@@ -291,7 +312,6 @@ export class KinematicsControlComponent {
         }
       });
     }
-
   }
 
 

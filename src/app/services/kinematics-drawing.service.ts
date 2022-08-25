@@ -8,7 +8,6 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls';
 import { KinematicService } from './kinematic.service';
 import { ClosedChainIKService } from './closed-chain-ik.service';
-import { KeyConstruct, KinematicConnection } from '../models/kinematic-connections.model';
 import { KinematicLinkService } from './kinematic-link.service';
 
 @Injectable()
@@ -34,6 +33,10 @@ export class KinematicsDrawingService {
     this.closedChainIKService.addToScene.subscribe(res => {
       this.addObjectToScene(res);
     });
+
+    this.closedChainIKService.removeFromScene.subscribe(res => {
+      this.removeObjectFromScene(res);
+    });
   }
 
   public selectSceneObject( object: any ) {
@@ -53,7 +56,7 @@ export class KinematicsDrawingService {
   }
 
   updateControlMode(name: string) {
-    if (name !== 'rotateAxis') {
+    if (name !== 'rotateAxis' && name !== 'move') {
       this.config.control.setMode( name );
     }
   }
@@ -100,10 +103,12 @@ export class KinematicsDrawingService {
     this.config.orbit.update();
 
     this.config.control = new TransformControls( this.config.currentCamera, this.config.renderer.domElement );
-    this.config.control.addEventListener( 'change', (event: any) => {
+    this.config.control.addEventListener( 'objectChange', (event: any) => {
       if (this.kinematicService.selectedJoints.length === 1) {
         const sceneObject = this.config.scene.getObjectByName(this.kinematicService.selectedJoints[0].id);
-        if (sceneObject) { this.updatePosition(sceneObject, this.kinematicService.selectedJoints[0]); }
+        if (sceneObject) {
+          this.updatePosition(sceneObject, this.kinematicService.selectedJoints[0], true);
+        }
       }
     });
 
@@ -140,6 +145,13 @@ export class KinematicsDrawingService {
 
   addObjectToScene(object: any) {
     this.config.scene.add(object);
+  }
+
+  removeObjectFromScene(name: string) {
+    const object = this.config.scene.getObjectByName(name);
+    if (object) {
+      this.config.scene.remove(object);
+    }
   }
 
 
@@ -218,22 +230,23 @@ export class KinematicsDrawingService {
 
           } else if (intersect.object && intersect.object instanceof THREE.Mesh) {
             const selectedElement = this.getObjectDetailsFromName(intersect.object.name);
+
             if (selectedElement) {
+              // console.log(selectedElement);
               if (selectedElement.color === 'Yellow') {
                 this.selectConnectionElement(intersect.object, shift);
                 break;
               } else if (selectedElement.color === 'Gray' && selectedElement.axis === 'M') {
-                this.selectMovableElement(intersect.object);
+                this.selectMovableElement(intersect.object, selectedElement.val);
                 break;
               }
             }
           }
 
-          const sceneObject = this.config.sceneObjects.filter(s => s.id === intersect.object.parent.id || (intersect.object.parent.parent && s.id === intersect.object.parent.parent.id))[0];
-          // console.log(sceneObject);
+          const joint = this.kinematicService.joints.filter(j => j.sceneObject.id === intersect.object.parent.id || (intersect.object.parent.parent && j.sceneObject.id === intersect.object.parent.parent.id))[0];
 
-          if (sceneObject) {
-            this.selectObject(sceneObject, shift);
+          if (joint) {
+            this.selectObject(joint.sceneObject, shift);
             this.animate();
             break;
           }
@@ -273,7 +286,7 @@ export class KinematicsDrawingService {
     if (name) {
       const nameList = name.split(':');
       if (nameList.length > 1) {
-        return { axis: nameList[1], color: nameList[0], offset: nameList.length > 2 ? parseInt(nameList[2]) : 0 };
+        return { axis: nameList[1], color: nameList[0], val: nameList.length > 2 ? nameList[2] : null };
       }
     }
     return;
@@ -364,20 +377,16 @@ export class KinematicsDrawingService {
   selectConnectionElement(object: any, shift = false) {
     // console.log(object);
     if (object && object.parent) {
-      const sceneObject = this.config.sceneObjects.filter(s => s.id === object.parent.id || (object.parent.parent && s.id === object.parent.parent.id))[0];
-      // console.log(sceneObject);
-      if (sceneObject) {
-        const parent = this.kinematicService.joints.filter(j => j.id === sceneObject.name)[0];
-        // console.log(parent);
+      const joint = this.kinematicService.joints.filter(j => j.sceneObject.id === object.parent.id || (object.parent.parent && j.sceneObject.id === object.parent.parent.id))[0];
+      if (joint) {
 
-
-        if (this.kinematicService.checkIfPointIsSelected(parent.id, object.uuid)) {
+        if (this.kinematicService.checkIfPointIsSelected(joint.id, object.uuid)) {
           // console.log('is selected');
-          shift ? this.deselectSelectionPoint(sceneObject.uuid, object) : this.deselectAllObjects();
+          shift ? this.deselectSelectionPoint(joint.sceneObject.uuid, object) : this.deselectAllObjects();
         } else {
           // const point = new connectionPoint(sceneObject, object);
           // shift ? this.kinematicService.selConnPoints.push(point) : this.kinematicService.selConnPoints = [ point ];
-          const point = new Point(parent.id, object.uuid);
+          const point = new Point(joint.id, object.uuid);
           if (!shift) {
             this.deselectAllObjects();
             this.kinematicService.selConnPoints = [ point ];
@@ -394,36 +403,43 @@ export class KinematicsDrawingService {
     }
   }
 
-  selectMovableElement(object: any) {
+  selectMovableElement(object: any, val: any) {
+
     if (object && object.parent) {
-      const sceneObject = this.config.sceneObjects.filter(s => s.id === object.parent.id || (object.parent.parent && s.id === object.parent.parent.id))[0];
 
-      // console.log(sceneObject);
+      const joint = this.kinematicService.joints.filter(j => j.sceneObject.id === object.parent.id || (object.parent.parent && j.sceneObject.id === object.parent.parent.id))[0];
 
-      const joint = this.kinematicService.getJoint(sceneObject.name);
-      // console.log(joint);
+      if (joint) {
+        if (val && val === 'E') {
+          this.deselectAllObjects();
+          this.kinematicService.selectedJoints = [ joint ];
+          console.log(val);
+          this.setObjectColor(object, this.config.selectColor);
 
-      if (sceneObject && joint) {
-        this.deselectAllObjects();
-        this.kinematicService.selectedJoints = [joint];
-        // this.config.control.detach();
-        this.setObjectColor(object, this.config.selectColor);
+          //extend the arm
+          //show arrow in direction of
+        } else {
+          this.deselectAllObjects();
+          this.kinematicService.selectedJoints = [joint];
+          // this.config.control.detach();
+          this.setObjectColor(object, this.config.selectColor);
 
-        // console.log(sceneObject);
-        const circlePosition = sceneObject.position.clone();
-        circlePosition.z + 15;
-        const circleOrientation = sceneObject.quaternion.clone()
-        this.updateRotation(circlePosition, circleOrientation);
-        this.toggleRotationCircle(true);
+          // // console.log(sceneObject);
+          // const circlePosition = joint.sceneObject.position.clone();
+          // circlePosition.z + 15;
+          // const circleOrientation = joint.sceneObject.quaternion.clone()
+          // this.updateRotation(circlePosition, circleOrientation);
+          // this.toggleRotationCircle(true);
 
-        this.config.pivotPoint.rotation.set(0,0,0);
-        const parent = object.parent;
-        object.parent.getWorldPosition(this.config.pivotPoint.position);
-        this.config.pivotPoint.attach(object);
-        // this.config.pivotPoint.rotation.z = this.getAngleRotaryElement();
-        this.config.pivotPoint.rotation.z = object.rotation.z;
+          // this.config.pivotPoint.rotation.set(0,0,0);
+          // const parent = object.parent;
+          // object.parent.getWorldPosition(this.config.pivotPoint.position);
+          // this.config.pivotPoint.attach(object);
+          // // this.config.pivotPoint.rotation.z = this.getAngleRotaryElement();
+          // this.config.pivotPoint.rotation.z = object.rotation.z;
 
-        parent.attach(object);
+          // parent.attach(object);
+        }
       }
     }
   }
@@ -481,8 +497,8 @@ export class KinematicsDrawingService {
       this.toggleRotationCircle(false);
       this.config.control.detach();
 
-      for (const object of this.config.sceneObjects) {
-        this.deselectObject(object);
+      for (const object of this.kinematicService.joints) {
+        this.deselectObject(object.sceneObject);
       }
       for (const item of this.kinematicService.selConnPoints) {
         const sceneObject = this.config.scene.getObjectByName(item.parent_id);
@@ -512,6 +528,7 @@ export class KinematicsDrawingService {
       }
       for (const joint of this.kinematicService.selectedJoints) {
         this.deleteObjectFromScene(joint.id);
+        this.kinematicLinkService.deleteAllLinks(joint.id);
         this.kinematicService.deleteJoint(joint.id);
       }
       this.animate();
@@ -519,45 +536,111 @@ export class KinematicsDrawingService {
   }
 
 
-  deleteObjectFromScene(name: string) {
-    const sceneObject = this.config.scene.getObjectByName(name);
-    if (sceneObject) {
-      const index = this.config.sceneObjects.indexOf(sceneObject);
-      if (index > -1) {
-        this.config.sceneObjects.splice(index, 1);
-      }
-      this.config.scene.remove(sceneObject);
+  copySelectedJoints() {
+    const newSelectedJoints = [];
+    if (this.kinematicService.selectedJoints.length > 0) {
+      for (const joint of this.kinematicService.selectedJoints) {
+        const copySceneObject = joint.sceneObject.clone();
+        const newJoint = this.kinematicService.copyJoint(joint.id, copySceneObject);
+        newSelectedJoints.push(newJoint);
+        this.config.scene.add(newJoint.sceneObject);
 
+        const sceneObject = this.config.scene.filter(newJoint.id);
+
+        // for (const connector of newJoint.connectors) {
+        //   // console.log(newJoint.sceneObject.children);
+        //   // console.log(connector);
+        //   sceneObject.traverse( (child: any) => {
+        //     // console.log(child);
+        //     if (child instanceof THREE.Mesh) {
+        //       // this.updateObjectDetails(child, newJoint.id, connector.name);
+        //       this.kinematicService.updateSelectionPointID(newJoint.id, connector.name, child.uuid);
+        //     }
+        //   });
+        // }
+        newJoint.sceneObject = sceneObject;
+      }
+      // this.deselectAllObjects();
+      // this.kinematicService.selectedJoints = newSelectedJoints;
     }
   }
 
 
-  updatePosition(object: any, model: JointLink) {
+  deleteObjectFromScene(name: string) {
+    const sceneObject = this.config.scene.getObjectByName(name);
+    if (sceneObject) {
+      this.config.scene.remove(sceneObject);
+    }
+  }
+
+
+  updatePosition(object: any, model: JointLink, updateChildren = false) {
     if (object) {
       if (model) {
+        model.sceneObject = object;
+
+        // const diffRotation = {
+        //   x: object.rotation.x - model.object3D.rotation.x * (Math.PI / 180),
+        //   y: object.rotation.y - model.object3D.rotation.y * (Math.PI / 180),
+        //   z: object.rotation.z - model.object3D.rotation.z * (Math.PI / 180)
+        // };
+
+        const diffTranslation = {
+          x: object.position.x - model.object3D.position.x,
+          y: object.position.y - model.object3D.position.y,
+          z: object.position.z - model.object3D.position.z
+        };
+
         model.object3D.rotation.x = object.rotation.x * (180 / Math.PI);
         model.object3D.rotation.y = object.rotation.y * (180 / Math.PI);
         model.object3D.rotation.z = object.rotation.z * (180 / Math.PI);
 
-        model.object3D.position.x = object.position.x;
-        model.object3D.position.y = object.position.y;
-        model.object3D.position.z = object.position.z;
+        model.object3D.position.x += diffTranslation.x;
+        model.object3D.position.y += diffTranslation.y;
+        model.object3D.position.z += diffTranslation.z;
+
+
+        if (updateChildren) {
+          this.updateChildren(model, diffTranslation);
+        }
       }
-      this.kinematicService.updateJointVisualization(model.id, model.object3D);
+      // this.kinematicService.updateJointVisualization(model.id, model.object3D);
     }
+  }
+
+  updateChildren(model: JointLink, diffTranslation: any, prevModel = null) {
+    // console.log(model.connectors);
+    for (const item of model.connectors) {
+      if (item.connected) {
+        if (prevModel === null || prevModel.id !== item.object) {
+          const connectedObject = this.kinematicService.joints.filter(j => j.id === item.object)[0];
+          if (connectedObject) {
+            // console.log('translate children ', diffTranslation);
+            this.translateObject(connectedObject, diffTranslation);
+            this.updateChildren(connectedObject, diffTranslation, model);
+          }
+        }
+      }
+    }
+  }
+
+  translateObject(model: JointLink, diffTranslation: any) {
+    const sceneObject = this.config.scene.getObjectByName(model.id);
+    sceneObject.position.set(sceneObject.position.x + diffTranslation.x, sceneObject.position.y + diffTranslation.y, sceneObject.position.z + diffTranslation.z);
+    model.sceneObject = sceneObject;
+    model.object3D.position.x += diffTranslation.x;
+    model.object3D.position.y += diffTranslation.y;
+    model.object3D.position.z += diffTranslation.z;
   }
 
 
   hideObject(model: JointLink) {
-    const sceneObject = this.config.sceneObjects.filter(s => s.name === model.id)[0];
-    if (sceneObject) {
-      if (model.object3D.hidden) {
-        this.config.scene.remove( sceneObject );
-      } else {
-        this.config.scene.add( sceneObject );
-      }
-      this.animate();
+    if (model.object3D.hidden) {
+      this.config.scene.remove( model.sceneObject );
+    } else {
+      this.config.scene.add( model.sceneObject );
     }
+    this.animate();
   }
 
 
@@ -661,7 +744,7 @@ export class KinematicsDrawingService {
 
 
   joinObjects() {
-    console.log(this.kinematicService.selConnPoints);
+    // console.log(this.kinematicService.selConnPoints);
 
     // check for existing connections
     if (this.kinematicService.selConnPoints.length === 2) {
@@ -674,8 +757,10 @@ export class KinematicsDrawingService {
 
       let sceneModels = [];
       let connPnts = [];
+      // console.log(this.kinematicService.joints);
       for (const model of models) {
         let sceneModel = this.config.scene.getObjectByName(model.id);
+        // console.log(model.id, sceneModel);
         sceneModel.updateMatrix();
         sceneModels.push(sceneModel);
 
@@ -687,7 +772,7 @@ export class KinematicsDrawingService {
         }
       }
 
-      console.log(models, sceneModels, connPnts);
+      // console.log(models, sceneModels, connPnts);
 
       sceneModels[1].rotation.set(sceneModels[0].rotation.x, sceneModels[0].rotation.y, sceneModels[0].rotation.y);
 
@@ -712,27 +797,32 @@ export class KinematicsDrawingService {
       translationMatrix.makeTranslation(centerPntOrigin.x - centerPntTarget.x, centerPntOrigin.y - centerPntTarget.y, centerPntOrigin.z - centerPntTarget.z);
       sceneModels[1].applyMatrix4( translationMatrix );
 
-
-
       this.animate();
+
+      this.updatePosition(sceneModels[0], models[0]);
+      this.updatePosition(sceneModels[1], models[1]);
+
+      models[0].sceneObject = sceneModels[0];
+      models[1].sceneObject = sceneModels[1];
 
       connPnts[0].connected = true;
       connPnts[0].object = models[1].id;
       connPnts[1].connected = true;
       connPnts[1].object = models[0].id;
 
-      this.updatePosition(sceneModels[0], models[0]);
-      this.updatePosition(sceneModels[1], models[1]);
-
       this.kinematicService.updateConnectionPoint(models[0].id, connPnts[0]);
       this.kinematicService.updateConnectionPoint(models[1].id, connPnts[1]);
 
-      console.log('connectObjects');
+      console.log(models[0].sceneObject);
+
+
+      // console.log('connectObjects');
 
       this.kinematicLinkService.createNewConnection([{ frame: models[0], point: connPnts[0] }, { frame: models[1], point: connPnts[1] }]);
 
       // this.closedChainIKService.connectObjects( [{ frame: models[0], point: connPnts[0] }, { frame: models[1], point: connPnts[1] }]);
 
+      console.log(this.config.scene);
 
     } else if (this.kinematicService.selConnPoints.length > 2) {
       this.updateProgess('too many items selected', 0);
@@ -752,77 +842,6 @@ export class KinematicsDrawingService {
       }
     }
   }
-
-
-
-
-  // joinObjects() {
-  //   console.log(this.kinematicService.selConnPoints);
-
-  //   // check for existing connections
-  //   if (this.kinematicService.selConnPoints.length === 2) {
-  //     if (this.kinematicService.selConnPoints[0].parent_id === this.kinematicService.selConnPoints[1].parent_id) {
-  //       this.updateProgess('selection points are from the same object', 0);
-  //       return;
-  //     }
-
-  //     const joint_origin = this.kinematicService.getJoint(this.kinematicService.selConnPoints[0].parent_id);
-  //     const joint_target = this.kinematicService.getJoint(this.kinematicService.selConnPoints[1].parent_id);
-  //     const sceneObject_origin = this.config.scene.getObjectByName(this.kinematicService.selConnPoints[0].parent_id);
-  //     const sceneObject_target = this.config.scene.getObjectByName(this.kinematicService.selConnPoints[1].parent_id);
-
-  //     sceneObject_target.updateMatrix();
-  //     sceneObject_origin.updateMatrix();
-
-  //     sceneObject_target.rotation.set(sceneObject_origin.rotation.x, sceneObject_origin.rotation.y, sceneObject_origin.rotation.y);
-
-  //     const connPoint_origin = this.kinematicService.getSelectionPoint(joint_origin.id, this.kinematicService.selConnPoints[0].id);
-  //     const connPoint_target = this.kinematicService.getSelectionPoint(joint_target.id, this.kinematicService.selConnPoints[1].id);
-
-  //     const pnt_dir_origin = this.getDirectionVector(sceneObject_origin, connPoint_origin);
-  //     const pnt_dir_target = this.getDirectionVector(sceneObject_target, connPoint_target);
-
-  //     const quaternion = new THREE.Quaternion();
-  //     const reverseOrigin = new THREE.Vector3();
-  //     reverseOrigin.multiplyVectors(pnt_dir_target, new THREE.Vector3(-1,-1,-1));
-  //     quaternion.setFromUnitVectors(pnt_dir_origin, reverseOrigin);
-  //     const matrix = new THREE.Matrix4();
-  //     matrix.makeRotationFromQuaternion( quaternion );
-  //     sceneObject_target.applyMatrix4( matrix );
-
-  //     sceneObject_target.updateMatrix();
-
-  //     this.animate();
-
-  //     let centerPntOrigin = this.getBBoxPnt(sceneObject_origin, connPoint_origin.name);
-  //     let centerPntTarget = this.getBBoxPnt(sceneObject_target, connPoint_target.name);
-
-  //     const translationMatrix = new THREE.Matrix4();
-  //     translationMatrix.makeTranslation(centerPntOrigin.x - centerPntTarget.x, centerPntOrigin.y - centerPntTarget.y, centerPntOrigin.z - centerPntTarget.z);
-  //     sceneObject_target.applyMatrix4( translationMatrix );
-
-  //     this.animate();
-
-  //     connPoint_origin.connected = true;
-  //     connPoint_target.connected = true;
-
-  //     this.kinematicService.updateConnectionPoint(joint_origin.id, connPoint_origin);
-  //     this.kinematicService.updateConnectionPoint(joint_target.id, connPoint_target);
-
-  //     console.log('connectObjects');
-
-  //     this.closedChainIKService.connectObjects( [{ frame: joint_origin, point: connPoint_origin }, { frame: joint_target, point: connPoint_target }]);
-
-  //     // this.config.connectionlists.push(new KinematicConnection(new KeyConstruct()))
-
-  //   } else if (this.kinematicService.selConnPoints.length > 2) {
-  //     this.updateProgess('too many items selected', 0);
-  //     // console.log('too many items selected');
-  //   } else if (this.kinematicService.selConnPoints.length < 2) {
-  //     this.updateProgess('select two points', 0);
-  //     // console.log('select two connection points');
-  //   }
-  // }
 
 
 

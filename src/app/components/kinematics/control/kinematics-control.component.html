@@ -85,12 +85,13 @@
                       <div class="label">{{ point.plane }}</div>
                       <span *ngIf="point.plane !== 'Z' && this.kinematicService.selectedJoints[0].isJoint">
                         <input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="angle_{{ point.id }}" name="angle_{{ point.id }}" [(ngModel)]="point.angle" (change)="this.updatePointAngle(point)">
+                        <input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="size_{{ point.id }}" name="size_{{ point.id }}" [(ngModel)]="point.size.value" (change)="this.updatePointSize(this.kinematicService.selectedJoints[0].id, point)">
                       </span>
-                      <div class="buttons" *ngIf="this.kinematicService.selectedJoints[0].isJoint">
+                      <div class="buttons">
                         <div id="linked" class="svg-button" [ngClass]="{ active: point.connected }"><img src="./assets/icons/effects/link-icon.svg"></div>
-                        <div id="outside" class="svg-button" *ngIf="point.plane === 'Y'" (click)="this.updatePointType(this.kinematicService.selectedJoints[0].id, point)"><img src="./assets/icons/buttons/outside.svg"></div>
-                        <div id="inside" class="svg-button" *ngIf="point.plane === 'X'" (click)="this.updatePointType(this.kinematicService.selectedJoints[0].id, point)"><img src="./assets/icons/buttons/inside.svg"></div>
-                        <div id="delete" class="svg-button" *ngIf="point.plane !== 'Z'" (click)="this.deletePoint(this.kinematicService.selectedJoints[0].id, point.id)"><img src="./assets/icons/buttons/bin.svg"></div>
+                        <div id="outside" class="svg-button" *ngIf="point.plane === 'Y' && this.kinematicService.selectedJoints[0].isJoint" (click)="this.updatePointType(this.kinematicService.selectedJoints[0].id, point)"><img src="./assets/icons/buttons/outside.svg"></div>
+                        <div id="inside" class="svg-button" *ngIf="point.plane === 'X' && this.kinematicService.selectedJoints[0].isJoint" (click)="this.updatePointType(this.kinematicService.selectedJoints[0].id, point)"><img src="./assets/icons/buttons/inside.svg"></div>
+                        <div id="delete" class="svg-button" *ngIf="point.plane !== 'Z' && this.kinematicService.selectedJoints[0].isJoint" (click)="this.deletePoint(this.kinematicService.selectedJoints[0].id, point.id)"><img src="./assets/icons/buttons/bin.svg"></div>
                       </div>
                     </div>
                   </li>

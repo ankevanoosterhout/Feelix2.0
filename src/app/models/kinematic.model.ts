@@ -45,6 +45,21 @@ export class Object3D {
 }
 
 
+export class ConnectorSize {
+  original: number;
+  scale: number;
+  value: number;
+  offset: number;
+
+  constructor(original: number, scale: number, value: number, offset: number) {
+    this.original = original;
+    this.scale = scale;
+    this.value = value;
+    this.offset = offset;
+  }
+}
+
+
 
 export class Connector {
   id: string;
@@ -53,7 +68,9 @@ export class Connector {
   name: string;
   angle: number;
   plane: string;
+  block_id: string;
   connected = false;
+  size = new ConnectorSize(2.5, 1, 2.5, 26.5);
   vector3 = new THREE.Vector3(0,0,0);
 
   constructor(id: string, name:string, angle: number, plane: string, vector3: THREE.Vector3) {
@@ -81,42 +98,46 @@ export class JointLink {
   object3D = new Object3D();
   selected = false;
   connectors: Array<Connector> = [];
+  sceneObject: THREE.Object3D = null;
 
   constructor(id:string, model: Model) {
     this.id = id;
-    this.name = model.type === 'arm' || model.type === 'connector' ? 'link' : model.type;
-    // this.type = model.type;
-    this.modelType = model.modelType;
-    this.active = model.active;
     this.grounded = false;
-    this.object3D.objectUrls = model.objectUrls;
-    this.object3D.color = model.color;
 
-      // const Z_connector_a = new Connector(null, 'Yellow:Z:1', 0, 'Z', new THREE.Vector3(1,1,1));
-      // const Z_connector_b = new Connector(null, 'Yellow:Z:-1', 0, 'Z', new THREE.Vector3(-1,-1,-1));
-      const Z_connector_a = new Connector(null, 'Yellow:Z:1', 0, 'Z', new THREE.Vector3(0,0,1));
-      const Z_connector_b = new Connector(null, 'Yellow:Z:-1', 0, 'Z', new THREE.Vector3(0,0,-1));
+    if (model) {
+      this.name = model.type === 'arm' || model.type === 'connector' ? 'link' : model.type;
+      // this.type = model.type;
+      this.modelType = model.modelType;
+      this.active = model.active;
+      this.object3D.objectUrls = model.objectUrls;
+      this.object3D.color = model.color;
 
-      this.connectors.push(Z_connector_a, Z_connector_b);
+        // const Z_connector_a = new Connector(null, 'Yellow:Z:1', 0, 'Z', new THREE.Vector3(1,1,1));
+        // const Z_connector_b = new Connector(null, 'Yellow:Z:-1', 0, 'Z', new THREE.Vector3(-1,-1,-1));
+        const Z_connector_a = new Connector(null, 'Yellow:Z:1', 0, 'Z', new THREE.Vector3(0,0,1));
+        const Z_connector_b = new Connector(null, 'Yellow:Z:-1', 0, 'Z', new THREE.Vector3(0,0,-1));
 
-    if (model.type === 'motor') {
-      this.isMotor = true;
-      this.isJoint = true;
+        this.connectors.push(Z_connector_a, Z_connector_b);
 
-    } else if (model.type === 'joint') {
-      this.isJoint = true;
+      if (model.type === 'motor') {
+        this.isMotor = true;
+        this.isJoint = true;
 
-    } else if (model.type === 'arm') {
-      this.size = 40;
+      } else if (model.type === 'joint') {
+        this.isJoint = true;
 
-    } else if (model.type === 'connector') {
-      this.size = 15;
-      const X_connector_a = new Connector(null, 'Yellow:X:1', 0, 'X', new THREE.Vector3(1,0,0));
-      const X_connector_b = new Connector(null, 'Yellow:X:-1', 0, 'X', new THREE.Vector3(-1,0,0));
-      const Y_connector_a = new Connector(null, 'Yellow:Y:1', 0, 'Y', new THREE.Vector3(0,1,0));
-      const Y_connector_b = new Connector(null, 'Yellow:Y:-1', 0, 'Y', new THREE.Vector3(0,-1,0));
+      } else if (model.type === 'arm') {
+        this.size = 40;
 
-      this.connectors.push(X_connector_a, X_connector_b, Y_connector_a, Y_connector_b);
+      } else if (model.type === 'connector') {
+        this.size = 15;
+        const X_connector_a = new Connector(null, 'Yellow:X:1', 0, 'X', new THREE.Vector3(1,0,0));
+        const X_connector_b = new Connector(null, 'Yellow:X:-1', 0, 'X', new THREE.Vector3(-1,0,0));
+        const Y_connector_a = new Connector(null, 'Yellow:Y:1', 0, 'Y', new THREE.Vector3(0,1,0));
+        const Y_connector_b = new Connector(null, 'Yellow:Y:-1', 0, 'Y', new THREE.Vector3(0,-1,0));
+
+        this.connectors.push(X_connector_a, X_connector_b, Y_connector_a, Y_connector_b);
+      }
     }
   }
 }

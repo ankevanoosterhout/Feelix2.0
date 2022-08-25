@@ -68,7 +68,8 @@ export class KinematicsCursorComponent implements AfterViewInit {
   cursors = [
     { id: 0, name: 'translate', icon: 'controls_translate.svg', selected: false, shortkey: 'translate (T)' },
     { id: 1, name: 'rotate', icon: 'controls_orbit.svg', selected: false, shortkey: 'rotate (R)' },
-    { id: 2, name: 'rotateAxis', icon: 'controls_rotate.svg', selected: false, shortkey: '' }
+    { id: 2, name: 'rotateAxis', icon: 'controls_rotate.svg', selected: false, shortkey: '' },
+    { id: 3, name: 'move', icon: 'hand.svg', selected: false, shortkey: 'move (M)' }
   ];
 
   cameras = [

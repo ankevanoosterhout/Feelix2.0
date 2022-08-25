@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Subject } from 'rxjs';
 import { v4 as uuid } from 'uuid';
-import { JointLink, Object3D, Connector, Point } from '../models/kinematic.model';
+import { JointLink, Object3D, Connector, Point, ConnectorSize } from '../models/kinematic.model';
 import * as THREE from 'three';
 
 
@@ -41,6 +41,56 @@ export class KinematicService {
       }
     }
   }
+
+  copyJoint(id: string, sceneObject: any) {
+    const joint = this.joints.filter(j => j.id === id)[0];
+    console.log(joint.id, joint.connectors);
+    if (joint) {
+      const newID = uuid();
+      sceneObject.name = newID;
+      console.log(sceneObject.name, newID);
+      const newJoint = new JointLink(newID, null);
+      console.log(newJoint.id);
+      newJoint.object3D = joint.object3D;
+      newJoint.isJoint = joint.isJoint;
+      newJoint.isMotor = joint.isMotor;
+      newJoint.modelType = joint.modelType;
+      newJoint.name = joint.name + '-copy';
+      newJoint.motor = null;
+      newJoint.sceneObject = sceneObject;
+      newJoint.connectors = joint.connectors;
+      console.log(newJoint.id, newJoint.connectors);
+      this.joints.push(newJoint);
+      console.log(this.joints);
+      return newJoint;
+    }
+  }
+
+
+  updateObjectDetails(object: any, model_id: string, point_name: string, color = null) {
+    // console.log(object);
+    object.traverse( ( child: any ) => {
+      if ( child instanceof THREE.Mesh ) {
+        if (color) {
+          child.material = new THREE.MeshStandardMaterial({ color: color });
+        }
+        const child_color = child.name.split(":");
+        if (child_color[0] === "Yellow") {
+          child.name = point_name;
+          const updatedPoint = this.updateSelectionPointID(model_id, point_name, child.uuid);
+          if (color !== null && updatedPoint) { object.name = updatedPoint.id; }
+        }
+        if (child_color.length === 3 && child_color[2] === "E") {
+          // child.name = point.name;
+          const updatedExtension = this.updateArmExtensionID(model_id, point_name, child.uuid);
+          // console.log(updatedExtension);
+          // if (updatedPoint) { object.name = updatedPoint.id; }
+        }
+      }
+    });
+    return object;
+  }
+
 
   anySelected(): boolean {
     if (this.selConnPoints.length > 0 || this.selectedJoints.length > 0) {
@@ -94,6 +144,24 @@ export class KinematicService {
         // console.log(item);
         if (item.name === name) {
           item.id = id;
+          // console.log(item);
+          return item;
+        }
+      }
+    }
+    return;
+  }
+
+  updateArmExtensionID(model_id: string, name: string, id: string) {
+    // console.log(name);
+    const joint = this.joints.filter(j => j.id === model_id)[0];
+    // console.log(joint);
+
+    if (joint) {
+      for (const item of joint.connectors) {
+        // console.log(item);
+        if (item.name === name) {
+          item.block_id = id;
           // console.log(item);
           return item;
         }
@@ -185,6 +253,15 @@ export class KinematicService {
   }
 
 
+  getConnectorSize(plane: string, type: number, isMotor: boolean) {
+    if (plane === 'X' || type === 2) {
+      return new ConnectorSize(1.5, 1, 1.5, isMotor ? 23.575 : 18.48);
+    } else if (plane === 'Y') {
+      return new ConnectorSize(2.5, 1, 2.5, isMotor ? 26.5 : 23);
+    }
+  }
+
+
   addPoint(id: string) {
     const joint = this.joints.filter(j => j.id === id)[0];
     if (joint) {
@@ -196,6 +273,7 @@ export class KinematicService {
       vector.normalize();
 
       const point = new Connector(null,'Yellow:' + axis + ':' + connectorsWithAxis.length, angle, axis, vector);
+      point.size = this.getConnectorSize(point.plane, joint.modelType, joint.isMotor);
       joint.connectors.push(point);
 
       this.importOBJModelToObjectGroup.next({ pnt: point, model_id: joint.id });

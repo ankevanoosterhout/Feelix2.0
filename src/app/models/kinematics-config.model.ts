@@ -25,7 +25,7 @@ export class KinematicsConfig {
   rayCaster = new THREE.Raycaster();
   lastRayCasterPoint = new THREE.Vector3();
 
-  sceneObjects: Array<THREE.Object3D> = [];
+  // sceneObjects: Array<THREE.Object3D> = [];
   mousedown = false;
   shift = false;
   gridVisible = true;

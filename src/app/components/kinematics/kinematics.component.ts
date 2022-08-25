@@ -52,6 +52,12 @@ export class KinematicsComponent implements OnInit {
     });
 
 
+    this.electronService.ipcRenderer.on('copy', (event: Event) => {
+      this.kinematicsDrawingService.copySelectedJoints();
+    });
+
+
+
     this.kinematicsDrawingService.selectObjectFromScene.subscribe(res => {
       this.kinematicsDrawingService.selectObject(res);
     });

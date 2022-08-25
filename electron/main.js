@@ -512,6 +512,13 @@ const kinematics_menu_template = [
         }
       },
       {
+        label: 'Copy',
+        accelerator: process.platform === 'darwin' ? 'Command+Shift+C' : 'Ctrl+Shift+C',
+        click() {
+          kinematicWindow.webContents.send('copy');
+        }
+      },
+      {
         label: 'Deselect all',
         click() {
           kinematicWindow.webContents.send('deselect');

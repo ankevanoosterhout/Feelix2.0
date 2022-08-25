@@ -15,8 +15,9 @@ export class KinematicLinkService {
 
 
   createNewConnection(objects: any) {
-    const kinematicConnection = new KinematicConnection(uuid());
     console.log(objects);
+
+    const kinematicConnection = new KinematicConnection(uuid());
     const keys = [];
     for (const obj of objects) {
       kinematicConnection.values.push(new KeyConstruct(obj.frame.id, obj.point.id));
@@ -30,8 +31,10 @@ export class KinematicLinkService {
       for (const key of keys) {
         const connList = this.getListWithKey(key);
         const index = this.connections.indexOf(connList);
-        indexes.push(index);
-        lists.push(connList.list);
+        if (index > -1) {
+          indexes.push(index);
+          lists.push(connList.list);
+        }
       }
       const newKinematicLinkItem = new KinematicConnectionList(uuid());
       const mergedList = lists[0].concat(lists[1]);
@@ -45,33 +48,41 @@ export class KinematicLinkService {
       this.connections.push(newKinematicLinkItem);
 
     } else if (keys[0] || keys[1]) {
-      const key = keys[0] ? keys[0] : keys[1];
+      const key = keys[0] !== null ? keys[0] : keys[1];
       const connList = this.getListWithKey(key);
-      connList.list.push(kinematicConnection);
+      if (connList) {
+        connList.list.push(kinematicConnection);
+      }
 
-    } else if (!keys[0] && !keys[1]) {
+    } else if (keys[0] === null && keys[1] === null) {
       const connList = new KinematicConnectionList(uuid());
       connList.list.push(kinematicConnection);
       this.connections.push(connList);
     }
+    const nrOfLinkedObjects = [ this.getNrOfLinksObject(objects[0].frame.id), this.getNrOfLinksObject(objects[0].frame.id)];
 
-    this.closedChainIKService.connectObjects(objects);
+    this.closedChainIKService.createRootStructure(kinematicConnection, objects, nrOfLinkedObjects);
 
-    console.log(this.connections);
+    // this.closedChainIKService.joinObjects(objects);
+
   }
 
-  isObjectConnected(id: string): string {
+  isObjectConnected(id: string): Array<string> {
     for (const connItem of this.connections) {
       for (const item of connItem.list) {
         for (const val of item.values) {
           if (val.object_id === id) {
-            return connItem.key;
+            return [connItem.key, item.key];
           }
         }
       }
     }
     return null;
   }
+
+
+
+
 
   getListWithKey(key: string) {
     return this.connections.filter(c => c.key === key)[0];
@@ -89,6 +100,22 @@ export class KinematicLinkService {
       }
     }
     return 0;
+  }
+
+  deleteAllLinks(id: string) {
+    for (const connItem of this.connections) {
+      for (const item of connItem.list) {
+        const inList = item.values.filter(v => v.object_id === id)[0];
+        if (inList) {
+          console.log(inList);
+          //get related value object, if object has no more connections to
+          const index = connItem.list.indexOf(item);
+          connItem.list.splice(index, -1);
+          // split in groups?
+        }
+      }
+    }
+    //recalculate link structure
   }
 
   // export class KeyConstruct {
