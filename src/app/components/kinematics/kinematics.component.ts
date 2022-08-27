@@ -220,6 +220,9 @@ export class KinematicsComponent implements OnInit {
         // this.config.control.setMode( 'rotate' );
         this.kinematicsDrawingService.selectControlMode('rotate');
         this.params.controls = 'rotate';
+        this.config.move = false;
+      } else if (key === 'm') {
+        this.config.move = true;
       }
       // else if (key === 's') {
       //   this.config.control.setMode( 'scale' );
@@ -227,6 +230,7 @@ export class KinematicsComponent implements OnInit {
       else if (key === 't') {
         // this.config.control.setMode( 'translate' );
         this.kinematicsDrawingService.selectControlMode('translate');
+        this.config.move = false;
         this.params.controls = 'translate';
       } else if (key === 'c') {
         this.kinematicsDrawingService.selectCamera();

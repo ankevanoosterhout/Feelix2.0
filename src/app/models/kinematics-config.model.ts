@@ -41,5 +41,6 @@ export class KinematicsConfig {
   plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
 
   rootActive = false;
+  move: boolean = false;
 }
 

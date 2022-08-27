@@ -58,6 +58,9 @@ export class KinematicsDrawingService {
   updateControlMode(name: string) {
     if (name !== 'rotateAxis' && name !== 'move') {
       this.config.control.setMode( name );
+      this.config.move = false;
+    } else if ('move') {
+      this.config.move = true;
     }
   }
 
@@ -103,6 +106,7 @@ export class KinematicsDrawingService {
     this.config.orbit.update();
 
     this.config.control = new TransformControls( this.config.currentCamera, this.config.renderer.domElement );
+    this.config.control.setSpace( 'local' );
     this.config.control.addEventListener( 'objectChange', (event: any) => {
       if (this.kinematicService.selectedJoints.length === 1) {
         const sceneObject = this.config.scene.getObjectByName(this.kinematicService.selectedJoints[0].id);
@@ -111,6 +115,12 @@ export class KinematicsDrawingService {
         }
       }
     });
+
+    this.config.control.addEventListener( 'mouseUp', (event: any) => {
+      if (this.config.move) {
+        this.closedChainIKService.updateTargetObject();
+      }
+    })
 
     this.config.control.addEventListener( 'dragging-changed', ( event: any ) => {
       // this.config.orbit.enabled = this.config.draggableObject !== undefined ? false : !event.value;
@@ -332,7 +342,13 @@ export class KinematicsDrawingService {
           this.setObjectColor(object, this.config.selectColor);
           // console.log(object);
           if (this.kinematicService.selectedJoints.length === 1) {
-            this.config.control.attach(object);
+            if (!this.config.move) {
+              this.config.control.attach(object);
+            } else {
+              console.log(object);
+              const target = this.closedChainIKService.createTarget();
+              this.config.control.attach(target);
+            }
           }
         }
       }
@@ -718,7 +734,7 @@ export class KinematicsDrawingService {
     let tmp = 0;
     for (const item of items) {
       const value = this.kinematicLinkService.getNrOfLinksObject(item.id);
-      console.log(value);
+      // console.log(value);
       if (value > tmp) {
         newList.unshift(item);
         tmp = value;
@@ -786,8 +802,18 @@ export class KinematicsDrawingService {
       const matrix = new THREE.Matrix4();
       matrix.makeRotationFromQuaternion( quaternion );
       sceneModels[1].applyMatrix4( matrix );
-      // sceneModels[1].updateMatrix();
+      sceneModels[1].updateMatrix();
 
+      console.log('update angle', connPnts[0].plane, connPnts[1].plane);
+      if ((connPnts[0].plane === 'X' || connPnts[0].plane === 'Y') && (connPnts[1].plane === 'X' || connPnts[1].plane === 'Y')) {
+        if (!(connPnts[0].angle%180 === 0 && connPnts[1].angle%180 === 0 && connPnts[0].angle === connPnts[1].angle) ) {
+          const updatedAngle = sceneModels[0].rotation.z + (connPnts[0].angle * (Math.PI/180)) - ((connPnts[1].angle * (Math.PI/180)) + Math.PI);
+          console.log(connPnts[0].angle, connPnts[1].angle, updatedAngle);
+          sceneModels[1].rotation.z = updatedAngle;
+          sceneModels[1].updateMatrix();
+        }
+      }
+      // sceneModels[1].updateMatrixWorld();
       this.animate();
 
       let centerPntOrigin = this.getBBoxPnt(sceneModels[0], connPnts[0].name);
@@ -813,16 +839,12 @@ export class KinematicsDrawingService {
       this.kinematicService.updateConnectionPoint(models[0].id, connPnts[0]);
       this.kinematicService.updateConnectionPoint(models[1].id, connPnts[1]);
 
-      console.log(models[0].sceneObject);
-
-
-      // console.log('connectObjects');
+      // console.log(models[0].sceneObject);
 
       this.kinematicLinkService.createNewConnection([{ frame: models[0], point: connPnts[0] }, { frame: models[1], point: connPnts[1] }]);
 
-      // this.closedChainIKService.connectObjects( [{ frame: models[0], point: connPnts[0] }, { frame: models[1], point: connPnts[1] }]);
 
-      console.log(this.config.scene);
+      // console.log(this.config.scene);
 
     } else if (this.kinematicService.selConnPoints.length > 2) {
       this.updateProgess('too many items selected', 0);

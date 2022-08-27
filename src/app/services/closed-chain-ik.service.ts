@@ -5,7 +5,7 @@ import { JointLink } from '../models/kinematic.model';
 import { KinematicConnection, KinematicConnectionList } from '../models/kinematic-connections.model';
 
 import * as THREE from 'three';
-import { Euler } from 'three';
+import { Euler, Group } from 'three';
 import { KinematicsConfig } from '../models/kinematics-config.model';
 
 // import { KinematicsConfig } from '../models/kinematics-config.model';
@@ -36,8 +36,7 @@ export class ClosedChainIKService {
   currRoot = null;
   goal: any;
 
-  // targetObject = new THREE.Group();
-  finalLink: any;
+
 
   addToScene: Subject<any> = new Subject();
   removeFromScene: Subject<any> = new Subject();
@@ -47,6 +46,9 @@ export class ClosedChainIKService {
   tempEuler = new Euler();
 
   frames: Array<any> = [];
+  newFrames: Array<string> = [];
+  targetObject: any;
+  finalLink: any;
 
   constructor() {
     // this.targetObject.position.set( 0, 0, 0 );
@@ -115,10 +117,12 @@ export class ClosedChainIKService {
     }
     if (this.frames.filter(f => f.name === joint_1.name).length === 0) {
       this.frames.push(joint_1);
+      this.newFrames.push(joint_1.name);
     }
 
     if (this.frames.filter(f => f.name === joint_2.name).length === 0) {
       this.frames.push(joint_2);
+      this.newFrames.push(joint_2.name);
     }
 
     console.log(this.frames);
@@ -179,24 +183,26 @@ export class ClosedChainIKService {
   createRootsFromFrames() {
     const roots = findRoots(this.frames);
     console.log(roots);
-    // this.setClosureLinkWithoutChild(roots);
-    // console.log(roots);
-    // console.log(roots);
     this.ikRoot = roots;
+    console.log(this.frames, this.newFrames);
+    let newStructure = false;
 
     for (const root of this.ikRoot) {
-      // let pos = root.position;
       root.traverse( c => {
         if (c.isJoint) {
-          c.setWorldPosition(c.position[0], c.position[1], c.position[2] );
-          c.setWorldQuaternion(c.quaternion[0], c.quaternion[1], c.quaternion[2], c.quaternion[3] );
-          c.setMatrixNeedsUpdate();
+          console.log(this.newFrames.includes(c.name));
+          if (this.newFrames.includes(c.name) && c.children) {
+            newStructure = true;
+          }
+          if (this.newFrames.includes(c.name) || newStructure) {
+            c.setWorldPosition(c.position[0], c.position[1], c.position[2] );
+            c.setWorldQuaternion(c.quaternion[ 0], c.quaternion[1], c.quaternion[2], c.quaternion[3] );
+            c.setMatrixNeedsUpdate();
+          }
         }
       });
-
-
     }
-
+    this.newFrames = [];
     this.createRootsHelper();
   }
 
@@ -232,7 +238,6 @@ export class ClosedChainIKService {
   joinObjects(objects: Array<any>) {
     console.log(objects);
 
-    let position = [0,0,0];
     let link = null;
     let newItem = true;
 
@@ -250,14 +255,12 @@ export class ClosedChainIKService {
               if (c.isJoint) {
                 if (c.name === object.frame.id) {
                   console.log("IN ROOT", c);
-                  position = c.position;
                   newItem = false;
                   joint = c;
                 }
               } else if (c.isLink) {
                 if (c.parent.name === object.frame.id) {
                   console.log("IN ROOT", c.parent);
-                  position = c.parent.position;
                   newItem = false;
                   joint = c.parent;
                 }
@@ -269,7 +272,6 @@ export class ClosedChainIKService {
         if (joint === null) {
           console.log("NOT IN ROOT", object.frame);
           // joint = this.createNewJointFromObject(object, position);
-          position = joint.position;
         }
 
         if (link === null) {
@@ -333,31 +335,76 @@ export class ClosedChainIKService {
   }
 
 
+  createTarget() {
+    this.finalLink = new Link();
+    this.finalLink.setPosition( 0, 0.5, 0 );
+    // this.ikRoot.updateMatrixWorld( true );
+    // this.frames[this.frames.length - 1].addChild(this.finalLink);
 
-  updateModelOnMoveTarget(targetObject: any) {
-    // this.targetObject.position.set( 0, 0, 0 );
+    this.createRootsFromFrames();
+
+    this.targetObject = new Group();
+    this.targetObject.position.set(0, 1, 0);
+    this.addToScene.next( this.targetObject );
+
+
+    this.targetObject.matrix.set( ...this.finalLink.matrixWorld ).transpose();
+    this.targetObject.matrix
+      .decompose( this.targetObject.position, this.targetObject.quaternion, this.targetObject.scale );
+
+    this.goal = new Goal();
+    this.goal.makeClosure( this.finalLink );
+
+    this.solver = new Solver( this.ikRoot );
+	  Object.assign( this.solver, this.solverOptions );
+
+    this.updateGoalDoF();
+
+    return this.targetObject;
   }
+
+
+  updateGoalDoF() {
+
+		const dof = [DOF.X, DOF.Y, DOF.Z, DOF.EX, DOF.EY, DOF.EZ];
+
+		this.goal.setGoalDoF( ...dof );
+
+	}
+
+  updateTargetObject() {
+    this.ikRoot.updateMatrixWorld( true );
+		this.targetObject.matrix.set( ...this.finalLink.matrixWorld ).transpose();
+		this.targetObject.matrix
+			.decompose( this.targetObject.position, this.targetObject.quaternion, this.targetObject.scale );
+  }
+
+
 
 
   createNewJointFromObject(object: any) {
     console.log(object);
 
     const newJoint = new Joint();
+    newJoint.clearDoF();
     newJoint.name = object.frame.id;
-    newJoint.setDoF( (object.point.plane === 'Z' ? DOF.EZ : DOF.EX) ); //DOF.EZ
-    newJoint.setPosition(
+    newJoint.setDoF( DOF.EZ ); //DOF.EZ
+    newJoint.setWorldPosition(
       object.frame.object3D.position.x,
       object.frame.object3D.position.y,
       object.frame.object3D.position.z ); //0, 1, 0}
     // newJoint.setMatrixNeedsUpdate();
 
-    newJoint.setDoFValue( (object.point.plane === 'Z' ? DOF.EZ : DOF.EX), object.frame.sceneObject.rotation.z );
-    newJoint.setRestPoseValues(object.frame.sceneObject.rotation.z);
-    newJoint.restPoseSet = true;
+    newJoint.setDoFValue( DOF.EZ, 1.8 * Math.PI);
+    // newJoint.setRestPoseValues(object.frame.sceneObject.rotation.z);
+    // newJoint.restPoseSet = true;
+    newJoint.targetSet = true;
 
-    newJoint.setMinLimits( - 0.9 * Math.PI );
-    newJoint.setMaxLimits( 0.9 * Math.PI );
-    newJoint.setQuaternion(object.frame.sceneObject.quaternion.x, object.frame.sceneObject.quaternion.y, object.frame.sceneObject.quaternion.z, object.frame.sceneObject.quaternion.w);
+    newJoint.setMinLimit(DOF.EZ, - 0.9 * Math.PI );
+    newJoint.setMaxLimit(DOF.EZ, 0.9 * Math.PI );
+//     setMinLimit( dof : DOF, value : Number ) : Boolean
+// setMaxLimit( dof : DOF, value : Number ) : Boolean
+    newJoint.setWorldQuaternion(object.frame.sceneObject.quaternion.x, object.frame.sceneObject.quaternion.y, object.frame.sceneObject.quaternion.z, object.frame.sceneObject.quaternion.w);
     // newJoint.setMatrixNeedsUpdate();
 
     console.log(newJoint.position, newJoint.quaternion);
@@ -461,7 +508,7 @@ export class ClosedChainIKService {
       this.ikHelper.name = 'ikHelper';
       // this.ikHelper.setColor( this.ikHelper.color );
       this.ikHelper.traverse( c => {
-        if (c instanceof THREE.Mesh) {
+        if (c.material) {
           c.material.color.setHex( 0xe91e63 );
         }
         c.visible = true;
@@ -492,32 +539,21 @@ export class ClosedChainIKService {
 
 
 
-  updateGoalDoF() {
-
-		const dof = [];
-		dof.push( DOF.X, DOF.Y, DOF.Z );
-		dof.push( DOF.EX, DOF.EY, DOF.EZ );
-
-		this.goal.setGoalDoF( ...dof );
-
-	}
-
-
 
   render() {
-    // if (this.goal && this.targetObject) {
-    //   this.goal.setPosition(
-    //     this.targetObject.position.x,
-    //     this.targetObject.position.y,
-    //     this.targetObject.position.z,
-    //   );
-    //   this.goal.setQuaternion(
-    //     this.targetObject.quaternion.x,
-    //     this.targetObject.quaternion.y,
-    //     this.targetObject.quaternion.z,
-    //     this.targetObject.quaternion.w,
-    //   );
-    // }
+    if (this.goal && this.targetObject) {
+      this.goal.setPosition(
+        this.targetObject.position.x,
+        this.targetObject.position.y,
+        this.targetObject.position.z,
+      );
+      this.goal.setQuaternion(
+        this.targetObject.quaternion.x,
+        this.targetObject.quaternion.y,
+        this.targetObject.quaternion.z,
+        this.targetObject.quaternion.w,
+      );
+    }
   }
 
 

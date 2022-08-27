@@ -100,6 +100,7 @@ export class JointLink {
   connectors: Array<Connector> = [];
   sceneObject: THREE.Object3D = null;
 
+
   constructor(id:string, model: Model) {
     this.id = id;
     this.grounded = false;
