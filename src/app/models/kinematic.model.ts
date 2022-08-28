@@ -94,7 +94,7 @@ export class JointLink {
   isMotor = false;
   isJoint = false;
   motor: number;
-  rotaryPosition = 0;
+  angle = 0;
   object3D = new Object3D();
   selected = false;
   connectors: Array<Connector> = [];

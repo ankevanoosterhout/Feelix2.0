@@ -50,8 +50,11 @@ export class KinematicsControlComponent {
 
     this.kinematicsDrawingService.loadOBJ.subscribe(res => {
       this.importOBJModel(res.url, res.name);
-
     });
+
+    this.kinematicsDrawingService.loadModelFromLink.subscribe(res => {
+      this.loadOBJModel(res);
+    })
   }
 
 
@@ -67,6 +70,8 @@ export class KinematicsControlComponent {
         object.rotation.x = model.object3D.rotation.x * (Math.PI / 180);
         object.rotation.y = model.object3D.rotation.y * (Math.PI / 180);
         object.rotation.z = model.object3D.rotation.z * (Math.PI / 180);
+
+        object.updateMatrixWorld();
       }
     }
   }
@@ -107,14 +112,13 @@ export class KinematicsControlComponent {
 
 
   loadOBJModel(model: any) {
-    // const modelGroup = new THREE.Group();
     const group = new THREE.Group();
     group.name = model.id;
 
-    for (const object of model.object3D.objectUrls) {
-      this.config.loader.load('./assets/models/' + object.url, (object: any) => {   // called when resource is loaded
+    for (const item of model.object3D.objectUrls) {
+      this.config.loader.load('./assets/models/' + item.url, (object: any) => {   // called when resource is loaded
 
-        object.name = model.g;
+        object.name = item.g;
 
         object.traverseVisible( ( child: any ) => {
             if ( child instanceof THREE.Mesh ) {
@@ -125,7 +129,9 @@ export class KinematicsControlComponent {
                 // console.log(model.id);
                 this.kinematicService.updateSelectionPointID(model.id, child.name, child.uuid);
               }
-
+            }
+            if (child.name === 'Z') {
+              child.rotation.z = model.angle * (Math.PI/180);
             }
         });
 
@@ -136,35 +142,46 @@ export class KinematicsControlComponent {
       }, (error: any) => {
         // console.log( 'Error loading model' );
       });
-
     }
-    this.kinematicService.joints.filter(j => j.id === model.id)[0].sceneObject = group;
 
-    // this.config.sceneObjects.push(group);
+    this.kinematicService.joints.filter(j => j.id === model.id)[0].sceneObject = group;
     this.config.scene.add( group );
+
+    for (const connector of model.connectors) {
+      if (connector.plane !== 'Z') {
+        this.importOBJModelToGroup(connector, model.id, model);
+      }
+    }
+    this.updateModel(model);
+    // this.updateJointAngle(this.kinematicService.joints.filter(j => j.id === model.id)[0]);
 
   }
 
 
 
 
-  importOBJModelToGroup(point: Connector, model_id: string) {
-    const sceneObject = this.config.scene.getObjectByName(this.kinematicService.selectedJoints[0].id);
+  importOBJModelToGroup(point: Connector, model_id: string, joint = null) {
+    if (joint === null) {
+      joint = this.kinematicService.selectedJoints[0];
+    }
+    const sceneObject = this.config.scene.getObjectByName(joint.id);
 
     if (sceneObject && sceneObject.isGroup && point) {
-      const imageUrl = (this.kinematicService.selectedJoints[0].active ? 'active':'passive') + '_joint_' + this.kinematicService.selectedJoints[0].modelType + '_connector_' + point.plane + '.obj';
+      const imageUrl = (joint.active ? 'active':'passive') + '_joint_' + joint.modelType + '_connector_' + point.plane + '.obj';
 
       this.config.loader.load('./assets/models/' + imageUrl, (object: any) => {   // called when resource is loaded
-        console.log(object);
+        // console.log(object);
         object = this.kinematicService.updateObjectDetails(object, model_id, point.name, this.config.selectColor);
 
-        object.rotation.z = point.angle * (Math.PI/180);
+        object.rotation.z = point.plane === 'Y' ? (point.angle + joint.angle) * (Math.PI/180) : point.angle * (Math.PI/180);
         sceneObject.add(object);
 
+        this.updatePointSize(model_id, point);
+
       }, (xhr: any) => {
-        console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
+        // console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
       }, (error: any) => {
-        console.log( 'Error loading model' );
+        // console.log( 'Error loading model' );
       });
     }
   }
@@ -189,9 +206,9 @@ export class KinematicsControlComponent {
       this.kinematicsDrawingService.animate();
 
     }, (xhr: any) => {
-      console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
+      // console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
     }, (error: any) => {
-      console.log( 'Error loading model' );
+      // console.log( 'Error loading model' );
     });
   }
 
@@ -201,11 +218,11 @@ export class KinematicsControlComponent {
     const sceneObject = this.config.scene.getObjectByName(this.kinematicService.selectedJoints[0].id);
     if (sceneObject && sceneObject.isGroup) {
 
-      sceneObject.traverseVisible( ( child: any ) => {
+      sceneObject.traverse( ( child: any ) => {
         if ( child.isGroup ) {
           const selectedMesh = child.children.filter(c => c.name === point.id)[0];
           if (selectedMesh) {
-            const angleRad = point.angle * (Math.PI/180);
+            const angleRad = point.plane === 'Y' ? (point.angle + this.kinematicService.selectedJoints[0].angle) * (Math.PI/180) : point.angle * (Math.PI/180);
             selectedMesh.rotation.z = angleRad;
             point.vector3 = new THREE.Vector3(-Math.cos(angleRad + (Math.PI / 2)), -Math.sin(angleRad + (Math.PI / 2)),0);
             point.vector3.normalize();
@@ -287,7 +304,7 @@ export class KinematicsControlComponent {
             child.position.y = -point.size.offset * (connector.size.scale - 1);
             // console.log(child.position);
           } else if( child.uuid === point.id) {
-            child.position.y = connector.size.value - 2;
+            child.position.y = point.plane === 'Y'? connector.size.value - 2.5 : connector.size.value - 2;
           }
         });
         joint.sceneObject = sceneObject;
@@ -311,6 +328,37 @@ export class KinematicsControlComponent {
           child.position.z = (newScale * -20) + 20;
         }
       });
+    }
+  }
+
+
+
+  updateJointAngle(joint: JointLink) {
+    //update all Y connectors and rotary indicator
+    const sceneObject = this.config.scene.getObjectByName(joint.id);
+    const Yconnectors = joint.connectors.filter(c => c.plane === 'Y');
+
+    if (sceneObject) {
+      sceneObject.traverse( (child: any) => {
+        if (child.name === 'Z') {
+          child.rotation.z = joint.angle * (Math.PI/180);
+        }
+
+        if (Yconnectors && Yconnectors.filter(c => c.id === child.name)[0]) {
+          const connector = joint.connectors.filter(c => c.id === child.name)[0];
+          if (connector) {
+            const angleRad = (connector.angle + joint.angle) * (Math.PI/180);
+            connector.vector3 = new THREE.Vector3(-Math.cos(angleRad + (Math.PI / 2)), -Math.sin(angleRad + (Math.PI / 2)),0);
+            child.rotation.z = angleRad;
+            this.kinematicService.updateConnectionPoint(joint.id, connector);
+          }
+        }
+      });
+
+      joint.sceneObject = sceneObject;
+      this.kinematicService.updateJoint(joint);
+
+      this.kinematicsDrawingService.animate();
     }
   }
 

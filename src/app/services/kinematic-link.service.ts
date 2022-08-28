@@ -1,18 +1,27 @@
 import { Injectable } from '@angular/core';
 import { KeyConstruct, KinematicConnection, KinematicConnectionList } from '../models/kinematic-connections.model';
 import { v4 as uuid } from 'uuid';
-import { ClosedChainIKService } from './closed-chain-ik.service';
+import { Subject } from 'rxjs';
+import { LocalStorageService } from 'ngx-webstorage';
+
 
 
 @Injectable()
 export class KinematicLinkService {
 
+  public static readonly MODEL_LOCATION = 'ngx-webstorage|links';
 
   connections: Array<KinematicConnectionList> = [];
+  public connectionsObservable = new Subject<KinematicConnectionList[]>();
 
+  constructor(private localSt: LocalStorageService) {
 
-  constructor(private closedChainIKService: ClosedChainIKService) {}
+    const data = this.localSt.retrieve('links');
 
+    if (data) {
+      this.connections = data;
+    }
+  }
 
   createNewConnection(objects: any) {
     console.log(objects);
@@ -59,9 +68,14 @@ export class KinematicLinkService {
       connList.list.push(kinematicConnection);
       this.connections.push(connList);
     }
-    const nrOfLinkedObjects = [ this.getNrOfLinksObject(objects[0].frame.id), this.getNrOfLinksObject(objects[0].frame.id)];
 
-    this.closedChainIKService.createRootStructure(kinematicConnection, objects, nrOfLinkedObjects);
+
+    console.log(this.connections);
+
+    this.store();
+    // const nrOfLinkedObjects = [ this.getNrOfLinksObject(objects[0].frame.id), this.getNrOfLinksObject(objects[0].frame.id)];
+
+    // this.closedChainIKService.createRootStructure(kinematicConnection, objects, nrOfLinkedObjects);
 
     // this.closedChainIKService.joinObjects(objects);
 
@@ -81,7 +95,36 @@ export class KinematicLinkService {
   }
 
 
+  getListWithObject(object: any) {
+    for (const connItem of this.connections) {
+      for (const item of connItem.list) {
+        const inList = item.values.filter(v => v.object_id === object.name)[0];
+        if (inList) {
+          return connItem;
+        }
+      }
+    }
+  }
 
+
+  getLinkedObjects(key: any, objectName: string): Array<any> {
+    const connList = this.connections.filter(c => c.key === key)[0];
+    console.log(connList);
+    let items = [];
+    if (connList) {
+      for (const item of connList.list) {
+        const inList = item.values.filter(v => v.object_id === objectName);
+
+        if (inList) {
+          const connectedObject = item.values.filter(v => v.object_id !== objectName);
+          if (connectedObject) {
+            items.push(connectedObject);
+          }
+        }
+      }
+    }
+    return items;
+  }
 
 
   getListWithKey(key: string) {
@@ -114,8 +157,21 @@ export class KinematicLinkService {
           // split in groups?
         }
       }
+      if (connItem.list.length === 0) {
+        const index = this.connections.indexOf(connItem);
+        if (index > -1) {
+          this.connections.splice(index, 1);
+        }
+      }
     }
+    this.store();
     //recalculate link structure
+  }
+
+
+  store() {
+    this.connectionsObservable.next(this.connections);
+    this.localSt.store('links', this.connections);
   }
 
   // export class KeyConstruct {

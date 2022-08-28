@@ -55,6 +55,13 @@
             <input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="text" class="blue wide input-column" id="name" name="name" [(ngModel)]="this.kinematicService.selectedJoints[0].name" (change)="updateModel(this.kinematicService.selectedJoints[0])">
           </div>
 
+          <div class="row" *ngIf="this.kinematicService.selectedJoints[0].isMotor">
+            <div class="label">angle</div>
+            <input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="angle" name="angle"
+            [(ngModel)]="this.kinematicService.selectedJoints[0].angle" (change)="this.updateJointAngle(this.kinematicService.selectedJoints[0])">
+          </div>
+
+
           <div class="row">
             <div class="label">position</div>
             <div class="values">

@@ -527,7 +527,13 @@ const kinematics_menu_template = [
       {
         label: 'Delete',
         click() {
-          kinematicWindow.webContents.send('delete');
+          kinematicWindow.webContents.send('delete', 'selected');
+        }
+      },
+      {
+        label: 'Delete all',
+        click() {
+          kinematicWindow.webContents.send('delete', 'all');
         }
       },
     ]

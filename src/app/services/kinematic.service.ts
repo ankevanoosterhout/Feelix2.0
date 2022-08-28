@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Subject } from 'rxjs';
 import { v4 as uuid } from 'uuid';
+import { LocalStorageService } from 'ngx-webstorage';
 import { JointLink, Object3D, Connector, Point, ConnectorSize } from '../models/kinematic.model';
 import * as THREE from 'three';
 
@@ -8,7 +9,11 @@ import * as THREE from 'three';
 @Injectable()
 export class KinematicService {
 
+  public static readonly MODEL_LOCATION = 'ngx-webstorage|models';
+
   joints: Array<JointLink> = [];
+  public jointsObservable = new Subject<JointLink[]>();
+
 
   selectedJoints = [];
 
@@ -20,13 +25,23 @@ export class KinematicService {
   importOBJModelToObjectGroup: Subject<any> = new Subject();
 
 
-  constructor() {}
+  constructor(private localSt: LocalStorageService) {
+
+    const data = this.localSt.retrieve('models');
+
+    if (data) {
+      this.joints = data;
+    }
+
+
+  }
 
   addJoint(model: any): JointLink {
     const joint = new JointLink(uuid(), model);
     const similarObjects = this.joints.filter(j => j.isMotor === joint.isMotor && j.isJoint === joint.isJoint).length;
     joint.name += '-' + (similarObjects + 1);
     this.joints.push(joint);
+    this.store();
 
     return joint;
   }
@@ -38,8 +53,15 @@ export class KinematicService {
       const index = this.joints.indexOf(joint);
       if (index > -1) {
         this.joints.splice(index, 1);
+        this.store();
       }
     }
+  }
+
+  deleteAll() {
+    this.joints = [];
+    this.selectedJoints = [];
+    this.store();
   }
 
   copyJoint(id: string, sceneObject: any) {
@@ -62,6 +84,8 @@ export class KinematicService {
       console.log(newJoint.id, newJoint.connectors);
       this.joints.push(newJoint);
       console.log(this.joints);
+      this.store();
+
       return newJoint;
     }
   }
@@ -71,14 +95,18 @@ export class KinematicService {
     // console.log(object);
     object.traverse( ( child: any ) => {
       if ( child instanceof THREE.Mesh ) {
-        if (color) {
-          child.material = new THREE.MeshStandardMaterial({ color: color });
-        }
+        // if (color) {
+        //   child.material = new THREE.MeshStandardMaterial({ color: color });
+        // }
         const child_color = child.name.split(":");
         if (child_color[0] === "Yellow") {
           child.name = point_name;
+          child.material = new THREE.MeshStandardMaterial({ color: 0xfc7f03 });
           const updatedPoint = this.updateSelectionPointID(model_id, point_name, child.uuid);
           if (color !== null && updatedPoint) { object.name = updatedPoint.id; }
+
+        } else if (child_color[0] === 'Gray') {
+          child.material = new THREE.MeshStandardMaterial({ color: 0x333333 });
         }
         if (child_color.length === 3 && child_color[2] === "E") {
           // child.name = point.name;
@@ -144,6 +172,7 @@ export class KinematicService {
         // console.log(item);
         if (item.name === name) {
           item.id = id;
+          this.store();
           // console.log(item);
           return item;
         }
@@ -162,6 +191,7 @@ export class KinematicService {
         // console.log(item);
         if (item.name === name) {
           item.block_id = id;
+          this.store();
           // console.log(item);
           return item;
         }
@@ -214,6 +244,7 @@ export class KinematicService {
     const joint = this.joints.filter(j => j.id === id)[0];
     if (joint) {
       joint.object3D = object3D;
+      this.store();
     }
 
     return joint;
@@ -234,12 +265,20 @@ export class KinematicService {
       let point = joint.connectors.filter(p => p.id === point_.id)[0];
       if (point) {
         point = point;
+        this.store();
       }
       return joint;
     }
     return;
   }
 
+  updateJoint(joint: JointLink) {
+    let jointInList = this.joints.filter(j => j.id === joint.id)[0];
+    if (jointInList) {
+      jointInList = joint;
+      this.store();
+    }
+  }
 
   getPoint(joint_id: string, point_id: string): Connector {
     const joint = this.joints.filter(j => j.id === joint_id)[0];
@@ -275,6 +314,7 @@ export class KinematicService {
       const point = new Connector(null,'Yellow:' + axis + ':' + connectorsWithAxis.length, angle, axis, vector);
       point.size = this.getConnectorSize(point.plane, joint.modelType, joint.isMotor);
       joint.connectors.push(point);
+      this.store();
 
       this.importOBJModelToObjectGroup.next({ pnt: point, model_id: joint.id });
     }
@@ -282,6 +322,11 @@ export class KinematicService {
 
 
 
+
+  store() {
+    this.jointsObservable.next(this.joints);
+    this.localSt.store('models', this.joints);
+  }
 
 
 

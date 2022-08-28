@@ -47,8 +47,8 @@ export class KinematicsComponent implements OnInit {
       this.kinematicsDrawingService.deselectAllObjects();
     });
 
-    this.electronService.ipcRenderer.on('delete', (event: Event) => {
-      this.kinematicsDrawingService.deleteSelectedJoints();
+    this.electronService.ipcRenderer.on('delete', (event: Event, data: string) => {
+      data === 'seleted' ? this.kinematicsDrawingService.deleteSelectedJoints() : this.kinematicsDrawingService.deleteAllJoints();
     });
 
 
@@ -84,6 +84,7 @@ export class KinematicsComponent implements OnInit {
   ngOnInit(): void {
     this.kinematicsDrawingService.init();
     this.kinematicsDrawingService.animate();
+
   }
 
 
@@ -133,13 +134,13 @@ export class KinematicsComponent implements OnInit {
       const finalPosition = this.config.intersectPoint.clone();
       finalPosition.x = -this.config.intersectPoint.y;
       finalPosition.y = this.config.intersectPoint.x;
-      console.log(this.config.intersectPoint);
+      // console.log(this.config.intersectPoint);
       matrix.lookAt(
         finalPosition,
         new THREE.Vector3(0, 0, 0),
         new THREE.Vector3(0, 0, 1)
       );
-      console.log(matrix);
+      // console.log(matrix);
       if (this.config.draggableObject) {
         this.config.draggableObject.quaternion.setFromRotationMatrix(matrix);
         this.config.draggableObject.rotateX(Math.PI/2);

@@ -123,7 +123,7 @@
           <div class="row">
             <label class="labelRow" for="name">Name</label>
             <input type="text" class="settings" id="col-effect-name" [(ngModel)]="this.drawingService.file.activeCollectionEffect.name" name="col-effect-name"
-              (change)="updateCollectionEffect()">
+              (change)="updateCollectionEffect()" (focusout)="hideCompleteValue()" (focus)="showCompleteValue()">
           </div>
           <div class="row" *ngIf="this.effect">
             <label class="labelRow" for="name">Instance of</label>

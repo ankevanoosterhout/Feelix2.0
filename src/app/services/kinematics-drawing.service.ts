@@ -10,6 +10,7 @@ import { KinematicService } from './kinematic.service';
 import { ClosedChainIKService } from './closed-chain-ik.service';
 import { KinematicLinkService } from './kinematic-link.service';
 
+
 @Injectable()
 export class KinematicsDrawingService {
 
@@ -23,7 +24,7 @@ export class KinematicsDrawingService {
   selectControl: Subject<any> = new Subject();
   updateCameraView: Subject<any> = new Subject();
   selectCameraView: Subject<any> = new Subject();
-
+  loadModelFromLink: Subject<any> = new Subject();
 
 
   constructor(@Inject(DOCUMENT) private document: Document, private kinematicService: KinematicService, private closedChainIKService: ClosedChainIKService,
@@ -38,6 +39,8 @@ export class KinematicsDrawingService {
       this.removeObjectFromScene(res);
     });
   }
+
+
 
   public selectSceneObject( object: any ) {
     this.selectObjectFromScene.next(object);
@@ -126,7 +129,7 @@ export class KinematicsDrawingService {
       // this.config.orbit.enabled = this.config.draggableObject !== undefined ? false : !event.value;
       this.config.orbit.enabled = !event.value;
 
-      console.log('dragging changed controls', this.config.orbit.enabled);
+      // console.log('dragging changed controls', this.config.orbit.enabled);
       // if (this.kinematicService.selectedJoints.length === 1) {
       //   const sceneObject = this.config.scene.getObjectByName(this.kinematicService.selectedJoints[0].id);
       //   if (sceneObject) { this.updatePosition(sceneObject, this.kinematicService.selectedJoints[0]); }
@@ -150,6 +153,14 @@ export class KinematicsDrawingService {
 
     this.config.orbit.update();
 
+    const joints = this.kinematicService.getAllJoints();
+
+    if (joints) {
+      for (const joint of joints) {
+        this.loadModelFromLink.next(joint);
+      }
+      this.deselectAllObjects();
+    }
   };
 
 
@@ -228,17 +239,19 @@ export class KinematicsDrawingService {
         // console.log(intersect);
 
 
-        // if (!intersect.isTransformControlsPlane) {
+        if (!intersects[0].isTransformControlsPlane) {
 
 
-          if (intersects && intersect.object.parent.name === 'rotary_control') {
-            this.config.draggableObject = intersect.object.parent;
-            console.log('rotate');
+          // if (intersects && intersect.object.parent.name === 'rotary_control') {
+          //   this.config.draggableObject = intersect.object.parent;
+          //   console.log('rotate');
 
-            this.config.pivotPoint.rotation.z = this.getAngleRotaryElement();
-            break;
+          //   this.config.pivotPoint.rotation.z = this.getAngleRotaryElement();
+          //   break;
 
-          } else if (intersect.object && intersect.object instanceof THREE.Mesh) {
+          // } else
+
+          if (intersect.object && intersect.object instanceof THREE.Mesh) {
             const selectedElement = this.getObjectDetailsFromName(intersect.object.name);
 
             if (selectedElement) {
@@ -258,8 +271,10 @@ export class KinematicsDrawingService {
           if (joint) {
             this.selectObject(joint.sceneObject, shift);
             this.animate();
+
             break;
           }
+        }
 
         // } else {
           // break;
@@ -346,8 +361,11 @@ export class KinematicsDrawingService {
               this.config.control.attach(object);
             } else {
               console.log(object);
-              const target = this.closedChainIKService.createTarget();
-              this.config.control.attach(target);
+              // const target = this.closedChainIKService.createTarget();
+              // this.config.control.attach(target);
+              // this.config.closedChaindService.createRootsFromStructure();
+              const linkedList = this.kinematicLinkService.getListWithObject(object);
+              this.closedChainIKService.createRootsFromList(linkedList, this.config.scene.children, object);
             }
           }
         }
@@ -551,6 +569,19 @@ export class KinematicsDrawingService {
     }
   }
 
+  deleteAllJoints() {
+    for (const joint of this.kinematicService.joints) {
+      this.kinematicLinkService.deleteAllLinks(joint.id);
+      const sceneObject = this.config.scene.getObjectByName(joint.id);
+      if (sceneObject) {
+        this.config.scene.remove(sceneObject);
+      }
+    }
+    this.kinematicService.deleteAll();
+    this.animate();
+  }
+
+
 
   copySelectedJoints() {
     const newSelectedJoints = [];
@@ -702,11 +733,11 @@ export class KinematicsDrawingService {
 
 
   getDirectionVector(object: any, axis:any): THREE.Vector3 {
-
+    console.log(object, axis);
     const worldDirection = new THREE.Vector3();
     object.getWorldDirection(worldDirection);
     // this.drawArrowHelper(object.position, worldDirection, 0x2121d8);
-    const updatedWorldDirect = axis.vector3.clone();
+    const updatedWorldDirect = new THREE.Vector3( axis.vector3.x, axis.vector3.y, axis.vector3.z );
     updatedWorldDirect.applyQuaternion(object.quaternion);
     // this.drawArrowHelper(object.position, updatedWorldDirect, 0x000000);
     return updatedWorldDirect;
@@ -804,15 +835,19 @@ export class KinematicsDrawingService {
       sceneModels[1].applyMatrix4( matrix );
       sceneModels[1].updateMatrix();
 
-      console.log('update angle', connPnts[0].plane, connPnts[1].plane);
-      if ((connPnts[0].plane === 'X' || connPnts[0].plane === 'Y') && (connPnts[1].plane === 'X' || connPnts[1].plane === 'Y')) {
-        if (!(connPnts[0].angle%180 === 0 && connPnts[1].angle%180 === 0 && connPnts[0].angle === connPnts[1].angle) ) {
-          const updatedAngle = sceneModels[0].rotation.z + (connPnts[0].angle * (Math.PI/180)) - ((connPnts[1].angle * (Math.PI/180)) + Math.PI);
+      // console.log('update angle', connPnts[0].plane, connPnts[1].plane);
+      if (connPnts[0].plane !== 'Z' && connPnts[1].plane !== 'Z') {
+
+        // if (!(connPnts[0].angle%90 === 0 && connPnts[1].angle%90 === 0)) {
+          const angle1 = connPnts[0].plane === 'Y' ? (connPnts[0].angle + models[0].angle)  * (Math.PI/180) : connPnts[0].angle * (Math.PI/180);
+          const angle2 = connPnts[1].plane === 'Y' ? (connPnts[1].angle + models[1].angle)  * (Math.PI/180) : connPnts[1].angle * (Math.PI/180);
+          const updatedAngle = (sceneModels[0].rotation.z + angle1) - (angle2 + Math.PI);
           console.log(connPnts[0].angle, connPnts[1].angle, updatedAngle);
           sceneModels[1].rotation.z = updatedAngle;
           sceneModels[1].updateMatrix();
-        }
+        // }
       }
+
       // sceneModels[1].updateMatrixWorld();
       this.animate();
 
@@ -864,6 +899,32 @@ export class KinematicsDrawingService {
       }
     }
   }
+
+
+
+
+  // obj - your object (THREE.Object3D or derived)
+// point - the point of rotation (THREE.Vector3)
+// axis - the axis of rotation (normalized THREE.Vector3)
+// theta - radian value of rotation
+// pointIsWorld - boolean indicating the point is in world coordinates (default = false)
+//  rotateAboutPoint(obj, point, axis, theta, pointIsWorld){
+//     pointIsWorld = (pointIsWorld === undefined)? false : pointIsWorld;
+
+//     if(pointIsWorld){
+//         obj.parent.localToWorld(obj.position); // compensate for world coordinate
+//     }
+
+//     obj.position.sub(point); // remove the offset
+//     obj.position.applyAxisAngle(axis, theta); // rotate the POSITION
+//     obj.position.add(point); // re-add the offset
+
+//     if(pointIsWorld){
+//         obj.parent.worldToLocal(obj.position); // undo world coordinates compensation
+//     }
+
+//     obj.rotateOnAxis(axis, theta); // rotate the OBJECT
+//   }
 
 
 

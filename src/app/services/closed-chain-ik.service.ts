@@ -7,6 +7,7 @@ import { KinematicConnection, KinematicConnectionList } from '../models/kinemati
 import * as THREE from 'three';
 import { Euler, Group } from 'three';
 import { KinematicsConfig } from '../models/kinematics-config.model';
+import { KinematicLinkService } from './kinematic-link.service';
 
 // import { KinematicsConfig } from '../models/kinematics-config.model';
 // import { IKRootsHelper } from 'closed-chain-ik-js-0.0.3/src/core/utils/findRoots.js';
@@ -50,11 +51,24 @@ export class ClosedChainIKService {
   targetObject: any;
   finalLink: any;
 
-  constructor() {
+  constructor(private kinematicLinkService: KinematicLinkService) {
     // this.targetObject.position.set( 0, 0, 0 );
     // this.addToScene.next(this.targetObject);
   }
 
+
+  createRootsFromList(connList: KinematicConnectionList, sceneObjects: any, object: any) {
+
+    console.log(connList, sceneObjects, object);
+    this.frames = [];
+    if (connList) {
+
+      const object_connections = this.kinematicLinkService.getLinkedObjects(connList.key, object.name);
+      console.log(object_connections);
+
+    }
+
+  }
 
 
   // createRootFromList(connList: KinematicConnectionList) {
