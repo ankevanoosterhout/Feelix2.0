@@ -92,6 +92,8 @@
                       <div class="label">{{ point.plane }}</div>
                       <span *ngIf="point.plane !== 'Z' && this.kinematicService.selectedJoints[0].isJoint">
                         <input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="angle_{{ point.id }}" name="angle_{{ point.id }}" [(ngModel)]="point.angle" (change)="this.updatePointAngle(point)">
+                      </span>
+                      <span *ngIf="this.kinematicService.selectedJoints[0].isJoint">
                         <input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="size_{{ point.id }}" name="size_{{ point.id }}" [(ngModel)]="point.size.value" (change)="this.updatePointSize(this.kinematicService.selectedJoints[0].id, point)">
                       </span>
                       <div class="buttons">

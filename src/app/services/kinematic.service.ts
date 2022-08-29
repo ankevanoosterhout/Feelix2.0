@@ -297,6 +297,8 @@ export class KinematicService {
       return new ConnectorSize(1.5, 1, 1.5, isMotor ? 23.575 : 18.48);
     } else if (plane === 'Y') {
       return new ConnectorSize(2.5, 1, 2.5, isMotor ? 26.5 : 23);
+    } else if (plane === 'Z') {
+      return new ConnectorSize(1, 1, 1, 17.2);
     }
   }
 

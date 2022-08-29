@@ -364,8 +364,11 @@ export class KinematicsDrawingService {
               // const target = this.closedChainIKService.createTarget();
               // this.config.control.attach(target);
               // this.config.closedChaindService.createRootsFromStructure();
-              const linkedList = this.kinematicLinkService.getListWithObject(object);
-              this.closedChainIKService.createRootsFromList(linkedList, this.config.scene.children, object);
+              const root = this.kinematicLinkService.getRootWithObject(object.name);
+              console.log(root);
+              if (root) {
+                this.closedChainIKService.createRootsFromList(root, this.config.scene.children.filter(c => c.isGroup));
+              }
             }
           }
         }
@@ -410,6 +413,7 @@ export class KinematicsDrawingService {
 
   selectConnectionElement(object: any, shift = false) {
     // console.log(object);
+    this.config.inputActive = false;
     if (object && object.parent) {
       const joint = this.kinematicService.joints.filter(j => j.sceneObject.id === object.parent.id || (object.parent.parent && j.sceneObject.id === object.parent.parent.id))[0];
       if (joint) {
@@ -570,14 +574,17 @@ export class KinematicsDrawingService {
   }
 
   deleteAllJoints() {
+    if (this.kinematicService.selectedJoints.length === 1) {
+      this.config.control.detach();
+    }
     for (const joint of this.kinematicService.joints) {
-      this.kinematicLinkService.deleteAllLinks(joint.id);
       const sceneObject = this.config.scene.getObjectByName(joint.id);
       if (sceneObject) {
         this.config.scene.remove(sceneObject);
       }
     }
     this.kinematicService.deleteAll();
+    this.kinematicLinkService.deleteAll();
     this.animate();
   }
 
@@ -647,9 +654,9 @@ export class KinematicsDrawingService {
         model.object3D.position.z += diffTranslation.z;
 
 
-        if (updateChildren) {
-          this.updateChildren(model, diffTranslation);
-        }
+        // if (updateChildren) {
+        //   this.updateChildren(model, diffTranslation);
+        // }
       }
       // this.kinematicService.updateJointVisualization(model.id, model.object3D);
     }
