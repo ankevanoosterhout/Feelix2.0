@@ -5,7 +5,7 @@ import { JointLink } from '../models/kinematic.model';
 import { Root } from '../models/kinematic-connections.model';
 
 import { Euler, Group } from 'three';
-import { KinematicLinkService } from './kinematic-link.service';
+// import { KinematicLinkService } from './kinematic-link.service';
 import { KinematicService } from './kinematic.service';
 
 
@@ -46,7 +46,7 @@ export class ClosedChainIKService {
   targetObject: any;
   finalLink: any;
 
-  constructor(private kinematicLinkService: KinematicLinkService, private kinematicService: KinematicService) {
+  constructor(private kinematicService: KinematicService) {
     // this.targetObject.position.set( 0, 0, 0 );
     // this.addToScene.next(this.targetObject);
   }
@@ -56,6 +56,7 @@ export class ClosedChainIKService {
 
     // console.log(root, sceneObjects, object);
     this.frames = [];
+    this.ikRoot = null;
     if (root) {
 
       let startJoint = this.getStartLinkRoot(root);
@@ -82,19 +83,19 @@ export class ClosedChainIKService {
       }
 
       if (joint_1 === undefined) {
-        const joint = this.kinematicService.getJoint(link.connJoints[0]);
-        if (joint) {
-          const sceneObjectJoint = sceneObjects.filter(s => s.name === joint.id)[0];
-          joint_1 = this.createNewJointFromObject(joint, sceneObjectJoint);
+        const jointObj = this.kinematicService.getJoint(link.connJoints[0]);
+        if (jointObj) {
+          const sceneObjectJoint = sceneObjects.filter(s => s.name === jointObj.id)[0];
+          joint_1 = this.createNewJointFromObject(jointObj, sceneObjectJoint);
         }
         // console.log(joint_1);
       }
 
       if (joint_2 === undefined) {
-        const joint = this.kinematicService.getJoint(link.connJoints[1]);
-        if (joint) {
-          const sceneObjectJoint = sceneObjects.filter(s => s.name === joint.id)[0];
-          joint_2 = this.createNewJointFromObject(joint, sceneObjectJoint);
+        const jointObj = this.kinematicService.getJoint(link.connJoints[1]);
+        if (jointObj) {
+          const sceneObjectJoint = sceneObjects.filter(s => s.name === jointObj.id)[0];
+          joint_2 = this.createNewJointFromObject(jointObj, sceneObjectJoint);
         }
         // console.log(joint_2);
       }
@@ -102,18 +103,34 @@ export class ClosedChainIKService {
       const parentJoint = joint_1.name === joint.id ? joint_1 : joint_2;
       const childJoint = joint_1.name !== joint.id ? joint_1 : joint_2;
 
-      // console.log(parentJoint, childJoint);
+      console.log(parentJoint, childJoint, newLink, link.closure);
 
-      if (parentJoint.child === null) {
+
+      if (parentJoint.child === null && !link.closure) {
         parentJoint.addChild(newLink);
-        if (link.isClosure) {
-          parentJoint.makeClosure(newLink);
-        }
       }
-      newLink.addChild(childJoint);
+      if (link.closure) {
+        parentJoint.makeClosure(newLink);
+        newLink.setWorldPosition(childJoint);
+        newLink.setWorldQuaternion(childJoint);
+
+        console.log(newLink);
+      } else {
+        newLink.addChild(childJoint);
+      }
+
+      console.log(link.closure);
+      // if (link.closure) {
+      //   parentJoint.makeClosure(newLink);
+      //   childJoint.makeClosure(newLink);
+      // }
 
       this.frames.push(newLink);
 
+      // let frameInList_parent = this.frames.filter(f => f.name === parentJoint.name)[0];
+      // let frameInList_child = this.frames.filter(f => f.name === childJoint.name)[0];
+
+      // console.log(frameInList_parent, frameInList_child);
 
       if (this.frames.filter(f => f.name === joint_1.name).length === 0) {
         this.frames.push(joint_1);
@@ -121,11 +138,10 @@ export class ClosedChainIKService {
 
       if (this.frames.filter(f => f.name === joint_2.name).length === 0) {
         this.frames.push(joint_2);
-        this.newFrames.push(joint_2.name);
       }
 
       const newItem = this.getNextLinkRoot(link, joint, root);
-      // console.log(newItem);
+      console.log(newItem);
       if (newItem !== null) {
         for (const item of newItem.links) {
           this.processLink(item, newItem.joint, sceneObjects, root);
@@ -170,7 +186,6 @@ export class ClosedChainIKService {
     }
     return null;
   }
-
 
   createRootsFromFrames(sceneObjects: any) {
     this.ikRoot = findRoots(this.frames);
@@ -275,10 +290,10 @@ export class ClosedChainIKService {
     newJoint.clearDoF();
     newJoint.name = joint.id;
     newJoint.setDoF( DOF.EZ ); //DOF.EZ
-    // newJoint.setWorldPosition(
-    //   sceneObject.position.x,
-    //   sceneObject.position.y,
-    //   sceneObject.position.z ); //0, 1, 0}
+    newJoint.setWorldPosition(
+      sceneObject.position.x,
+      sceneObject.position.y,
+      sceneObject.position.z ); //0, 1, 0}
     // newJoint.setMatrixNeedsUpdate();
 
     newJoint.setDoFValue( DOF.EZ, 1.8 * Math.PI);
@@ -290,7 +305,7 @@ export class ClosedChainIKService {
     newJoint.setMaxLimit(DOF.EZ, 0.9 * Math.PI );
 //     setMinLimit( dof : DOF, value : Number ) : Boolean
 // setMaxLimit( dof : DOF, value : Number ) : Boolean
-    // newJoint.setWorldQuaternion(sceneObject.quaternion.x, sceneObject.quaternion.y, sceneObject.quaternion.z, sceneObject.quaternion.w);
+    newJoint.setWorldQuaternion(sceneObject.quaternion.x, sceneObject.quaternion.y, sceneObject.quaternion.z, sceneObject.quaternion.w);
     // newJoint.setMatrixNeedsUpdate();
 
     console.log(newJoint.position, newJoint.quaternion);

@@ -845,14 +845,14 @@ export class KinematicsDrawingService {
       // console.log('update angle', connPnts[0].plane, connPnts[1].plane);
       if (connPnts[0].plane !== 'Z' && connPnts[1].plane !== 'Z') {
 
-        // if (!(connPnts[0].angle%90 === 0 && connPnts[1].angle%90 === 0)) {
+        if (connPnts[0].angle !== connPnts[1].angle) {
           const angle1 = connPnts[0].plane === 'Y' ? (connPnts[0].angle + models[0].angle)  * (Math.PI/180) : connPnts[0].angle * (Math.PI/180);
           const angle2 = connPnts[1].plane === 'Y' ? (connPnts[1].angle + models[1].angle)  * (Math.PI/180) : connPnts[1].angle * (Math.PI/180);
           const updatedAngle = (sceneModels[0].rotation.z + angle1) - (angle2 + Math.PI);
           console.log(connPnts[0].angle, connPnts[1].angle, updatedAngle);
           sceneModels[1].rotation.z = updatedAngle;
           sceneModels[1].updateMatrix();
-        // }
+        }
       }
 
       // sceneModels[1].updateMatrixWorld();

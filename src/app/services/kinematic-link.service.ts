@@ -24,86 +24,76 @@ export class KinematicLinkService {
   }
 
   createNewConnection(objects: any) {
-    console.log(objects);
-   //check if link exists
+    // console.log(objects);
+
     const linkInRoot = this.findLink(objects[0].frame.id, objects[1].frame.id);
-    console.log(linkInRoot);
-    if (!linkInRoot) {
-      const newLink = new Link(uuid(), false, [objects[0].frame.id, objects[1].frame.id]);
+
+    if (linkInRoot === undefined) {
+      const newLink = new Link(uuid(), false, [objects[0].frame.id, objects[1].frame.id], [objects[0].point.id, objects[1].point.id]);
       const root1 = this.getRootWithObject(objects[0].frame.id);
       const root2 = this.getRootWithObject(objects[1].frame.id);
 
-      console.log(root1, root2);
-
       if (root1 === undefined && root2 === undefined) {
-        //create new list
-        console.log('both undefined');
+
         const newRoot = new Root(uuid());
-        console.log(newRoot);
 
         newRoot.links.push(newLink);
 
-        for (const object of objects) {
-          const newJoint = new Joint(object.frame.id, [ newLink ]);
-          console.log(newJoint);
+        for (const obj of objects) {
+          const newJoint = new Joint(obj.frame.id, [ newLink ]);
           newRoot.joints.push(newJoint);
         }
 
         this.roots.push(newRoot);
 
       } else if (root1 !== undefined && root2 !== undefined) {
-        console.log(root1.key === root2.key);
 
-        console.log('both defined');
-        //merge roots
-        const newRoot = root1.key !== root2.key ? new Root(uuid()) : root1;
+        const newRoot = new Root(uuid());
 
         if (root1.key !== root2.key) {
 
           newRoot.joints = root1.joints.concat(root2.joints);
           newRoot.links = root1.links.concat(root2.links);
 
-          console.log(newRoot);
-
           const root1_index = this.roots.indexOf(root1);
           this.roots.splice(root1_index, 1);
 
-          console.log(root1_index);
-
           const root2_index = this.roots.indexOf(root2);
           this.roots.splice(root2_index, 1);
-
-          console.log(root1_index);
         }
 
+        let i = 0;
         for (const object of objects) {
-          const joint = newRoot.joints.filter(j => j.id === object.id)[0];
+          const root = i === 0 ? root1 : root2;
+          const joint = root1.key !== root2.key ? newRoot.joints.filter(j => j.id === object.id)[0] : root.joints.filter(j => j.id === objects[i].frame.id)[0];
+          // console.log(joint);
+          // console.log(root1.key === root2.key)
           if (joint) {
             if (joint.links.length > 2 || root1.key === root2.key) {
               newLink.closure = true;
             }
             joint.links.push(newLink);
           }
+          i++;
         }
 
-        newRoot.links.push(newLink);
+        if (root1.key !== root2.key) {
+          newRoot.links.push(newLink);
+        } else {
+          root1.links.push(newLink);
+        }
 
         if (root1.key !== root2.key) {
           this.roots.push(newRoot);
-        } else {
-          this.roots.filter(r => r.key === root1.key)[0] = newRoot;
         }
-
 
       } else {
 
-        console.log('one defined');
         const root = root1 !== undefined ? root1 : root2;
-        console.log(root);
 
-        const newJoint = new Joint(root1 !== undefined ? objects[0].frame.id : objects[1].frame.id, [ newLink ]);
+        const newJoint = new Joint(root1 === undefined ? objects[0].frame.id : objects[1].frame.id, [ newLink ]);
         const jointInRoot = root.joints.filter(j => j.id === (root1 !== undefined ? objects[0].frame.id : objects[1].frame.id))[0];
-        console.log(jointInRoot);
+
         if (jointInRoot) {
           if (jointInRoot.links.length > 2) {
             newLink.closure = true;
@@ -148,8 +138,9 @@ export class KinematicLinkService {
 
 
   getRootWithObject(id: string) {
+    // console.log(id, this.roots);
     for (const root of this.roots) {
-      console.log(root);
+      // console.log(root);
 
       const inList = root.joints.filter(j => j.id === id)[0];
       if (inList) {
@@ -161,7 +152,7 @@ export class KinematicLinkService {
 
   getLinkedObjects(key: any, id: string): Array<any> {
     const root = this.roots.filter(c => c.key === key)[0];
-    console.log(root);
+    // console.log(root);
     let items = [];
     if (root) {
       const joint = root.joints.filter(o => o.id === id)[0];
@@ -185,7 +176,7 @@ export class KinematicLinkService {
 
   getNrOfLinksObject(id: string) {
     for (const root of this.roots) {
-      console.log(root);
+      // console.log(root);
       const joint = root.joints.filter(j => j.id === id)[0];
       if (joint) {
         return joint.links.length;
@@ -197,10 +188,10 @@ export class KinematicLinkService {
 
   deleteAllLinks(id: string) {
     for (const root of this.roots) {
-      console.log(root);
+      // console.log(root);
       const joint = root.joints.filter(o => o.id === id)[0];
       if (joint) {
-        console.log(joint);
+        // console.log(joint);
         //get related value object, if object has no more connections to
         const index = root.joints.indexOf(joint);
         for (const link of root.links) {
