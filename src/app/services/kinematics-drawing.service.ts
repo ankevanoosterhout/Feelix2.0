@@ -32,7 +32,8 @@ export class KinematicsDrawingService {
     this.config = new KinematicsConfig();
 
     this.closedChainIKService.addToScene.subscribe(res => {
-      this.addObjectToScene(res);
+      console.log(res);
+      this.addObjectToScene(res.object, res.addControls);
     });
 
     this.closedChainIKService.removeFromScene.subscribe(res => {
@@ -161,11 +162,26 @@ export class KinematicsDrawingService {
       }
       this.deselectAllObjects();
     }
+
+    // const promise = this.closedChainIKService.loadCuriosity();
+    // console.log(promise);
+    // this.closedChainIKService.loadModel( promise );
   };
 
 
-  addObjectToScene(object: any) {
-    this.config.scene.add(object);
+
+
+
+  addObjectToScene(object: any, addControls = false) {
+    if (object) {
+      this.config.scene.add(object);
+      console.log(this.config.scene);
+      if (addControls) {
+        const sceneObject = this.config.scene.getObjectByName(object.name);
+        this.config.control.attach(sceneObject);
+      }
+      this.animate();
+    }
   }
 
   removeObjectFromScene(name: string) {
@@ -173,6 +189,7 @@ export class KinematicsDrawingService {
     if (object) {
       this.config.scene.remove(object);
     }
+    this.animate();
   }
 
 
@@ -368,6 +385,7 @@ export class KinematicsDrawingService {
               console.log(root);
               if (root) {
                 this.closedChainIKService.createRootsFromList(root, this.config.scene.children.filter(c => c.isGroup));
+                this.closedChainIKService.createTarget(object);
               }
             }
           }
@@ -740,12 +758,14 @@ export class KinematicsDrawingService {
 
 
   getDirectionVector(object: any, axis:any): THREE.Vector3 {
-    console.log(object, axis);
+    // console.log(object, axis);
     const worldDirection = new THREE.Vector3();
     object.getWorldDirection(worldDirection);
+    worldDirection.normalize();
     // this.drawArrowHelper(object.position, worldDirection, 0x2121d8);
     const updatedWorldDirect = new THREE.Vector3( axis.vector3.x, axis.vector3.y, axis.vector3.z );
     updatedWorldDirect.applyQuaternion(object.quaternion);
+    updatedWorldDirect.normalize();
     // this.drawArrowHelper(object.position, updatedWorldDirect, 0x000000);
     return updatedWorldDirect;
   }
@@ -825,13 +845,13 @@ export class KinematicsDrawingService {
           }
         }
       }
-
       // console.log(models, sceneModels, connPnts);
-
-      sceneModels[1].rotation.set(sceneModels[0].rotation.x, sceneModels[0].rotation.y, sceneModels[0].rotation.y);
+      sceneModels[1].rotation.set(sceneModels[0].rotation.x, sceneModels[0].rotation.y, sceneModels[0].rotation.z);
 
       const pnt_dir_origin = this.getDirectionVector(sceneModels[0], connPnts[0]);
       const pnt_dir_target = this.getDirectionVector(sceneModels[1], connPnts[1]);
+
+      console.log(pnt_dir_origin, pnt_dir_target);
 
       const quaternion = new THREE.Quaternion();
       const reverseOrigin = new THREE.Vector3();
@@ -842,17 +862,17 @@ export class KinematicsDrawingService {
       sceneModels[1].applyMatrix4( matrix );
       sceneModels[1].updateMatrix();
 
-      // console.log('update angle', connPnts[0].plane, connPnts[1].plane);
-      if (connPnts[0].plane !== 'Z' && connPnts[1].plane !== 'Z') {
-
-        if (connPnts[0].angle !== connPnts[1].angle) {
-          const angle1 = connPnts[0].plane === 'Y' ? (connPnts[0].angle + models[0].angle)  * (Math.PI/180) : connPnts[0].angle * (Math.PI/180);
-          const angle2 = connPnts[1].plane === 'Y' ? (connPnts[1].angle + models[1].angle)  * (Math.PI/180) : connPnts[1].angle * (Math.PI/180);
+      console.log('update angle', connPnts[0].plane, connPnts[1].plane);
+      if (connPnts[0].plane !== 'Z' && connPnts[1].plane !== 'Z' && !(pnt_dir_origin.x === pnt_dir_target.x && pnt_dir_origin.y === pnt_dir_target.y && pnt_dir_origin.z === pnt_dir_target.z)) {
+        console.log(pnt_dir_origin, pnt_dir_target, reverseOrigin);
+        // if (connPnts[0].angle !== connPnts[1].angle && connPnts[0].angle%90 !== 0) {
+          const angle1 = connPnts[0].plane === 'Y' ? (connPnts[0].angle + models[0].angle) * (Math.PI/180) : connPnts[0].angle * (Math.PI/180);
+          const angle2 = connPnts[1].plane === 'Y' ? (connPnts[1].angle + models[1].angle) * (Math.PI/180) : connPnts[1].angle * (Math.PI/180);
           const updatedAngle = (sceneModels[0].rotation.z + angle1) - (angle2 + Math.PI);
           console.log(connPnts[0].angle, connPnts[1].angle, updatedAngle);
           sceneModels[1].rotation.z = updatedAngle;
           sceneModels[1].updateMatrix();
-        }
+        // }
       }
 
       // sceneModels[1].updateMatrixWorld();

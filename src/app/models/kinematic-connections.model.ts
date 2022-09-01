@@ -1,27 +1,40 @@
+export class LinkedJoint {
+  id: string;
+  connector: string;
+  plane: string;
+
+  constructor(id: string, connector: string, plane: string) {
+    this.id = id;
+    this.connector = connector;
+    this.plane = plane;
+  }
+}
+
+
 export class Link {
   id: string;
-  connJoints: Array<string>;
-  connPoints: Array<string>;
-  closure: boolean;
+  joints: Array<LinkedJoint> = [];
+  closure = false;
 
 
-  constructor(id: string, closure: boolean, connJoints: Array<string>, connPoints: Array<string>) {
+  constructor(id: string, joints: Array<LinkedJoint>) {
     this.id = id;
-    this.closure = closure;
-    this.connJoints = connJoints;
-    this.connPoints = connPoints;
+    this.joints = joints;
   }
+}
+
+export class LinkGroup {
+  links: Array<Link> = [];
 }
 
 
 export class Joint {
   id: string;
-  links: Array<Link>;
+  linkGroup: Array<LinkGroup> = [ new LinkGroup(), new LinkGroup() ];
   // axis: string;
 
-  constructor(id: string, links: Array<Link>) {
+  constructor(id: string) {
     this.id = id;
-    this.links = links;
     // this.axis = axis;
   }
 }

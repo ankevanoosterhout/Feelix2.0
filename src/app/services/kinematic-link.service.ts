@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
-import { Joint, Link, Root } from '../models/kinematic-connections.model';
+import { Joint, Link, LinkedJoint, Root } from '../models/kinematic-connections.model';
 import { v4 as uuid } from 'uuid';
 import { Subject } from 'rxjs';
 import { LocalStorageService } from 'ngx-webstorage';
+import { JointLink } from '../models/kinematic.model';
 
 
 
@@ -23,101 +24,85 @@ export class KinematicLinkService {
     }
   }
 
+
   createNewConnection(objects: any) {
-    // console.log(objects);
 
     const linkInRoot = this.findLink(objects[0].frame.id, objects[1].frame.id);
 
     if (linkInRoot === undefined) {
-      const newLink = new Link(uuid(), false, [objects[0].frame.id, objects[1].frame.id], [objects[0].point.id, objects[1].point.id]);
-      const root1 = this.getRootWithObject(objects[0].frame.id);
-      const root2 = this.getRootWithObject(objects[1].frame.id);
+      // console.log(objects);
 
-      if (root1 === undefined && root2 === undefined) {
+      let selectedRoot = this.getRootWithObject(objects[1].frame.id);
+      // console.log(selectedRoot);
 
-        const newRoot = new Root(uuid());
+      let newLink = new Link(uuid(), [ new LinkedJoint(objects[0].frame.id, objects[0].point.id, objects[0].point.plane), new LinkedJoint(objects[1].frame.id, objects[1].point.id, objects[1].point.plane)]);
+      let root = this.getRootWithObject(objects[0].frame.id);
 
-        newRoot.links.push(newLink);
+      for (const object of objects) {
 
-        for (const obj of objects) {
-          const newJoint = new Joint(obj.frame.id, [ newLink ]);
-          newRoot.joints.push(newJoint);
+        // console.log(root);
+
+        if (root === undefined) {
+          root = selectedRoot !== undefined ? selectedRoot : new Root(uuid());
+          console.log(root);
+          if (this.roots.filter(r => r.key === root.key).length === 0) {
+            this.roots.push(root);
+          }
         }
 
-        this.roots.push(newRoot);
+        if (root.links.length > 0 && selectedRoot !== undefined && selectedRoot.key !== root.key) {
+          let newRoot;
+          //merge roots
+          newRoot = new Root(uuid());
+          newRoot.joints = root.joints.concat(selectedRoot.joints);
+          newRoot.links = root.links.concat(selectedRoot.links);
 
-      } else if (root1 !== undefined && root2 !== undefined) {
-
-        const newRoot = new Root(uuid());
-
-        if (root1.key !== root2.key) {
-
-          newRoot.joints = root1.joints.concat(root2.joints);
-          newRoot.links = root1.links.concat(root2.links);
-
-          const root1_index = this.roots.indexOf(root1);
+          const root1_index = this.roots.indexOf(root);
           this.roots.splice(root1_index, 1);
 
-          const root2_index = this.roots.indexOf(root2);
+          const root2_index = this.roots.indexOf(selectedRoot);
           this.roots.splice(root2_index, 1);
+
+          root = newRoot;
+          selectedRoot = undefined;
+
+          this.roots.push(root);
         }
 
-        let i = 0;
-        for (const object of objects) {
-          const root = i === 0 ? root1 : root2;
-          const joint = root1.key !== root2.key ? newRoot.joints.filter(j => j.id === object.id)[0] : root.joints.filter(j => j.id === objects[i].frame.id)[0];
-          // console.log(joint);
-          // console.log(root1.key === root2.key)
-          if (joint) {
-            if (joint.links.length > 2 || root1.key === root2.key) {
-              newLink.closure = true;
-            }
-            joint.links.push(newLink);
-          }
-          i++;
+        // console.log(root.joints.filter(j => j.id === object.frame.id)[0], object.frame.id);
+
+        let joint = root.joints.filter(j => j.id === object.frame.id)[0];
+
+        const group = object.point.plane === 'Y' ? 1 : 0;
+        // console.log(group);
+        // console.log(object.point);
+        // console.log(joint);
+
+        if (joint === undefined) {
+          const newJoint = new Joint(object.frame.id);
+          newJoint.linkGroup[group].links.push(newLink);
+          root.joints.push(newJoint);
+        } else if (joint !== undefined) {
+          console.log(joint);
+          joint.linkGroup[group].links.push(newLink);
         }
-
-        if (root1.key !== root2.key) {
-          newRoot.links.push(newLink);
-        } else {
-          root1.links.push(newLink);
-        }
-
-        if (root1.key !== root2.key) {
-          this.roots.push(newRoot);
-        }
-
-      } else {
-
-        const root = root1 !== undefined ? root1 : root2;
-
-        const newJoint = new Joint(root1 === undefined ? objects[0].frame.id : objects[1].frame.id, [ newLink ]);
-        const jointInRoot = root.joints.filter(j => j.id === (root1 !== undefined ? objects[0].frame.id : objects[1].frame.id))[0];
-
-        if (jointInRoot) {
-          if (jointInRoot.links.length > 2) {
-            newLink.closure = true;
-          }
-          jointInRoot.links.push(newLink);
-        }
-
-        root.links.push(newLink);
-        root.joints.push(newJoint);
+        // console.log(joint);
       }
 
-      console.log(this.roots);
+      root.links.push(newLink);
 
-
+      // console.log(this.roots);
       this.store();
     }
   }
 
 
 
+
   findLink(joint_1: string, joint_2: string) {
     for (const root of this.roots) {
       for (const link of root.links) {
-        if (link.connJoints.includes(joint_1) && link.connJoints.includes(joint_2)) {
+        if (link.joints.filter(j => j.id === joint_1).length > 0 && link.joints.filter(j => j.id === joint_2).length > 0) {
           return link;
         }
       }
@@ -138,34 +123,40 @@ export class KinematicLinkService {
 
 
   getRootWithObject(id: string) {
-    // console.log(id, this.roots);
     for (const root of this.roots) {
-      // console.log(root);
-
-      const inList = root.joints.filter(j => j.id === id)[0];
-      if (inList) {
-        return root;
-      }
-    }
-  }
-
-
-  getLinkedObjects(key: any, id: string): Array<any> {
-    const root = this.roots.filter(c => c.key === key)[0];
-    // console.log(root);
-    let items = [];
-    if (root) {
-      const joint = root.joints.filter(o => o.id === id)[0];
-
-      if (joint) {
-        for (const link of joint.links) {
-          const linkedObject = link.connJoints.filter(j => j !== id)[0];
-          items.push(linkedObject);
+      console.log(root.joints, id);
+      for (const joint of root.joints) {
+        console.log(joint.id, id);
+        if (joint.id === id) {
+          return root;
         }
       }
+      // const inList = root.joints.filter(j => j.id === id)[0];
+      // console.log(inList);
+      // if (inList) {
+      //   return root;
+      // }
     }
-    return items;
+    return;
   }
+
+
+  // getLinkedObjects(key: any, id: string): Array<any> {
+  //   const root = this.roots.filter(c => c.key === key)[0];
+  //   // console.log(root);
+  //   let items = [];
+  //   if (root) {
+  //     const joint = root.joints.filter(o => o.id === id)[0];
+
+  //     if (joint) {
+  //       for (const link of joint.links) {
+  //         const linkedObject = link.joints.filter(j => j.id !== id)[0];
+  //         items.push(linkedObject);
+  //       }
+  //     }
+  //   }
+  //   return items;
+  // }
 
 
   getListWithKey(key: string) {
@@ -174,12 +165,14 @@ export class KinematicLinkService {
 
 
 
+
+
   getNrOfLinksObject(id: string) {
     for (const root of this.roots) {
       // console.log(root);
       const joint = root.joints.filter(j => j.id === id)[0];
       if (joint) {
-        return joint.links.length;
+        return joint.linkGroup[0].links.length + joint.linkGroup[1].links.length;
       }
 
     }
@@ -195,7 +188,7 @@ export class KinematicLinkService {
         //get related value object, if object has no more connections to
         const index = root.joints.indexOf(joint);
         for (const link of root.links) {
-          if (joint.links.includes(link)) {
+          if (joint.linkGroup[0].links.includes(link) || joint.linkGroup[1].links.includes(link)) {
             const indexOfLink = root.links.indexOf(link);
             root.links.splice(indexOfLink, 1);
           }
@@ -220,9 +213,7 @@ export class KinematicLinkService {
     this.store();
   }
 
-  checkIfRootHasSplit() {
 
-  }
 
   store() {
     this.rootsObservable.next(this.roots);
