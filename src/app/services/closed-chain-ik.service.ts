@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Solver, Link,	Joint, IKRootsHelper, Goal, findRoots, DOF, setIKFromUrdf, urdfRobotToIKRoot } from 'closed-chain-ik-js-0.0.3/src';
+import { Solver, Link,	Joint, IKRootsHelper, Goal, findRoots, DOF, setIKFromUrdf, urdfRobotToIKRoot, SOLVE_STATUS_NAMES } from 'closed-chain-ik-js-0.0.3/src';
 import { Subject } from 'rxjs';
 import { JointLink } from '../models/kinematic.model';
 import { LinkGroup, Root } from '../models/kinematic-connections.model';
@@ -23,14 +23,14 @@ export class ClosedChainIKService {
   // TODO: why is the solve stalling so frequently? Only when goal is set with rotation.
   // Matching rotation goal doesn't seem to work.
   solverOptions = {
-    maxIterations: 3,
+    maxIterations: 10,
     divergeThreshold: 0.005,
     stallThreshold: 1e-3,
     translationErrorClamp: 0.25,
     rotationErrorClamp: 0.25,
     translationConvergeThreshold: 1e-3,
-    rotationConvergeThreshold: 1e-3,
-    restPoseFactor: 0.001,
+    rotationConvergeThreshold: 1e-3
+    // restPoseFactor: 0.001,
   };
 
   ikRoot = null;
@@ -85,19 +85,18 @@ export class ClosedChainIKService {
     this.ikRoot = null;
     if (root) {
       const startJoint = this.getStartJoint(root);
-      // console.log(startJoint);
       this.processJoint(startJoint, null, sceneObjects, root);
-
     }
   }
 
   processJoint(joint: any, parentLink: any, sceneObjects: any, root: Root) {
 
+
     if (!this.createRoot) {
       // console.log(joint);
       const jointObj = this.kinematicService.getJoint(joint.id);
       const sceneObjectJoint = sceneObjects.filter(s => s.name === joint.id)[0];
-      console.log(jointObj.id);
+      // console.log(jointObj.id);
 
       const jointEl = this.frames.filter(f => f.name === jointObj.id && f.isJoint)[0] ?
         this.frames.filter(f => f.name === jointObj.id && f.isJoint)[0] : this.createNewJointFromObject(jointObj, sceneObjectJoint);
@@ -108,7 +107,7 @@ export class ClosedChainIKService {
         link.name = link.name === "" ? joint.id + ':C' : link.name;
         jointEl.addChild(link);
       } else {
-        console.log('add child to link', joint.id, link.name);
+        // console.log('add child to link', joint.id, link.name);
         link.addChild(jointEl);
       }
 
@@ -116,7 +115,7 @@ export class ClosedChainIKService {
 
       if (this.frames.filter(f => f.name === jointEl.name && jointEl.isJoint).length === 0) {
         this.frames.push(jointEl);
-        console.log(this.frames);
+        // console.log(this.frames);
       }
 
 
@@ -125,79 +124,44 @@ export class ClosedChainIKService {
         // console.log(this.frames);
       }
 
-      for (const connector of jointObj.connectors) {
-        if (connector.connected) {
-          // console.log(connector);
 
-          const connectedJointObj = this.kinematicService.getJoint(connector.object);
-          const connectedJointInRoot = root.joints.filter(j => j.id === connectedJointObj.id)[0];
-          // console.log(connectedJointObj);
-          const connectorToOriginalObject = connectedJointObj.connectors.filter(c => c.object === joint.id)[0];
-          const newConnectedJoint = this.createNewJointFromObject(connectedJointObj, sceneObjectJoint);
 
-          const jointInFrames = this.frames.filter(f => f.name === newConnectedJoint.name)[0];
+      if (!this.createRoot) {
+        for (const connector of jointObj.connectors) {
+          if (connector.connected) {
+            // console.log(connector);
 
-          if (jointInFrames === undefined) {
-            link.addChild(newConnectedJoint);
-            this.frames.push(newConnectedJoint);
-          } else if (jointInFrames !== undefined) {
-            console.log('add ', jointInFrames, ' to ', link);
-            // jointInFrames.addChild(link);
-            // link.addChild(jointInFrames);
-          }
-          // console.log(connectedJointObj, connectorToOriginalObject);
-          // end joint
-          // if (connectedJointObj.connectors.filter(c => c.connected).length === 1) {
-          //   console.log(connectedJointObj.connectors.filter(c => c.connected)[0]);
-          //   console.log(connectedJointObj.id, joint.id);
-          //   const newConnectedJoint = this.createNewJointFromObject(connectedJointObj, sceneObjectJoint);
-          //   if (this.frames.filter(f => f.name === newConnectedJoint.name).length === 0) {
-          //     this.frames.push(newConnectedJoint);
-          //     console.log(link.children.filter(l => l.name === newConnectedJoint.name).length);
-          //   }
-          //   if (link.children.filter(l => l.name === newConnectedJoint.name).length === 0) {
-          //     console.log('add child link');
-          //     console.log(newConnectedJoint.name, joint.id, link.children, parentLink);
-          //     link.addChild(this.frames.filter(f => f.name === newConnectedJoint.name)[0]);
-          //   }
-          // }
-            // this.processJoint(connectedJointInRoot, null, sceneObjects, root);
+            const connectedJointObj = this.kinematicService.getJoint(connector.object);
+            const connectedJointInRoot = root.joints.filter(j => j.id === connectedJointObj.id)[0];
+            // console.log(connectedJointObj);
+            const connectorToOriginalObject = connectedJointObj.connectors.filter(c => c.object === joint.id)[0];
+            const newConnectedJoint = this.createNewJointFromObject(connectedJointObj, sceneObjectJoint);
 
-          for (const connectorJO of connectedJointObj.connectors.filter(c => c.connected)) {
+            const jointInFrames = this.frames.filter(f => f.name === newConnectedJoint.name)[0];
 
-            if (connectorJO.object !== joint.id) {
-              console.log('new' + connectorToOriginalObject.plane, connectorJO.plane);
-              this.processJoint(connectedJointInRoot, (connectorToOriginalObject.plane === connectorJO.plane ? link : null), sceneObjects, root);
+            if (jointInFrames === undefined) {
+              link.addChild(newConnectedJoint);
+              this.frames.push(newConnectedJoint);
+            } else if (jointInFrames !== undefined) {
+              // console.log('add ', jointInFrames, ' to ', link);
+              // jointInFrames.addChild(link);
+              // link.addChild(jointInFrames);
+            }
+
+            for (const connectorJO of connectedJointObj.connectors.filter(c => c.connected)) {
+
+              if (connectorJO.object !== joint.id) {
+                console.log('new' + connectorToOriginalObject.plane, connectorJO.plane);
+                this.processJoint(connectedJointInRoot, (connectorToOriginalObject.plane === connectorJO.plane ? link : null), sceneObjects, root);
+
+              }
 
             }
-            // else {
-            //   console.log('this' + connectorToOriginalObject.plane, connectorJO.plane);
-            //   console.log(newConnectedJoint.name, joint.id);
-            //   const jointInFrames = this.frames.filter(f => f.name === newConnectedJoint.name)[0];
-            //   console.log(jointInFrames, parentLink);
-            //   if (jointInFrames === undefined && (parentLink === null || parentLink === undefined)) {
-            //     link.addChild(newConnectedJoint);
-            //     this.frames.push(newConnectedJoint);
-            //   } else if (jointInFrames) {
-            //     console.log('add ', jointInFrames, ' to ', link);
-            //     // link.addChild(jointInFrames);
-            //   }
-            //   // if (this.frames.filter(f => f.name === newConnectedJoint.name).length === 0) {
-            //   //   this.frames.push(newConnectedJoint);
-            //   //   // link.addChild(newConnectedJoint);
-            //   // } else {
-            //   //   console.log('add to link', link.name);
-            //   //   // console.log(connectorJO, joint);
-            //   //   // console.log(jointObj.connectors.length, connectedJointObj.connectors.length);
-            //   //   link.addChild(this.frames.filter(f => f.name === newConnectedJoint.name)[0]);
-            //   // }
-            // }
           }
-
-
         }
       }
     }
+
     if (this.frames.filter(f => f.isJoint).length === root.joints.length) {
       this.createRoot = true;
       console.log('finished');
@@ -205,316 +169,8 @@ export class ClosedChainIKService {
       this.createRootsFromFrames(sceneObjects);
       return;
     }
+
   }
-
-
-  // processJoint(joint: any, childLink: any, parentLink: any, sceneObjects: any, root: Root) {
-
-  //   console.log(joint, childLink, parentLink, root);
-  //   // console.log(this.frames.filter(f => f.name === joint.id).length + " in list");
-
-
-  //   if (!this.createRoot) {
-  //     const linkInList = parentLink === null || this.frames.filter(f => f.name === parentLink.name).length === 0 ? false : true;
-
-  //     const sceneObjectJoint = sceneObjects.filter(s => s.name === joint.id)[0];
-  //     const jointObj = this.kinematicService.getJoint(joint.id);
-  //     console.log(jointObj.id);
-
-  //     const newJoint = this.frames.filter(f => f.name === joint.id).length === 0 ? this.createNewJointFromObject(jointObj, sceneObjectJoint, joint) : this.frames.filter(f => f.name === joint.id)[0];
-  //     const pLink = linkInList ? this.frames.filter(f => f.name === parentLink.name)[0] : new Link();
-  //     console.log(pLink);
-
-  //     if (parentLink) {
-  //       console.log(pLink, newJoint);
-  //       pLink.addChild(newJoint);
-  //       if (!linkInList) {
-  //         pLink.name = parentLink.name;
-  //         console.log(pLink.name)
-  //         this.frames.push(pLink);
-  //       }
-  //     } else if (childLink) {
-  //       console.log(newJoint, childLink.name);
-  //       newJoint.addChild(childLink);
-  //       this.frames.push(childLink);
-  //     }
-
-  //     if (this.frames.filter(f => f.name === newJoint.name).length === 0) {
-
-  //       this.frames.push(newJoint);
-
-  //       if (this.frames.filter(f => f.isJoint).length === root.joints.length) {
-  //         // this.createRootsFromFrames(sceneObjects);
-  //         this.createRoot = true;
-  //         console.log (this.frames);
-  //         return;
-  //       }
-
-  //       console.log(joint, joint.linkGroup);
-  //       if (joint && joint.linkGroup) {
-  //         for (const group of joint.linkGroup) {
-  //           console.log(group);
-  //           for (const link of group.links) {
-  //             console.log(link);
-  //             const linkedJoint = link.joints.filter(j => j.id !== joint.id)[0];
-  //             console.log(linkedJoint);
-  //             const sameJoint = link.joints.filter(j => j.id === joint.id)[0];
-  //             const linkedJointInRoot = root.joints.filter(j => j.id === linkedJoint.id)[0];
-  //             console.log(sameJoint);
-  //             console.log(linkedJointInRoot);
-  //             console.log(link.joints.filter(j => j.id !== joint.id), link.joints.filter(j => j.id === joint.id));
-  //             console.log(linkedJoint.plane === sameJoint.plane);
-  //             // const linkedJointObj = this.kinematicService.getJoint(linkedJoint.id);
-  //             // const plane = this.getConnectionPlane(root, linkedJoint);
-  //             // console.log(plane);
-  //             // console.log(linkedJoint, linkedJointObj, linkedJointInRoot);
-  //             const newLink = new Link();
-  //             newLink.name = linkedJoint.id + ':C';
-  //             console.log(childLink);
-  //             this.processJoint(linkedJointInRoot, (sameJoint.plane === linkedJoint.plane ? null : newLink), (sameJoint.plane === linkedJoint.plane ? childLink : null), sceneObjects, root);
-
-  //             // const connectedObjects = this.getConnectedObjects(root, linkedJoint);
-  //             // console.log(connectedObjects);
-  //             // for (const connectedObj of connectedObjects) {
-  //             //   const connectedJoint = this.kinematicService.getJoint(connectedObj.id);
-  //             //   console.log(connectedJoint);
-  //             //   if (connectedJoint && connectedObj.plane === ) {
-  //             //     this.processJoint(connectedJoint, null, childLink, sceneObjects, root);
-  //             //   }
-  //             // }
-  //           }
-  //         }
-  //       }
-  //     }
-  //   }
-  // }
-
-
-  // processJoint(joint: any, link: any, sceneObjects: any, root: Root) {
-  //   console.log(joint, link, root);
-
-  //   console.log(this.frames.filter(f => f.isJoint).length, root.joints.length);
-  //   if (this.frames.filter(f => f.isJoint).length >= root.joints.length - 1) {
-  //     this.createRoot = true;
-  //     console.log(this.frames);
-  //   }
-
-  //   if (!this.createRoot) {
-  //     const sceneObjectJoint = sceneObjects.filter(s => s.name === joint.id)[0];
-  //     const jointObj = this.kinematicService.getJoint(joint.id);
-
-  //     const newJoint = this.frames.filter(f => f.name === joint.id && f.isJoint).length === 0 ?
-  //         this.createNewJointFromObject(jointObj, sceneObjectJoint, joint) : this.frames.filter(f => f.name === joint.id && f.isJoint)[0];
-
-  //     const linkInList = this.frames.filter(f => f.name === link.name).length > 0 ? true : false;
-  //     const newLink = !linkInList ? new Link() : link;
-  //     console.log(newJoint, newLink);
-
-  //     if (linkInList) {
-  //       // console.log('update existing link');
-  //       newLink.addChild(newJoint);
-  //     } else {
-  //       newLink.name = joint.id + ':C';
-  //     }
-
-  //     if (this.frames.filter(f => f.name === joint.id && f.isJoint).length === 0) {
-  //       // console.log('new link');
-  //       newJoint.addChild(newLink);
-  //       this.frames.push(newLink);
-  //     }
-
-  //     if (this.frames.filter(f => f.name === jointObj.id && f.isJoint).length === 0) {
-  //       // console.log('add joint');
-  //       this.frames.push(newJoint);
-  //     }
-
-  //     if (joint && joint.linkGroup) {
-
-  //       for (const group of joint.linkGroup) {
-  //         for (const link of group.links) {
-  //           // get linked joints
-  //           // console.log(link);
-  //           const linkedJoint = link.joints.filter(j => j.id !== joint.id)[0];
-  //           // console.log(linkedJoint);
-  //           const linkedJointInRoot = root.joints.filter(j => j.id === linkedJoint.id)[0];
-  //           const planeLink = this.getConnectionPlane(root, linkedJoint);
-
-  //           this.processJoint(linkedJointInRoot, new Link(), sceneObjects, root);
-
-
-  //           const connectedObjects = this.getConnectedObjects(root, linkedJoint);
-  //           // console.log(connectedObjects);
-
-  //           for (const connectedObj of connectedObjects) {
-  //             const connectedJoint = this.kinematicService.getJoint(connectedObj.id);
-  //             // console.log(connectedJoint, connectedObj, connectedObj.id, linkedJoint.id);
-  //             // console.log(connectedJoint.id === joint.id);
-  //             // if (connectedJoint.id !== jointObj.id) {
-  //               // console.log(plane, planeLink, connectedObj.plane);
-  //               if (connectedObj.plane === planeLink) {
-  //                 // console.log('next same plane', linkedJointInRoot, newLink);
-  //                 this.processJoint(connectedJoint, newLink, sceneObjects, root);
-  //               }
-  //             // }
-  //           }
-
-  //           // if (this.frames.filter(f => f.name === linkedJoint.id).length === 0) {
-  //           //   console.log(joint.id, linkedJoint.id);
-  //           //   if (plane && planeLink === plane) {
-  //           //     console.log('next same plane', linkedJointInRoot, newLink);
-  //           //     // this.processJoint(linkedJointInRoot, newLink, sceneObjects, root, plane);
-  //           //   } else {
-  //           //     console.log('next other plane', linkedJointInRoot, newLink);
-  //           //     // this.processJoint(linkedJointInRoot, new Link(), sceneObjects, root, plane);
-  //           //   }
-  //           // }
-
-  //           // console.log(linkedJoint, linkedJointInRoot);
-  //         }
-  //       }
-  //     }
-  //   }
-
-  // }
-
-  // processJoint(joint: any, link: any, sceneObjects: any, root: Root) {
-  //   console.log(joint, link, root);
-
-
-  //   const jointObj = this.kinematicService.getJoint(joint.id);
-
-  //   const inList = this.frames.filter(f => f.name === joint.id && f.isJoint).length > 0 ? true : false;
-
-  //   console.log(inList);
-
-  //   if (!inList) {
-
-  //     const sceneObjectJoint = sceneObjects.filter(s => s.name === joint.id)[0];
-
-  //     const newJoint = this.frames.filter(f => f.name === joint.id && f.isJoint).length === 0 ?
-  //       this.createNewJointFromObject(jointObj, sceneObjectJoint, joint) : this.frames.filter(f => f.name === joint.id && f.isJoint)[0];
-
-  //     //create a new link for next joint
-  //     const linkInList = this.frames.filter(f => f.name === joint.id + ':C' && f.isLink).length > 0 ? true : false;
-  //     const newLink = !linkInList ? new Link() : this.frames.filter(f => f.name === joint.id + ':C' && f.isLink)[0];
-
-  //     if (!linkInList) {
-  //       newLink.name = joint.id + ':C';
-  //       this.frames.push(newLink);
-  //     }
-  //     if (link) {
-  //       link.addChild(newJoint);
-  //     } else {
-  //       console.log("newLink", newLink.name, newJoint.children);
-  //       newJoint.addChild(newLink);
-  //     }
-
-  //     this.frames.push(newJoint);
-
-
-  //     if (joint && joint.linkGroup) {
-  //       for (const group of joint.linkGroup) {
-  //         console.log(group);
-
-  //         for (const link of group.links) {
-  //           console.log(link);
-  //           const linkedJoint = link.joints.filter(j => j.id !== joint.id)[0];
-  //           const linkedJointInRoot = root.joints.filter(j => j.id === linkedJoint.id)[0];
-  //           const plane = this.getConnectionPlane(root, linkedJoint);
-  //           console.log(plane);
-
-  //           const connectedObjects = this.getConnectedObjects(root, linkedJoint);
-  //           console.log(connectedObjects);
-
-  //           this.processJoint(linkedJointInRoot, newLink, sceneObjects, root);
-
-  //           for (const connectedObj of connectedObjects) {
-
-  //             const connectedJoint = this.kinematicService.getJoint(connectedObj.id);
-  //             console.log(connectedObj, connectedObj.id, linkedJoint.id);
-  //             if (connectedJoint && connectedObj.id !== joint.id) {
-  //               if (plane === connectedObj.plane) {
-  //                 this.processJoint(linkedJointInRoot, link, sceneObjects, root);
-  //                 // add link to child
-  //               }
-  //             }
-  //           }
-
-  //         }
-  //       }
-  //     }
-
-
-  //     console.log(this.frames);
-
-  //   } else {
-  //     if (this.frames.filter(f => f.isJoint).length === root.joints.length) {
-  //       this.createRootsFromFrames(sceneObjects);
-  //     }
-  //   }
-  // }
-
-
-  // processJoint(joint: any, parentLink: any, sceneObjects: any, root: Root) {
-
-  //   console.log(joint, parentLink, root);
-  //   // console.log(this.frames.filter(f => f.name === joint.id).length + " in list");
-  //   if (this.frames.filter(f => f.name === joint.id + ':C' && f.isLink).length === 0) {
-  //     const newLink = new Link();
-  //     newLink.name = joint.id + ':C';
-  //     const sceneObjectJoint = sceneObjects.filter(s => s.name === joint.id)[0];
-  //     const jointObj = this.kinematicService.getJoint(joint.id);
-  //     // const plane = this.getConnectionPlane(root, joint);
-  //     const newJoint = this.createNewJointFromObject(jointObj, sceneObjectJoint, joint);
-
-  //     console.log(parentLink, newJoint);
-  //     if (this.frames.filter(f => f.name === joint.id && f.isJoint).length === 0) {
-  //       if (parentLink) {
-  //         parentLink.attachChild(newJoint);
-  //         if (this.frames.filter(f => f.name === parentLink.name).length === 0) {
-  //           this.frames.push(parentLink);
-  //         }
-  //       } else {
-  //         console.log('inlist ', this.frames.filter(f => f.name === joint.id && f.isJoint));
-  //       }
-  //       newJoint.attachChild(newLink);
-
-  //       this.frames.push(newJoint);
-
-  //       console.log(joint, joint.linkGroup);
-  //       if (joint && joint.linkGroup) {
-  //         for (const group of joint.linkGroup) {
-  //           console.log(group);
-  //           for (const link of group.links) {
-  //             console.log(link);
-  //             const linkedJoint = link.joints.filter(j => j.id !== joint.id)[0];
-  //             const linkedJointInRoot = root.joints.filter(j => j.id === linkedJoint.id)[0];
-  //             // const linkedJointObj = this.kinematicService.getJoint(linkedJoint.id);
-
-  //             // console.log(linkedJoint, linkedJointObj, linkedJointInRoot);
-
-  //             this.processJoint(linkedJointInRoot, newLink, sceneObjects, root);
-
-  //             const connectedObjects = this.getConnectedObjects(root, linkedJoint);
-  //             console.log(connectedObjects);
-  //             for (const connectedObj of connectedObjects) {
-  //               const connectedJoint = this.kinematicService.getJoint(connectedObj.id);
-  //               // console.log(connectedJoint);
-  //               if (connectedJoint) {
-  //                 this.processJoint(connectedJoint, newLink, sceneObjects, root);
-  //               }
-  //             }
-  //           }
-  //         }
-  //       }
-  //     }
-  //     // if (this.frames.filter(f => f.isJoint).length === root.joints.length) {
-  //     //   this.createRootsFromFrames(sceneObjects);
-  //     // }
-
-  //     console.log (this.frames);
-  //   }
-  // }
 
 
 
@@ -535,29 +191,6 @@ export class ClosedChainIKService {
       return startJoint;
     }
   }
-
-
-
-
-  // getConnectionPlane(root: Root, object: any) {
-  //   // console.log(root, object);
-  //   if (root && root.links.length > 0) {
-  //     console.log(root.links);
-  //     for (const link of root.links) {
-  //       console.log(link.joints.filter(j => j.id !== object.id));
-  //       const connJoint = link.joints.filter(j => j.id !== object.id)[0];
-  //       // console.log(connJoint);
-  //       return connJoint.plane;
-
-  //       // const connectedJoint = link.joints.filter(j => j.id === object.id && j.plane === object.plane)[0];
-  //       // // console.log(connectedJoint);
-  //       // if (connectedJoint) {
-  //       //   linkedObjects.push(link.joints.filter(j => j.id !== object.id)[0]);
-  //       // }
-  //     }
-  //   }
-  //   return null;
-  // }
 
 
 
@@ -596,25 +229,11 @@ export class ClosedChainIKService {
     }
   }
 
-  getNextLinkRoot(currlink: Link, currJoint: Joint, root: Root) {
-    // console.log(currlink, currlink.connJoints, currJoint);
-    if (currlink.connJoints) {
-      const newJointID = currlink.connJoints.filter(l => l !== currJoint.id)[0];
-      //return newItem list
-      if (newJointID) {
-        const newJoint = root.joints.filter(j => j.id === newJointID)[0];
-        // console.log(newJoint);
-        if (newJoint) {
-          // return { joint: newJoint, links: newJoint.links.filter(l => l.id !== currlink.id) };
-        }
-      }
-    }
-    return null;
-  }
+
 
   createRootsFromFrames(sceneObjects: any) {
     this.ikRoot = findRoots(this.frames);
-    // console.log(this.ikRoot);
+    console.log(this.ikRoot);
     for (const root of this.ikRoot) {
       root.traverse( c => {
         if (c.isJoint) {
@@ -622,7 +241,8 @@ export class ClosedChainIKService {
 
           if (sceneObject) {
             c.setWorldPosition(sceneObject.position.x, sceneObject.position.y, sceneObject.position.z);
-            c.setWorldQuaternion(sceneObject.quaternion.x, sceneObject.quaternion.y, sceneObject.quaternion.z, sceneObject.quaternion.w);
+            // quat.fromEuler( c.quaternion, c.rotation.x, c.object3D.rotation.y, c.object3D.rotation.z );
+            // c.setWorldQuaternion(c.quaternion.x, c.quaternion.y, c.quaternion.z, c.quaternion.w);
 
             c.updateMatrixWorld( false );
           }
@@ -674,10 +294,10 @@ export class ClosedChainIKService {
                 let worldPosition = new THREE.Vector3();
                 object.getWorldPosition(worldPosition);
                 console.log(worldPosition);
-                this.targetObject.position.set( worldPosition.x, worldPosition.y, worldPosition.z );
-                this.targetObject.updateMatrix();
+                this.targetObject.position.set( 0, 0, 0 );
+                // this.targetObject.updateMatrix();
                 this.finalLink = new Link();
-                this.finalLink.setWorldPosition( worldPosition.x, worldPosition.y, worldPosition.z);
+                this.finalLink.setPosition( 0, 0, 0);
                 console.log(c.parent, c.child);
                 if (c.parent === null) {
                   this.finalLink.addChild(c);
@@ -687,21 +307,31 @@ export class ClosedChainIKService {
                 // else {
                 //   this.finalLink.makeClosure(c);
                 // }
-                this.finalLink.updateMatrix();
+                // this.finalLink.updateMatrix();
+
+                root.updateMatrixWorld( true );
+
+                this.targetObject.matrix.set( ...this.finalLink.matrixWorld ).transpose();
+                this.targetObject.matrix.decompose( this.targetObject.position, this.targetObject.quaternion, this.targetObject.scale );
+
+
                 this.targetObject.name = 'target';
-                const geometry = new THREE.SphereGeometry( 30, 32, 16 );
+                const geometry = new THREE.SphereGeometry( 25, 32, 16 );
                 const material = new THREE.MeshBasicMaterial( { color: 0xffff00, opacity: 0.5 } );
                 const sphere = new THREE.Mesh( geometry, material );
                 this.targetObject.add(sphere);
                 this.addToScene.next( { object: this.targetObject, addControls: true } );
 
                 this.goal = new Goal();
+
               	this.goal.makeClosure( this.finalLink );
 
-                this.updateGoalDoF();
+                this.createRootsHelper();
 
-                this.solver = new Solver( this.ikRoot );
-	              Object.assign( this.solver, this.solverOptions );
+                this.createSolver(root);
+
+                this.updateGoalDoF();
+                console.log(this.solver);
 
               }
             }
@@ -712,31 +342,8 @@ export class ClosedChainIKService {
 
     }
 
-  // createTarget() {
-  //   this.finalLink = new Link();
-  //   this.finalLink.setPosition( 0, 0.5, 0 );
-  //   // this.ikRoot.updateMatrixWorld( true );
-  //   // this.frames[this.frames.length - 1].addChild(this.finalLink);
-
-  //   // this.createRootsFromFrames();
 
 
-
-
-  //   this.targetObject.matrix.set( ...this.finalLink.matrixWorld ).transpose();
-  //   this.targetObject.matrix
-  //     .decompose( this.targetObject.position, this.targetObject.quaternion, this.targetObject.scale );
-
-  //   this.goal = new Goal();
-  //   this.goal.makeClosure( this.finalLink );
-
-  //   this.solver = new Solver( this.ikRoot );
-	//   Object.assign( this.solver, this.solverOptions );
-
-  //   this.updateGoalDoF();
-
-  //   return this.targetObject;
-  // }
 
 
   updateGoalDoF() {
@@ -755,8 +362,8 @@ export class ClosedChainIKService {
       this.targetObject.matrix.set( ...this.finalLink.matrixWorld ).transpose();
       this.targetObject.matrix.decompose( this.targetObject.position, this.targetObject.quaternion, this.targetObject.scale );
 
-
-      this.ikHelper.updateStructure();
+      // this.solver.solve();
+      // this.ikHelper.updateStructure();
     }
   }
 
@@ -764,20 +371,17 @@ export class ClosedChainIKService {
 
 
   createNewJointFromObject(joint: JointLink, sceneObject: any) {
-    // console.log(joint, sceneObject, startJoint);
-
-    // const plane =
-    // startJoint.linkGroup.filter(j => j.id === object.id && j.plane === object.plane)[0];
+    // console.log(joint, sceneObject);
 
     if (sceneObject) {
       const newJoint = new Joint();
       // newJoint.clearDoF();
       newJoint.name = joint.id;
       newJoint.setDoF( DOF.EZ ); //DOF.EZ
-      newJoint.setWorldPosition(
-        sceneObject.position.x,
-        sceneObject.position.y,
-        sceneObject.position.z ); //0, 1, 0}
+      // newJoint.setWorldPosition(
+      //   sceneObject.position.x,
+      //   sceneObject.position.y,
+      //   sceneObject.position.z ); //0, 1, 0}
       // newJoint.setMatrixNeedsUpdate();
 
       // console.log(joint.limits);
@@ -785,15 +389,13 @@ export class ClosedChainIKService {
 
       // newJoint.setRestPoseValues(object.frame.sceneObject.rotation.z);
       // newJoint.restPoseSet = true;
-      newJoint.targetSet = true;
-//sceneObject.quaternion.y !== 0 ? DOF.EX : DOF.EY
+      // newJoint.targetSet = true;
       if (joint.limits.min > -10000 && joint.limits.max < 10000) {
         newJoint.setDoFValue(DOF.EZ, (joint.limits.max - joint.limits.min) * this.DEG2PI);
         newJoint.setMinLimit(DOF.EZ, joint.limits.min * this.DEG2PI);
         newJoint.setMaxLimit(DOF.EZ, joint.limits.max * this.DEG2PI);
       }
-  //     setMinLimit( dof : DOF, value : Number ) : Boolean
-  // setMaxLimit( dof : DOF, value : Number ) : Boolean
+
       newJoint.setWorldQuaternion(sceneObject.quaternion.x, sceneObject.quaternion.y, sceneObject.quaternion.z, sceneObject.quaternion.w);
       // newJoint.setMatrixNeedsUpdate();
 
@@ -880,8 +482,8 @@ export class ClosedChainIKService {
     }
   }
 
-  createSolver() {
-    this.solver = new Solver(this.ikRoot);
+  createSolver(root: any) {
+    this.solver = new Solver(root);
     Object.assign( this.solver, this.solverOptions );
   }
 
@@ -889,19 +491,25 @@ export class ClosedChainIKService {
 
 
   render() {
-    // if (this.goal && this.targetObject) {
-    //   this.goal.setPosition(
-    //     this.targetObject.position.x,
-    //     this.targetObject.position.y,
-    //     this.targetObject.position.z,
-    //   );
-    //   this.goal.setQuaternion(
-    //     this.targetObject.quaternion.x,
-    //     this.targetObject.quaternion.y,
-    //     this.targetObject.quaternion.z,
-    //     this.targetObject.quaternion.w,
-    //   );
-    // }
+    if (this.goal && this.targetObject && this.solver) {
+      this.goal.setPosition(
+        this.targetObject.position.x,
+        this.targetObject.position.y,
+        this.targetObject.position.z,
+      );
+      this.goal.setQuaternion(
+        this.targetObject.quaternion.x,
+        this.targetObject.quaternion.y,
+        this.targetObject.quaternion.z,
+        this.targetObject.quaternion.w,
+      );
+
+      if (this.solver && this.ikRoot) {
+        const solverOutput = this.solver.solve().map( s => SOLVE_STATUS_NAMES[ s ] ).join( '\n' );
+        console.log(solverOutput);
+      }
+    }
+
   }
 
 

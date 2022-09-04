@@ -25,7 +25,7 @@
       <ul class="content" [ngClass]="{ open: visible[5] }">
         <li *ngFor="let object of this.kinematicService.joints">
           <div class="row" (click)="selectJointObject(object)">
-            <input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="text" class="wide" [ngClass]="{ blue: object.selected }" id="name" name="name" [(ngModel)]="object.name" (change)="updateModel(object)">
+            <input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="text" class="wide" [ngClass]="{ blue: object.selected }" id="name" name="name" [(ngModel)]="object.name" (change)="updateJoint(object)">
 
             <div class="buttons">
               <div id="rotate" class="svg-button" (click)="rotate()"><img src="./assets/icons/buttons/rotate.svg"></div>
@@ -52,7 +52,7 @@
         <li *ngIf="this.kinematicService.selectedJoints.length === 1">
           <div class="row">
             <label class="label">name</label>
-            <input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="text" class="blue wide input-column" id="name" name="name" [(ngModel)]="this.kinematicService.selectedJoints[0].name" (change)="updateModel(this.kinematicService.selectedJoints[0])">
+            <input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="text" class="blue wide input-column" id="name" name="name" [(ngModel)]="this.kinematicService.selectedJoints[0].name" (change)="updateJoint(this.kinematicService.selectedJoints[0])">
           </div>
 
           <div class="row" *ngIf="this.kinematicService.selectedJoints[0].isMotor">
@@ -65,9 +65,9 @@
             <div class="label">limits</div>
             <div class="values">
               <p> </p><input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="limits_min" name="limits_min"
-              [(ngModel)]="this.kinematicService.selectedJoints[0].limits.min" (change)="updateModel(this.kinematicService.selectedJoints[0])">
+              [(ngModel)]="this.kinematicService.selectedJoints[0].limits.min" (change)="updateJoint(this.kinematicService.selectedJoints[0])">
               <p> </p><input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="limits_max" name="limits_max"
-               [(ngModel)]="this.kinematicService.selectedJoints[0].limits.max" (change)="updateModel(this.kinematicService.selectedJoints[0])">
+               [(ngModel)]="this.kinematicService.selectedJoints[0].limits.max" (change)="updateJoint(this.kinematicService.selectedJoints[0])">
             </div>
           </div>
 
@@ -75,17 +75,17 @@
           <div class="row">
             <div class="label">position</div>
             <div class="values">
-              <p>x </p><input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="pos_x" name="pos_x" [(ngModel)]="this.kinematicService.selectedJoints[0].object3D.position.x" (change)="updateModel(this.kinematicService.selectedJoints[0])">
-              <p>y </p><input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="pos_y" name="pos_y" [(ngModel)]="this.kinematicService.selectedJoints[0].object3D.position.y" (change)="updateModel(this.kinematicService.selectedJoints[0])">
-              <p>z </p><input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="pos_z" name="pos_z" [(ngModel)]="this.kinematicService.selectedJoints[0].object3D.position.z" (change)="updateModel(this.kinematicService.selectedJoints[0])">
+              <p>x </p><input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="pos_x" name="pos_x" [(ngModel)]="this.kinematicService.selectedJoints[0].object3D.position.x" (change)="updateJoint(this.kinematicService.selectedJoints[0])">
+              <p>y </p><input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="pos_y" name="pos_y" [(ngModel)]="this.kinematicService.selectedJoints[0].object3D.position.y" (change)="updateJoint(this.kinematicService.selectedJoints[0])">
+              <p>z </p><input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="pos_z" name="pos_z" [(ngModel)]="this.kinematicService.selectedJoints[0].object3D.position.z" (change)="updateJoint(this.kinematicService.selectedJoints[0])">
             </div>
           </div>
           <div class="row">
             <div class="label">rotation</div>
             <div class="values">
-              <p>x </p><input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="rot_x" name="rot_x" [(ngModel)]="this.kinematicService.selectedJoints[0].object3D.rotation.x" (change)="updateModel(this.kinematicService.selectedJoints[0])">
-              <p>y </p><input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="rot_y" name="rot_y" [(ngModel)]="this.kinematicService.selectedJoints[0].object3D.rotation.y" (change)="updateModel(this.kinematicService.selectedJoints[0])">
-              <p>z </p><input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="rot_z" name="rot_z" [(ngModel)]="this.kinematicService.selectedJoints[0].object3D.rotation.z" (change)="updateModel(this.kinematicService.selectedJoints[0])">
+              <p>x </p><input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="rot_x" name="rot_x" [(ngModel)]="this.kinematicService.selectedJoints[0].object3D.rotation.x" (change)="updateJoint(this.kinematicService.selectedJoints[0])">
+              <p>y </p><input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="rot_y" name="rot_y" [(ngModel)]="this.kinematicService.selectedJoints[0].object3D.rotation.y" (change)="updateJoint(this.kinematicService.selectedJoints[0])">
+              <p>z </p><input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="rot_z" name="rot_z" [(ngModel)]="this.kinematicService.selectedJoints[0].object3D.rotation.z" (change)="updateJoint(this.kinematicService.selectedJoints[0])">
             </div>
           </div>
 
@@ -124,7 +124,7 @@
           <div class="row">
             <label class="radio-container inline">
               <input type="checkbox" class="type" id="joint_active" name="joint_active"
-              [(ngModel)]="this.kinematicService.selectedJoints[0].grounded" [checked]="this.kinematicService.selectedJoints[0].grounded" (change)="updateModel(this.kinematicService.selectedJoints[0])">
+              [(ngModel)]="this.kinematicService.selectedJoints[0].grounded" [checked]="this.kinematicService.selectedJoints[0].grounded" (change)="updateJoint(this.kinematicService.selectedJoints[0])">
               <span class="checkmark radio inline"></span> lock position
             </label>
           </div>
@@ -133,13 +133,13 @@
 
           <div class="row" *ngIf="this.kinematicService.selectedJoints[0].isMotor && this.kinematicService.selectedJoints[0].active">
             <select class="form-control playWindow microcontroller" id="microcontroller" name="microcontroller" [(ngModel)]="this.kinematicService.selectedJoints[0].control"
-              (change)="updateModel(this.kinematicService.selectedJoints[0])">
+              (change)="updateJoint(this.kinematicService.selectedJoints[0])">
               <option class="placeholder" value="" selected>-- select microcontroller --</option>
               <option *ngFor="let item of this.hardwareService.microcontrollers" [ngValue]="item">{{ item.name }}</option>
             </select>
 
             <select *ngIf="this.kinematicService.selectedJoints[0].control" class="form-control playWindow microcontroller small" id="motor" name="motor" [(ngModel)]="this.kinematicService.selectedJoints[0].motor"
-              (change)="updateModel(this.kinematicService.selectedJoints[0])">
+              (change)="updateJoint(this.kinematicService.selectedJoints[0])">
               <option *ngFor="let motor of this.kinematicService.selectedJoints[0].control.motors" [ngValue]="motor.index">{{ motor.id }}</option>
             </select>
           </div>
@@ -147,14 +147,14 @@
           <div class="row" *ngIf="this.kinematicService.selectedJoints[0].control">
             <div class="label">encoder</div>
             <input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="encoder" name="encoder"
-            [(ngModel)]="this.kinematicService.selectedJoints[0].control.motors[0].state.position.current" (change)="updateModel(this.kinematicService.selectedJoints[0])">
+            [(ngModel)]="this.kinematicService.selectedJoints[0].control.motors[0].state.position.current" (change)="updateJoint(this.kinematicService.selectedJoints[0])">
           </div>
 
           <div class="row" *ngIf="this.kinematicService.selectedJoints[0].control">
             <div class="label">constraints</div>
             <div class="values">
-              <p>min </p><input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="range_start" name="range_start" [(ngModel)]="this.kinematicService.selectedJoints[0].control.motors[0].state.position.start" (change)="updateModel(this.kinematicService.selectedJoints[0])">
-              <p>max </p><input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="range_end" name="range_end" [(ngModel)]="this.kinematicService.selectedJoints[0].control.motors[0].state.position.end" (change)="updateModel(this.kinematicService.selectedJoints[0])">
+              <p>min </p><input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="range_start" name="range_start" [(ngModel)]="this.kinematicService.selectedJoints[0].control.motors[0].state.position.start" (change)="updateJoint(this.kinematicService.selectedJoints[0])">
+              <p>max </p><input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="range_end" name="range_end" [(ngModel)]="this.kinematicService.selectedJoints[0].control.motors[0].state.position.end" (change)="updateJoint(this.kinematicService.selectedJoints[0])">
             </div>
           </div>
 

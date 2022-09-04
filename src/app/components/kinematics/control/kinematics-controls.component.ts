@@ -46,7 +46,7 @@ export class KinematicsControlComponent {
     });
 
     this.kinematicsDrawingService.updateModelPosition.subscribe(res => {
-      this.updateModel(res);
+      this.updateJoint(res);
     });
 
     this.kinematicsDrawingService.loadOBJ.subscribe(res => {
@@ -61,28 +61,36 @@ export class KinematicsControlComponent {
   }
 
 
-  updateModel(model: JointLink) {
-    if (model) {
-      const object = this.config.scene.getObjectByName(model.id);
+  updateJoint(joint: JointLink) {
+    if (joint) {
+      const object = this.config.scene.getObjectByName(joint.id);
 
       if (object) {
-        object.position.x = model.object3D.position.x;
-        object.position.y = model.object3D.position.y;
-        object.position.z = model.object3D.position.z;
+        object.position.x = joint.object3D.position.x;
+        object.position.y = joint.object3D.position.y;
+        object.position.z = joint.object3D.position.z;
 
-        object.rotation.x = model.object3D.rotation.x * (Math.PI / 180);
-        object.rotation.y = model.object3D.rotation.y * (Math.PI / 180);
-        object.rotation.z = model.object3D.rotation.z * (Math.PI / 180);
+        object.rotation.x = joint.object3D.rotation.x * (Math.PI / 180);
+        object.rotation.y = joint.object3D.rotation.y * (Math.PI / 180);
+        object.rotation.z = joint.object3D.rotation.z * (Math.PI / 180);
 
-        object.updateMatrixWorld();
+        object.quaternion.setFromEuler(object.rotation);
+        
+        object.updateMatrix();
+
+
+        joint.sceneObject = object;
       }
     }
+
+    this.kinematicService.updateJoint(joint);
+    // this.kinematicService.updateJointVisualization(joint.id, joint.object3D);
   }
 
-  updateJoint(joint: JointLink) {
-    this.kinematicService.updateJointVisualization(joint.id, joint.object3D);
-    this.updateModel(this.kinematicService.getJoint(joint.id));
-  }
+  // updateJoint(joint: JointLink) {
+  //   // this.kinematicService.updateJointVisualization(joint.id, joint.object3D);
+  //   this.updateJoint(joint);
+  // }
 
   selectJointObject(object: JointLink) {
     const sceneObject = this.config.scene.getObjectByName(object.id);
@@ -155,7 +163,7 @@ export class KinematicsControlComponent {
         this.importOBJModelToGroup(connector, model.id, model);
       }
     }
-    this.updateModel(model);
+    this.updateJoint(model);
     // this.updateJointAngle(this.kinematicService.joints.filter(j => j.id === model.id)[0]);
 
   }

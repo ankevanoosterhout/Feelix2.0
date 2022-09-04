@@ -122,6 +122,7 @@ export class KinematicsDrawingService {
 
     this.config.control.addEventListener( 'mouseUp', (event: any) => {
       if (this.config.move) {
+        console.log('update target');
         this.closedChainIKService.updateTargetObject();
       }
     })
@@ -385,7 +386,7 @@ export class KinematicsDrawingService {
               console.log(root);
               if (root) {
                 this.closedChainIKService.createRootsFromList(root, this.config.scene.children.filter(c => c.isGroup));
-                // this.closedChainIKService.createTarget(object);
+                this.closedChainIKService.createTarget(object);
               }
             }
           }
