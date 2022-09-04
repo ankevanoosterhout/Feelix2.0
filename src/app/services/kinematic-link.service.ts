@@ -51,7 +51,7 @@ export class KinematicLinkService {
         }
 
         if (root.links.length > 0 && selectedRoot !== undefined && selectedRoot.key !== root.key) {
-          let newRoot;
+          let newRoot: any;
           //merge roots
           newRoot = new Root(uuid());
           newRoot.joints = root.joints.concat(selectedRoot.joints);
@@ -83,7 +83,7 @@ export class KinematicLinkService {
           newJoint.linkGroup[group].links.push(newLink);
           root.joints.push(newJoint);
         } else if (joint !== undefined) {
-          console.log(joint);
+          // console.log(joint);
           joint.linkGroup[group].links.push(newLink);
         }
         // console.log(joint);

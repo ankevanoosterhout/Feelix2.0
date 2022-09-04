@@ -57,8 +57,18 @@
 
           <div class="row" *ngIf="this.kinematicService.selectedJoints[0].isMotor">
             <div class="label">angle</div>
-            <input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="angle" name="angle"
-            [(ngModel)]="this.kinematicService.selectedJoints[0].angle" (change)="this.updateJointAngle(this.kinematicService.selectedJoints[0])">
+            <p> </p><input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="angle" name="angle"
+                [(ngModel)]="this.kinematicService.selectedJoints[0].angle" (change)="this.updateJointAngle(this.kinematicService.selectedJoints[0])">
+          </div>
+
+          <div class="row" *ngIf="this.kinematicService.selectedJoints[0].isMotor">
+            <div class="label">limits</div>
+            <div class="values">
+              <p> </p><input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="limits_min" name="limits_min"
+              [(ngModel)]="this.kinematicService.selectedJoints[0].limits.min" (change)="updateModel(this.kinematicService.selectedJoints[0])">
+              <p> </p><input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="limits_max" name="limits_max"
+               [(ngModel)]="this.kinematicService.selectedJoints[0].limits.max" (change)="updateModel(this.kinematicService.selectedJoints[0])">
+            </div>
           </div>
 
 

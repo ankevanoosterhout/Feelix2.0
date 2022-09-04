@@ -19,14 +19,15 @@ export class KinematicsControlComponent {
 
   public config: KinematicsConfig;
 
+  infinity = -3.4576917263943217389012348562315E+1203466;
 
   models = [
     new Model(0, 'motor', 1, true, 'active_joint_1.png', [ { g:'B', url:'active_joint_1_base.obj'}, { g:'Z', url: 'active_joint_connector_Z.obj' }], 0xff2200),
     new Model(1, 'motor', 2, true, 'active_joint_2.png', [{ g:'B', url:'active_joint_2_base.obj'}, { g:'Z', url: 'active_joint_connector_Z.obj' }], 0xff2200),
     new Model(2, 'joint', 1, false, 'passive_joint_1.png', [{ g:'B', url:'passive_joint_1_base.obj'}, { g:'Z', url: 'passive_joint_connector_Z.obj' }], 0x02a3d9 ),
     new Model(3, 'joint', 2,false, 'passive_joint_2.png', [{ g:'B', url:'passive_joint_2_base.obj'}, { g:'Z', url: 'passive_joint_connector_Z.obj' }], 0x02a3d9 ),
-    new Model(4, 'arm', 0, false, 'arm.png', [{ g:'C', url:'arm.obj'} ], 0x333333),
-    new Model(5, 'connector', 0,false, 'cube.png', [{ g:'C', url:'cube.obj'}], 0x333333)
+    // new Model(4, 'arm', 0, false, 'arm.png', [{ g:'C', url:'arm.obj'} ], 0x333333),
+    // new Model(5, 'connector', 0,false, 'cube.png', [{ g:'C', url:'cube.obj'}], 0x333333)
   ];
 
 //this.kinematicService.selectedJoints[0].type === 'motor' && this.kinematicService.selectedJoints[0].subtype === 'b' && type === 'i'
@@ -54,7 +55,9 @@ export class KinematicsControlComponent {
 
     this.kinematicsDrawingService.loadModelFromLink.subscribe(res => {
       this.loadOBJModel(res);
-    })
+    });
+
+    console.log(this.infinity);
   }
 
 
@@ -230,6 +233,8 @@ export class KinematicsControlComponent {
           }
         }
       });
+
+      this.updateJointLimits(this.kinematicService.selectedJoints[0]);
     }
   }
 
@@ -247,9 +252,66 @@ export class KinematicsControlComponent {
       this.removeConnectorImage(point);
       this.importOBJModelToGroup(point, joint.id);
       this.kinematicsDrawingService.animate();
+      // this.updateJointLimits(this.kinematicService.selectedJoints[0]);
     }
   }
 
+
+
+  updateJointLimits(joint: JointLink) {
+    if (joint) {
+      const connY = joint.connectors.filter(c => c.plane === 'Y');
+      const connX = joint.connectors.filter(c => c.plane === 'X');
+
+      if ((connY.length === 0 || connX.length === 0) || joint.modelType === 2) {
+        joint.limits.min = -this.infinity;
+        joint.limits.max = this.infinity
+      } else {
+        let min = 360;
+        let max = 0;
+        for (const connector of connY) {
+
+          if (connector.angle < min) {
+            min = connector.angle;
+            if (max === 0) { max = min; }
+          }
+          if (connector.angle > max) {
+            max = connector.angle;
+          }
+        }
+
+        let minX = 0;
+        let maxX = 360;
+
+        for (const connector of connX) {
+          console.log(connector.angle, minX, maxX);
+          if (connector.angle > minX && connector.angle < min) {
+            minX = connector.angle;
+          }
+          if (connector.angle < maxX && connector.angle > max) {
+            maxX = connector.angle;
+          }
+        }
+
+        joint.limits.min = min - minX;
+        joint.limits.max = maxX - max;
+      }
+    }
+    this.updateJoint(this.kinematicService.selectedJoints[0]);
+  }
+
+
+
+  getClosestConnector(connectors: any, angle: number) {
+    let movableRange = 360;
+    for (const conn of connectors) {
+      console.log(conn.angle, angle);
+      if (conn.angle - angle < movableRange && conn.angle - angle > 0) {
+        movableRange = conn.angle - angle;
+      }
+    }
+    return movableRange;
+  }
 
 
   removeConnectorImage(point: Connector) {
@@ -311,6 +373,7 @@ export class KinematicsControlComponent {
         this.kinematicService.selectedJoints = [ joint ];
       }
       this.kinematicsDrawingService.animate();
+
     }
   }
 

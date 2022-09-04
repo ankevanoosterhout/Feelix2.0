@@ -82,6 +82,11 @@ export class Connector {
   }
 }
 
+export class Limits {
+  min: number = -1.797693134862315E+308 * 1.001;
+  max: number = 1.797693134862315E+308 * 1.001;
+}
+
 export class JointLink {
   id: string;
   name: string;
@@ -95,6 +100,7 @@ export class JointLink {
   isJoint = false;
   motor: number;
   angle = 0;
+  limits = new Limits();
   object3D = new Object3D();
   selected = false;
   connectors: Array<Connector> = [];

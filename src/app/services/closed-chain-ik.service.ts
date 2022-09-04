@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Solver, Link,	Joint, IKRootsHelper, Goal, findRoots, DOF, setIKFromUrdf, urdfRobotToIKRoot } from 'closed-chain-ik-js-0.0.3/src';
 import { Subject } from 'rxjs';
 import { JointLink } from '../models/kinematic.model';
-import { Root } from '../models/kinematic-connections.model';
+import { LinkGroup, Root } from '../models/kinematic-connections.model';
 import * as THREE from 'three';
 
 import { Euler, Group } from 'three';
@@ -70,6 +70,7 @@ export class ClosedChainIKService {
   goals = [];
   goalIcons = [];
 
+  DEG2PI = Math.PI / 180;
 
   constructor(private kinematicService: KinematicService) {
     // this.targetObject.position.set( 0, 0, 0 );
@@ -92,61 +93,431 @@ export class ClosedChainIKService {
 
   processJoint(joint: any, parentLink: any, sceneObjects: any, root: Root) {
 
-    // console.log(joint, parentLink, root);
-    // console.log(this.frames.filter(f => f.name === joint.id).length + " in list");
-    if (this.frames.filter(f => f.name === joint.id).length === 0) {
-      const newLink = new Link();
-      const sceneObjectJoint = sceneObjects.filter(s => s.name === joint.id)[0];
+    if (!this.createRoot) {
+      // console.log(joint);
       const jointObj = this.kinematicService.getJoint(joint.id);
-      const plane = this.getConnectionPlane(root, joint);
-      console.log(plane);
-      const newJoint = this.createNewJointFromObject(jointObj, sceneObjectJoint, joint);
+      const sceneObjectJoint = sceneObjects.filter(s => s.name === joint.id)[0];
+      console.log(jointObj.id);
 
-      if (newJoint) {
+      const jointEl = this.frames.filter(f => f.name === jointObj.id && f.isJoint)[0] ?
+        this.frames.filter(f => f.name === jointObj.id && f.isJoint)[0] : this.createNewJointFromObject(jointObj, sceneObjectJoint);
 
-        if (parentLink) {
-          parentLink.addChild(newJoint);
-          if (this.frames.filter(f => f.name === parentLink.name).length === 0) {
-            this.frames.push(parentLink);
+      const link = parentLink === null || parentLink === undefined ? new Link() : this.frames.filter(f => f.name === parentLink.name && f.isLink)[0];
+      // console.log(link);
+      if (parentLink === null || parentLink === undefined) {
+        link.name = link.name === "" ? joint.id + ':C' : link.name;
+        jointEl.addChild(link);
+      } else {
+        console.log('add child to link', joint.id, link.name);
+        link.addChild(jointEl);
+      }
+
+      // console.log(link);
+
+      if (this.frames.filter(f => f.name === jointEl.name && jointEl.isJoint).length === 0) {
+        this.frames.push(jointEl);
+        console.log(this.frames);
+      }
+
+
+      if (this.frames.filter(f => f.name === link.name && link.isLink).length === 0) {
+        this.frames.push(link);
+        // console.log(this.frames);
+      }
+
+      for (const connector of jointObj.connectors) {
+        if (connector.connected) {
+          // console.log(connector);
+
+          const connectedJointObj = this.kinematicService.getJoint(connector.object);
+          const connectedJointInRoot = root.joints.filter(j => j.id === connectedJointObj.id)[0];
+          // console.log(connectedJointObj);
+          const connectorToOriginalObject = connectedJointObj.connectors.filter(c => c.object === joint.id)[0];
+          const newConnectedJoint = this.createNewJointFromObject(connectedJointObj, sceneObjectJoint);
+
+          const jointInFrames = this.frames.filter(f => f.name === newConnectedJoint.name)[0];
+
+          if (jointInFrames === undefined) {
+            link.addChild(newConnectedJoint);
+            this.frames.push(newConnectedJoint);
+          } else if (jointInFrames !== undefined) {
+            console.log('add ', jointInFrames, ' to ', link);
+            // jointInFrames.addChild(link);
+            // link.addChild(jointInFrames);
           }
-        }
-        newJoint.addChild(newLink);
-        this.frames.push(newJoint);
+          // console.log(connectedJointObj, connectorToOriginalObject);
+          // end joint
+          // if (connectedJointObj.connectors.filter(c => c.connected).length === 1) {
+          //   console.log(connectedJointObj.connectors.filter(c => c.connected)[0]);
+          //   console.log(connectedJointObj.id, joint.id);
+          //   const newConnectedJoint = this.createNewJointFromObject(connectedJointObj, sceneObjectJoint);
+          //   if (this.frames.filter(f => f.name === newConnectedJoint.name).length === 0) {
+          //     this.frames.push(newConnectedJoint);
+          //     console.log(link.children.filter(l => l.name === newConnectedJoint.name).length);
+          //   }
+          //   if (link.children.filter(l => l.name === newConnectedJoint.name).length === 0) {
+          //     console.log('add child link');
+          //     console.log(newConnectedJoint.name, joint.id, link.children, parentLink);
+          //     link.addChild(this.frames.filter(f => f.name === newConnectedJoint.name)[0]);
+          //   }
+          // }
+            // this.processJoint(connectedJointInRoot, null, sceneObjects, root);
 
-        // console.log(joint, joint.linkGroup);
-        if (joint && joint.linkGroup) {
-          for (const group of joint.linkGroup) {
-            // console.log(group);
-            for (const link of group.links) {
-              // console.log(link);
-              const linkedJoint = link.joints.filter(j => j.id !== joint.id)[0];
-              const linkedJointInRoot = root.joints.filter(j => j.id === linkedJoint.id)[0];
-              // const linkedJointObj = this.kinematicService.getJoint(linkedJoint.id);
-              newLink.name = joint.id + ':C';
-              // console.log(linkedJoint, linkedJointObj, linkedJointInRoot);
+          for (const connectorJO of connectedJointObj.connectors.filter(c => c.connected)) {
 
-              this.processJoint(linkedJointInRoot, newLink, sceneObjects, root);
+            if (connectorJO.object !== joint.id) {
+              console.log('new' + connectorToOriginalObject.plane, connectorJO.plane);
+              this.processJoint(connectedJointInRoot, (connectorToOriginalObject.plane === connectorJO.plane ? link : null), sceneObjects, root);
 
-              const connectedObjects = this.getConnectedObjects(root, linkedJoint);
-              // console.log(connectedObjects);
-              for (const connectedObj of connectedObjects) {
-                const connectedJoint = this.kinematicService.getJoint(connectedObj.id);
-                // console.log(connectedJoint);
-                if (connectedJoint) {
-                  this.processJoint(connectedJoint, newLink, sceneObjects, root);
-                }
-              }
             }
+            // else {
+            //   console.log('this' + connectorToOriginalObject.plane, connectorJO.plane);
+            //   console.log(newConnectedJoint.name, joint.id);
+            //   const jointInFrames = this.frames.filter(f => f.name === newConnectedJoint.name)[0];
+            //   console.log(jointInFrames, parentLink);
+            //   if (jointInFrames === undefined && (parentLink === null || parentLink === undefined)) {
+            //     link.addChild(newConnectedJoint);
+            //     this.frames.push(newConnectedJoint);
+            //   } else if (jointInFrames) {
+            //     console.log('add ', jointInFrames, ' to ', link);
+            //     // link.addChild(jointInFrames);
+            //   }
+            //   // if (this.frames.filter(f => f.name === newConnectedJoint.name).length === 0) {
+            //   //   this.frames.push(newConnectedJoint);
+            //   //   // link.addChild(newConnectedJoint);
+            //   // } else {
+            //   //   console.log('add to link', link.name);
+            //   //   // console.log(connectorJO, joint);
+            //   //   // console.log(jointObj.connectors.length, connectedJointObj.connectors.length);
+            //   //   link.addChild(this.frames.filter(f => f.name === newConnectedJoint.name)[0]);
+            //   // }
+            // }
           }
+
+
         }
       }
-      if (this.frames.filter(f => f.isJoint).length === root.joints.length) {
-        this.createRootsFromFrames(sceneObjects);
-      }
-
-      console.log (this.frames);
+    }
+    if (this.frames.filter(f => f.isJoint).length === root.joints.length) {
+      this.createRoot = true;
+      console.log('finished');
+      console.log(this.frames);
+      this.createRootsFromFrames(sceneObjects);
+      return;
     }
   }
+
+
+  // processJoint(joint: any, childLink: any, parentLink: any, sceneObjects: any, root: Root) {
+
+  //   console.log(joint, childLink, parentLink, root);
+  //   // console.log(this.frames.filter(f => f.name === joint.id).length + " in list");
+
+
+  //   if (!this.createRoot) {
+  //     const linkInList = parentLink === null || this.frames.filter(f => f.name === parentLink.name).length === 0 ? false : true;
+
+  //     const sceneObjectJoint = sceneObjects.filter(s => s.name === joint.id)[0];
+  //     const jointObj = this.kinematicService.getJoint(joint.id);
+  //     console.log(jointObj.id);
+
+  //     const newJoint = this.frames.filter(f => f.name === joint.id).length === 0 ? this.createNewJointFromObject(jointObj, sceneObjectJoint, joint) : this.frames.filter(f => f.name === joint.id)[0];
+  //     const pLink = linkInList ? this.frames.filter(f => f.name === parentLink.name)[0] : new Link();
+  //     console.log(pLink);
+
+  //     if (parentLink) {
+  //       console.log(pLink, newJoint);
+  //       pLink.addChild(newJoint);
+  //       if (!linkInList) {
+  //         pLink.name = parentLink.name;
+  //         console.log(pLink.name)
+  //         this.frames.push(pLink);
+  //       }
+  //     } else if (childLink) {
+  //       console.log(newJoint, childLink.name);
+  //       newJoint.addChild(childLink);
+  //       this.frames.push(childLink);
+  //     }
+
+  //     if (this.frames.filter(f => f.name === newJoint.name).length === 0) {
+
+  //       this.frames.push(newJoint);
+
+  //       if (this.frames.filter(f => f.isJoint).length === root.joints.length) {
+  //         // this.createRootsFromFrames(sceneObjects);
+  //         this.createRoot = true;
+  //         console.log (this.frames);
+  //         return;
+  //       }
+
+  //       console.log(joint, joint.linkGroup);
+  //       if (joint && joint.linkGroup) {
+  //         for (const group of joint.linkGroup) {
+  //           console.log(group);
+  //           for (const link of group.links) {
+  //             console.log(link);
+  //             const linkedJoint = link.joints.filter(j => j.id !== joint.id)[0];
+  //             console.log(linkedJoint);
+  //             const sameJoint = link.joints.filter(j => j.id === joint.id)[0];
+  //             const linkedJointInRoot = root.joints.filter(j => j.id === linkedJoint.id)[0];
+  //             console.log(sameJoint);
+  //             console.log(linkedJointInRoot);
+  //             console.log(link.joints.filter(j => j.id !== joint.id), link.joints.filter(j => j.id === joint.id));
+  //             console.log(linkedJoint.plane === sameJoint.plane);
+  //             // const linkedJointObj = this.kinematicService.getJoint(linkedJoint.id);
+  //             // const plane = this.getConnectionPlane(root, linkedJoint);
+  //             // console.log(plane);
+  //             // console.log(linkedJoint, linkedJointObj, linkedJointInRoot);
+  //             const newLink = new Link();
+  //             newLink.name = linkedJoint.id + ':C';
+  //             console.log(childLink);
+  //             this.processJoint(linkedJointInRoot, (sameJoint.plane === linkedJoint.plane ? null : newLink), (sameJoint.plane === linkedJoint.plane ? childLink : null), sceneObjects, root);
+
+  //             // const connectedObjects = this.getConnectedObjects(root, linkedJoint);
+  //             // console.log(connectedObjects);
+  //             // for (const connectedObj of connectedObjects) {
+  //             //   const connectedJoint = this.kinematicService.getJoint(connectedObj.id);
+  //             //   console.log(connectedJoint);
+  //             //   if (connectedJoint && connectedObj.plane === ) {
+  //             //     this.processJoint(connectedJoint, null, childLink, sceneObjects, root);
+  //             //   }
+  //             // }
+  //           }
+  //         }
+  //       }
+  //     }
+  //   }
+  // }
+
+
+  // processJoint(joint: any, link: any, sceneObjects: any, root: Root) {
+  //   console.log(joint, link, root);
+
+  //   console.log(this.frames.filter(f => f.isJoint).length, root.joints.length);
+  //   if (this.frames.filter(f => f.isJoint).length >= root.joints.length - 1) {
+  //     this.createRoot = true;
+  //     console.log(this.frames);
+  //   }
+
+  //   if (!this.createRoot) {
+  //     const sceneObjectJoint = sceneObjects.filter(s => s.name === joint.id)[0];
+  //     const jointObj = this.kinematicService.getJoint(joint.id);
+
+  //     const newJoint = this.frames.filter(f => f.name === joint.id && f.isJoint).length === 0 ?
+  //         this.createNewJointFromObject(jointObj, sceneObjectJoint, joint) : this.frames.filter(f => f.name === joint.id && f.isJoint)[0];
+
+  //     const linkInList = this.frames.filter(f => f.name === link.name).length > 0 ? true : false;
+  //     const newLink = !linkInList ? new Link() : link;
+  //     console.log(newJoint, newLink);
+
+  //     if (linkInList) {
+  //       // console.log('update existing link');
+  //       newLink.addChild(newJoint);
+  //     } else {
+  //       newLink.name = joint.id + ':C';
+  //     }
+
+  //     if (this.frames.filter(f => f.name === joint.id && f.isJoint).length === 0) {
+  //       // console.log('new link');
+  //       newJoint.addChild(newLink);
+  //       this.frames.push(newLink);
+  //     }
+
+  //     if (this.frames.filter(f => f.name === jointObj.id && f.isJoint).length === 0) {
+  //       // console.log('add joint');
+  //       this.frames.push(newJoint);
+  //     }
+
+  //     if (joint && joint.linkGroup) {
+
+  //       for (const group of joint.linkGroup) {
+  //         for (const link of group.links) {
+  //           // get linked joints
+  //           // console.log(link);
+  //           const linkedJoint = link.joints.filter(j => j.id !== joint.id)[0];
+  //           // console.log(linkedJoint);
+  //           const linkedJointInRoot = root.joints.filter(j => j.id === linkedJoint.id)[0];
+  //           const planeLink = this.getConnectionPlane(root, linkedJoint);
+
+  //           this.processJoint(linkedJointInRoot, new Link(), sceneObjects, root);
+
+
+  //           const connectedObjects = this.getConnectedObjects(root, linkedJoint);
+  //           // console.log(connectedObjects);
+
+  //           for (const connectedObj of connectedObjects) {
+  //             const connectedJoint = this.kinematicService.getJoint(connectedObj.id);
+  //             // console.log(connectedJoint, connectedObj, connectedObj.id, linkedJoint.id);
+  //             // console.log(connectedJoint.id === joint.id);
+  //             // if (connectedJoint.id !== jointObj.id) {
+  //               // console.log(plane, planeLink, connectedObj.plane);
+  //               if (connectedObj.plane === planeLink) {
+  //                 // console.log('next same plane', linkedJointInRoot, newLink);
+  //                 this.processJoint(connectedJoint, newLink, sceneObjects, root);
+  //               }
+  //             // }
+  //           }
+
+  //           // if (this.frames.filter(f => f.name === linkedJoint.id).length === 0) {
+  //           //   console.log(joint.id, linkedJoint.id);
+  //           //   if (plane && planeLink === plane) {
+  //           //     console.log('next same plane', linkedJointInRoot, newLink);
+  //           //     // this.processJoint(linkedJointInRoot, newLink, sceneObjects, root, plane);
+  //           //   } else {
+  //           //     console.log('next other plane', linkedJointInRoot, newLink);
+  //           //     // this.processJoint(linkedJointInRoot, new Link(), sceneObjects, root, plane);
+  //           //   }
+  //           // }
+
+  //           // console.log(linkedJoint, linkedJointInRoot);
+  //         }
+  //       }
+  //     }
+  //   }
+
+  // }
+
+  // processJoint(joint: any, link: any, sceneObjects: any, root: Root) {
+  //   console.log(joint, link, root);
+
+
+  //   const jointObj = this.kinematicService.getJoint(joint.id);
+
+  //   const inList = this.frames.filter(f => f.name === joint.id && f.isJoint).length > 0 ? true : false;
+
+  //   console.log(inList);
+
+  //   if (!inList) {
+
+  //     const sceneObjectJoint = sceneObjects.filter(s => s.name === joint.id)[0];
+
+  //     const newJoint = this.frames.filter(f => f.name === joint.id && f.isJoint).length === 0 ?
+  //       this.createNewJointFromObject(jointObj, sceneObjectJoint, joint) : this.frames.filter(f => f.name === joint.id && f.isJoint)[0];
+
+  //     //create a new link for next joint
+  //     const linkInList = this.frames.filter(f => f.name === joint.id + ':C' && f.isLink).length > 0 ? true : false;
+  //     const newLink = !linkInList ? new Link() : this.frames.filter(f => f.name === joint.id + ':C' && f.isLink)[0];
+
+  //     if (!linkInList) {
+  //       newLink.name = joint.id + ':C';
+  //       this.frames.push(newLink);
+  //     }
+  //     if (link) {
+  //       link.addChild(newJoint);
+  //     } else {
+  //       console.log("newLink", newLink.name, newJoint.children);
+  //       newJoint.addChild(newLink);
+  //     }
+
+  //     this.frames.push(newJoint);
+
+
+  //     if (joint && joint.linkGroup) {
+  //       for (const group of joint.linkGroup) {
+  //         console.log(group);
+
+  //         for (const link of group.links) {
+  //           console.log(link);
+  //           const linkedJoint = link.joints.filter(j => j.id !== joint.id)[0];
+  //           const linkedJointInRoot = root.joints.filter(j => j.id === linkedJoint.id)[0];
+  //           const plane = this.getConnectionPlane(root, linkedJoint);
+  //           console.log(plane);
+
+  //           const connectedObjects = this.getConnectedObjects(root, linkedJoint);
+  //           console.log(connectedObjects);
+
+  //           this.processJoint(linkedJointInRoot, newLink, sceneObjects, root);
+
+  //           for (const connectedObj of connectedObjects) {
+
+  //             const connectedJoint = this.kinematicService.getJoint(connectedObj.id);
+  //             console.log(connectedObj, connectedObj.id, linkedJoint.id);
+  //             if (connectedJoint && connectedObj.id !== joint.id) {
+  //               if (plane === connectedObj.plane) {
+  //                 this.processJoint(linkedJointInRoot, link, sceneObjects, root);
+  //                 // add link to child
+  //               }
+  //             }
+  //           }
+
+  //         }
+  //       }
+  //     }
+
+
+  //     console.log(this.frames);
+
+  //   } else {
+  //     if (this.frames.filter(f => f.isJoint).length === root.joints.length) {
+  //       this.createRootsFromFrames(sceneObjects);
+  //     }
+  //   }
+  // }
+
+
+  // processJoint(joint: any, parentLink: any, sceneObjects: any, root: Root) {
+
+  //   console.log(joint, parentLink, root);
+  //   // console.log(this.frames.filter(f => f.name === joint.id).length + " in list");
+  //   if (this.frames.filter(f => f.name === joint.id + ':C' && f.isLink).length === 0) {
+  //     const newLink = new Link();
+  //     newLink.name = joint.id + ':C';
+  //     const sceneObjectJoint = sceneObjects.filter(s => s.name === joint.id)[0];
+  //     const jointObj = this.kinematicService.getJoint(joint.id);
+  //     // const plane = this.getConnectionPlane(root, joint);
+  //     const newJoint = this.createNewJointFromObject(jointObj, sceneObjectJoint, joint);
+
+  //     console.log(parentLink, newJoint);
+  //     if (this.frames.filter(f => f.name === joint.id && f.isJoint).length === 0) {
+  //       if (parentLink) {
+  //         parentLink.attachChild(newJoint);
+  //         if (this.frames.filter(f => f.name === parentLink.name).length === 0) {
+  //           this.frames.push(parentLink);
+  //         }
+  //       } else {
+  //         console.log('inlist ', this.frames.filter(f => f.name === joint.id && f.isJoint));
+  //       }
+  //       newJoint.attachChild(newLink);
+
+  //       this.frames.push(newJoint);
+
+  //       console.log(joint, joint.linkGroup);
+  //       if (joint && joint.linkGroup) {
+  //         for (const group of joint.linkGroup) {
+  //           console.log(group);
+  //           for (const link of group.links) {
+  //             console.log(link);
+  //             const linkedJoint = link.joints.filter(j => j.id !== joint.id)[0];
+  //             const linkedJointInRoot = root.joints.filter(j => j.id === linkedJoint.id)[0];
+  //             // const linkedJointObj = this.kinematicService.getJoint(linkedJoint.id);
+
+  //             // console.log(linkedJoint, linkedJointObj, linkedJointInRoot);
+
+  //             this.processJoint(linkedJointInRoot, newLink, sceneObjects, root);
+
+  //             const connectedObjects = this.getConnectedObjects(root, linkedJoint);
+  //             console.log(connectedObjects);
+  //             for (const connectedObj of connectedObjects) {
+  //               const connectedJoint = this.kinematicService.getJoint(connectedObj.id);
+  //               // console.log(connectedJoint);
+  //               if (connectedJoint) {
+  //                 this.processJoint(connectedJoint, newLink, sceneObjects, root);
+  //               }
+  //             }
+  //           }
+  //         }
+  //       }
+  //     }
+  //     // if (this.frames.filter(f => f.isJoint).length === root.joints.length) {
+  //     //   this.createRootsFromFrames(sceneObjects);
+  //     // }
+
+  //     console.log (this.frames);
+  //   }
+  // }
+
+
+
 
 
   getStartJoint(root: Root) {
@@ -168,23 +539,25 @@ export class ClosedChainIKService {
 
 
 
-  getConnectionPlane(root: Root, object: any) {
-    console.log(root, object);
-    if (root && root.links.length > 0) {
-      for (const link of root.links) {
+  // getConnectionPlane(root: Root, object: any) {
+  //   // console.log(root, object);
+  //   if (root && root.links.length > 0) {
+  //     console.log(root.links);
+  //     for (const link of root.links) {
+  //       console.log(link.joints.filter(j => j.id !== object.id));
+  //       const connJoint = link.joints.filter(j => j.id !== object.id)[0];
+  //       // console.log(connJoint);
+  //       return connJoint.plane;
 
-        const connJoint = link.joints.filter(j => j.id !== object.id)[0];
-        console.log(connJoint);
-
-        // const connectedJoint = link.joints.filter(j => j.id === object.id && j.plane === object.plane)[0];
-        // // console.log(connectedJoint);
-        // if (connectedJoint) {
-        //   linkedObjects.push(link.joints.filter(j => j.id !== object.id)[0]);
-        // }
-      }
-    }
-    return null;
-  }
+  //       // const connectedJoint = link.joints.filter(j => j.id === object.id && j.plane === object.plane)[0];
+  //       // // console.log(connectedJoint);
+  //       // if (connectedJoint) {
+  //       //   linkedObjects.push(link.joints.filter(j => j.id !== object.id)[0]);
+  //       // }
+  //     }
+  //   }
+  //   return null;
+  // }
 
 
 
@@ -390,8 +763,8 @@ export class ClosedChainIKService {
 
 
 
-  createNewJointFromObject(joint: JointLink, sceneObject: any, startJoint: any) {
-    console.log(joint, sceneObject, startJoint);
+  createNewJointFromObject(joint: JointLink, sceneObject: any) {
+    // console.log(joint, sceneObject, startJoint);
 
     // const plane =
     // startJoint.linkGroup.filter(j => j.id === object.id && j.plane === object.plane)[0];
@@ -401,25 +774,30 @@ export class ClosedChainIKService {
       // newJoint.clearDoF();
       newJoint.name = joint.id;
       newJoint.setDoF( DOF.EZ ); //DOF.EZ
-      // newJoint.setWorldPosition(
-      //   sceneObject.position.x,
-      //   sceneObject.position.y,
-      //   sceneObject.position.z ); //0, 1, 0}
+      newJoint.setWorldPosition(
+        sceneObject.position.x,
+        sceneObject.position.y,
+        sceneObject.position.z ); //0, 1, 0}
       // newJoint.setMatrixNeedsUpdate();
 
-      newJoint.setDoFValue( DOF.EZ, 1.6 * Math.PI);
+      // console.log(joint.limits);
+
+
       // newJoint.setRestPoseValues(object.frame.sceneObject.rotation.z);
       // newJoint.restPoseSet = true;
       newJoint.targetSet = true;
 //sceneObject.quaternion.y !== 0 ? DOF.EX : DOF.EY
-      newJoint.setMinLimit(DOF.EZ, 0.2 * Math.PI);
-      newJoint.setMaxLimit(DOF.EZ, 1.8 * Math.PI );
+      if (joint.limits.min > -10000 && joint.limits.max < 10000) {
+        newJoint.setDoFValue(DOF.EZ, (joint.limits.max - joint.limits.min) * this.DEG2PI);
+        newJoint.setMinLimit(DOF.EZ, joint.limits.min * this.DEG2PI);
+        newJoint.setMaxLimit(DOF.EZ, joint.limits.max * this.DEG2PI);
+      }
   //     setMinLimit( dof : DOF, value : Number ) : Boolean
   // setMaxLimit( dof : DOF, value : Number ) : Boolean
-      // newJoint.setWorldQuaternion(sceneObject.quaternion.x, sceneObject.quaternion.y, sceneObject.quaternion.z, sceneObject.quaternion.w);
+      newJoint.setWorldQuaternion(sceneObject.quaternion.x, sceneObject.quaternion.y, sceneObject.quaternion.z, sceneObject.quaternion.w);
       // newJoint.setMatrixNeedsUpdate();
 
-      console.log(newJoint);
+      // console.log(newJoint);
       return newJoint;
     }
   }

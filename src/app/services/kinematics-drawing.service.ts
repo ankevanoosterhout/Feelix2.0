@@ -385,7 +385,7 @@ export class KinematicsDrawingService {
               console.log(root);
               if (root) {
                 this.closedChainIKService.createRootsFromList(root, this.config.scene.children.filter(c => c.isGroup));
-                this.closedChainIKService.createTarget(object);
+                // this.closedChainIKService.createTarget(object);
               }
             }
           }
