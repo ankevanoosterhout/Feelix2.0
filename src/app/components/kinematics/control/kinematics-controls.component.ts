@@ -26,6 +26,7 @@ export class KinematicsControlComponent {
     new Model(1, 'motor', 2, true, 'active_joint_2.png', [{ g:'B', url:'active_joint_2_base.obj'}, { g:'Z', url: 'active_joint_connector_Z.obj' }], 0xff2200),
     new Model(2, 'joint', 1, false, 'passive_joint_1.png', [{ g:'B', url:'passive_joint_1_base.obj'}, { g:'Z', url: 'passive_joint_connector_Z.obj' }], 0x02a3d9 ),
     new Model(3, 'joint', 2,false, 'passive_joint_2.png', [{ g:'B', url:'passive_joint_2_base.obj'}, { g:'Z', url: 'passive_joint_connector_Z.obj' }], 0x02a3d9 ),
+    new Model(4, 'joint', 2,false, 'fixed_joint.png', [{ g:'B', url:'fixed_joint_base.obj'}, { g:'X', url: 'fixed_joint_connector_X.obj' }], 0x02a3d9 )
     // new Model(4, 'arm', 0, false, 'arm.png', [{ g:'C', url:'arm.obj'} ], 0x333333),
     // new Model(5, 'connector', 0,false, 'cube.png', [{ g:'C', url:'cube.obj'}], 0x333333)
   ];
@@ -57,6 +58,9 @@ export class KinematicsControlComponent {
       this.loadOBJModel(res);
     });
 
+    this.kinematicsDrawingService.updateJointAngleScene.subscribe(res => {
+      this.updateJointAngle(res);
+    });
     console.log(this.infinity);
   }
 
@@ -75,7 +79,7 @@ export class KinematicsControlComponent {
         object.rotation.z = joint.object3D.rotation.z * (Math.PI / 180);
 
         object.quaternion.setFromEuler(object.rotation);
-        
+
         object.updateMatrix();
 
 
@@ -405,10 +409,11 @@ export class KinematicsControlComponent {
 
 
   updateJointAngle(joint: JointLink) {
+    console.log(joint.angle);
     //update all Y connectors and rotary indicator
     const sceneObject = this.config.scene.getObjectByName(joint.id);
     const Yconnectors = joint.connectors.filter(c => c.plane === 'Y');
-
+    console.log(sceneObject, Yconnectors);
     if (sceneObject) {
       sceneObject.traverse( (child: any) => {
         if (child.name === 'Z') {

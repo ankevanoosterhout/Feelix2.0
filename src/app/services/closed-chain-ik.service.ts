@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Solver, Link,	Joint, IKRootsHelper, Goal, findRoots, DOF, setIKFromUrdf, urdfRobotToIKRoot, SOLVE_STATUS_NAMES } from 'closed-chain-ik-js-0.0.3/src';
 import { Subject } from 'rxjs';
 import { JointLink } from '../models/kinematic.model';
-import { LinkGroup, Root } from '../models/kinematic-connections.model';
+import { Root } from '../models/kinematic-connections.model';
 import * as THREE from 'three';
 
 import { Euler, Group } from 'three';
@@ -29,8 +29,8 @@ export class ClosedChainIKService {
     translationErrorClamp: 0.25,
     rotationErrorClamp: 0.25,
     translationConvergeThreshold: 1e-3,
-    rotationConvergeThreshold: 1e-3
-    // restPoseFactor: 0.001,
+	  rotationConvergeThreshold: 1e-3,
+    restPoseFactor: 0.001
   };
 
   ikRoot = null;
@@ -43,6 +43,8 @@ export class ClosedChainIKService {
 
   addToScene: Subject<any> = new Subject();
   removeFromScene: Subject<any> = new Subject();
+  updateJointsInScene: Subject<any> = new Subject();
+  animateScene: Subject<any> = new Subject();
 
   rootNode: any = null;
 
@@ -83,6 +85,7 @@ export class ClosedChainIKService {
     // console.log(root, sceneObjects);
     this.frames = [];
     this.ikRoot = null;
+    this.createRoot = false;
     if (root) {
       const startJoint = this.getStartJoint(root);
       this.processJoint(startJoint, null, sceneObjects, root);
@@ -294,14 +297,17 @@ export class ClosedChainIKService {
                 let worldPosition = new THREE.Vector3();
                 object.getWorldPosition(worldPosition);
                 console.log(worldPosition);
-                this.targetObject.position.set( 0, 0, 0 );
+                this.targetObject.position.set( worldPosition.x, worldPosition.y, worldPosition.z );
                 // this.targetObject.updateMatrix();
                 this.finalLink = new Link();
-                this.finalLink.setPosition( 0, 0, 0);
+                this.finalLink.setPosition(0, 0.5, 0);
                 console.log(c.parent, c.child);
-                if (c.parent === null) {
-                  this.finalLink.addChild(c);
-                } else if (c.child === null) {
+                // if (c.parent === null) {
+                //   console.log('parent');
+                //   this.finalLink.attachChild(c);
+                // } else
+                if (c.child === null) {
+                  console.log('child');
                   c.addChild(this.finalLink);
                 }
                 // else {
@@ -314,11 +320,11 @@ export class ClosedChainIKService {
                 this.targetObject.matrix.set( ...this.finalLink.matrixWorld ).transpose();
                 this.targetObject.matrix.decompose( this.targetObject.position, this.targetObject.quaternion, this.targetObject.scale );
 
-
                 this.targetObject.name = 'target';
                 const geometry = new THREE.SphereGeometry( 25, 32, 16 );
                 const material = new THREE.MeshBasicMaterial( { color: 0xffff00, opacity: 0.5 } );
                 const sphere = new THREE.Mesh( geometry, material );
+
                 this.targetObject.add(sphere);
                 this.addToScene.next( { object: this.targetObject, addControls: true } );
 
@@ -355,7 +361,7 @@ export class ClosedChainIKService {
 	}
 
   updateTargetObject() {
-    if (this.ikRoot && this.targetObject && this.solver) {
+    if (this.ikRoot && this.targetObject) {
       for (const root of this.ikRoot) {
         root.updateMatrixWorld( true );
       }
@@ -363,7 +369,26 @@ export class ClosedChainIKService {
       this.targetObject.matrix.decompose( this.targetObject.position, this.targetObject.quaternion, this.targetObject.scale );
 
       // this.solver.solve();
-      // this.ikHelper.updateStructure();
+      this.ikHelper.updateStructure();
+
+      // console.log(this.ikHelper);
+      // console.log(this.ikRoot);
+
+      for (const root of this.ikRoot) {
+        root.traverse( ( child: any ) => {
+          if ( child.isJoint ) {
+            let position_ = [];
+            let quaternion_ = [];
+            child.getWorldPosition(position_);
+            child.getWorldQuaternion(quaternion_);
+            this.updateJointsInScene.next({ joint: child, position: position_, quaternion: quaternion_ });
+          }
+        });
+      }
+
+      this.animateScene.next();
+
+      // console.log(this.solver);
     }
   }
 
@@ -371,7 +396,7 @@ export class ClosedChainIKService {
 
 
   createNewJointFromObject(joint: JointLink, sceneObject: any) {
-    // console.log(joint, sceneObject);
+    console.log(joint.limits);
 
     if (sceneObject) {
       const newJoint = new Joint();
@@ -390,11 +415,16 @@ export class ClosedChainIKService {
       // newJoint.setRestPoseValues(object.frame.sceneObject.rotation.z);
       // newJoint.restPoseSet = true;
       // newJoint.targetSet = true;
-      if (joint.limits.min > -10000 && joint.limits.max < 10000) {
+      if (joint.limits.min * -1 > -10000 && joint.limits.max < 10000) {
         newJoint.setDoFValue(DOF.EZ, (joint.limits.max - joint.limits.min) * this.DEG2PI);
-        newJoint.setMinLimit(DOF.EZ, joint.limits.min * this.DEG2PI);
+        newJoint.setMinLimit(DOF.EZ, -joint.limits.min * this.DEG2PI);
         newJoint.setMaxLimit(DOF.EZ, joint.limits.max * this.DEG2PI);
       }
+      newJoint.setDoFValue(DOF.EX, 0);
+      newJoint.setDoFValue(DOF.EY, 0);
+      newJoint.setDoFValue(DOF.X, 0);
+      newJoint.setDoFValue(DOF.Y, 0);
+      newJoint.setDoFValue(DOF.Z, 0);
 
       newJoint.setWorldQuaternion(sceneObject.quaternion.x, sceneObject.quaternion.y, sceneObject.quaternion.z, sceneObject.quaternion.w);
       // newJoint.setMatrixNeedsUpdate();
@@ -414,14 +444,6 @@ export class ClosedChainIKService {
     }
   }
 
-
-  // addFinalLink(position: any) {
-  //   this.finalLink = new Link();
-  //   this.finalLink.setPosition( position.x, position.y, position.z );
-  //   this.currRoot.addChild( this.finalLink );
-
-  //   this.updateRoot();
-  // }
 
 
 
@@ -488,10 +510,15 @@ export class ClosedChainIKService {
   }
 
 
+  removeTarget() {
+    this.targetObject = null;
+    this.solver = null;
+  }
+
 
 
   render() {
-    if (this.goal && this.targetObject && this.solver) {
+    if (this.goal && this.targetObject && this.solver && this.ikRoot) {
       this.goal.setPosition(
         this.targetObject.position.x,
         this.targetObject.position.y,
@@ -503,13 +530,11 @@ export class ClosedChainIKService {
         this.targetObject.quaternion.z,
         this.targetObject.quaternion.w,
       );
-
-      if (this.solver && this.ikRoot) {
-        const solverOutput = this.solver.solve().map( s => SOLVE_STATUS_NAMES[ s ] ).join( '\n' );
-        console.log(solverOutput);
-      }
+      // console.log(this.ikRoot, this.solver, this.targetObject);
+      this.solver.solve();
+      // const solverOutput = this.solver.solve().map( s => SOLVE_STATUS_NAMES[ s ] ).join( '\n' );
+      // console.log(solverOutput);
     }
-
   }
 
 
@@ -544,247 +569,5 @@ export class ClosedChainIKService {
       }
     }
   }
-
-
-
-
-
-  loadCuriosity() {
-
-    return new Promise( ( resolve, reject ) => {
-
-      const url = 'https://raw.githubusercontent.com/gkjohnson/curiosity_mars_rover-mirror/master/curiosity_mars_rover_description/urdf/curiosity_mars_rover.xacro';
-      const xacroLoader = new XacroLoader();
-      xacroLoader.rospackCommands = {
-
-        find( pkg ) {
-
-          switch ( pkg ) {
-
-            case 'curiosity_mars_rover_description':
-              return 'https://raw.githubusercontent.com/gkjohnson/curiosity_mars_rover-mirror/master/curiosity_mars_rover_description/';
-            default:
-              return pkg;
-
-          }
-
-        }
-
-      };
-
-      xacroLoader.load( url, xacro => {
-
-        let ik, urdf, goalMap;
-
-        const manager = new LoadingManager();
-        manager.onLoad = () => {
-
-          const toRemove = [];
-          urdf.traverse( c => {
-
-            if ( c.isLight || c.isLineSegments ) {
-
-              toRemove.push( c );
-
-            }
-
-          } );
-
-          toRemove.forEach( l => {
-
-            l.parent.remove( l );
-
-          } );
-
-          this.convertColorsAndTextures( urdf );
-          resolve( { ik, urdf, goalMap, helperScale: 0.3 } );
-
-        };
-
-        const urdfLoader = new URDFLoader( manager );
-        urdfLoader.packages = {
-          'curiosity_mars_rover_description': 'https://raw.githubusercontent.com/gkjohnson/curiosity_mars_rover-mirror/master/curiosity_mars_rover_description/'
-        };
-        urdf = urdfLoader.parse( xacro );
-        urdf.joints.arm_03_joint.limit.upper = Math.PI * 3 / 2;
-        ik = urdfRobotToIKRoot( urdf );
-
-        // make the root fixed
-        ik.clearDoF();
-        quat.fromEuler( ik.quaternion, - 90, 0, 0 );
-        ik.position[ 1 ] -= 0.5;
-        ik.setMatrixNeedsUpdate();
-
-        // start the joints off at reasonable angles
-        urdf.setJointValue( 'arm_02_joint', - Math.PI / 2 );
-        urdf.setJointValue( 'arm_03_joint', Math.PI );
-        urdf.setJointValue( 'arm_04_joint', Math.PI );
-        // urdf.setJointValue( 'joint_5', - Math.PI / 4 );
-        setIKFromUrdf( ik, urdf );
-
-        goalMap = new Map();
-        const tool = ik.find( l => l.name === 'arm_tools' );
-        const link = urdf.links.arm_tools;
-
-        const ee = new Joint();
-        ee.name = link.name;
-        ee.makeClosure( tool );
-
-        tool.getWorldPosition( ee.position );
-        tool.getWorldQuaternion( ee.quaternion );
-        ee.setMatrixNeedsUpdate();
-        goalMap.set( ee, tool );
-
-      }, reject );
-
-    } );
-
-  }
-
-  convertColorsAndTextures( root ) {
-
-    function _apply( material ) {
-
-      material.color.convertSRGBToLinear();
-      if ( material.map ) material.map.encoding = sRGBEncoding;
-
-    }
-
-    root.traverse( c => {
-
-      if ( c.material ) {
-
-        const material = c.material;
-        if ( Array.isArray( material ) ) {
-
-          material.forEach( _apply );
-
-        } else {
-
-          _apply( material );
-
-        }
-
-      }
-
-    } );
-
-  }
-
-
-  loadModel( promise: any ) {
-
-
-    if ( this.urdfRoot ) {
-
-      this.urdfRoot.traverse( this.dispose );
-      this.drawThroughIkHelper.traverse( this.dispose );
-      this.ikHelper.traverse( this.dispose );
-
-      this.removeFromScene.next(this.urdfRoot.name);
-      this.removeFromScene.next(this.ikHelper.name);
-      this.removeFromScene.next( this.targetObject.name );
-    }
-
-    this.targetObject = new Group();
-    this.targetObject.position.set(0, 1, 0);
-    console.log(this.targetObject);
-    this.addToScene.next( { object: this.targetObject, addControls: false } );
-
-    this.ikRoot = null;
-    this.urdfRoot = null;
-    this.ikHelper = null;
-    this.goals.length = 0;
-    this.goalToLinkMap.clear();
-    this.linkToGoalMap.clear();
-    this.selectedGoalIndex = - 1;
-
-    this.loadId ++;
-    const thisLoadId = this.loadId;
-    promise
-      .then( ( { goalMap, urdf, ik, helperScale = 1 } ) => {
-
-        console.log(goalMap, urdf, ik);
-
-        if ( this.loadId !== thisLoadId ) {
-
-          return;
-
-        }
-
-        ik.updateMatrixWorld( true );
-
-        // create the helper
-        this.ikHelper = new IKRootsHelper( ik );
-        this.ikHelper.setResolution( window.innerWidth, window.innerHeight );
-        this.ikHelper.setJointScale(80);
-        this.ikHelper.name = 'ikHelper';
-        // this.ikHelper.setColor( this.ikHelper.color );
-        this.ikHelper.traverse( c => {
-          if (c.material) {
-            c.material.color.setHex( 0xe91e63 );
-          }
-          c.visible = true;
-        });
-
-        console.log(this.ikHelper);
-
-        urdf.traverse( c => {
-
-          c.castShadow = true;
-          c.receiveShadow = true;
-
-        } );
-        urdf.name = 'urdf';
-
-        this.addToScene.next({ object: urdf, addControls: false });
-        this.addToScene.next({ object: this.ikHelper, addControls: false });
-
-        const loadedGoals = [];
-        goalMap.forEach( ( link, goal ) => {
-
-          loadedGoals.push( goal );
-          this.goalToLinkMap.set( goal, link );
-          this.linkToGoalMap.set( link, goal );
-
-        } );
-
-        console.log(goalMap, this.goalToLinkMap, this.linkToGoalMap);
-
-        this.solver = new Solver( ik ); // : new Solver( ik );
-        this.solver.maxIterations = 3;
-        this.solver.translationErrorClamp = 0.25;
-        this.solver.rotationErrorClamp = 0.25;
-        this.solver.restPoseFactor = 0.01;
-        this.solver.divergeThreshold = 0.05;
-
-        if ( loadedGoals.length ) {
-
-          this.targetObject.position.set( ...loadedGoals[ 0 ].position );
-          this.targetObject.quaternion.set( ...loadedGoals[ 0 ].quaternion );
-          this.selectedGoalIndex = 0;
-
-        } else {
-
-          this.selectedGoalIndex = - 1;
-
-        }
-
-        loadedGoals.forEach( g => {
-
-          g.originalPosition = [ 0, 0, 0 ];
-          g.originalQuaternion = [ 0, 0, 0, 1 ];
-
-        } );
-
-        this.ikRoot = ik;
-        this.urdfRoot = urdf;
-        this.goals.push( ...loadedGoals );
-
-        // rebuildGUI();
-
-      });
-
-    }
 
 }

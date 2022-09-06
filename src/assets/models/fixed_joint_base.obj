@@ -2,7 +2,7 @@
 
 mtllib 27fbb8ca-fa67-4dfd-8dff-969c24f22250.mtl
 
-g body_fixedjoint
+g Gray:M:R
 
 v -15.000000 -0.000000 15.500000
 v -14.824207 2.289739 15.500000

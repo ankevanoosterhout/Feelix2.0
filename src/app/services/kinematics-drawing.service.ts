@@ -25,6 +25,7 @@ export class KinematicsDrawingService {
   updateCameraView: Subject<any> = new Subject();
   selectCameraView: Subject<any> = new Subject();
   loadModelFromLink: Subject<any> = new Subject();
+  updateJointAngleScene: Subject<any> = new Subject();
 
 
   constructor(@Inject(DOCUMENT) private document: Document, private kinematicService: KinematicService, private closedChainIKService: ClosedChainIKService,
@@ -38,6 +39,14 @@ export class KinematicsDrawingService {
 
     this.closedChainIKService.removeFromScene.subscribe(res => {
       this.removeObjectFromScene(res);
+    });
+
+    this.closedChainIKService.updateJointsInScene.subscribe(res => {
+      this.updateJointsInRoot(res.joint, res.position, res.quaternion);
+    });
+
+    this.closedChainIKService.animateScene.subscribe(res => {
+      this.animate();
     });
   }
 
@@ -125,7 +134,7 @@ export class KinematicsDrawingService {
         console.log('update target');
         this.closedChainIKService.updateTargetObject();
       }
-    })
+    });
 
     this.config.control.addEventListener( 'dragging-changed', ( event: any ) => {
       // this.config.orbit.enabled = this.config.draggableObject !== undefined ? false : !event.value;
@@ -253,11 +262,12 @@ export class KinematicsDrawingService {
     //   this.config.draggableObject = intersects[0].object.parent;
 
     // } else {
-      for (const intersect of intersects) {
+      if (!intersects[0].isTransformControlsPlane) {
+
+        for (const intersect of intersects) {
         // console.log(intersect);
 
 
-        if (!intersects[0].isTransformControlsPlane) {
 
 
           // if (intersects && intersect.object.parent.name === 'rotary_control') {
@@ -270,8 +280,9 @@ export class KinematicsDrawingService {
           // } else
 
           if (intersect.object && intersect.object instanceof THREE.Mesh) {
+            // console.log(intersect.object);
             const selectedElement = this.getObjectDetailsFromName(intersect.object.name);
-
+            // console.log(selectedElement);
             if (selectedElement) {
               // console.log(selectedElement);
               if (selectedElement.color === 'Yellow') {
@@ -333,6 +344,33 @@ export class KinematicsDrawingService {
       }
     }
     return;
+  }
+
+
+  updateJointsInRoot(joint: any, position: Array<number>, quaternion: Array<number>) {
+
+    const sceneObject = this.config.scene.getObjectByName(joint.name);
+    console.log(sceneObject);
+    // console.log(sceneObject.position, joint.position);
+    // console.log(sceneObject.quaternion, joint.quaternion);
+    console.log(sceneObject.quaternion, quaternion, sceneObject.rotation);
+
+    if (sceneObject) {
+      // sceneObject.matrix.set(sceneObject.matrix);
+
+      sceneObject.position.set( position[0], position[1], position[2] );
+      console.log(joint);
+      // sceneObject.quaternion.setFromRotationMatrix(joint.matrix);
+      sceneObject.updateMatrix();
+      sceneObject.quaternion.set( quaternion[0], quaternion[1], quaternion[2], quaternion[3] );
+
+      const jointObject = this.kinematicService.getJoint(joint.name);
+      jointObject.angle = joint.dofValues[5] * -(180/Math.PI);
+
+      if (jointObject) {
+        this.updateJointAngleScene.next(jointObject);
+      }
+    }
   }
 
 
@@ -548,6 +586,8 @@ export class KinematicsDrawingService {
 
 
   deselectAllObjects() {
+    // console.log(this.config.scene);
+    // console.log(this.config.scene.getObjectByName('target'));
     if (this.kinematicService.anySelected()) {
       // console.log('deselect draggable object');
       this.config.draggableObject = undefined;
@@ -564,11 +604,19 @@ export class KinematicsDrawingService {
         }
       }
       this.kinematicService.deselectAll();
-      this.animate();
     }
     if (this.config.tmpPlane) {
       this.config.scene.remove(this.config.tmpPlane);
     }
+    // if (this.config.move) {
+    const target = this.config.scene.getObjectByName('target');
+    if (target) {
+      console.log(target);
+      this.config.scene.remove(target);
+      this.closedChainIKService.removeTarget();
+    }
+    this.animate();
+
   }
 
 
@@ -677,6 +725,7 @@ export class KinematicsDrawingService {
         //   this.updateChildren(model, diffTranslation);
         // }
       }
+      this.kinematicService.updateJoint(model);
       // this.kinematicService.updateJointVisualization(model.id, model.object3D);
     }
   }
