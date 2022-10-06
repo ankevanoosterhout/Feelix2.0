@@ -4,20 +4,21 @@ import { v4 as uuid } from 'uuid';
 import { MicroController } from '../models/hardware.model';
 import { Model, DataSet, Classifier, Data, NN_options, Label } from '../models/ml5js.model';
 import { HardwareService } from './hardware.service';
-import p5 from 'p5';
-import ml5 from 'ml5';
+// import p5 from 'p5';
+// import ml5 from 'ml5';
 import { DataSetService } from './dataset.service';
 import { Subject } from 'rxjs';
 import { ML5ModelService } from './ml5-model.service';
 import { FilterModel, UploadStringModel } from '../models/effect-upload.model';
 import { ElectronService } from 'ngx-electron';
 import { FileSaverService } from 'ngx-filesaver';
+import * as tf from '@tensorflow/tfjs';
 
 @Injectable()
 export class ML5jsService {
 
     public modelSet = [
-      new Model(uuid(), 'model', 'NeuralNetwork', new NN_options('classification', false, 0.2, 16), { epochs: 32, batchSize: 12 }),
+      new Model(uuid(), 'model', 'NeuralNetwork', new NN_options('classification', false, 0.2, 5), { epochs: 32, batchSize: 12 }),
       new Model(uuid(), 'model', 'KNNClassifier', {}, {}),
       new Model(uuid(), 'model', 'kMeans', { k_clusters: 3, max_iterations: 4, threshold: 0.5 }, {}),
     ];
@@ -133,8 +134,12 @@ export class ML5jsService {
         let i = 0;
 
         for (const classifier of this.selectedModel.outputs) {
+
+
           if (classifier.active) {
-            outputs.push('"' + classifier.name + '":"' + set.d.outputs[i] + '"');
+            for (const label of classifier.labels) {
+              label.name === set.d.outputs[i] ? outputs.push(1) : outputs.push(0);
+            }
             i++;
           }
         }
@@ -144,8 +149,8 @@ export class ML5jsService {
           return false;
         }
 
-        const outputstr = outputs.join(',');
-        const outputObject = JSON.parse('{' + outputstr + '}');
+        // const outputstr = outputs.join(',');
+        // const outputObject = JSON.parse('{' + outputstr + '}');
 
         set.d.inputs.forEach(input => {
           let inputs = [];
@@ -154,19 +159,23 @@ export class ML5jsService {
             for (let _i = 0; _i < motor.length; _i++) {
               const input_variable = this.selectedModel.inputs.filter(i => i.name === motor[_i].data.name)[0];
               if (input_variable.active) {
-                inputs.push('"' + motor[_i].data.name + '-' + motor[_i].motor + '":' + motor[_i].data.value);
+                inputs.push(motor[_i].data.value);
+                // inputs.push('"' + motor[_i].data.name + '-' + motor[_i].motor + '":' + motor[_i].data.value);
               }
             }
           }
           const input_var = this.selectedModel.inputs.filter(i => i.name === input.inputdata.name)[0];
           if (input_var.active) {
-            inputs.push('"' + input.inputdata.name + '":' + input.inputdata.value);
+            console.log(input_var, input.inputdata.value);
+            // const input_var_value = input.inputdata.value.split(':');
+            inputs.push(parseFloat(input.inputdata.value));
           }
 
-          const inputstr = inputs.join(',');
-          let inputObject = JSON.parse('{' + inputstr + '}');
+          // const inputstr = inputs.join(',');
+          // let inputObject = JSON.parse('{' + inputstr + '}');
+          // console.log(input, inputstr, inputObject);
 
-          data.push({ xs: inputObject, ys: outputObject });
+          data.push({ xs: inputs, ys: outputs });
         });
       });
 
@@ -262,27 +271,85 @@ export class ML5jsService {
 
 
 
-    NN_createData(data: Array<any>, model: Model) {
+    NN_createData(data: Array<any>, modelObj: Model) {
 
-      this.selectedModel.model = ml5.neuralNetwork(model.options);
+      this.selectedModel.model = tf.sequential();
 
-      this.updateProgess('model loaded', 40);
+      this.selectedModel.model.name = modelObj.name;
+
+      this.updateProgess('model created', 40);
+      console.log(data, modelObj);
 
       if (data.length > 0) {
+        const outputs = [];
+        const inputs = [];
         data.forEach(item => {
-          this.selectedModel.model.addData(item.xs, item.ys);
+          console.log(item);
+          // const input = tf.tensor(item.xs, [ item.xs.length ]);
+          inputs.push(item.xs);
+          // const output = tf.tensor(item.ys, [ item.ys.length ]);
+          outputs.push(item.ys);
+          // input.print();
         });
 
-        this.selectedModel.model.normalizeData();
+        const iTensor = tf.tensor(inputs, [ inputs.length, inputs[0].length ]);
+        const oTensor = tf.tensor(outputs, [ outputs.length, outputs[0].length ]);
+        console.log(iTensor, oTensor);
+
+        for (let layer = 0; layer < modelObj.options.hiddenUnits; layer++) {
+          const hiddenLayer = tf.layers.dense({
+            units: inputs[0].length,
+            inputShape: [ inputs[0].length ],
+            activation: 'sigmoid'
+          });
+
+          console.log(hiddenLayer);
+
+          this.selectedModel.model.add(hiddenLayer);
+        }
+
+        const outputLayer = tf.layers.dense({
+          units: outputs[0].length,
+          activation: 'sigmoid'
+        });
+
+        this.selectedModel.model.add(outputLayer);
+
+        const sgdOpt = tf.train.sgd(modelObj.options.learningRate);
+
+        this.selectedModel.model.compile( {
+          optimizer: sgdOpt,
+          loss: tf.losses.meanSquaredError
+        });
+
+        // console.log(this.selectedModel.model);
+      //   this.selectedModel.model.normalizeData();
 
         this.updateProgess('training model', 60);
 
-        this.selectedModel.model.train(model.trainingOptions, this.whileTraining, this.finishedTraining);
+        this.train(iTensor, oTensor, modelObj.trainingOptions).then(() => { console.log('training is complete') });
+        // console.log(iTensor, oTensor);
+
+
+      //   this.selectedModel.model.train(model.trainingOptions, this.whileTraining, this.finishedTraining);
       } else {
         this.updateProgess('no data found, training canceled', 0);
         this.processing = false;
         return false;
       }
+    }
+
+
+
+    async train(iTensor: any, oTensor: any, options: any) {
+
+      const response = await this.selectedModel.model.fit(iTensor, oTensor, {
+        batchSize: options.batchSize,
+        epochs: options.epochs
+      });
+      // console.log(response.history.loss[0]);
+      this.updateProgess('training is complete, loss = ' + response.history.loss[response.history.loss.length - 1], 100);
+      console.log(response);
     }
 
 
@@ -303,14 +370,25 @@ export class ML5jsService {
     NN_Deploy(input: any, selectedModel: any, path: string) {
 
       this.serialPath = path;
+      // if (selectedModel.options.task === 'classification') {
+      //   if (selectedModel.multiple) {
+      //     this.selectedModel.model.classify(input, this.handleClassificationResults);
+      //   } else {
+      //     this.selectedModel.model.classifyMultiple(input, this.handleClassificationResults);
+      //   }
+      // } else {
+      //   this.selectedModel.model.predict(input, this.handleRegressionResults);
+      // }
+      // console.log(input);
+
+      // console.log(selectedModel.options.task, selectedModel.multiple);
+
+
       if (selectedModel.options.task === 'classification') {
-        if (selectedModel.multiple) {
-          this.selectedModel.model.classify(input, this.handleClassificationResults);
-        } else {
-          this.selectedModel.model.classifyMultiple(input, this.handleClassificationResults);
-        }
-      } else {
-        this.selectedModel.model.predict(input, this.handleRegressionResults);
+        const iTensor = selectedModel.multiple ? tf.tensor2d(input) : tf.tensor2d([input]);
+        console.log(iTensor);
+        const outputs = this.selectedModel.model.predict(iTensor);
+        outputs.print();
       }
     }
 

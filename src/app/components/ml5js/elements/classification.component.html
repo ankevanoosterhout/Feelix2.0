@@ -5,12 +5,7 @@
       <label class="labelRow auto_width" *ngIf="this.ml5jsService.selectedModel.type === 'NeuralNetwork' && this.ml5jsService.selectedModel.options.task === 'classification'">Classifiers</label>
       <button class="add labelRowItem" (click)="this.ml5jsService.addClassifier()" title="add new classifier">Add</button>
     </div>
-    <div class="row">
-      <label class="radio-container"><div class="question-mark" title="classify multiple outputs">?</div>classify multiple
-        <input type="checkbox" class="type" id="multiple" name="interpolate" [(ngModel)]="this.ml5jsService.selectedModel.multiple" [checked]="this.ml5jsService.selectedModel.multiple">
-        <span class="checkmark radio ml5js"></span>
-      </label>
-    </div>
+
 
     <ul id="data_output_list" class="classifiers">
       <li *ngFor="let classifier of this.ml5jsService.selectedModel.outputs; let i=index;" class="dataSet">
@@ -38,6 +33,13 @@
         </ul>
       </li>
     </ul>
+
+    <div class="row">
+      <label class="radio-container"><div class="question-mark" title="classify multiple inputs simultaneously">?</div>classify batch
+        <input type="checkbox" class="type" id="multiple" name="interpolate" [(ngModel)]="this.ml5jsService.selectedModel.multiple" [checked]="this.ml5jsService.selectedModel.multiple">
+        <span class="checkmark radio ml5js"></span>
+      </label>
+    </div>
   </div>
 
   <div class="row">

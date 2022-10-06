@@ -280,13 +280,14 @@ const mainMenuTemplate = [
       {
         label: 'Kinematic Design',
         accelerator: process.platform == 'darwin' ? 'Command+K' : 'Ctrl+K',
-        // enabled: false,
+        enabled: false,
         click() {
           createKinematicsWindow();
         }
       },
       {
         label: 'ML5js Window',
+        enabled: false,
         click() {
           createML5jsWindow();
         }
@@ -757,6 +758,8 @@ function createML5jsWindow() {
     ml5jsWindow.once('ready-to-show', () => {
       ml5jsWindow.show()
     });
+
+    // ml5jsWindow.webContents.openDevTools();
 
     ml5jsWindow.on('close', function () {
       ml5jsWindow = null

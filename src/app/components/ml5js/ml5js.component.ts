@@ -36,36 +36,41 @@ export class ML5jsComponent implements OnInit {
 
         if (data.velocity > 0.1 || data.velocity < -0.1) {
           if (this.ml5jsService.classify && this.ml5jsService.selectedModel.model) {
-            let inputList = [];
+            let inputs = [];
             for (const input of this.ml5jsService.selectedModel.inputs) {
               if (input.active) {
                 if (input.name === 'angle') {
-                  inputList.push('"angle-' + data.motorID + '":' + data.angle);
+                  inputs.push(data.angle);
+                  // inputList.push('"angle-' + data.motorID + '":' + data.angle);
                 } else if (input.name === 'velocity') {
-                  inputList.push('"velocity-' + data.motorID + '":' + data.velocity);
+                  inputs.push(data.velocity);
+                  // inputList.push('"velocity-' + data.motorID + '":' + data.velocity);
                 } else if (input.name === 'direction') {
-                  inputList.push('"direction-' + data.motorID + '":' + (data.velocity >= 0.00 ? 1 : 0));
+                  inputs.push((data.velocity >= 0.00 ? 1 : 0));
+                  // inputList.push('"direction-' + data.motorID + '":' + (data.velocity >= 0.00 ? 1 : 0));
                 } else if (input.name === 'target') {
-                  inputList.push('"target-' + data.motorID + '":' + data.target);
+                  inputs.push(data.target);
+                  // inputList.push('"target-' + data.motorID + '":' + data.target);
                 }
+
               }
             }
-            const inputstr = inputList.join(',');
-            let inputObject = JSON.parse('{' + inputstr + '}');
+            // const inputstr = inputList.join(',');
+            // let inputObject = JSON.parse('{' + inputstr + '}');
 
             if (this.ml5jsService.selectedModel.multiple) {
               const microcontroller = this.ml5jsService.selectedMicrocontrollers.filter(m => m.serialPort.path === data.serialPath)[0];
               if (this.inputArray.length > 0 && this.hardwareService.getDataSendTime(microcontroller.id) - new Date().getTime() > microcontroller.updateSpeed * 3) {
                 this.ml5jsService.NN_Deploy(this.inputArray, this.ml5jsService.selectedModel, data.serialPath);
               } else {
-                this.inputArray.push(inputObject);
+                this.inputArray.push(inputs);
               }
 
               this.hardwareService.updateDataSendTime(microcontroller.id);
 
             } else {
 
-              this.ml5jsService.NN_Deploy(inputObject, this.ml5jsService.selectedModel, data.serialPath);
+              this.ml5jsService.NN_Deploy(inputs, this.ml5jsService.selectedModel, data.serialPath);
             }
 
           } else if (this.ml5jsService.dataSets.length > 0) {
