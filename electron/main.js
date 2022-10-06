@@ -280,7 +280,7 @@ const mainMenuTemplate = [
       {
         label: 'Kinematic Design',
         accelerator: process.platform == 'darwin' ? 'Command+K' : 'Ctrl+K',
-        enabled: false,
+        // enabled: false,
         click() {
           createKinematicsWindow();
         }
