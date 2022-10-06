@@ -42,17 +42,17 @@ export class DrawElementsService {
 
       const dragPath = d3
         .drag()
-        .on('start', (d: any) => {
+        .on('start', (event: any, d: any) => {
 
           if (this.config.cursor.slug === 'sel' || this.config.cursor.slug === 'dsel' || this.config.cursor.slug === 'anchor' ||
-              (!d3.event.sourceEvent.shiftKey && this.config.cursor.slug === 'thick')) {
+              (!event.sourceEvent.shiftKey && this.config.cursor.slug === 'thick')) {
 
-            this.nodeService.selectPath(d.parent, d3.event.sourceEvent.shiftKey);
+            this.nodeService.selectPath(d.parent, event.sourceEvent.shiftKey);
 
             if (this.config.cursor.slug === 'dsel') {
               this.config.svg.selectAll('.cpSVG, .bbox').remove();
-              dragStart = { x: d3.event.sourceEvent.pageX, y: d3.event.sourceEvent.pageY - this.config.margin.top };
-              dragUpdate = { x: d3.event.sourceEvent.pageX, y: d3.event.sourceEvent.pageY - this.config.margin.top };
+              dragStart = { x: event.sourceEvent.pageX, y: event.sourceEvent.pageY - this.config.margin.top };
+              dragUpdate = { x: event.sourceEvent.pageX, y: event.sourceEvent.pageY - this.config.margin.top };
             }
 
             if (this.config.cursor.slug === 'sel') {
@@ -60,9 +60,8 @@ export class DrawElementsService {
               this.nodeService.selectedNodes = [];
               this.bboxService.drawBoundingBox();
             }
-          } else if ((this.config.cursor.slug === 'pen' && d3.event.sourceEvent.shiftKey) ||
-                    (d3.event.sourceEvent.shiftKey && this.config.cursor.slug === 'thick') ||
-                    this.config.cursor.slug === 'scis') {
+          } else if ((this.config.cursor.slug === 'pen' && event.sourceEvent.shiftKey) ||
+                    (event.sourceEvent.shiftKey && this.config.cursor.slug === 'thick') || this.config.cursor.slug === 'scis') {
             // add node on path
             const nodes = this.nodeService.getNodesOfPathSegment(d.id, d.parent);
             const mouse = {
@@ -86,9 +85,9 @@ export class DrawElementsService {
             this.redrawElements();
           }
         })
-        .on('drag', (d: any) => {
+        .on('drag', (event: any, d: any) => {
           if (this.config.cursor.slug === 'dsel') {
-            const coords = { x: d3.event.sourceEvent.pageX, y: d3.event.sourceEvent.pageY - this.config.margin.top };
+            const coords = { x: event.sourceEvent.pageX, y: event.sourceEvent.pageY - this.config.margin.top };
 
             if (this.nodeService.selectedNodes.length === 0) {
 
@@ -103,23 +102,23 @@ export class DrawElementsService {
                 x: this.nodeService.scale.scaleX.invert(coords.x) - this.nodeService.scale.scaleX.invert(dragUpdate.x),
                 y: this.nodeService.scale.scaleY.invert(coords.y) - this.nodeService.scale.scaleY.invert(dragUpdate.y)
               };
-              this.nodeService.moveAllSelectedNodes(translate, d3.event.sourceEvent.shiftKey);
+              this.nodeService.moveAllSelectedNodes(translate, event.sourceEvent.shiftKey);
               this.redrawElements();
               dragUpdate = coords;
             }
           }
         })
-        .on('end', (d: any) => {
+        .on('end', (event: any, d: any) => {
 
           if (this.config.cursor.slug === 'dsel') {
             if (this.nodeService.selectedNodes.length === 0) {
-              const coords = { x: d3.event.sourceEvent.pageX, y: d3.event.sourceEvent.pageY - this.config.margin.top };
+              const coords = { x: event.sourceEvent.pageX, y: event.sourceEvent.pageY - this.config.margin.top };
 
               const translate = {
                 x: this.nodeService.scale.scaleX.invert(coords.x) - this.nodeService.scale.scaleX.invert(dragStart.x),
                 y: this.nodeService.scale.scaleY.invert(coords.y) - this.nodeService.scale.scaleY.invert(dragStart.y)
               };
-              this.nodeService.moveAllSelectedNodes(translate, d3.event.sourceEvent.shiftKey);
+              this.nodeService.moveAllSelectedNodes(translate, event.sourceEvent.shiftKey);
               // this.redrawElements();
             }
             this.bboxService.getBBoxSelectedPaths();
@@ -154,18 +153,18 @@ export class DrawElementsService {
             }
           }
         })
-        .on('mousemove', (d: any) => {
-          if ((this.config.cursor.slug === 'pen' && d3.event.shiftKey) || this.config.cursor.slug === 'thick' || this.config.cursor.slug === 'scis') {
+        .on('mousemove', (event: any, d: any) => {
+          if ((this.config.cursor.slug === 'pen' && event.shiftKey) || this.config.cursor.slug === 'thick' || this.config.cursor.slug === 'scis') {
 
             const mouse = {
-              x: this.nodeService.scale.scaleX.invert(d3.event.x - this.config.margin.left),
-              y: this.nodeService.scale.scaleY.invert(d3.event.y - this.config.margin.top)
+              x: this.nodeService.scale.scaleX.invert(event.x - this.config.margin.left),
+              y: this.nodeService.scale.scaleY.invert(event.y - this.config.margin.top)
             };
             if (d3.select('.cursorConnection').empty()) {
               this.updatePointPath(mouse, d.parent, d.id);
             }
 
-            if (this.config.cursor.slug === 'pen' && d3.event.shiftKey) {
+            if (this.config.cursor.slug === 'pen' && event.shiftKey) {
               this.config.cursor.selectedSubcursor = 'add';
               this.document.getElementById('field-inset').style.cursor =
                 this.config.cursor.subcursor.filter(c => c.name === 'add')[0].cursor;
@@ -234,21 +233,21 @@ export class DrawElementsService {
 
     const dragNode = d3
       .drag()
-      .on('start', (d: any) => {
+      .on('start', (event: any, d: any) => {
 
 
 
-        if ((this.config.cursor.slug === 'dsel') || (this.config.cursor.slug === 'anchor' && !d3.event.sourceEvent.altKey)) {
+        if ((this.config.cursor.slug === 'dsel') || (this.config.cursor.slug === 'anchor' && !event.sourceEvent.altKey)) {
 
-          if (!d3.event.sourceEvent.shiftKey) {
+          if (!event.sourceEvent.shiftKey) {
             const cpPoints = this.nodeService.getCP(d);
             this.drawControlPoints(cpPoints);
           } else {
             this.config.svg.select('.cpSVG').remove();
           }
 
-          this.nodeService.selectPath(d.path, d3.event.sourceEvent.shiftKey);
-          this.nodeService.selectNode(d.id, d3.event.sourceEvent.shiftKey);
+          this.nodeService.selectPath(d.path, event.sourceEvent.shiftKey);
+          this.nodeService.selectNode(d.id, event.sourceEvent.shiftKey);
 
           this.config.nodesSVG.selectAll('.fn_' + d.path).style('fill', this.file.configuration.colors.filter(c => c.type === 'position2')[0].hash);
           this.dataService.selectElement(d.id, d.pos.x, d.pos.y, null, null);
@@ -294,7 +293,7 @@ export class DrawElementsService {
         } else if (this.config.cursor.slug === 'sel') {
 
           this.nodeService.selectedNodes = [];
-          this.nodeService.selectPath(d.path, d3.event.shiftKey);
+          this.nodeService.selectPath(d.path, event.shiftKey);
           this.bboxService.drawBoundingBox();
 
         } else if (this.config.cursor.slug === 'scis') {
@@ -318,12 +317,12 @@ export class DrawElementsService {
         }
 
       })
-      .on('drag', (d: any) => {
+      .on('drag', (event: any, d: any) => {
 
         if ( this.config.cursor.slug === 'thick' || this.config.cursor.slug === 'dsel' || this.config.cursor.slug === 'anchor' ) {
           const coords = {
-            x: d3.event.sourceEvent.pageX - this.config.margin.left,
-            y: d3.event.sourceEvent.pageY - this.config.margin.top - this.config.margin.offsetTop };
+            x: event.sourceEvent.pageX - this.config.margin.left,
+            y: event.sourceEvent.pageY - this.config.margin.top - this.config.margin.offsetTop };
 
           if (coords.y < 0) { coords.y = 0; }
           if (coords.y > this.config.chartDy) { coords.y = this.config.chartDy; }
@@ -344,7 +343,7 @@ export class DrawElementsService {
 
           if (this.config.cursor.slug === 'dsel' || this.config.cursor.slug  === 'anchor') {
 
-            this.nodeService.moveAllSelectedNodes(diff, d3.event.sourceEvent.shiftKey);
+            this.nodeService.moveAllSelectedNodes(diff, event.sourceEvent.shiftKey);
             this.dataService.selectElement(d.id, d.pos.x, d.pos.y, null, null);
             this.redrawElements();
             if (this.nodeService.selectedNodes.length === 1) {
@@ -387,12 +386,12 @@ export class DrawElementsService {
 
 
     const dragForceNode = d3.drag()
-      .on('start', (d: any) => {
+      // .on('start', (d: any) => {
 
-      })
-      .on('drag', (d: any) => {
+      // })
+      .on('drag', (event: any, d: any) => {
         if (this.config.cursor.slug === 'thick') {
-          const invertX = this.nodeService.scale.scaleX.invert(d3.event.sourceEvent.pageX - this.config.margin.left);
+          const invertX = this.nodeService.scale.scaleX.invert(event.sourceEvent.pageX - this.config.margin.left);
 
           const diffX = { x: invertX - d.angle.x };
           this.nodeService.moveNodeAngle(d, diffX);
@@ -505,9 +504,9 @@ export class DrawElementsService {
           this.config.nodesSVG.selectAll('#id_nf_' + d.id + '_' + d.path).style('fill', this.file.configuration.colors.filter(c => c.type === 'position2')[0].hash);
         }
       })
-      .on('mouseleave', (d: { id: string; path: string; pos: { x: number; y: number; };  }) => {
+      .on('mouseleave', (event: any, d: { id: string; path: string; pos: { x: number; y: number; };  }) => {
 
-        if (this.config.cursor.slug === 'pen' && !d3.event.altKey) {
+        if (this.config.cursor.slug === 'pen' && !event.altKey) {
           this.config.cursor.selectedSubcursor = null;
           this.document.getElementById('field-inset').style.cursor = this.config.cursor.cursor;
           this.config.svg.select('.cursorConnectionClose').remove();
@@ -558,13 +557,13 @@ export class DrawElementsService {
 
     const dragCP = d3
       .drag()
-      .on('drag', (d: any) => {
+      .on('drag', (event: any, d: any) => {
 
         if ((this.config.cursor.slug === 'dsel' && type === 'pos') || (this.config.cursor.slug === 'thick' && type === 'angle') ||
              this.config.cursor.slug === 'anchor') {
           let coords = {
-            x: this.nodeService.scale.scaleX.invert(d3.event.x),
-            y: this.nodeService.scale.scaleY.invert(d3.event.sourceEvent.pageY - this.config.margin.top - this.config.margin.offsetTop)
+            x: this.nodeService.scale.scaleX.invert(event.x),
+            y: this.nodeService.scale.scaleY.invert(event.sourceEvent.pageY - this.config.margin.top - this.config.margin.offsetTop)
           };
           if (this.file.activeEffect.grid.snap && this.file.activeEffect.grid.visible && this.config.cursor.slug !== 'thick') {
             coords = this.nodeService.calculateSnapPoint(coords);

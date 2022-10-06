@@ -115,11 +115,11 @@ export class EffectsComponent implements OnInit, AfterViewInit {
 
   public dragstart(item: any) {
     this.drawingService.setTmpEffect(item);
-    this.document.querySelector('#overlayEffect-' + item.id).classList.add('dragging');
+    this.document.getElementById('overlayEffect-' + item.id).classList.add('dragging');
   }
 
   public dragend(item: any) {
-    this.document.querySelector('#overlayEffect-' + item.id).classList.remove('dragging');
+    this.document.getElementById('overlayEffect-' + item.id).classList.remove('dragging');
     this.drawingService.config.tmpEffect = null;
   }
 

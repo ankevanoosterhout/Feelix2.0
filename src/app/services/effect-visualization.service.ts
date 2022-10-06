@@ -108,12 +108,12 @@ export class EffectVisualizationService {
           activeCollEffect = collEffect;
           d3.selectAll('#coll-effect-' + collection.id + '-' + collEffect.id).style('opacity', 0.6);
         })
-        .on('drag', (d, i) => {
+        .on('drag', (event, d, i) => {
           if (!layerLocked) {
             if (i === 0) {
-              collEffect.position.x += (collection.config.newXscale.invert(d3.event.x) - collection.config.newXscale.invert(d3.event.x - d3.event.dx));
+              collEffect.position.x += (collection.config.newXscale.invert(event.x) - collection.config.newXscale.invert(event.x - event.dx));
             } else {
-              collEffect.repeat.repeatInstances[i - 1].x += (collection.config.newXscale.invert(d3.event.x) - collection.config.newXscale.invert(d3.event.x - d3.event.dx));
+              collEffect.repeat.repeatInstances[i - 1].x += (collection.config.newXscale.invert(event.x) - collection.config.newXscale.invert(event.x - event.dx));
             }
             this.drawCollectionEffect(svg, collection, collEffect, effect, pixHeight, activeCollEffect, colors);
           }

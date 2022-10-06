@@ -10,7 +10,7 @@ let progress = 0;
 let dataSendWaitList = [];
 let datalist = [];
 
-const softwareVersion = { major: 2, minor: 2, patch: 0 };
+const softwareVersion = { major: 2, minor: 2, patch: 1 };
 
 
 function listSerialPorts(callback) {
@@ -260,7 +260,7 @@ class newSerialPort {
           if (data.major !== softwareVersion.major || data.minor !== softwareVersion.minor || data.patch !== softwareVersion.patch) {
             main.showMessageConfirmation({ msg: "The software version of Feelix does not match the software version on the microcontroller (v"
               + (data.major + '.' + data.minor + '.' + data.patch) + "), please update to v" + (softwareVersion.major + '.' + softwareVersion.minor + '.' + softwareVersion.patch), action:"updateVersion", type: "message", d: this.COM });
-                          this.sp.close();
+                          // this.sp.close();
           }
         } else if (d.charAt(0) === 'R') {
           const dataArray = d.substr(1).split(':');

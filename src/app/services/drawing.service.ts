@@ -89,10 +89,10 @@ export class DrawingService {
         // .attr('stroke', '#1c1c1c')
         .attr('shape-rendering', 'crispEdges')
         .attr('fill', '#fff')
-        .on('click', () => {
+        .on('click', (event) => {
           if (this.config.cursor.slug === 'zoom') {
             let direction = 1;
-            if (d3.event.altKey) {
+            if (event.altKey) {
               direction = -1;
             } else {
               this.document.getElementById('field-inset').style.cursor = this.config.cursor.cursor;
@@ -199,9 +199,9 @@ export class DrawingService {
       .zoom()
       .scaleExtent([0.01, Infinity])
       .translateExtent([[this.config.chartDx * -0.5, 0], [(this.config.chartDx * 1.5), this.config.chartDy]]) // 1.2
-      .on('zoom', () => {
+      .on('zoom', (event: any) => {
         if (this.config.zoomable) {
-          const transform = d3.event.transform;
+          const transform = event.transform;
 
           this.scaleContent(transform);
           this.updateSlider(transform);
@@ -326,15 +326,15 @@ export class DrawingService {
 
     const dragContent = d3
       .drag()
-      .on('start', () => { dragStartPos = d3.event.x; })
-      .on('drag', () => {
-        if (this.config.sliderDrawplane.inner.min + (d3.event.x - dragStartPos) >= this.config.sliderDrawplane.outer.min &&
-            this.config.sliderDrawplane.inner.max + (d3.event.x - dragStartPos) <= this.config.sliderDrawplane.outer.max) {
-          this.config.sliderDrawplane.inner.min += (d3.event.x - dragStartPos);
-          this.config.sliderDrawplane.inner.max += (d3.event.x - dragStartPos);
+      .on('start', (event: any) => { dragStartPos = event.x; })
+      .on('drag', (event: any) => {
+        if (this.config.sliderDrawplane.inner.min + (event.x - dragStartPos) >= this.config.sliderDrawplane.outer.min &&
+            this.config.sliderDrawplane.inner.max + (event.x - dragStartPos) <= this.config.sliderDrawplane.outer.max) {
+          this.config.sliderDrawplane.inner.min += (event.x - dragStartPos);
+          this.config.sliderDrawplane.inner.max += (event.x - dragStartPos);
           d3.select('.innerRoundRectSlider').attr('x', this.config.sliderDrawplane.inner.min - 6);
           this.translateDrawplane();
-          dragStartPos = d3.event.x;
+          dragStartPos = event.x;
         }
       })
       .on('end', () => {
@@ -873,37 +873,37 @@ export class DrawingService {
         // tslint:disable-next-line: variable-name
         const dragGuide = d3
           .drag()
-          .on('start', (d: { id: string; axis: string; coords: { x: number; y: number; }; }) => {
+          .on('start', (event: any, d: { id: string; axis: string; coords: { x: number; y: number; }; }) => {
               if (!this.file.activeEffect.grid.lockGuides && (this.config.cursor.slug === 'sel' || this.config.cursor.slug === 'dsel')) {
                 d3.select('#id_' + d.id).classed('selected', true);
                 if (d.axis === 'x') {
                   this.dataService
-                   .updatePoints(null, this.nodeService.scale.scaleY.invert(d3.event.y - this.config.margin.top), null, null);
+                   .updatePoints(null, this.nodeService.scale.scaleY.invert(event.y - this.config.margin.top), null, null);
                 } else if (d.axis === 'y') {
                   this.dataService.updatePoints(
-                    this.nodeService.scale.scaleX.invert(d3.event.x - this.config.rulerWidth), null, null, null);
+                    this.nodeService.scale.scaleX.invert(event.x - this.config.rulerWidth), null, null, null);
                 }
               }
           })
-          .on('drag', (d: { id: string; axis: string; coords: { x: number; y: number; }; }) => {
+          .on('drag', (event: any, d: { id: string; axis: string; coords: { x: number; y: number; }; }) => {
               if (!this.file.activeEffect.grid.lockGuides && (this.config.cursor.slug === 'sel' || this.config.cursor.slug === 'dsel')) {
-                if (d.axis === 'x' && d3.event.y < this.config.svgDy - 22) {
-                  d3.select('#id_' + d.id).attr('y', d3.event.y);
+                if (d.axis === 'x' && event.y < this.config.svgDy - 22) {
+                  d3.select('#id_' + d.id).attr('y', event.y);
                   this.dataService.updatePoints(
-                    null, this.nodeService.scale.scaleY.invert(d3.event.y - this.config.margin.top + this.config.rulerWidth), null, null);
-                } else if (d.axis === 'y' && d3.event.x > this.config.margin.left && d3.event.x < this.config.svgDx - this.config.rulerWidth) {
-                  d3.select('#id_' + d.id).attr('x', d3.event.x);
+                    null, this.nodeService.scale.scaleY.invert(event.y - this.config.margin.top + this.config.rulerWidth), null, null);
+                } else if (d.axis === 'y' && event.x > this.config.margin.left && event.x < this.config.svgDx - this.config.rulerWidth) {
+                  d3.select('#id_' + d.id).attr('x', event.x);
                   this.dataService.updatePoints(
-                    this.nodeService.scale.scaleX.invert(d3.event.x - this.config.margin.left), null, null, null);
+                    this.nodeService.scale.scaleX.invert(event.x - this.config.margin.left), null, null, null);
                 }
               }
           })
-          .on('end', (d: { id: string; axis: string; coords: { x: number; y: number; }; }) => {
+          .on('end', (event: any, d: { id: string; axis: string; coords: { x: number; y: number; }; }) => {
             if (!this.file.activeEffect.grid.lockGuides && (this.config.cursor.slug === 'sel' || this.config.cursor.slug === 'dsel')) {
               d3.select('#id_' + d.id).classed('selected', false);
               this.file.activeEffect.grid.guides.filter(g => g.id === d.id)[0].coords = {
-                x: this.nodeService.scale.scaleX.invert(d3.event.x - this.config.margin.left),
-                y: this.nodeService.scale.scaleY.invert(d3.event.y - this.config.margin.top)
+                x: this.nodeService.scale.scaleX.invert(event.x - this.config.margin.left),
+                y: this.nodeService.scale.scaleY.invert(event.y - this.config.margin.top)
               };
             }
           });
@@ -927,23 +927,23 @@ export class DrawingService {
           .style('stroke', 'transparent')
           .style('stroke-width', 3)
           .style('shape-rendering', 'crispEdges')
-          .on('click', (d: { id: string; axis: string; coords: { x: number; y: number; }; }) => {
+          .on('click', (event: any, d: { id: string; axis: string; coords: { x: number; y: number; }; }) => {
             if (this.config.cursor.slug === 'pen') {
               d3.select('#id_' + d.id).attr('pointer-events', 'none');
             } else if (this.config.cursor.slug === 'sel' || this.config.cursor.slug === 'dsel') {
               d3.select('#id_' + d.id).attr('pointer-events', 'all');
 
               if (!this.file.activeEffect.grid.lockGuides && d3.select('#id_' + d.id).classed('selected') === false) {
-                if (d3.event.shiftKey) {
+                if (event.shiftKey) {
                   this.dataService.addSelectedElement(d.id);
                 } else if (d.axis === 'x') {
                   this.dataService
-                    .selectElement(d.id, null, this.nodeService.scale.scaleY.invert(d3.event.y - this.config.margin.top), null, null);
+                    .selectElement(d.id, null, this.nodeService.scale.scaleY.invert(event.y - this.config.margin.top), null, null);
                 } else if (d.axis === 'y') {
                   this.dataService
-                    .selectElement(d.id, this.nodeService.scale.scaleX.invert(d3.event.x - this.config.margin.left), null, null, null);
+                    .selectElement(d.id, this.nodeService.scale.scaleX.invert(event.x - this.config.margin.left), null, null, null);
                 }
-                if (!d3.event.shiftKey) { d3.selectAll('.guide.selected').classed('selected', false); }
+                if (!event.shiftKey) { d3.selectAll('.guide.selected').classed('selected', false); }
                 d3.select('#id_' + d.id).classed('selected', true);
               }
             }

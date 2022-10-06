@@ -14,7 +14,7 @@ import { Subject } from 'rxjs';
 export class BBoxService {
   public config: DrawingPlaneConfig;
 
- 
+
 
   constructor(@Inject(DOCUMENT) private document: Document, public dataService: DataService,
               public nodeService: NodeService, private bezierService: BezierService, public drawingService: DrawingService) {
@@ -74,48 +74,48 @@ export class BBoxService {
       this.drawingService.colorNodesSelectedPaths();
 
       const dragBBox = d3.drag()
-        .on('start', () => {
+        .on('start', (event: any, d: any) => {
           if (!this.config.zoomable) {
-
-
-            this.config.containerBox = this.config.svg.select('.innerContainer').node().getBoundingClientRect();
             this.config.startPosBox = this.config.svg.select('#bbox').node().getBoundingClientRect();
-            const dragStart = d3.mouse(this.config.svg.select('.drawAreaContainer').node());
-            this.config.dragStartPoint = {x: dragStart[0], y: dragStart[1]};
+
+            const dragStart = d3.pointer(event);
+            this.config.dragStartPoint = { x: dragStart[0], y: dragStart[1]  };
             this.config.grabPos = {
-                x: this.config.dragStartPoint.x - (this.config.startPosBox.left - this.config.margin.left),
+                // x: this.config.dragStartPoint.x - (this.config.startPosBox.left - this.config.margin.left),
                 y: this.config.dragStartPoint.y - (this.config.startPosBox.top - this.config.margin.offsetTop - this.config.margin.top)
             };
             this.document.getElementById('field-inset').style.cursor = 'url(./assets/icons/tools/cursor-drag.png), none';
           }
         })
-        .on('drag', () => {
+        .on('drag', (event: any, d: any) => {
           if (!this.config.zoomable) {
-            const pt1 = d3.mouse(this.config.svg.select('.drawAreaContainer').node());
-            const point1 = { x: pt1[0], y: pt1[1] };
+            const pt1 = d3.pointer(event);
+            const point1 = { x: pt1[0], y: pt1[1] - (this.config.margin.offsetTop + this.config.margin.top) };
 
-            if (point1.y + 2 > this.config.grabPos.y &&
-              point1.y - 2 < this.config.chartDy - (this.config.startPosBox.height - this.config.grabPos.y)) {
+            if (point1.y + 4 >= this.config.grabPos.y && point1.y - 2 <= this.config.chartDy - (this.config.startPosBox.height - this.config.grabPos.y)) {
 
-              const diff = {x: (point1.x - this.config.dragStartPoint.x), y: (point1.y - this.config.dragStartPoint.y) };
-              if (d3.event.sourceEvent.shiftKey) {
-                if (Math.abs(diff.x) > Math.abs(diff.y)) { diff.y = 0; } else if (Math.abs(diff.y) > Math.abs(diff.x)) { diff.x = 0; }
+              const diff = { x: (point1.x - this.config.dragStartPoint.x - this.config.margin.left),
+                             y: (point1.y - this.config.dragStartPoint.y) };
+
+              if (event.sourceEvent.shiftKey) {
+                Math.abs(diff.x) > Math.abs(diff.y) ? diff.y = 0 : diff.x = 0;
               }
+
               this.config.svg.select('#bbox')
                 .attr('transform', 'translate(' + [ diff.x, this.config.margin.top + diff.y ] + ')');
 
               for (const path of this.nodeService.selectedPaths) {
-                d3.selectAll('#pathSVG_' + path + '_angle,' + '#pathSVG_' + path + '_pos,' +
+                this.config.svg.selectAll('#pathSVG_' + path + '_angle,' + '#pathSVG_' + path + '_pos,' +
                              '#nodesSVG_' + path + ', ' + '#forceNodeSVG_' + path + ', ' + '#planeSVG_' + path)
                   .attr('transform', 'translate(' + [ diff.x, this.config.margin.top + diff.y ] + ')');
               }
             }
             const boxPosition = this.config.svg.select('#boxOutline').node().getBoundingClientRect();
             this.updateInputBoxesBBox(boxPosition);
-            this.drawingService.drawCursorPosition(d3.event.x + this.config.margin.left, d3.event.y + this.config.margin.top);
+            this.drawingService.drawCursorPosition(event.x + this.config.margin.left, event.y + this.config.margin.top);
           }
         })
-        .on('end', () => {
+        .on('end', (event) => {
           if (!this.config.zoomable) {
             this.document.getElementById('field-inset').style.cursor = this.config.cursor.cursor;
 
@@ -136,7 +136,7 @@ export class BBoxService {
                            y: this.nodeService.scale.scaleY.invert(newPosBox.top  ) -
                               this.nodeService.scale.scaleY.invert(this.config.startPosBox.top  ) };
 
-            if (d3.event.sourceEvent.shiftKey) {
+            if (event.sourceEvent.shiftKey) {
               if (Math.abs(diff.x) > Math.abs(diff.y)) { diff.y = 0; } else if (Math.abs(diff.y) > Math.abs(diff.x)) { diff.x = 0; }
             }
 
@@ -225,10 +225,10 @@ export class BBoxService {
           d3.selectAll('.nodesSVG').remove();
           this.config.boxRef = this.config.svg.selectAll('#boxOutline').node().getBBox();
       })
-      .on('drag', (d) => this.dragHandleResize(d))
-      .on('end', () => {
-          d3.event.sourceEvent.preventDefault();
-          d3.event.sourceEvent.stopPropagation();
+      .on('drag', (event, d) => this.dragHandleResize(event, d))
+      .on('end', (event, d) => {
+          event.sourceEvent.preventDefault();
+          event.sourceEvent.stopPropagation();
           this.config.boxRef = this.config.svg.select('#boxOutline').node().getBoundingClientRect();
           this.nodeService.scalePath(this.nodeService.selectedPaths, this.config.aspectRatioX, this.config.aspectRatioY,
             this.nodeService.scale.scaleX.invert(this.config.offsetXnodes),
@@ -292,11 +292,11 @@ export class BBoxService {
   }
 
 
-  private dragHandleResize(d: any) {
+  private dragHandleResize(event, d: any) {
 
     const handleID = d.id;
-    const dX = Math.max(0, Math.min(this.config.chartDx, d3.event.x - this.config.margin.left));
-    const dY = Math.max(0, Math.min(this.config.chartDy, d3.event.y - this.config.margin.offsetTop - this.config.margin.top));
+    const dX = Math.max(0, Math.min(this.config.chartDx, event.x - this.config.margin.left));
+    const dY = Math.max(0, Math.min(this.config.chartDy, event.y - this.config.margin.offsetTop - this.config.margin.top));
 
     this.config.aspectRatioX = 1;
     this.config.aspectRatioY = 1;
@@ -308,7 +308,7 @@ export class BBoxService {
     const rotationX = 0;
 
     let preserveAspectRatio = false;
-    if (d3.event.sourceEvent.shiftKey) { preserveAspectRatio = true; }
+    if (event.sourceEvent.shiftKey) { preserveAspectRatio = true; }
 
     // vertical handles
     if (handleID === 2 || handleID === 3 || handleID === 4) {
@@ -375,7 +375,7 @@ export class BBoxService {
     const updateBox = this.config.svg.select('#boxOutline').node().getBoundingClientRect();
     this.updateInputBoxesBBox(updateBox);
     this.drawHandles(updateBox);
-    this.drawingService.drawCursorPosition(d3.event.x, d3.event.y);
+    this.drawingService.drawCursorPosition(event.x, event.y);
 
   }
 

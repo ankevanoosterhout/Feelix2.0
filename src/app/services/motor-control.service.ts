@@ -542,9 +542,9 @@ export class MotorControlService {
 
     const dragContent = d3
       .drag()
-      .on('drag', () => {
-        collection.config.slider.inner.min += d3.event.dx;
-        collection.config.slider.inner.max += d3.event.dx;
+      .on('drag', (event: any) => {
+        collection.config.slider.inner.min += event.dx;
+        collection.config.slider.inner.max += event.dx;
 
         if (collection.config.slider.inner.min < 0) {
           collection.config.slider.inner.max += (-collection.config.slider.inner.min);
