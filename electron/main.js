@@ -280,6 +280,7 @@ const mainMenuTemplate = [
       {
         label: 'Kinematic Design',
         accelerator: process.platform == 'darwin' ? 'Command+K' : 'Ctrl+K',
+        enabled: false,
         click() {
           createKinematicsWindow();
         }
@@ -422,16 +423,49 @@ const kinematics_menu_template = [
     label: 'File',
     submenu: [
       {
-        label: 'Load',
-        click() { }
+        label: 'New model',
+        click() {
+          createFileSettingWindow("model-settings");
+        }
+      },
+      {
+        label: 'Load model',
+        click() {
+          openFileDialog('mFeelix', 'loadModel', 'loadModelLocation');
+        }
       },
       {
         label: 'Save',
-        click() { }
+        accelerator: process.platform == 'darwin' ? 'Command+S' : 'Ctrl+S',
+        click() { kinematicWindow.webContents.send('saveActiveFile', true); }
+      },
+      {
+        label: 'Save as',
+        accelerator: process.platform == 'darwin' ? 'Command+Shift+S' : 'Ctrl+Shift+S',
+        click() { kinematicWindow.webContents.send('saveActiveFile', false); }
       },
       {
         label: 'Examples',
-        click() { }
+        submenu: [
+          {
+            label: 'Snake',
+            click() {
+              kinematicWindow.webContents.send('example', 'snake');
+            }
+          },
+          {
+            label: 'Pointing device',
+            click() {
+              kinematicWindow.webContents.send('example', 'pointing-device');
+            }
+          },
+          {
+            label: 'Linear extension',
+            click() {
+              kinematicWindow.webContents.send('example', 'pointing-device');
+            }
+          }
+        ]
       }
     ]
   },
@@ -563,7 +597,7 @@ function openFileDialog(extension, storage, location) {
       jsonfile.readFile(fileName[0], function (err, obj) {
         let loadFile = JSON.stringify(JSON.stringify(obj));
         let loadFileLocation = JSON.stringify(JSON.stringify(fileName[0]));
-
+        console.log(obj);
         // localStorage.removeItem('loadFile');
         // localStorage.removeItem('loadFileLocation');
 
@@ -578,7 +612,8 @@ function openFileDialog(extension, storage, location) {
 /****** save file data *****/
 
 ipcMain.on('saveFile', function (e, data) {
-  if (data.overwrite) {
+  console.log(data);
+  if (data.overwrite && data.file.path) {
     const existingFile = fs.existsSync(data.file.path);
     if (!existingFile) {
       data.overwrite = false;
@@ -606,6 +641,8 @@ function saveFileWidthDialog(file, overwrite, newId, ext) {
         let extension = fileName.split(".");
         if (extension[extension.length - 1] === 'feelix') {
           fileName = fileName.slice(0, -5);
+        } else if (extension[extension.length - 1] === 'mFeelix') {
+          fileName = fileName.slice(0, -6);
         }
 
         let posName = fileName.lastIndexOf(".");
@@ -1340,6 +1377,12 @@ ipcMain.on('send_data_str', (event, data) =>  {
 
 ipcMain.on('getValue', (event, data) => {
   serialPort.getValue(data.motor_id, data.port, data.char);
+});
+
+ipcMain.on('newModel', (event, data) => {
+  if (kinematicWindow !== null) {
+    kinematicWindow.webContents.send('newModel', data);
+  }
 });
 
 

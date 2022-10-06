@@ -175,6 +175,7 @@ export class KinematicsControlComponent {
 
 
 
+
   importOBJModelToGroup(point: Connector, model_id: string, joint = null) {
     if (joint === null) {
       joint = this.kinematicService.selectedJoints[0];

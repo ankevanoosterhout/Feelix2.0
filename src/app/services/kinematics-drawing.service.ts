@@ -48,7 +48,18 @@ export class KinematicsDrawingService {
     this.closedChainIKService.animateScene.subscribe(res => {
       this.animate();
     });
+
+    this.kinematicService.loadModels.subscribe(res => {
+      this.loadSavedModels();
+    });
+
+    this.kinematicService.deleteJointsScene.subscribe(res => {
+      this.deleteAllJointsFromScene();
+    });
+
   }
+
+
 
 
 
@@ -58,6 +69,14 @@ export class KinematicsDrawingService {
 
   updateProgess(_status: String, _progress: number) {
     this.updateKinematicsProgress.next({ status: _status, progress: _progress });
+  }
+
+  save() {
+    this.kinematicService.save(null);
+  }
+
+  newModel(modelFile: any) {
+    this.kinematicService.newModel(modelFile);
   }
 
 
@@ -119,6 +138,7 @@ export class KinematicsDrawingService {
     this.config.orbit.update();
 
     this.config.control = new TransformControls( this.config.currentCamera, this.config.renderer.domElement );
+    this.config.control.name = 'no-pointer-events';
     this.config.control.setSpace( 'local' );
     this.config.control.addEventListener( 'objectChange', (event: any) => {
       if (this.kinematicService.selectedJoints.length === 1) {
@@ -129,7 +149,7 @@ export class KinematicsDrawingService {
       }
     });
 
-    this.config.control.addEventListener( 'mouseUp', (event: any) => {
+    this.config.control.addEventListener('mouseUp', (event: any) => {
       if (this.config.move) {
         console.log('update target');
         this.closedChainIKService.updateTargetObject();
@@ -164,28 +184,34 @@ export class KinematicsDrawingService {
 
     this.config.orbit.update();
 
-    const joints = this.kinematicService.getAllJoints();
+  }
 
-    if (joints) {
-      for (const joint of joints) {
-        this.loadModelFromLink.next(joint);
+
+  loadSavedModels() {
+    console.log('load models');
+
+    for (const joint of this.kinematicService.joints) {
+      if (joint.sceneObject) {
+        if (joint.sceneObject.object) {
+
+          this.config.jsonLoader.parse(joint.sceneObject, (obj: any) => {
+            joint.sceneObject = obj;
+            this.config.scene.add(obj);
+          });
+        } else {
+          this.config.scene.add(joint.sceneObject);
+        }
+        this.setObjectColor(joint.sceneObject);
       }
-      this.deselectAllObjects();
     }
-
-    // const promise = this.closedChainIKService.loadCuriosity();
-    // console.log(promise);
-    // this.closedChainIKService.loadModel( promise );
-  };
-
-
-
+    this.animate();
+  }
 
 
   addObjectToScene(object: any, addControls = false) {
     if (object) {
       this.config.scene.add(object);
-      console.log(this.config.scene);
+      // console.log(this.config.scene);
       if (addControls) {
         const sceneObject = this.config.scene.getObjectByName(object.name);
         this.config.control.attach(sceneObject);
@@ -231,11 +257,13 @@ export class KinematicsDrawingService {
   drawGrid() {
     const mesh = new THREE.Mesh( new THREE.PlaneGeometry( 2000, 2000 ), new THREE.MeshPhongMaterial( { color: 0x999999, depthWrite: false, side: THREE.DoubleSide } ) );
     mesh.rotation.x = - Math.PI / 2;
-    mesh.name = 'mesh';
+    // mesh.name = 'mesh';
+    mesh.name = 'no-pointer-events';
     this.config.scene.add( mesh );
 
     const grid = new THREE.GridHelper( 2000, 50, 0x000000, 0x000000 );
-    grid.name = 'grid';
+    // grid.name = 'grid';
+    grid.name = 'no-pointer-events';
     grid.material.opacity = 0.2;
     grid.material.transparent = true;
     this.config.scene.add( grid );
@@ -262,13 +290,11 @@ export class KinematicsDrawingService {
     //   this.config.draggableObject = intersects[0].object.parent;
 
     // } else {
-      if (!intersects[0].isTransformControlsPlane) {
+
+
 
         for (const intersect of intersects) {
         // console.log(intersect);
-
-
-
 
           // if (intersects && intersect.object.parent.name === 'rotary_control') {
           //   this.config.draggableObject = intersect.object.parent;
@@ -295,21 +321,25 @@ export class KinematicsDrawingService {
             }
           }
 
-          const joint = this.kinematicService.joints.filter(j => j.sceneObject.id === intersect.object.parent.id || (intersect.object.parent.parent && j.sceneObject.id === intersect.object.parent.parent.id))[0];
+          if (intersect.object && intersect.object.name !== 'no-pointer-events' && intersect.object.parent.name !== 'rotary_control') {
+            const joint = this.kinematicService.joints.filter(j => j.id === intersect.object.parent.name || (intersect.object.parent.parent && j.id === intersect.object.parent.parent.name))[0];
 
-          if (joint) {
-            this.selectObject(joint.sceneObject, shift);
-            this.animate();
+            // console.log(joint);
 
-            break;
-          }
+            if (joint) {
+              this.selectJoint(joint, shift);
+              this.animate();
+
+              break;
+            }
+
         }
 
         // } else {
           // break;
         // }
-      }
-    // }
+      // }
+    }
   }
 
 
@@ -392,12 +422,53 @@ export class KinematicsDrawingService {
   // }
 
 
-  selectObject(object: any, shift = false) {
-    // console.log(object);
+  selectJoint(joint: any, shift = false) {
 
-    const joint = this.kinematicService.joints.filter(j => j.id === object.name)[0];
     if (joint) {
       const isSelectedIndex = this.kinematicService.selectedJoints.indexOf(joint);
+      if (isSelectedIndex > -1) {
+        this.deselectObject(joint.sceneObject);
+        this.config.control.detach();
+
+      } else {
+        if (!shift && this.kinematicService.selectedJoints.length > 0) {
+          this.deselectAllObjects();
+        } else if (shift && this.kinematicService.selectedJoints.length === 1) {
+          this.config.control.detach();
+        }
+        this.kinematicService.selectJoint(joint.id);
+        this.setObjectColor(joint.sceneObject, this.config.selectColor);
+
+        console.log(this.kinematicService.selectedJoints);
+        if (this.kinematicService.selectedJoints.length === 1) {
+          if (!this.config.move) {
+            this.config.control.attach(joint.sceneObject);
+          } else {
+            // this.config.control.attach(target);
+            // this.config.closedChaindService.createRootsFromStructure();
+
+            const root = this.kinematicLinkService.getRootWithObject(joint.sceneObject.name);
+            console.log(root);
+            if (root) {
+              this.closedChainIKService.createRootsFromList(root, this.config.scene.children.filter(c => c.isGroup));
+              this.closedChainIKService.createTarget(joint.sceneObject);
+              // this.config.control.attach(joint.sceneObject);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  selectObject(object: any, shift = false) {
+    console.log(object, this.kinematicService.joints);
+
+    const joint = this.kinematicService.joints.filter(j => j.id === object.name)[0];
+    console.log(joint);
+    if (joint) {
+      console.log(joint);
+      const isSelectedIndex = this.kinematicService.selectedJoints.indexOf(joint);
+      console.log(isSelectedIndex);
       if (isSelectedIndex > -1) {
         this.deselectObject(object);
         this.config.control.detach();
@@ -412,6 +483,7 @@ export class KinematicsDrawingService {
           this.kinematicService.selectJoint(joint.id);
           this.setObjectColor(object, this.config.selectColor);
           // console.log(object);
+
           if (this.kinematicService.selectedJoints.length === 1) {
             if (!this.config.move) {
               this.config.control.attach(object);
@@ -435,7 +507,8 @@ export class KinematicsDrawingService {
 
 
   setObjectColor(object: any, color = null) {
-    object.traverseVisible( ( child: any ) => {
+    // console.log(object);
+    object.traverse( ( child: any ) => {
       if (child.isGroup) {
         for (const childEl of child) {
           if ( childEl instanceof THREE.Mesh ){
@@ -584,6 +657,25 @@ export class KinematicsDrawingService {
     this.animate();
   }
 
+  deleteAllJointsFromScene() {
+    this.deselectAllObjects();
+    if (this.config.scene) {
+      const objectList = [];
+      for (const child of this.config.scene.children) {
+        if (child.type == 'Group' && child.name !== 'rotary_control') {
+          objectList.push(child.name);
+          // this.config.scene.remove(child);
+          // console.log(this.config.scene);
+        }
+      }
+      for (const obj of objectList) {
+        const sceneObj = this.config.scene.getObjectByName(obj);
+        if (sceneObj) {
+          this.config.scene.remove(sceneObj);
+        }
+      }
+    }
+  }
 
   deselectAllObjects() {
     // console.log(this.config.scene);
@@ -611,7 +703,7 @@ export class KinematicsDrawingService {
     // if (this.config.move) {
     const target = this.config.scene.getObjectByName('target');
     if (target) {
-      console.log(target);
+      // console.log(target);
       this.config.scene.remove(target);
       this.closedChainIKService.removeTarget();
     }
@@ -680,6 +772,7 @@ export class KinematicsDrawingService {
         //   });
         // }
         newJoint.sceneObject = sceneObject;
+        // console.log(newJoint.sceneObject);
       }
       // this.deselectAllObjects();
       // this.kinematicService.selectedJoints = newSelectedJoints;

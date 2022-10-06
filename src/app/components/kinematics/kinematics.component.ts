@@ -1,4 +1,4 @@
-import { Component, OnInit, HostListener, Inject } from '@angular/core';
+import { Component, OnInit, HostListener, Inject, AfterViewInit } from '@angular/core';
 import { ElectronService } from 'ngx-electron';
 import * as THREE from 'three';
 import { KinematicsConfig } from 'src/app/models/kinematics-config.model';
@@ -11,13 +11,14 @@ import { ClosedChainIKService } from 'src/app/services/closed-chain-ik.service';
     templateUrl: './kinematics.component.html',
     styleUrls: ['../windows/effects/effects.component.css','./kinematics.component.css']
 })
-export class KinematicsComponent implements OnInit {
+export class KinematicsComponent implements OnInit, AfterViewInit {
 
   public config: KinematicsConfig;
 
   public page = 'Kinematics';
   public status = 'Ready';
   public progress = 0;
+  list = 'models';
 
   params = {
     controls: 'translate',
@@ -33,13 +34,15 @@ export class KinematicsComponent implements OnInit {
     this.config = this.kinematicsDrawingService.config;
 
     this.electronService.ipcRenderer.on('gridVisible', (event: Event, visible: boolean) => {
-      const items = ['mesh', 'grid'];
-      for (const item of items) {
-        const object = this.config.scene.getObjectByName(item);
-        if (object) {
+      // const items = ['mesh', 'grid'];
+      const objects = this.config.scene.getObjectsByName('no-pointer-events');
+      console.log(objects);
+      if (objects) {
+        for (const object of objects) {
           object.visible = visible;
         }
       }
+
       this.kinematicsDrawingService.animate();
     });
 
@@ -52,11 +55,21 @@ export class KinematicsComponent implements OnInit {
     });
 
 
+    this.electronService.ipcRenderer.on('save', (event: Event) => {
+      this.kinematicsDrawingService.save();
+    });
+
+
+
+
     this.electronService.ipcRenderer.on('copy', (event: Event) => {
       this.kinematicsDrawingService.copySelectedJoints();
     });
 
 
+    this.electronService.ipcRenderer.on('example', (event: Event, data: any) =>  {
+      this.openExample(data);
+    });
 
     this.kinematicsDrawingService.selectObjectFromScene.subscribe(res => {
       this.kinematicsDrawingService.selectObject(res);
@@ -75,6 +88,12 @@ export class KinematicsComponent implements OnInit {
       this.document.getElementById('progress').style.width = width + 'px';
     });
 
+
+    this.electronService.ipcRenderer.on('newModel', (event: Event, data: any) => {
+      this.kinematicsDrawingService.newModel(data);
+
+    });
+
   }
 
 
@@ -87,6 +106,9 @@ export class KinematicsComponent implements OnInit {
 
   }
 
+  ngAfterViewInit(): void {
+    this.kinematicsDrawingService.loadSavedModels();
+  }
 
   getWindowSize() {
     this.config.height = window.innerHeight;
@@ -180,9 +202,7 @@ export class KinematicsComponent implements OnInit {
 
 
     if (this.config.rootActive) {
-
       this.closedChainService.updateRoot();
-
     }
 
 
@@ -252,6 +272,15 @@ export class KinematicsComponent implements OnInit {
     this.config.currentCamera.lookAt( this.config.orbit.target.x, this.config.orbit.target.y, this.config.orbit.target.z );
     this.onWindowResize();
   }
+
+
+  openExample(example: string) {
+
+    console.log(example);
+
+  }
+
+
 
 
 

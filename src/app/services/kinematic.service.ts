@@ -2,38 +2,245 @@ import { Injectable } from '@angular/core';
 import { Subject } from 'rxjs';
 import { v4 as uuid } from 'uuid';
 import { LocalStorageService } from 'ngx-webstorage';
-import { JointLink, Object3D, Connector, Point, ConnectorSize } from '../models/kinematic.model';
+import { JointLink, Object3D, Connector, Point, ConnectorSize, ModelFile } from '../models/kinematic.model';
 import * as THREE from 'three';
+import { FileSaverService } from 'ngx-filesaver';
+import { KinematicLinkService } from './kinematic-link.service';
 
 
 @Injectable()
 export class KinematicService {
 
+  public static readonly  LOAD_FILE = 'loadModel';
+  public static readonly  LOAD_FILE_LOCATION = 'loadModelLocation';
+
   public static readonly MODEL_LOCATION = 'ngx-webstorage|models';
+  public static readonly MODEL_FILES_LOCATION = 'ngx-webstorage|modelFiles';
 
   joints: Array<JointLink> = [];
-  public jointsObservable = new Subject<JointLink[]>();
 
+  models: Array<ModelFile> = [];
+
+  public modelObservable = new Subject<ModelFile[]>();
+  public jointObservable = new Subject<JointLink[]>();
 
   selectedJoints = [];
 
   selConnPoints: Array<Point> = [];
 
-  kinematicChain: Array<any> = [];
-  kinematicChainList: Array<any> = [];
-
   importOBJModelToObjectGroup: Subject<any> = new Subject();
+  loadModels: Subject<any> = new Subject();
+  deleteJointsScene: Subject<any> = new Subject();
+
+  fs: any;
+
+  constructor(private localSt: LocalStorageService, private _FileSaverService: FileSaverService, private kinematicLinkService: KinematicLinkService) {
+
+    this.fs = (window as any).fs;
+
+    localStorage.removeItem(KinematicService.LOAD_FILE);
+    localStorage.removeItem(KinematicService.LOAD_FILE_LOCATION);
 
 
-  constructor(private localSt: LocalStorageService) {
+    // const data = this.localSt.retrieve('models');
 
-    const data = this.localSt.retrieve('models');
+    // if (data) {
+    //   this.joints = data;
+    // }
 
-    if (data) {
-      this.joints = data;
+
+    const storedFiles = this.localSt.retrieve('modelFiles');
+    console.log(storedFiles);
+    if (storedFiles && storedFiles.length > 0) {
+      this.models = storedFiles;
+      // console.log(this.models);
+      this.setAnyActive();
+    } else {
+      this.createDefaultModel('Untitled-1');
     }
 
 
+    window.addEventListener( 'storage', event => {
+      // console.log(event, event.storageArea, localStorage, event.key);
+      if (event.storageArea === localStorage) {
+        if (event.key === KinematicService.MODEL_FILES_LOCATION) {
+          const models: ModelFile[] = JSON.parse(localStorage.getItem(KinematicService.MODEL_FILES_LOCATION));
+          console.log(models);
+          this.models = models;
+          this.modelObservable.next(this.models);
+        }
+
+        if (event.key.startsWith(KinematicService.LOAD_FILE)) {
+          const fileLocation: string = JSON.parse(localStorage.getItem(KinematicService.LOAD_FILE_LOCATION));
+          console.log(fileLocation);
+          this.parseFile(localStorage.getItem(KinematicService.LOAD_FILE)).then((model: ModelFile) => {
+            try {
+              model.path = fileLocation;
+              model.isActive = false;
+              this.models.push(model);
+              this.store();
+              this.setActive(model);
+            } catch (error) {
+            }
+          });
+
+          localStorage.removeItem(KinematicService.LOAD_FILE);
+          localStorage.removeItem(KinematicService.LOAD_FILE_LOCATION);
+        }
+      }
+    }, false );
+
+
+  }
+
+
+  add(model: ModelFile) {
+    // console.log(model);
+    this.models.push(model);
+    this.setActive(model);
+    this.store();
+  }
+
+
+  newModel(model: ModelFile) {
+    console.log(model);
+    this.updateActiveModel();
+    this.add(model);
+  }
+
+
+  setActive(activeModel: ModelFile) {
+    // console.log(activeModel);
+    // if (!activeModel.isActive) {
+    this.loadFile(activeModel);
+      // this.loadJoints(activeModel.joints);
+      // this.loadLinks(activeModel.links);
+    // }
+    for (const model of this.models) {
+      model.isActive = model.id === activeModel.id ? true : false;
+    }
+  }
+
+
+  setAnyActive() {
+    const currentactiveFile = this.models.filter(m => m.isActive)[0];
+    if (!currentactiveFile) {
+      if (this.models.length > 0) {
+        this.setActive(this.models[0]);
+        this.store();
+      } else {
+        this.createDefaultModel('untitled-1');
+      }
+    } else {
+      this.setActive(currentactiveFile);
+    }
+  }
+
+  getActiveModel() {
+    const activeModel = this.models.filter(m => m.isActive)[0];
+    if (activeModel) {
+      activeModel.joints = this.joints;
+      activeModel.links = this.kinematicLinkService.roots;
+      this.store();
+    }
+    return activeModel;
+  }
+
+  loadFile(model: ModelFile) {
+    this.deleteJointsScene.next();
+    if (model.joints) {
+      this.joints = model.joints;
+      this.kinematicLinkService.roots = model.links;
+      this.store();
+      this.loadModels.next();
+    }
+  }
+
+  getAll() {
+    return this.models;
+  }
+
+
+  save(modelObj: ModelFile, close = false) {
+
+    const model = modelObj ? modelObj : this.models.filter(m => m.isActive)[0];
+
+    if (model && model.isActive) {
+      model.joints = this.joints;
+    }
+    if (model) {
+      if (model.path) {
+        fetch(model.path).then((res) => {
+          this.saveChangesToFile(model);
+        }).catch((err) => {
+          this.saveFileWithDialog(model);
+        });
+      } else {
+        this.saveFileWithDialog(model);
+      }
+
+      if (close) {
+        model.isActive = false;
+        this.setAnyActive();
+        this.deleteModel(model);
+      }
+    }
+  }
+
+  saveFileWithDialog(model: ModelFile) {
+    const blob = new Blob([JSON.stringify(model)], { type: 'text/plain' });
+    const currentFileName = model.name + '.mFeelix';
+    this._FileSaverService.save(blob, currentFileName, 'text/plain');
+    // this._FileSaverService.save(blob, file.name + '.json');
+  }
+
+  saveChangesToFile(model: ModelFile) {
+    model.date.modified = new Date().getTime();
+    model.date.changed = false;
+    this.store();
+    try {
+      this.fs.writeFileSync(model.path, JSON.stringify(model), 'utf-8');
+    } catch (e) {
+      alert('Failed to save file data');
+    }
+  }
+
+  parseFile(file: any) {
+    return new Promise((resolve, reject) => {
+      resolve(JSON.parse(file));
+    });
+  }
+
+  updateActiveModel() {
+    if (this.models.length > 0) {
+      const activeModel = this.models.filter(m => m.isActive)[0];
+      if (activeModel) {
+        activeModel.joints = this.joints;
+        activeModel.links = this.kinematicLinkService.roots;
+        this.store();
+      }
+    }
+  }
+
+  deleteModel(model: ModelFile) {
+    const modelObj = this.models.filter(m => m.id === model.id)[0];
+    if (modelObj) {
+      if (modelObj.isActive) {
+        this.deleteJointsScene.next();
+        this.joints = [];
+        this.kinematicLinkService.deleteAll();
+      }
+      const index = this.models.indexOf(modelObj);
+      if (index > -1) {
+        this.models.splice(index, 1);
+      }
+    }
+  }
+
+
+  createDefaultModel(name: string) {
+    const defaultFile = new ModelFile(uuid(), name);
+    this.add(defaultFile);
   }
 
   addJoint(model: any): JointLink {
@@ -59,8 +266,14 @@ export class KinematicService {
   }
 
   deleteAll() {
+    this.deselectAll();
     this.joints = [];
-    this.selectedJoints = [];
+    this.kinematicLinkService.deleteAll();
+    const activeModel = this.models.filter(m => m.isActive)[0];
+    if (activeModel) {
+      activeModel.joints = [];
+      activeModel.links = [];
+    }
     this.store();
   }
 
@@ -83,7 +296,7 @@ export class KinematicService {
       newJoint.connectors = joint.connectors;
       console.log(newJoint.id, newJoint.connectors);
       this.joints.push(newJoint);
-      console.log(this.joints);
+      // console.log(this.joints);
       this.store();
 
       return newJoint;
@@ -326,8 +539,10 @@ export class KinematicService {
 
 
   store() {
-    this.jointsObservable.next(this.joints);
+    this.modelObservable.next(this.models);
+    this.jointObservable.next(this.joints);
     this.localSt.store('models', this.joints);
+    this.localSt.store('modelFiles', this.models);
   }
 
 

@@ -28,11 +28,9 @@
 }
 
 
-.open-tabs.FeelixioFiles {
-  margin-top:0;
-  border-top: 1px solid #1c1c1c;
-  border-bottom: 1px solid #1c1c1c;
-  height: 23px;
+.open-tabs.models {
+  background: #b9b9b9;
+  border-bottom: 1px solid #666;
 }
 
 .scroll-arrows {
@@ -107,10 +105,13 @@
   float:left;
 }
 
-
 .tabs.effects {
   height: 20px;
   margin:-1px 0 0;
+}
+
+.tabs.models {
+  color:#ddd;
 }
 
 .tabs li {
@@ -133,12 +134,12 @@
 }
 
 
-.tabs.FeelixioFiles li {
-  border-top:none;
-  height: 22px;
-  line-height: 21px;
-  border-right:1px solid #1c1c1c;
+.tabs.models li {
+  background: #666666;
+  border-right:1px solid #666;
+  border-top:1px solid #666;
 }
+
 .filename-tab {
   position:relative;
   width: auto;
@@ -159,6 +160,12 @@
 .tabs li.active {
   background:#4a4a4a;
   border-bottom:1px solid #4a4a4a;
+}
+
+
+.tabs.models li.active {
+  background:#7b7b7b;
+  border-bottom:1px solid #666;
 }
 
 .saved {

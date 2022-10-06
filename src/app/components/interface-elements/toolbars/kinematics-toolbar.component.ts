@@ -71,7 +71,7 @@ import { KinematicsDrawingService } from 'src/app/services/kinematics-drawing.se
           height:auto;
           left:0;
           top:0;
-          margin: 5px;
+          margin: 28px 5px;
           /* border-right: 1px solid #202020; */
           /* vertical-align: middle; */
         }

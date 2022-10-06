@@ -30,6 +30,7 @@ const routes: Routes = [
     { path: 'toolbar-inset', component: ToolbarInsetComponent },
     { path: 'effects', component: EffectsComponent },
     { path: 'file-settings', component: FileSettingsComponent },
+    { path: 'model-settings', component: FileSettingsComponent },
     { path: 'file-update-settings', component: FileSettingsComponent },
     { path: 'effect-list', component: EffectListComponent },
     { path: 'effect-settings', component: EffectSettingsComponent },

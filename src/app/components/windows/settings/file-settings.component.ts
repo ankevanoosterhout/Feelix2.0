@@ -8,6 +8,7 @@ import { Router } from '@angular/router';
 import { DrawingService } from 'src/app/services/drawing.service';
 import { Collection } from 'src/app/models/collection.model';
 import { Effect } from 'src/app/models/effect.model';
+import { ModelFile } from 'src/app/models/kinematic.model';
 
 
 @Component({
@@ -39,13 +40,15 @@ import { Effect } from 'src/app/models/effect.model';
 })
 
 export class FileSettingsComponent implements OnInit {
-  file: File;
+  file: any;
   updateMode = false;
   mode = 'default';
   newFileCount = 1;
 
   buttonText = 'Create';
   initialUnits = { name: 'deg', PR: 360 };
+
+  type = 'file';
 
 
   // tslint:disable-next-line: variable-name
@@ -57,25 +60,33 @@ export class FileSettingsComponent implements OnInit {
       this.updateMode = true;
       this.buttonText = 'Update';
     }
+
+    if (this.router.url === '/model-settings') {
+      this.type = 'model';
+    }
   }
 
   public submit() {
-
-    if (!this.updateMode) {
-      this.fileService.updateActiveFile();
-      this.electronService.ipcRenderer.send('updateNumberOfNewFiles');
-      if (this.file.collections.length === 0) {
-        this.file.collections.push(new Collection(uuid(), 'Collection-' + (this.file.collections.length + 1)));
+    if (this.type === 'file') {
+      if (!this.updateMode) {
+        this.fileService.updateActiveFile();
+        this.electronService.ipcRenderer.send('updateNumberOfNewFiles');
+        if (this.file.collections.length === 0) {
+          this.file.collections.push(new Collection(uuid(), 'Collection-' + (this.file.collections.length + 1)));
+        }
+        if (this.file.effects.length === 0) {
+          this.file.effects.push(new Effect(uuid()));
+          this.file.activeEffect = this.file.effects[0];
+        }
+        this.fileService.add(this.file);
+      } else {
+        this.drawingService.setEditBounds();
+        this.fileService.updateUnits(this.initialUnits, this.file.activeEffect.grid.xUnit);
       }
-      if (this.file.effects.length === 0) {
-        this.file.effects.push(new Effect(uuid()));
-        this.file.activeEffect = this.file.effects[0];
-      }
-      this.fileService.add(this.file);
     } else {
-      this.drawingService.setEditBounds();
-      this.fileService.updateUnits(this.initialUnits, this.file.activeEffect.grid.xUnit);
+      this.electronService.ipcRenderer.send('newModel', this.file);
     }
+
     this.close();
   }
 
@@ -87,9 +98,11 @@ export class FileSettingsComponent implements OnInit {
   }
 
   updateFileName(filename: string) {
-    let path = this.file.path.substring(0, this.file.path.lastIndexOf('\\'));
-    path += filename + '.json';
-    this.file.path = path;
+    if (this.file.path) {
+      let path = this.file.path.substring(0, this.file.path.lastIndexOf('\\'));
+      path += filename + '.json';
+      this.file.path = path;
+    }
     this.file.name = filename;
   }
 
@@ -97,13 +110,15 @@ export class FileSettingsComponent implements OnInit {
   ngOnInit(): void {
     this.document.body.classList.add('disable-scroll-body');
     if (this.updateMode) {
-      this.file = this.fileService.getAllFileData();
+      if (this.type === 'file') {
+        this.file = this.fileService.getAllFileData();
+      }
     } else {
       if (this.electronService.isElectronApp) {
         this.electronService.ipcRenderer.send('getNumberOfNewFiles');
       }
-      this.newFileCount = this.fileService.getFileCount();
-      this.file = new File('Untitled-' + this.newFileCount, uuid(), false);
+      this.newFileCount = this.type === 'file' ? this.fileService.getFileCount() : 1;
+      this.file = this.type === 'file' ? new File('Untitled-' + this.newFileCount, uuid(), false) : new ModelFile(uuid(), 'Untitled-' + this.newFileCount);
     }
   }
 }

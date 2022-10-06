@@ -6,6 +6,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { DialogComponent } from '../windows/dialog.component';
 import { DOCUMENT } from '@angular/common';
 import { v4 as uuid } from 'uuid';
+import { KinematicService } from 'src/app/services/kinematic.service';
 
 
 @Component({
@@ -44,17 +45,17 @@ export class FileListComponent implements OnInit {
   public scrollTab = false;
 
   constructor(@Inject(DOCUMENT) private document: Document, public fileService: FileService,
-              private electronService: ElectronService, public dialog: MatDialog) {
+              private electronService: ElectronService, public dialog: MatDialog, private kinematicService: KinematicService) {
 
     this.electronService.ipcRenderer.on('saveActiveFile', (event: Event, type: any) => {
-      const activeFile = this.fileService.getAllFileData();
-
+      const activeFile = this._list === 'designFiles' ? this.fileService.getAllFileData() : this.kinematicService.getActiveModel();
+      console.log(activeFile);
       if (activeFile.overwrite) { // prevent overwrite example files
         const data = {
           file: activeFile,
           overwrite: type,
           newId: uuid(),
-          extension: '.feelix'
+          extension: this._list === 'designFiles' ? '.feelix' : '.mFeelix'
         };
         this.electronService.ipcRenderer.send('saveFile', data);
       }
@@ -75,21 +76,30 @@ export class FileListComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.files = this.fileService.getAll();
+    this.files = this._list === 'designFiles' ? this.fileService.getAll() : this.kinematicService.getAll();
     this.scrollVisible(window.innerWidth);
     if (this.files.length < 1) {
-      this.fileService.createDefault('Untitled-1');
-      this.fileService.store();
-      this.files = this.fileService.getAll();
+      if (this._list === 'designFiles') {
+        this.fileService.createDefault('Untitled-1');
+        this.fileService.store();
+        this.files = this.fileService.getAll();
+      }
     }
-    this.fileService.fileObservable.subscribe(files => {
-      this.files = files;
-      this.scrollVisible(window.innerWidth);
-    });
+    if (this._list === 'designFiles') {
+      this.fileService.fileObservable.subscribe(files => {
+        this.files = files;
+        this.scrollVisible(window.innerWidth);
+      });
+    } else {
+      this.kinematicService.modelObservable.subscribe(models => {
+        this.files = models;
+        this.scrollVisible(window.innerWidth);
+      });
+    }
   }
 
   selectTab(file: any) {
-    this.fileService.setActive(file);
+    this._list === 'designFiles' ? this.fileService.setActive(file) : this.kinematicService.setActive(file);
   }
 
   closeTab(file: any) {
@@ -106,7 +116,8 @@ export class FileListComponent implements OnInit {
     dialogConfig.afterClosed().subscribe(
         data => {
           if (data === 'no') {
-            this.fileService.delete(file);
+
+            this._list === 'designFiles' ? this.fileService.delete(file) : this.kinematicService.deleteModel(file);
 
           } else if (data === 'yes') {
             this.saveFileData(file, true);
@@ -118,8 +129,8 @@ export class FileListComponent implements OnInit {
   }
 
 
-  saveFileData(file: File, close = false) {
-    this.fileService.save(file, close);
+  saveFileData(file: any, close = false) {
+    this._list === 'designFiles' ? this.fileService.save(file, close) : this.kinematicService.save(file, close);
   }
 
 

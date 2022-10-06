@@ -28,6 +28,7 @@ import { KinematicsDrawingService } from 'src/app/services/kinematics-drawing.se
         width: auto;
         position: absolute;
         left: 50%;
+        margin-left: -112px;
         bottom: 80px;
         justify-content: center;
       }

@@ -1,5 +1,7 @@
 import { MicroController } from "./hardware.model";
 import * as THREE from 'three';
+import { Root } from "./kinematic-connections.model";
+import { Dates } from "./file.model";
 
 export class ObjectUrl {
   url: string;
@@ -169,5 +171,24 @@ export class Point {
   constructor(parent_id: string, id: string) {
     this.id = id;
     this.parent_id = parent_id;
+  }
+}
+
+
+
+export class ModelFile {
+  id: string;
+  name: string;
+  path: string;
+  softwareVersion = '2.2.0';
+  date = new Dates();
+  joints: Array<JointLink> = [];
+  links: Array<Root> = [];
+  isActive: boolean = false;
+  overwrite: boolean = true;
+
+  constructor(id: string, name: string) {
+    this.id = id;
+    this.name = name;
   }
 }

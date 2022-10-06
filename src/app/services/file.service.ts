@@ -504,6 +504,8 @@ export class FileService {
     this.store();
   }
 
+
+
   setAnyActive() {
     const currentactiveFile = this.files.filter(f => f.isActive)[0];
     if (!currentactiveFile) {

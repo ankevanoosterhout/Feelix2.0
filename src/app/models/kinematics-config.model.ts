@@ -20,6 +20,7 @@ export class KinematicsConfig {
   control: any;
   orbit: any;
   loader = new OBJLoader();
+  jsonLoader = new THREE.ObjectLoader();
   mousePosition = new THREE.Vector2();
   rayCaster = new THREE.Raycaster();
   lastRayCasterPoint = new THREE.Vector3();

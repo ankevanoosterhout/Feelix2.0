@@ -87,6 +87,7 @@ export class ClosedChainIKService {
     this.ikRoot = null;
     this.createRoot = false;
     if (root) {
+      console.log(root);
       const startJoint = this.getStartJoint(root);
       this.processJoint(startJoint, null, sceneObjects, root);
     }
@@ -103,15 +104,21 @@ export class ClosedChainIKService {
 
       const jointEl = this.frames.filter(f => f.name === jointObj.id && f.isJoint)[0] ?
         this.frames.filter(f => f.name === jointObj.id && f.isJoint)[0] : this.createNewJointFromObject(jointObj, sceneObjectJoint);
+      // console.log(jointEl);
 
       const link = parentLink === null || parentLink === undefined ? new Link() : this.frames.filter(f => f.name === parentLink.name && f.isLink)[0];
       // console.log(link);
+      // console.log(link);
       if (parentLink === null || parentLink === undefined) {
         link.name = link.name === "" ? joint.id + ':C' : link.name;
-        jointEl.addChild(link);
+        if (jointEl.children.length === 0) {
+          jointEl.addChild(link);
+        }
       } else {
         // console.log('add child to link', joint.id, link.name);
-        link.addChild(jointEl);
+        if (!link.children.includes(jointEl)) {
+          link.addChild(jointEl);
+        }
       }
 
       // console.log(link);
@@ -127,7 +134,13 @@ export class ClosedChainIKService {
         // console.log(this.frames);
       }
 
-
+      if (this.frames.filter(f => f.isJoint).length === root.joints.length) {
+        this.createRoot = true;
+        console.log('finished');
+        console.log(this.frames);
+        this.createRootsFromFrames(sceneObjects);
+        return;
+      }
 
       if (!this.createRoot) {
         for (const connector of jointObj.connectors) {
@@ -158,21 +171,11 @@ export class ClosedChainIKService {
                 this.processJoint(connectedJointInRoot, (connectorToOriginalObject.plane === connectorJO.plane ? link : null), sceneObjects, root);
 
               }
-
             }
           }
         }
       }
     }
-
-    if (this.frames.filter(f => f.isJoint).length === root.joints.length) {
-      this.createRoot = true;
-      console.log('finished');
-      console.log(this.frames);
-      this.createRootsFromFrames(sceneObjects);
-      return;
-    }
-
   }
 
 
@@ -236,7 +239,7 @@ export class ClosedChainIKService {
 
   createRootsFromFrames(sceneObjects: any) {
     this.ikRoot = findRoots(this.frames);
-    console.log(this.ikRoot);
+    // console.log(this.ikRoot);
     for (const root of this.ikRoot) {
       root.traverse( c => {
         if (c.isJoint) {
@@ -337,7 +340,7 @@ export class ClosedChainIKService {
                 this.createSolver(root);
 
                 this.updateGoalDoF();
-                console.log(this.solver);
+                // console.log(this.solver);
 
               }
             }
@@ -374,19 +377,19 @@ export class ClosedChainIKService {
       // console.log(this.ikHelper);
       // console.log(this.ikRoot);
 
-      for (const root of this.ikRoot) {
-        root.traverse( ( child: any ) => {
-          if ( child.isJoint ) {
-            let position_ = [];
-            let quaternion_ = [];
-            child.getWorldPosition(position_);
-            child.getWorldQuaternion(quaternion_);
-            this.updateJointsInScene.next({ joint: child, position: position_, quaternion: quaternion_ });
-          }
-        });
-      }
+      // for (const root of this.ikRoot) {
+      //   root.traverse( ( child: any ) => {
+      //     if ( child.isJoint ) {
+      //       let position_ = [];
+      //       let quaternion_ = [];
+      //       child.getWorldPosition(position_);
+      //       child.getWorldQuaternion(quaternion_);
+      //       this.updateJointsInScene.next({ joint: child, position: position_, quaternion: quaternion_ });
+      //     }
+      //   });
+      // }
 
-      this.animateScene.next();
+      // this.animateScene.next();
 
       // console.log(this.solver);
     }
@@ -396,7 +399,7 @@ export class ClosedChainIKService {
 
 
   createNewJointFromObject(joint: JointLink, sceneObject: any) {
-    console.log(joint.limits);
+    console.log('limits ', joint.limits);
 
     if (sceneObject) {
       const newJoint = new Joint();
