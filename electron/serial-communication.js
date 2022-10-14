@@ -257,9 +257,9 @@ class newSerialPort {
               minor: parseInt(dataArray[1]),
               patch: parseInt(dataArray[2]),
           };
-          if (data.major !== softwareVersion.major || data.minor !== softwareVersion.minor || data.patch !== softwareVersion.patch) {
+          if (data.major !== softwareVersion.major || data.minor !== softwareVersion.minor) {
             main.showMessageConfirmation({ msg: "The software version of Feelix does not match the software version on the microcontroller (v"
-              + (data.major + '.' + data.minor + '.' + data.patch) + "), please update to v" + (softwareVersion.major + '.' + softwareVersion.minor + '.' + softwareVersion.patch), action:"updateVersion", type: "message", d: this.COM });
+              + (data.major + '.' + data.minor + '.' + data.patch) + "), update to v" + (softwareVersion.major + '.' + softwareVersion.minor + '.X'), action:"updateVersion", type: "message", d: this.COM });
                           // this.sp.close();
           }
         } else if (d.charAt(0) === 'R') {

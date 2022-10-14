@@ -13,6 +13,7 @@ import { FilterModel, UploadStringModel } from '../models/effect-upload.model';
 import { ElectronService } from 'ngx-electron';
 import { FileSaverService } from 'ngx-filesaver';
 import * as tf from '@tensorflow/tfjs';
+import { Tensor2D } from '@tensorflow/tfjs';
 
 @Injectable()
 export class ML5jsService {
@@ -166,7 +167,7 @@ export class ML5jsService {
           }
           const input_var = this.selectedModel.inputs.filter(i => i.name === input.inputdata.name)[0];
           if (input_var.active) {
-            console.log(input_var, input.inputdata.value);
+            // console.log(input_var, input.inputdata.value);
             // const input_var_value = input.inputdata.value.split(':');
             inputs.push(parseFloat(input.inputdata.value));
           }
@@ -278,13 +279,13 @@ export class ML5jsService {
       this.selectedModel.model.name = modelObj.name;
 
       this.updateProgess('model created', 40);
-      console.log(data, modelObj);
+      // console.log(data, modelObj);
 
       if (data.length > 0) {
         const outputs = [];
         const inputs = [];
         data.forEach(item => {
-          console.log(item);
+          // console.log(item);
           // const input = tf.tensor(item.xs, [ item.xs.length ]);
           inputs.push(item.xs);
           // const output = tf.tensor(item.ys, [ item.ys.length ]);
@@ -303,7 +304,7 @@ export class ML5jsService {
             activation: 'sigmoid'
           });
 
-          console.log(hiddenLayer);
+          // console.log(hiddenLayer);
 
           this.selectedModel.model.add(hiddenLayer);
         }
@@ -328,8 +329,6 @@ export class ML5jsService {
         this.updateProgess('training model', 60);
 
         this.train(iTensor, oTensor, modelObj.trainingOptions).then(() => { console.log('training is complete') });
-        // console.log(iTensor, oTensor);
-
 
       //   this.selectedModel.model.train(model.trainingOptions, this.whileTraining, this.finishedTraining);
       } else {
@@ -347,6 +346,11 @@ export class ML5jsService {
         batchSize: options.batchSize,
         epochs: options.epochs
       });
+
+      iTensor.dispose();
+      oTensor.dispose();
+
+      console.log(tf.memory().numTensors);
       // console.log(response.history.loss[0]);
       this.updateProgess('training is complete, loss = ' + response.history.loss[response.history.loss.length - 1], 100);
       console.log(response);
@@ -370,28 +374,31 @@ export class ML5jsService {
     NN_Deploy(input: any, selectedModel: any, path: string) {
 
       this.serialPath = path;
-      // if (selectedModel.options.task === 'classification') {
-      //   if (selectedModel.multiple) {
-      //     this.selectedModel.model.classify(input, this.handleClassificationResults);
-      //   } else {
-      //     this.selectedModel.model.classifyMultiple(input, this.handleClassificationResults);
-      //   }
-      // } else {
-      //   this.selectedModel.model.predict(input, this.handleRegressionResults);
-      // }
-      // console.log(input);
-
-      // console.log(selectedModel.options.task, selectedModel.multiple);
-
 
       if (selectedModel.options.task === 'classification') {
         const iTensor = selectedModel.multiple ? tf.tensor2d(input) : tf.tensor2d([input]);
-        console.log(iTensor);
-        const outputs = this.selectedModel.model.predict(iTensor);
-        outputs.print();
+        const outputs = this.selectedModel.model.predict(iTensor).dataSync();
+        console.log(outputs);
+        this.updatePredictionClassifiers(outputs);
+
+        iTensor.dispose();
       }
     }
 
+
+    updatePredictionClassifiers(results: Array<any>) {
+      for (const output of this.selectedModel.outputs) {
+        let i  = 0;
+        for (const label of output.labels) {
+
+          label.confidence = results[i];
+          this.document.getElementById('bar-' + output.name + '-' + label.name).style.width = (label.confidence * 100) + '%';
+          this.document.getElementById('confidence-' + output.name + '-' + label.name).innerHTML = (label.confidence * 100).toFixed(2) + '%';
+
+          i++;
+        }
+      }
+    }
 
 
 

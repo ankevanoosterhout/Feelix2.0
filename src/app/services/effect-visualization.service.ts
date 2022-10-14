@@ -108,13 +108,14 @@ export class EffectVisualizationService {
           activeCollEffect = collEffect;
           d3.selectAll('#coll-effect-' + collection.id + '-' + collEffect.id).style('opacity', 0.6);
         })
-        .on('drag', (event, d, i) => {
+        .on('drag', (event, d) => {
           if (!layerLocked) {
-            if (i === 0) {
-              collEffect.position.x += (collection.config.newXscale.invert(event.x) - collection.config.newXscale.invert(event.x - event.dx));
+            if (collEffect.repeat.repeatInstances.filter(r => r.id === d.id)[0]) {
+              collEffect.repeat.repeatInstances.filter(r => r.id === d.id)[0].x += (collection.config.newXscale.invert(event.x) - collection.config.newXscale.invert(event.x - event.dx));
             } else {
-              collEffect.repeat.repeatInstances[i - 1].x += (collection.config.newXscale.invert(event.x) - collection.config.newXscale.invert(event.x - event.dx));
+              collEffect.position.x += (collection.config.newXscale.invert(event.x) - collection.config.newXscale.invert(event.x - event.dx));
             }
+
             this.drawCollectionEffect(svg, collection, collEffect, effect, pixHeight, activeCollEffect, colors);
           }
         })
@@ -341,13 +342,13 @@ export class EffectVisualizationService {
         .enter()
         .append('line')
         .attr('class', 'offset-' + collection.id + '-' + collEffect.id + '-' + Math.round(x * 1000))
-        .attr('x1', (d, i) => collection.config.newXscale((d.x * (collEffect.scale.x / 100) * multiply.x) + x))
-        .attr('x2', (d, i) => render ? collection.config.newXscale((d.o * (collEffect.scale.x / 100) * multiply.x) + x) : collection.config.newXscale(((d.x + d.d) * multiply.x) + x))
+        .attr('x1', (d) => collection.config.newXscale((d.x * (collEffect.scale.x / 100) * multiply.x) + x))
+        .attr('x2', (d) => render ? collection.config.newXscale((d.o * (collEffect.scale.x / 100) * multiply.x) + x) : collection.config.newXscale(((d.x + d.d) * multiply.x) + x))
         .attr('y1', (d) => collection.config.newYscale((d.y * multiply.y )) * (collEffect.scale.y / 100) + offset)
         .attr('y2', (d) => collection.config.newYscale((d.y * multiply.y )) * (collEffect.scale.y / 100) + offset)
         .attr('stroke', 'rgba(255,255,255,0.4)')
         .attr('stroke-width', 1)
-        .style('opacity', (d, i) => render && this.checkIfXisWithinOverlap(d.x * (collEffect.scale.x / 100) + (x/multiply.x), collection.renderedData) ? 0 : 0.4);
+        .style('opacity', (d) => render && this.checkIfXisWithinOverlap(d.x * (collEffect.scale.x / 100) + (x/multiply.x), collection.renderedData) ? 0 : 0.4);
 
       grp.selectAll('circle.offset-' + collection.id + '-' + collEffect.id + '-' + Math.round(x * 1000))
         .data(dataCopy)

@@ -113,7 +113,9 @@ export class ML5jsComponent implements OnInit {
                     m++;
                   }
                   microcontrollerObject.inputdata = { name: "time", value: new Date().getTime() - this.ml5jsService.recording.starttime };
-                  dataset.d.inputs.push(microcontrollerObject);
+                  if (dataset.d) {
+                    dataset.d.inputs.push(microcontrollerObject);
+                  }
                   break;
                 }
               }
