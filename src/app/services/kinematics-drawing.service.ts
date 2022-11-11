@@ -9,6 +9,7 @@ import { TransformControls } from 'three/examples/jsm/controls/TransformControls
 import { KinematicService } from './kinematic.service';
 import { ClosedChainIKService } from './closed-chain-ik.service';
 import { KinematicLinkService } from './kinematic-link.service';
+import { FullIKService } from './full-ik.service';
 
 
 @Injectable()

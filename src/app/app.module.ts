@@ -66,6 +66,7 @@ import { KinematicsDrawingService } from './services/kinematics-drawing.service'
 import { KinematicsCursorComponent } from './components/kinematics/control/kinematics-cursor.component';
 import { ClosedChainIKService } from './services/closed-chain-ik.service';
 import { KinematicLinkService } from './services/kinematic-link.service';
+import { FullIKService } from './services/full-ik.service';
 
 @NgModule({
   declarations: [
@@ -138,7 +139,8 @@ import { KinematicLinkService } from './services/kinematic-link.service';
     KinematicService,
     KinematicsDrawingService,
     ClosedChainIKService,
-    KinematicLinkService
+    KinematicLinkService,
+    FullIKService
   ],
   bootstrap: [
     AppComponent
