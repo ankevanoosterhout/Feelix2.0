@@ -1,19 +1,19 @@
 import { DOCUMENT } from '@angular/common';
 import { Component, OnInit, Inject, HostListener } from '@angular/core';
 import { ElectronService } from 'ngx-electron';
-import { Classifier, DataSet } from 'src/app/models/ml5js.model';
+import { Classifier, DataSet } from 'src/app/models/tensorflow.model';
 import { HardwareService } from 'src/app/services/hardware.service';
-import { ML5jsService } from 'src/app/services/ml5js.service';
+import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service';
 import { MotorControlService } from 'src/app/services/motor-control.service';
 import { UploadService } from 'src/app/services/upload.service';
 import { v4 as uuid } from 'uuid';
 
 @Component({
   selector: 'app-ml5js',
-  templateUrl: './ml5js.component.html',
-  styleUrls: ['../windows/effects/effects.component.css', './ml5js.component.css'],
+  templateUrl: './tensorFlowJS.component.html',
+  styleUrls: ['../windows/effects/effects.component.css', './tensorFlowJS.component.css'],
 })
-export class ML5jsComponent implements OnInit {
+export class TensorFlowJSComponent implements OnInit {
 
   updateHorizontalScreenDivision = false;
   updateVerticalScreenDivision = false;
@@ -29,15 +29,15 @@ export class ML5jsComponent implements OnInit {
   inputArray = [];
 
   constructor(@Inject(DOCUMENT) private document: Document, public motorControlService: MotorControlService, public hardwareService: HardwareService,
-    private uploadService: UploadService, private electronService: ElectronService, public ml5jsService: ML5jsService) {
+    private uploadService: UploadService, private electronService: ElectronService, public tensorflowService: TensorFlowMainService) {
 
 
       this.electronService.ipcRenderer.on('motorData', (event: Event, data: any) => {
 
         if (data.velocity > 0.1 || data.velocity < -0.1) {
-          if (this.ml5jsService.classify && this.ml5jsService.selectedModel.model) {
+          if (this.tensorflowService.classify && this.tensorflowService.selectedModel.model) {
             let inputs = [];
-            for (const input of this.ml5jsService.selectedModel.inputs) {
+            for (const input of this.tensorflowService.selectedModel.inputs) {
               if (input.active) {
                 if (input.name === 'angle') {
                   inputs.push(data.angle);
@@ -58,10 +58,10 @@ export class ML5jsComponent implements OnInit {
             // const inputstr = inputList.join(',');
             // let inputObject = JSON.parse('{' + inputstr + '}');
 
-            if (this.ml5jsService.selectedModel.multiple) {
-              const microcontroller = this.ml5jsService.selectedMicrocontrollers.filter(m => m.serialPort.path === data.serialPath)[0];
+            if (this.tensorflowService.selectedModel.multiple) {
+              const microcontroller = this.tensorflowService.selectedMicrocontrollers.filter(m => m.serialPort.path === data.serialPath)[0];
               if (this.inputArray.length > 0 && this.hardwareService.getDataSendTime(microcontroller.id) - new Date().getTime() > microcontroller.updateSpeed * 3) {
-                this.ml5jsService.NN_Deploy(this.inputArray, this.ml5jsService.selectedModel, data.serialPath);
+                this.tensorflowService.NN_Deploy(this.inputArray, this.tensorflowService.selectedModel, data.serialPath);
               } else {
                 this.inputArray.push(inputs);
               }
@@ -70,14 +70,14 @@ export class ML5jsComponent implements OnInit {
 
             } else {
 
-              this.ml5jsService.NN_Deploy(inputs, this.ml5jsService.selectedModel, data.serialPath);
+              this.tensorflowService.NN_Deploy(inputs, this.tensorflowService.selectedModel, data.serialPath);
             }
 
-          } else if (this.ml5jsService.dataSets.length > 0) {
+          } else if (this.tensorflowService.dataSets.length > 0) {
 
-            if (this.ml5jsService.recording.active) {
-              let dataset = this.ml5jsService.dataSets.filter(d => d.open)[0];
-              for (const microcontroller of this.ml5jsService.selectedMicrocontrollers) {
+            if (this.tensorflowService.recording.active) {
+              let dataset = this.tensorflowService.dataSets.filter(d => d.open)[0];
+              for (const microcontroller of this.tensorflowService.selectedMicrocontrollers) {
 
                 if (microcontroller.serialPort.path === data.serialPath) {
                   let microcontrollerObject = { port: microcontroller.serialPort.path, motors: [], inputdata: { name: null, value: null } };
@@ -86,7 +86,7 @@ export class ML5jsComponent implements OnInit {
 
                     let i = 0;
                     let dataList = [];
-                    for (const input of this.ml5jsService.selectedModel.inputs) {
+                    for (const input of this.tensorflowService.selectedModel.inputs) {
                         let dataObject = { motor: motor.id, index: m, data: { name: input.name, value: null } }
                         if (input.name === 'angle' || input.name === 'velocity' || input.name === 'target' || input.name === 'direction') {
 
@@ -112,7 +112,7 @@ export class ML5jsComponent implements OnInit {
                     }
                     m++;
                   }
-                  microcontrollerObject.inputdata = { name: "time", value: new Date().getTime() - this.ml5jsService.recording.starttime };
+                  microcontrollerObject.inputdata = { name: "time", value: new Date().getTime() - this.tensorflowService.recording.starttime };
                   if (dataset.d) {
                     dataset.d.inputs.push(microcontrollerObject);
                   }
@@ -128,18 +128,18 @@ export class ML5jsComponent implements OnInit {
       });
 
       this.electronService.ipcRenderer.on('export-dataset-model', (event: Event, data: any) => {
-        this.ml5jsService.saveDataNN();
+        this.tensorflowService.saveDataNN();
       });
 
       this.electronService.ipcRenderer.on('load-datasets', (event: Event, data: any) => {
         if (data) {
           for (const dataset of data) {
-            if (this.ml5jsService.dataSets.filter(d => d.id === dataset.id).length === 0) {
-              this.ml5jsService.dataSets.unshift(dataset);
+            if (this.tensorflowService.dataSets.filter(d => d.id === dataset.id).length === 0) {
+              this.tensorflowService.dataSets.unshift(dataset);
             }
           }
-          if (this.ml5jsService.dataSets.length > 0) {
-            const item = this.document.getElementById('dataSetItem-' + this.ml5jsService.dataSets[(this.ml5jsService.dataSets.length - 1)].id);
+          if (this.tensorflowService.dataSets.length > 0) {
+            const item = this.document.getElementById('dataSetItem-' + this.tensorflowService.dataSets[(this.tensorflowService.dataSets.length - 1)].id);
             if (item) { item.click(); }
           }
         }
@@ -148,11 +148,11 @@ export class ML5jsComponent implements OnInit {
 
       this.electronService.ipcRenderer.on('load-model', (event: Event, data: any) => {
         if (data && data[0]) {
-          this.ml5jsService.loadModel(data[0].id);
+          this.tensorflowService.loadModel(data[0].id);
         }
       });
 
-      this.ml5jsService.updateML5jsProgress.subscribe(data => {
+      this.tensorflowService.updateML5jsProgress.subscribe(data => {
         this.progress = data.progress;
         this.status = data.status;
         this.document.getElementById('msg').innerHTML = this.status;
@@ -160,21 +160,21 @@ export class ML5jsComponent implements OnInit {
         this.document.getElementById('progress').style.width = width + 'px';
       });
 
-      this.ml5jsService.updateResizeElements.subscribe(data => {
+      this.tensorflowService.updateResizeElements.subscribe(data => {
         this.updateScreenDivisionY(data.coord);
       });
 
 
       this.electronService.ipcRenderer.on('save-model', (event: Event) => {
-        this.ml5jsService.saveModel();
+        this.tensorflowService.saveModel();
       });
 
       this.electronService.ipcRenderer.on('export-model', (event: Event) => {
-        this.ml5jsService.exportModel();
+        this.tensorflowService.exportModel();
       });
 
       this.electronService.ipcRenderer.on('import-model', (event: Event) => {
-        this.ml5jsService.importModel();
+        this.tensorflowService.importModel();
       });
 
       this.electronService.ipcRenderer.on('deploy-model', (event: Event) => {
@@ -189,8 +189,8 @@ export class ML5jsComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.ml5jsService.dataSets.push(new DataSet(uuid(), 'Data set ' + (this.ml5jsService.dataSets.length + 1)));
-    this.ml5jsService.selectedModel.outputs.push(new Classifier('Classifier-' + (this.ml5jsService.selectedModel.outputs.length + 1)));
+    this.tensorflowService.dataSets.push(new DataSet(uuid(), 'Data set ' + (this.tensorflowService.dataSets.length + 1)));
+    this.tensorflowService.selectedModel.outputs.push(new Classifier('Classifier-' + (this.tensorflowService.selectedModel.outputs.length + 1)));
   }
 
 

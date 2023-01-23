@@ -120,16 +120,12 @@ ul {
   color:#ccc;
 }
 
-.tabsContainer-vertical li div:active {
+.tabsContainer-vertical li div:active,
+.tabsContainer-vertical li div.active  {
   background: #444;
   color:#ccc;
 }
 
-
-.tabsContainer-vertical li div.active {
-  background: #333;
-  color:#ccc;
-}
 
 .tabsContainer-vertical li div.add-button {
   display: inline-block;

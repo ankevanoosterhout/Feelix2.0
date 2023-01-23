@@ -1,4 +1,4 @@
-import { Classifier } from "./ml5js.model";
+import { Classifier } from "./tensorflow.model";
 
 
 export class FilterType {

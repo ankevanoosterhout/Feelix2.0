@@ -3,7 +3,7 @@ import { v4 as uuid } from 'uuid';
 import { LocalStorageService } from 'ngx-webstorage';
 import { Subject } from 'rxjs';
 import { CloneService } from './clone.service';
-import { DataSet } from '../models/ml5js.model';
+import { DataSet } from '../models/tensorflow.model';
 
 @Injectable()
 export class DataSetService {

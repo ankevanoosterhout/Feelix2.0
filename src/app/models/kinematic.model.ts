@@ -3,6 +3,14 @@ import * as THREE from 'three';
 import { Root } from "./kinematic-connections.model";
 import { Dates } from "./file.model";
 
+
+export enum JointType {
+  revolute,
+  continuous,
+  prismatic,
+  fixed
+}
+
 export class ObjectUrl {
   url: string;
   g: string;
@@ -17,6 +25,7 @@ export class Model {
   thumbnail: string;
   objectUrls: Array<ObjectUrl>;
   color: number;
+  origin = new Vector3();
 
   constructor(id: number, type: string, modelType: number, active: boolean, thumbnail: string, objectUrls: Array<ObjectUrl>, color: number) {
     this.id = id;
@@ -74,6 +83,7 @@ export class Connector {
   connected = false;
   size = new ConnectorSize(2.5, 1, 2.5, 26.5);
   vector3 = new THREE.Vector3(0,0,0);
+  processed = false;
 
   constructor(id: string, name:string, angle: number, plane: string, vector3: THREE.Vector3) {
     this.id = id;
@@ -89,9 +99,69 @@ export class Limits {
   max: number = 1.797693134862315E+308 * 1.001;
 }
 
-export class JointLink {
+
+export class Dimensions {
+  origin = new Vector3();
+  rpy = new Vector3();
+}
+
+export class JointConfig {
+  active: boolean;
+  grounded: boolean;
+  control: MicroController;
+  motorIndex: number;
+  selected = false;
+}
+
+
+export class URFD_Joint {
   id: string;
   name: string;
+  parent: URFD_Link;
+  child: URFD_Link;
+  type: JointType;
+  dimensions = new Dimensions();
+  axis = new Vector3();
+  DoF: any;
+  limits = new Limits();
+  object3D = new Object3D();
+  config = new JointConfig();
+
+  constructor(id: string, model: Model) {
+    this.id = id;
+    this.config.active = model.active;
+    this.object3D.objectUrls = model.objectUrls;
+    this.object3D.color = model.color;
+    this.type = JointType.revolute;
+    this.axis.z = 1;
+    this.dimensions.origin = model.origin;
+  }
+}
+
+
+export class URFD_Link {
+  id: string;
+  name: string;
+  type: JointType;
+  parent: URFD_Joint;
+  children: Array<any>;
+  dimensions = new Dimensions();
+  size: number;
+  object3D = new Object3D();
+
+  constructor(id: string, model: Model) {
+    this.id = id;
+    this.dimensions.origin = model.origin;
+    this.object3D.objectUrls = model.objectUrls;
+    this.object3D.color = model.color;
+    this.dimensions.origin = model.origin;
+  }
+}
+
+
+export class JointLink {
+  id: string;
+  name: string; //move to in config
   // type: string;
   modelType: number;
   active: boolean;
@@ -107,7 +177,6 @@ export class JointLink {
   selected = false;
   connectors: Array<Connector> = [];
   sceneObject: THREE.Object3D = null;
-
 
   constructor(id:string, model: Model) {
     this.id = id;

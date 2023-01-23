@@ -16,7 +16,7 @@ import { MotorControlToolbarInsetComponent } from './components/interface-elemen
 import { MotorControlToolbarComponent } from './components/interface-elements/toolbars/motor-control-toolbar.component';
 import { MotorSettingsComponent } from './components/windows/settings/motor-settings.component';
 import { EffectListComponent } from './components/file/effect-list.component';
-import { ML5jsComponent } from './components/ml5js/ml5js.component';
+import { TensorFlowJSComponent } from './components/ml5js/tensorFlowJS.component';
 import { LoadDataSetsComponent } from './components/ml5js/datasets/load-datasets.component';
 import { KinematicsComponent } from './components/kinematics/kinematics.component';
 import { KinematicsToolbarComponent } from './components/interface-elements/toolbars/kinematics-toolbar.component';
@@ -39,7 +39,7 @@ const routes: Routes = [
     { path: 'zigzag', component: ZigZagComponent },
     { path: 'transform', component: TransformComponent },
     { path: 'info', component: InfoPageComponent },
-    { path: 'ml5js', component: ML5jsComponent },
+    { path: 'tensorflow', component: TensorFlowJSComponent },
     { path: 'motor-control-component', component: MotorControlComponent },
     { path: 'motor-control-toolbar-inset', component: MotorControlToolbarInsetComponent },
     { path: 'motor-control-toolbar', component: MotorControlToolbarComponent },

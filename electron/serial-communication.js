@@ -329,9 +329,12 @@ function prepareMotorData(uploadContent, motor, datalist) {
   if (motor.config.sensorOffset !== undefined) {
     datalist.unshift('FM' + motor.id + 'O' + (motor.config.sensorOffset * (Math.PI / 180)).toFixed(12));
   }
+  if (motor.config.transmission !== 1) {
+    datalist.unshift('FM' + motor.id + 'X' + (motor.config.encoder.transmission.toFixed(12))); //new
+  }
   datalist.unshift('FM' + motor.id + 'C' + motor.config.encoder.clock_speed);
   datalist.unshift('FM' + motor.id + 'H' + uploadContent.config.loop);
-  datalist.unshift('FM' + motor.id + 'D' + (motor.config.encoder.direction === 'CW' ? 1 : -1));
+  datalist.unshift('FM' + motor.id + 'D' + (motor.config.encoder.direction ? 1 : -1));
   datalist.unshift('FM' + motor.id + 'T' + uploadContent.config.updateSpeed);
   datalist.unshift('FM' + motor.id + 'J' + Math.round(uploadContent.config.range));
   datalist.unshift('FM' + motor.id + 'M' + uploadContent.config.constrain_range);

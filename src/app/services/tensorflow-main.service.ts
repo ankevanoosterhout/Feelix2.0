@@ -2,13 +2,13 @@ import { DOCUMENT } from '@angular/common';
 import { Injectable, Inject } from '@angular/core';
 import { v4 as uuid } from 'uuid';
 import { MicroController } from '../models/hardware.model';
-import { Model, DataSet, Classifier, Data, NN_options, Label } from '../models/ml5js.model';
+import { Model, DataSet, Classifier, Data, NN_options, Label } from '../models/tensorflow.model';
 import { HardwareService } from './hardware.service';
 // import p5 from 'p5';
 // import ml5 from 'ml5';
 import { DataSetService } from './dataset.service';
 import { Subject } from 'rxjs';
-import { ML5ModelService } from './ml5-model.service';
+import { TensorFlowModelService } from './tensorFlow-model.service';
 import { FilterModel, UploadStringModel } from '../models/effect-upload.model';
 import { ElectronService } from 'ngx-electron';
 import { FileSaverService } from 'ngx-filesaver';
@@ -16,7 +16,7 @@ import * as tf from '@tensorflow/tfjs';
 import { Tensor2D } from '@tensorflow/tfjs';
 
 @Injectable()
-export class ML5jsService {
+export class TensorFlowMainService {
 
     public modelSet = [
       new Model(uuid(), 'model', 'NeuralNetwork', new NN_options('classification', false, 0.2, 5), { epochs: 32, batchSize: 12 }),
@@ -57,7 +57,7 @@ export class ML5jsService {
     updateResizeElements: Subject<any> = new Subject();
 
     constructor(@Inject(DOCUMENT) private document: Document, public hardwareService: HardwareService, private dataSetService: DataSetService,
-                private ml5ModelService: ML5ModelService, private electronService: ElectronService, private _FileSaverService: FileSaverService) {}
+                private tensorflowService: TensorFlowModelService, private electronService: ElectronService, private _FileSaverService: FileSaverService) {}
 
 
 
@@ -524,7 +524,7 @@ export class ML5jsService {
     }
 
     loadModel(id: String) {
-      const model = this.ml5ModelService.getModel(id);
+      const model = this.tensorflowService.getModel(id);
       // console.log(model);
       const modelStr = JSON.stringify(model.model);
       if (model) {
@@ -540,7 +540,7 @@ export class ML5jsService {
 
     saveModel() {
       if (this.selectedModel) {
-        this.selectedModel.id = this.ml5ModelService.saveModel(this.selectedModel);
+        this.selectedModel.id = this.tensorflowService.saveModel(this.selectedModel);
         this.updateProgess('model saved', 100);
       }
     }

@@ -19,7 +19,7 @@ let mainMenu, displays, kinematicsMenu;
 let gridSnap = false, gridVisible = false, guidesLock = false;
 let tmpWindow = null;
 let activeWindow = null;
-let ml5jsWindow = null;
+let tensorflowWindow = null;
 
 
 /****** start app *****/
@@ -286,10 +286,10 @@ const mainMenuTemplate = [
         }
       },
       {
-        label: 'ML5js Window',
+        label: 'Machine Learning',
         // enabled: false,
         click() {
-          createML5jsWindow();
+          createTensorFlowWindow();
         }
       }
     ]
@@ -361,25 +361,25 @@ const ml5_control_menu_template = [
       {
         label: 'Save',
         click() {
-          ml5jsWindow.webContents.send('save-model');
+          tensorflowWindow.webContents.send('save-model');
         }
       },
       {
         label: 'Train',
         click() {
-          ml5jsWindow.webContents.send('train-model');
+          tensorflowWindow.webContents.send('train-model');
         }
       },
       {
         label: 'Deploy',
         click() {
-          ml5jsWindow.webContents.send('deploy-model');
+          tensorflowWindow.webContents.send('deploy-model');
         }
       },
       {
         label: 'Export',
         click() {
-          ml5jsWindow.webContents.send('export-model');
+          tensorflowWindow.webContents.send('export-model');
         }
       }
     ]
@@ -396,7 +396,7 @@ const ml5_control_menu_template = [
       {
         label: 'Export',
         click() {
-          ml5jsWindow.webContents.send('export-dataset-model');
+          tensorflowWindow.webContents.send('export-dataset-model');
         }
       }
     ]
@@ -412,7 +412,7 @@ const ml5_control_menu_template = [
       },
       {
         label: 'Open development tools',
-        click() {  ml5jsWindow.webContents.openDevTools(); }
+        click() {  tensorflowWindow.webContents.openDevTools(); }
       },
     ]
   }
@@ -724,9 +724,9 @@ function createWindow() {
 
 }
 
-function createML5jsWindow() {
-  if (!ml5jsWindow) {
-    ml5jsWindow = new BrowserWindow({
+function createTensorFlowWindow() {
+  if (!tensorflowWindow) {
+    tensorflowWindow = new BrowserWindow({
       width: 1000,
       height: 550,
       title: 'ml5.js',
@@ -744,25 +744,25 @@ function createML5jsWindow() {
 
     const ml5jsMenu = Menu.buildFromTemplate(ml5_control_menu_template);
 
-    ml5jsWindow.setMenu(ml5jsMenu);
+    tensorflowWindow.setMenu(ml5jsMenu);
 
-    ml5jsWindow.loadURL(
+    tensorflowWindow.loadURL(
       url.format({
         pathname: path.join(__dirname, `../dist/feelix/index.html`),
         protocol: "file:",
         slashes: true,
-        hash: '/ml5js'
+        hash: '/tensorflow'
       })
     );
 
-    ml5jsWindow.once('ready-to-show', () => {
-      ml5jsWindow.show()
+    tensorflowWindow.once('ready-to-show', () => {
+      tensorflowWindow.show()
     });
 
-    // ml5jsWindow.webContents.openDevTools();
+    // tensorflowWindow.webContents.openDevTools();
 
-    ml5jsWindow.on('close', function () {
-      ml5jsWindow = null
+    tensorflowWindow.on('close', function () {
+      tensorflowWindow = null
     });
   }
 }
@@ -1190,11 +1190,11 @@ ipcMain.on('changeViewTranslation', function(e, data) {
 
 
 ipcMain.on('load-datasets', function(e, data) {
-  ml5jsWindow.webContents.send('load-datasets', data);
+  tensorflowWindow.webContents.send('load-datasets', data);
 });
 
 ipcMain.on('load-model', function(e, data) {
-  ml5jsWindow.webContents.send('load-model', data);
+  tensorflowWindow.webContents.send('load-model', data);
 });
 
 
@@ -1425,8 +1425,8 @@ function displayStatus(data, page) {
 
 function visualizaMotorData(data) {
   mainWindow.webContents.send('playData', data);
-  if (ml5jsWindow !== null) {
-    ml5jsWindow.webContents.send('motorData', data);
+  if (tensorflowWindow !== null) {
+    tensorflowWindow.webContents.send('motorData', data);
   }
 }
 

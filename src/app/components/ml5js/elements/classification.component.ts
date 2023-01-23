@@ -1,21 +1,21 @@
 
 import { Component, Inject } from '@angular/core';
 import { FilterService } from 'src/app/services/filter.service';
-import { ML5jsService } from 'src/app/services/ml5js.service';
+import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service';
 
 @Component({
   selector: 'app-classification',
   templateUrl: 'classification.component.html',
-  styleUrls: ['../../windows/effects/effects.component.css', './../ml5js.component.css'],
+  styleUrls: ['../../windows/effects/effects.component.css', './../tensorFlowJS.component.css'],
 })
 export class ClassificationComponent {
 
 
-  constructor(public ml5jsService: ML5jsService, public filterService: FilterService) {
+  constructor(public tensorFlowService: TensorFlowMainService, public filterService: FilterService) {
 
     this.filterService.addFilterToModel.subscribe(data => {
       if (data) {
-        this.ml5jsService.selectedModel.filters.push(data);
+        this.tensorFlowService.selectedModel.filters.push(data);
       }
     });
 

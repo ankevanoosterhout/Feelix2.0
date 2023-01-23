@@ -1,5 +1,5 @@
 import { BrowserModule } from '@angular/platform-browser';
-import { NgModule, ɵɵclassMapInterpolate5 } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgxWebstorageModule } from 'ngx-webstorage';
 import { NgxFsModule } from 'ngx-fs';
@@ -49,14 +49,14 @@ import { ComponentService } from './services/component.service';
 import { ExportDialogComponent } from './components/windows/export-dialog.component';
 import { CloneService } from './services/clone.service';
 import { GridService } from './services/grid.service';
-import { ML5jsComponent } from './components/ml5js/ml5js.component';
-import { ML5jsService } from './services/ml5js.service';
+import { TensorFlowJSComponent } from './components/ml5js/tensorFlowJS.component';
+import { TensorFlowMainService } from './services/tensorflow-main.service';
 import { DataComponent } from './components/ml5js/elements/data.component';
 import { ClassificationComponent } from './components/ml5js/elements/classification.component';
 import { ModelComponent } from './components/ml5js/elements/model.component';
 import { DataSetService } from './services/dataset.service';
 import { LoadDataSetsComponent } from './components/ml5js/datasets/load-datasets.component';
-import { ML5ModelService } from './services/ml5-model.service';
+import { TensorFlowModelService } from './services/tensorFlow-model.service';
 import { FilterService } from './services/filter.service';
 import { KinematicsComponent } from './components/kinematics/kinematics.component';
 import { KinematicService } from './services/kinematic.service';
@@ -66,7 +66,9 @@ import { KinematicsDrawingService } from './services/kinematics-drawing.service'
 import { KinematicsCursorComponent } from './components/kinematics/control/kinematics-cursor.component';
 import { ClosedChainIKService } from './services/closed-chain-ik.service';
 import { KinematicLinkService } from './services/kinematic-link.service';
-import { FullIKService } from './services/full-ik.service';
+import { DragControlsService } from './services/drag-controls.service';
+import { IKService } from './services/IK.service';
+// import { FullIKService } from './services/full-ik.service';
 
 @NgModule({
   declarations: [
@@ -93,7 +95,7 @@ import { FullIKService } from './services/full-ik.service';
     MotorControlComponent,
     MotorControlToolbarInsetComponent,
     MotorControlToolbarComponent,
-    ML5jsComponent,
+    TensorFlowJSComponent,
     DataComponent,
     ClassificationComponent,
     ModelComponent,
@@ -132,15 +134,17 @@ import { FullIKService } from './services/full-ik.service';
     ComponentService,
     MotorControlService,
     CloneService,
-    ML5jsService,
+    TensorFlowMainService,
     DataSetService,
-    ML5ModelService,
+    TensorFlowModelService,
     FilterService,
     KinematicService,
     KinematicsDrawingService,
     ClosedChainIKService,
     KinematicLinkService,
-    FullIKService
+    DragControlsService,
+    IKService
+    // FullIKService
   ],
   bootstrap: [
     AppComponent

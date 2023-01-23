@@ -2,20 +2,20 @@
 import { DOCUMENT } from '@angular/common';
 import { Component, Inject } from '@angular/core';
 import { ElectronService } from 'ngx-electron';
-import { ML5jsService } from 'src/app/services/ml5js.service';
+import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service';
 
 
 @Component({
   selector: 'app-model',
   templateUrl: 'model.component.html',
-  styleUrls: ['../../windows/effects/effects.component.css', './../ml5js.component.css'],
+  styleUrls: ['../../windows/effects/effects.component.css', './../tensorFlowJS.component.css'],
 })
 export class ModelComponent {
 
 
 
 
-  constructor(@Inject(DOCUMENT) private document: Document, public ml5jsService: ML5jsService, private electronService: ElectronService) {
+  constructor(@Inject(DOCUMENT) private document: Document, public tensorFlowService: TensorFlowMainService, private electronService: ElectronService) {
 
 
 
@@ -24,36 +24,36 @@ export class ModelComponent {
 
 
   initializeNN_Model() {
-    if (!this.ml5jsService.processing) {
+    if (!this.tensorFlowService.processing) {
 
-      this.ml5jsService.processing = true;
-      this.ml5jsService.updateProgess('initializing model', 20);
+      this.tensorFlowService.processing = true;
+      this.tensorFlowService.updateProgess('initializing model', 20);
 
-      if (this.ml5jsService.dataSets.length === 0) {
-        this.ml5jsService.processing = false;
-        this.ml5jsService.updateProgess('no data', 0);
+      if (this.tensorFlowService.dataSets.length === 0) {
+        this.tensorFlowService.processing = false;
+        this.tensorFlowService.updateProgess('no data', 0);
         return false;
       }
 
-      let data = this.ml5jsService.createJSONfromDataSet(this.ml5jsService.dataSets, true);
+      let data = this.tensorFlowService.createJSONfromDataSet(this.tensorFlowService.dataSets, true);
 
       const inputLabels = [];
       const outputLabels = [];
 
-      for (const input of this.ml5jsService.selectedModel.inputs) {
+      for (const input of this.tensorFlowService.selectedModel.inputs) {
         if (input.active) { inputLabels.push(input.name); }
       }
 
-      for (const output of this.ml5jsService.selectedModel.outputs) {
+      for (const output of this.tensorFlowService.selectedModel.outputs) {
         for (const label of output.labels) {
           if (!outputLabels.includes(label.name)) { outputLabels.push(label.name); }
         }
       }
 
-      this.ml5jsService.selectedModel.options.inputs = inputLabels;
-      this.ml5jsService.selectedModel.options.outputs = outputLabels;
+      this.tensorFlowService.selectedModel.options.inputs = inputLabels;
+      this.tensorFlowService.selectedModel.options.outputs = outputLabels;
 
-      this.ml5jsService.NN_createData(data, this.ml5jsService.selectedModel);
+      this.tensorFlowService.NN_createData(data, this.tensorFlowService.selectedModel);
     }
   }
 
@@ -63,17 +63,17 @@ export class ModelComponent {
 
 
   classifyAtRunTime() {
-    if (this.ml5jsService.selectedModel.model) {
-      if (!this.ml5jsService.classify) {
-        this.ml5jsService.processing = false;
-        this.ml5jsService.classify = true;
-        this.ml5jsService.updateProgess('deploy', 100);
+    if (this.tensorFlowService.selectedModel.model) {
+      if (!this.tensorFlowService.classify) {
+        this.tensorFlowService.processing = false;
+        this.tensorFlowService.classify = true;
+        this.tensorFlowService.updateProgess('deploy', 100);
         this.document.getElementById('record-button').click();
       } else {
-        this.ml5jsService.processing = false;
-        this.ml5jsService.classify = false;
-        this.ml5jsService.updateProgess('stopped', 0);
-        this.ml5jsService.resetFiltersMicrocontroller();
+        this.tensorFlowService.processing = false;
+        this.tensorFlowService.classify = false;
+        this.tensorFlowService.updateProgess('stopped', 0);
+        this.tensorFlowService.resetFiltersMicrocontroller();
       }
     }
   }

@@ -1,7 +1,7 @@
 
 import { Component, Inject } from '@angular/core';
 import { HardwareService } from 'src/app/services/hardware.service';
-import { ML5jsService } from 'src/app/services/ml5js.service';
+import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service';
 import { ElectronService } from 'ngx-electron';
 import { ConnectModel } from 'src/app/models/effect-upload.model';
 import { UploadService } from 'src/app/services/upload.service';
@@ -10,14 +10,14 @@ import { DOCUMENT } from '@angular/common';
 @Component({
   selector: 'app-data',
   templateUrl: 'data.component.html',
-  styleUrls: ['../../windows/effects/effects.component.css', './../ml5js.component.css'],
+  styleUrls: ['../../windows/effects/effects.component.css', './../tensorFlowJS.component.css'],
 })
 export class DataComponent {
 
 
   dataVisible = true;
 
-  constructor(@Inject(DOCUMENT) private document: Document,public ml5jsService: ML5jsService, public hardwareService: HardwareService,
+  constructor(@Inject(DOCUMENT) private document: Document,public tensorFlowService: TensorFlowMainService, public hardwareService: HardwareService,
               private electronService: ElectronService, private uploadService: UploadService) {
 
   }
@@ -25,22 +25,22 @@ export class DataComponent {
 
 
   record() {
-    this.ml5jsService.recording.active = !this.ml5jsService.recording.active;
-    if (this.ml5jsService.recording.active) {
-      this.ml5jsService.recording.starttime = new Date().getTime();
+    this.tensorFlowService.recording.active = !this.tensorFlowService.recording.active;
+    if (this.tensorFlowService.recording.active) {
+      this.tensorFlowService.recording.starttime = new Date().getTime();
     }
-    for (const microcontroller of this.ml5jsService.selectedMicrocontrollers) {
-      microcontroller.record = this.ml5jsService.recording.active;
+    for (const microcontroller of this.tensorFlowService.selectedMicrocontrollers) {
+      microcontroller.record = this.tensorFlowService.recording.active;
 
       if (microcontroller.record) {
         for (const motor of microcontroller.motors) {
           if (motor.record) {
-            this.ml5jsService.updateProgess('connecting to motor ' + motor.id + ' at ' +  microcontroller.serialPort.path, 0);
+            this.tensorFlowService.updateProgess('connecting to motor ' + motor.id + ' at ' +  microcontroller.serialPort.path, 0);
              // this.electronService.ipcRenderer.send('requestData', new ConnectModel(microcontroller));
           }
         }
       } else {
-        this.ml5jsService.classify = false;
+        this.tensorFlowService.classify = false;
       }
     }
   }
@@ -48,11 +48,11 @@ export class DataComponent {
 
   toggleDataSection() {
     this.dataVisible = !this.dataVisible;
-    this.ml5jsService.updateResize((!this.dataVisible ? window.innerHeight - 60 : window.innerHeight * 0.45));
+    this.tensorFlowService.updateResize((!this.dataVisible ? window.innerHeight - 60 : window.innerHeight * 0.45));
   }
 
   updateCommunicationSpeed(id: string) {
-    const microcontroller = this.ml5jsService.selectedMicrocontrollers.filter(m => m.id === id)[0];
+    const microcontroller = this.tensorFlowService.selectedMicrocontrollers.filter(m => m.id === id)[0];
     if (microcontroller) {
       this.hardwareService.updateMicroController(microcontroller);
       const uploadModel = this.uploadService.createUploadModel(null, microcontroller);

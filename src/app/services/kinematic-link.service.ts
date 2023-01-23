@@ -21,6 +21,7 @@ export class KinematicLinkService {
 
     if (data) {
       this.roots = data;
+      console.log(this.roots);
     }
   }
 
@@ -124,9 +125,9 @@ export class KinematicLinkService {
 
   getRootWithObject(id: string) {
     for (const root of this.roots) {
-      console.log(root.joints, id);
+      // console.log(root.joints, id);
       for (const joint of root.joints) {
-        console.log(joint.id, id);
+        // console.log(joint.id, id);
         if (joint.id === id) {
           return root;
         }
@@ -139,6 +140,9 @@ export class KinematicLinkService {
     }
     return;
   }
+
+
+
 
 
   // getLinkedObjects(key: any, id: string): Array<any> {

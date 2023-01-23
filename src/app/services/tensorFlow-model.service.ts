@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
 import { LocalStorageService } from 'ngx-webstorage';
-import { Model } from '../models/ml5js.model';
+import { Model } from '../models/tensorflow.model';
 import { CloneService } from './clone.service';
 import { v4 as uuid } from 'uuid';
 
 
 @Injectable()
-export class ML5ModelService {
+export class TensorFlowModelService {
 
   public static readonly LIBRARY_LOCATION = 'ngx-webstorage|models';
 
@@ -17,8 +17,8 @@ export class ML5ModelService {
 
     window.addEventListener('storage', event => {
       if (event.storageArea === localStorage) {
-        if (event.key === ML5ModelService.LIBRARY_LOCATION) {
-          const dataSetLib: Array<Model> = JSON.parse(localStorage.getItem(ML5ModelService.LIBRARY_LOCATION));
+        if (event.key === TensorFlowModelService.LIBRARY_LOCATION) {
+          const dataSetLib: Array<Model> = JSON.parse(localStorage.getItem(TensorFlowModelService.LIBRARY_LOCATION));
           this.models = dataSetLib;
         }
       }

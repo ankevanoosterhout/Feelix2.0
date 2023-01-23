@@ -1,7 +1,7 @@
 import { Configuration } from './configuration.model';
 import { Collection } from './collection.model';
 import { Details, Effect } from './effect.model';
-import { Model, DataSet } from './ml5js.model';
+import { Model, DataSet } from './tensorflow.model';
 
 export class Dates {
   created = new Date().getTime();

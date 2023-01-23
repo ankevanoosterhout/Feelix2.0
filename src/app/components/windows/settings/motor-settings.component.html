@@ -81,8 +81,43 @@
             </div>
 
             <div class="form-group">
-              <label class="labelRow motorsettings inset"><div class="question-mark" title="Direction of sensor opposed to motor poles derived from calibration.">?</div>Sensor direction</label>
+              <div class="row">
+                <label class="labelRow motorsettings inset"><div class="question-mark" title="Voltage applied to the motor. Usually between 10V and 20V, check your pcb and motor type for the specifications">?</div>Supply voltage</label>
+                <input type="number" class="motor-settings" name="supply-voltage" id="supply-voltage" [(ngModel)]="motor.config.supplyVoltage" disabled><span class="units motor-settings disabled">V</span>
+              </div>
+              <div class="row-slider">
+                <div class="slider">
+                  <input type="range" class="html-slider" [min]="10" [max]="24" step="0.5" name="frequencyMotor" [(ngModel)]="motor.config.supplyVoltage" (change)="updateSupplyVoltage(selectedMicrocontroller)">
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="labelRow motorsettings inset"><div class="question-mark" title="Voltage limitting variable. Optional, overflowing values will be cut off.">?</div>Voltage limit</label>
+              <input type="number" class="motor-settings" id="voltage-limit" name="voltage-limit" [(ngModel)]="motor.config.voltageLimit" (change)="updateMicrocontroller(selectedMicrocontroller)"><span class="units motor-settings">V</span>
+            </div>
+
+            <div class="form-group">
+              <label class="labelRow motorsettings inset"><div class="question-mark" title="Velocity limitting variable. Optional">?</div>Velocity limit</label>
+              <input type="number" class="motor-settings" id="velocity-limit" name="velocity-limit" [(ngModel)]="motor.config.velocityLimit" (change)="updateMicrocontroller(selectedMicrocontroller)"><span class="units motor-settings">rad/s</span>
+            </div>
+
+
+            <div class="horizontalSeparator"></div>
+
+
+            <div class="form-group">
+              <label class="labelRow motorsettings inset"><div class="question-mark" title="Direction of sensor opposed to motor poles. Values is derived from calibration.">?</div>Sensor direction</label>
               <input type="text" class="small motor-settings text-align-right" id="calibrationDirection-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" name="calibrationDirection-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" [(ngModel)]="motor.config.calibration.direction" disabled>
+            </div>
+
+            <div class="form-group">
+              <div class="row">
+                <label class="radio-container motorsettings">Reverse direction <div class="question-mark" title="Reverse sensor direction">?</div>
+                  <input type="checkbox" class="type" id="reverse-sensor-direction" name="direction" [(ngModel)]="motor.config.encoder.direction" [checked]="motor.config.encoder.direction" (change)="updateMicrocontroller(selectedMicrocontroller)">
+                  <span class="checkmark radio playwindow"></span>
+                </label>
+              </div>
             </div>
 
             <div class="form-group">
@@ -98,6 +133,15 @@
               [(ngModel)]="motor.state.position.start" (change)="updateMicrocontroller(this.selectedMicrocontroller)">
               <div class="units motor-setting">&deg;</div>
             </div>
+
+
+
+            <!-- <div class="form-group" *ngIf="motor.config.encoderType === 'Magnetic sensor'">
+              <label class="labelRow select motorsettings inset"><div class="question-mark" title="Rotational direction opposed to sensor direction">?</div>Rotation direction</label>
+              <select class="form-control playWindow" id="direction" [(ngModel)]="motor.config.encoder.direction" name="direction" (change)="updateMicrocontroller(this.selectedMicrocontroller)">
+                <option *ngFor="let type of directionType" [ngValue]="type.name">{{ type.name }}</option>
+              </select>
+            </div> -->
 
             <div class="form-group">
               <label class="labelRow motorsettings inset"><div class="question-mark" title="Optional: set end position">?</div>End position</label>
@@ -119,6 +163,13 @@
 
 
 
+
+
+
+
+
+
+
             <!-- <div class="form-group">
               <label class="labelRow motorsettings inset"><div class="question-mark" title="Last position read from the motor.">?</div>Current position</label>
               <input type="number" class="small motor-settings" id="currentPosition" name="currentPosition" disabled [(ngModel)]="motor.state.position.current">
@@ -126,7 +177,7 @@
             </div> -->
 
 
-            <div class="horizontalSeparator"></div>
+            <!-- <div class="horizontalSeparator"></div>
 
             <div class="form-group">
               <label class="labelRow select motorsettings inset"><div class="question-mark" title="Position sensor">?</div>Position sensor</label>
@@ -147,7 +198,7 @@
               <select class="form-control playWindow" id="part-number" [(ngModel)]="motor.config.encoder.part_number" name="part-number" (change)="updateMicrocontroller(this.selectedMicrocontroller)">
                 <option *ngFor="let type of magneticSensorType" [ngValue]="type.name">{{ type.name }}</option>
               </select>
-            </div>
+            </div> -->
 
             <!-- <div class="form-group" *ngIf="motor.config.encoderType === 'Magnetic sensor'">
               <label class="labelRow select motorsettings inset">Communication protocol</label>
@@ -167,29 +218,19 @@
             </div> -->
 
 
-            <div class="horizontalSeparator"></div>
+            <!-- <div class="horizontalSeparator"></div> -->
+
+
+
 
             <div class="form-group">
               <div class="row">
-                <label class="labelRow motorsettings inset"><div class="question-mark" title="Voltage applied to the motor. Usually between 10V and 24V, check your motor for the specifications">?</div>Supply voltage</label>
-                <input type="number" class="motor-settings" name="supply-voltage" id="supply-voltage" [(ngModel)]="motor.config.supplyVoltage" disabled><span class="units motor-settings disabled">V</span>
-              </div>
-              <div class="row-slider">
-                <div class="slider">
-                  <input type="range" class="html-slider" [min]="10" [max]="24" step="0.5" name="frequencyMotor" [(ngModel)]="motor.config.supplyVoltage" (change)="updateMicrocontroller(selectedMicrocontroller)">
-                </div>
+                <label class="labelRow motorsettings inset"><div class="question-mark" title="Optional: set transmission ratio/gain when using gears or force translations">?</div>Transmission factor</label>
+                <input type="number" class="motor-settings" id="transmissionValue-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" name="transmissionValue-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}"
+                [(ngModel)]="motor.config.transmission" (change)="updateMicrocontroller(this.selectedMicrocontroller)">
               </div>
             </div>
 
-            <div class="form-group">
-              <label class="labelRow motorsettings inset"><div class="question-mark" title="Voltage limitting variable. Optional, overflowing values will be cut off.">?</div>Voltage limit</label>
-              <input type="number" class="motor-settings" id="voltage-limit" name="voltage-limit" [(ngModel)]="motor.config.voltageLimit" (change)="updateMicrocontroller(selectedMicrocontroller)"><span class="units motor-settings">V</span>
-            </div>
-
-            <div class="form-group">
-              <label class="labelRow motorsettings inset"><div class="question-mark" title="Velocity limitting variable. Optional">?</div>Velocity limit</label>
-              <input type="number" class="motor-settings" id="velocity-limit" name="velocity-limit" [(ngModel)]="motor.config.velocityLimit" (change)="updateMicrocontroller(selectedMicrocontroller)"><span class="units motor-settings">rad/s</span>
-            </div>
 
             <div class="horizontalSeparator" *ngIf="selectedMicrocontroller && selectedMicrocontroller.vendor !== 'ESP8266'"></div>
 
@@ -215,16 +256,10 @@
               </div>
             </div>
 
-            <div class="horizontalSeparator"></div>
+            <!-- <div class="horizontalSeparator"></div> -->
+
 
             <!-- <div class="form-group">
-              <label class="labelRow select motorsettings inset"><div class="question-mark" title="Motion control type">?</div>Motion control</label>
-              <select class="form-control playWindow" id="motion-control" [(ngModel)]="motor.config.motionControl" name="motion-control" (change)="updateMicrocontroller(this.selectedMicrocontroller)">
-                <option *ngFor="let type of motionControlTypes" [ngValue]="type.name">{{ type.name }}</option>
-              </select>
-            </div> -->
-
-            <div class="form-group">
               <label class="labelRow motorsettings inset"><div class="question-mark" title="Position PID controller, to tune position effects (visit simplefoc.com for more details)">?</div> PID position</label>
               <p>P </p><input type="number" class="small motor-settings" id="position_pid_p" name="position_pid_p" [(ngModel)]="motor.position_pid.p" (change)="updateMicrocontroller(this.selectedMicrocontroller)">
               <p>I </p><input type="number" class="small motor-settings" id="position_pid_i" name="position_pid_i" [(ngModel)]="motor.position_pid.i" (change)="updateMicrocontroller(this.selectedMicrocontroller)">
@@ -236,7 +271,7 @@
               <p>P </p><input type="number" class="small motor-settings" id="velocity_pid_p" name="velocity_pid_p" [(ngModel)]="motor.velocity_pid.p" (change)="updateMicrocontroller(this.selectedMicrocontroller)">
               <p>I </p><input type="number" class="small motor-settings" id="velocity_pid_i" name="velocity_pid_i" [(ngModel)]="motor.velocity_pid.i" (change)="updateMicrocontroller(this.selectedMicrocontroller)">
               <p>D </p><input type="number" class="small motor-settings" id="velocity_pid_d" name="velocity_pid_d" [(ngModel)]="motor.velocity_pid.d" (change)="updateMicrocontroller(this.selectedMicrocontroller)">
-            </div>
+            </div> -->
 
           </div>
         </div>

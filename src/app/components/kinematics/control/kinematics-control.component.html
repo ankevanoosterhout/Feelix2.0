@@ -1,13 +1,76 @@
-<div id="controls" (click)="stopPropagation($event)">
+<div id="controls" (mouseover)="onControlsMouseover()" (mouseout)="onControlsMouseout()">
   <div class="attach-toolbar"><div class="attach-arrow" [ngClass]="{ hidden: !visible[0] }" (click)="visible[0] = !visible[0]"></div><div class="label title">controls</div></div>
 
   <ul class="menu" [ngClass]="{ open: visible[0] }">
+
+
+    <li id="general-item">
+      <div class="opencloseArrow" [ngClass]="{ open: visible[7] }" (click)="visible[7] = !visible[7]"><div></div></div>
+      <label class="label header">general</label>
+
+      <ul class="content" [ngClass]="{ open: visible[7] }">
+        <li>
+          <div class="row">
+            <div class="labelRow">animate</div>
+            <label class="radio-container inline">
+              <input type="checkbox" class="type" id="animate" name="animate">
+              <span class="checkmark radio inline"></span>
+            </label>
+          </div>
+
+          <div class="row">
+            <div class="labelRow">display models</div>
+            <label class="radio-container inline">
+              <input type="checkbox" class="type" id="display_models" name="display_models">
+              <span class="checkmark radio inline"></span>
+            </label>
+          </div>
+
+          <div class="row">
+            <div class="labelRow">display IK</div>
+            <label class="radio-container inline">
+              <input type="checkbox" class="type" id="display_ik" name="display_ik">
+              <span class="checkmark radio inline"></span>
+            </label>
+          </div>
+
+          <div class="row">
+            <div class="labelRow">iterations</div>
+            <input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="iterations" name="iterations">
+          </div>
+        </li>
+      </ul>
+    </li>
+
+
 
     <li id="model-item">
       <div class="opencloseArrow" [ngClass]="{ open: visible[4] }" (click)="visible[4] = !visible[4]"><div></div></div>
       <label class="label header">models</label>
 
       <ul class="content" [ngClass]="{ open: visible[4] }">
+        <div class="row"><label class="label header">joints</label></div>
+        <div class="row">
+          <ul id="models">
+            <li *ngFor="let model of this.jointModels">
+              <div id="item-{{ model.id }}" class="model-item" (click)="addJoint(model)"><img src="./assets/images/models_png/{{ model.thumbnail }}"></div>
+            </li>
+          </ul>
+        </div>
+      </ul>
+
+      <!-- <ul class="content" [ngClass]="{ open: visible[4] }">
+        <div class="row"><label class="label header">links</label></div>
+        <div class="row">
+          <ul id="models">
+            <li *ngFor="let model of this.linkModels">
+              <div id="item-{{ model.id }}" class="model-item" (click)="addLink(model)"><img src="./assets/images/models_png/{{ model.thumbnail }}"></div>
+            </li>
+          </ul>
+        </div>
+      </ul> -->
+
+      <!-- <ul class="content" [ngClass]="{ open: visible[4] }">
         <div class="row">
           <ul id="models">
             <li *ngFor="let model of this.models">
@@ -15,7 +78,7 @@
             </li>
           </ul>
         </div>
-      </ul>
+      </ul> -->
     </li>
 
     <li id="component-item">

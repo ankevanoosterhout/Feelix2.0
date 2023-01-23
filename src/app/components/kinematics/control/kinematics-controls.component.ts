@@ -7,6 +7,9 @@ import { HardwareService } from 'src/app/services/hardware.service';
 
 import { KinematicsConfig } from 'src/app/models/kinematics-config.model';
 import { KinematicsDrawingService } from 'src/app/services/kinematics-drawing.service';
+import { DragControlsService } from 'src/app/services/drag-controls.service';
+import { IKService } from 'src/app/services/IK.service';
+import { Event } from '@angular/router';
 
 @Component({
     selector: 'app-kinematics-control',
@@ -15,31 +18,56 @@ import { KinematicsDrawingService } from 'src/app/services/kinematics-drawing.se
 })
 export class KinematicsControlComponent {
 
-  public visible = [true, false, false, false, false, false, false];
+  public visible = [true, false, false, false, false, false, false, false];
 
   public config: KinematicsConfig;
 
   infinity = -3.4576917263943217389012348562315E+1203466;
 
+  // models = [
+  //   new Model(0, 'motor', 1, true, 'active_joint_1.png', [ { g:'B', url:'active_joint_1_base.obj'}, { g:'Z', url: 'active_joint_connector_Z.obj' }], 0xff2200),
+  //   new Model(1, 'motor', 2, true, 'active_joint_2.png', [{ g:'B', url:'active_joint_2_base.obj'}, { g:'Z', url: 'active_joint_connector_Z.obj' }], 0xff2200),
+  //   new Model(2, 'joint', 1, false, 'passive_joint_1.png', [{ g:'B', url:'passive_joint_1_base.obj'}, { g:'Z', url: 'passive_joint_connector_Z.obj' }], 0x02a3d9 ),
+  //   new Model(3, 'joint', 2,false, 'passive_joint_2.png', [{ g:'B', url:'passive_joint_2_base.obj'}, { g:'Z', url: 'passive_joint_connector_Z.obj' }], 0x02a3d9 ),
+  //   new Model(4, 'joint', 2,false, 'fixed_joint.png', [{ g:'B', url:'fixed_joint_base.obj'}, { g:'X', url: 'fixed_joint_connector_X.obj' }], 0x02a3d9 )
+  //   // new Model(4, 'arm', 0, false, 'arm.png', [{ g:'C', url:'arm.obj'} ], 0x333333),
+  //   // new Model(5, 'connector', 0,false, 'cube.png', [{ g:'C', url:'cube.obj'}], 0x333333)
+  // ];
+
   models = [
-    new Model(0, 'motor', 1, true, 'active_joint_1.png', [ { g:'B', url:'active_joint_1_base.obj'}, { g:'Z', url: 'active_joint_connector_Z.obj' }], 0xff2200),
-    new Model(1, 'motor', 2, true, 'active_joint_2.png', [{ g:'B', url:'active_joint_2_base.obj'}, { g:'Z', url: 'active_joint_connector_Z.obj' }], 0xff2200),
-    new Model(2, 'joint', 1, false, 'passive_joint_1.png', [{ g:'B', url:'passive_joint_1_base.obj'}, { g:'Z', url: 'passive_joint_connector_Z.obj' }], 0x02a3d9 ),
-    new Model(3, 'joint', 2,false, 'passive_joint_2.png', [{ g:'B', url:'passive_joint_2_base.obj'}, { g:'Z', url: 'passive_joint_connector_Z.obj' }], 0x02a3d9 ),
-    new Model(4, 'joint', 2,false, 'fixed_joint.png', [{ g:'B', url:'fixed_joint_base.obj'}, { g:'X', url: 'fixed_joint_connector_X.obj' }], 0x02a3d9 )
+    new Model(0, 'motor', 1, true, 'active_joint.png', [ { g:'B', url:'active_joint_1_base.obj'}, { g:'Z', url: 'active_joint_connector_Z.obj' }], 0xff2200),
+    new Model(1, 'motor', 1, true, 'joint_rotor.png', [ { g:'B', url:'joint_rotor.obj'}, { g:'Z', url: 'active_joint_connector_Z.obj' }], 0xff2200),
+    new Model(2, 'motor', 1, true, 'active_joint_1.png', [ { g:'B', url:'active_joint_1_base.obj'}, { g:'Z', url: 'active_joint_connector_Z.obj' }], 0xff2200),
+    new Model(3, 'motor', 2, true, 'active_joint_2.png', [{ g:'B', url:'active_joint_2_base.obj'}, { g:'Z', url: 'active_joint_connector_Z.obj' }], 0xff2200),
+    new Model(4, 'joint', 1, false, 'passive_joint_1.png', [{ g:'B', url:'passive_joint_1_base.obj'}, { g:'Z', url: 'passive_joint_connector_Z.obj' }], 0x02a3d9 ),
+    new Model(5, 'joint', 2,false, 'passive_joint_2.png', [{ g:'B', url:'passive_joint_2_base.obj'}, { g:'Z', url: 'passive_joint_connector_Z.obj' }], 0x02a3d9 ),
+    new Model(6, 'joint', 2,false, 'fixed_joint.png', [{ g:'B', url:'fixed_joint_base.obj'}, { g:'X', url: 'fixed_joint_connector_X.obj' }], 0x02a3d9 )
     // new Model(4, 'arm', 0, false, 'arm.png', [{ g:'C', url:'arm.obj'} ], 0x333333),
     // new Model(5, 'connector', 0,false, 'cube.png', [{ g:'C', url:'cube.obj'}], 0x333333)
   ];
 
+  jointModels = [
+    new Model(0, 'revolute', 1, true, 'active_joint_1.png', [ { g:'B', url:'active_joint_stator.obj'}, { g:'Z', url: 'active_joint_connector_Z.obj' }], 0xff2200),
+    new Model(0, 'revolute', 1, false, 'passive_joint_1.png', [ { g:'B', url:'passive_joint_stator.obj'}, { g:'Z', url: 'active_joint_connector_Z.obj' }], 0xff2200),
+    new Model(0, 'revolute', 1, true, 'active_joint_3.png', [ { g:'B', url:'active_joint_stator.obj'}, { g:'Z', url: 'active_joint_connector_Z.obj' }], 0xff2200),
+    new Model(0, 'revolute', 1, false, 'passive_joint_3.png', [ { g:'B', url:'passive_joint_stator.obj'}, { g:'Z', url: 'passive_joint_connector_Z.obj' }], 0xff2200),
+    new Model(0, 'fixed', 1, false, 'fixed_joint.png', [ { g:'B', url:'fixed_joint_base.obj'}, { g:'Z', url: 'fixed_joint_connector_X.obj' }], 0xff2200)
+  ];
+
+  linkModels = [
+    new Model(1, 'motor', 1, true, 'joint_rotor.png', [ { g:'B', url:'joint_rotor.obj'}, { g:'Z', url: 'active_joint_connector_Z.obj' }], 0xff2200)
+  ]
+
+
 //this.kinematicService.selectedJoints[0].type === 'motor' && this.kinematicService.selectedJoints[0].subtype === 'b' && type === 'i'
 
   constructor(public kinematicService: KinematicService, private kinematicsDrawingService: KinematicsDrawingService,
-              private electronService: ElectronService, public hardwareService: HardwareService) {
+              private electronService: ElectronService, public hardwareService: HardwareService, private ikService: IKService, private dragControlService: DragControlsService) {
 
     this.config = this.kinematicsDrawingService.config;
 
-    this.electronService.ipcRenderer.on('controlsVisible', (event: Event, visible: boolean) => {
-      this.visible[0] = visible;
+    this.electronService.ipcRenderer.on('controlsVisible', (event: any, data: any) => {
+      this.visible[0] = data;
     });
 
     this.kinematicService.importOBJModelToObjectGroup.subscribe(res => {
@@ -58,10 +86,29 @@ export class KinematicsControlComponent {
       this.loadOBJModel(res);
     });
 
-    this.kinematicsDrawingService.updateJointAngleScene.subscribe(res => {
-      this.updateJointAngle(res);
-    });
+    // this.kinematicsDrawingService.updateJointAngleScene.subscribe(res => {
+    //   this.updateJointAngle(res);
+    // });
+
+    // this.dragControls.updateJointAngleScene.subscribe(res => {
+    //   const joint = this.kinematicService.getJoint(res.joint);
+    //   if (joint) {
+    //     joint.angle += res.delta;
+    //     this.updateJointAngle(joint);
+    //   }
+    // });
+
     console.log(this.infinity);
+  }
+
+  onControlsMouseover() {
+    this.config.rayCaster.layers.disableAll();
+    this.kinematicsDrawingService.setControlsActive.next(true);
+  }
+
+  onControlsMouseout() {
+    this.config.rayCaster.layers.enableAll();
+    this.kinematicsDrawingService.setControlsActive.next(false);
   }
 
 
@@ -83,7 +130,7 @@ export class KinematicsControlComponent {
         object.updateMatrix();
 
 
-        joint.sceneObject = object;
+        // joint.sceneObject = object;
       }
     }
 
@@ -96,12 +143,12 @@ export class KinematicsControlComponent {
   //   this.updateJoint(joint);
   // }
 
-  selectJointObject(object: JointLink) {
-    const sceneObject = this.config.scene.getObjectByName(object.id);
-    if (sceneObject) {
-      this.kinematicsDrawingService.selectSceneObject(sceneObject);
-    }
-  }
+  // selectJointObject(object: JointLink) {
+  //   const sceneObject = this.config.scene.getObjectByName(object.id);
+  //   if (sceneObject) {
+      // this.kinematicsDrawingService.selectSceneObject(sceneObject);
+    // }
+  // }
 
 
   deletePoint(id: string, point_id: string) {
@@ -120,9 +167,34 @@ export class KinematicsControlComponent {
 
 
 
-  addModel(model: any) {
-    const modelObject = this.kinematicService.addJoint(model);
-    this.loadOBJModel(modelObject);
+  // addModel(model: any) {
+  //   console.log(model);
+  //   const modelObject = this.kinematicService.addJoint(model);
+  //   // start urfd file
+  //   console.log(modelObject);
+  //   this.loadOBJModel(modelObject);
+  // }
+
+  addJoint(model: any) {
+    console.log(model);
+    const urfd_joint = this.kinematicService.addNewJoint(model);
+    // if (this.dragControlService.selectedObject) {
+    //   urfd_joint.dimensions.origin = this.dragControlService.selectedObject.dimensions.origin;
+    // }
+    console.log(urfd_joint);
+    // start urfd file
+    this.ikService.newJoint(urfd_joint, this.dragControlService.selected);
+    console.log(urfd_joint);
+    this.loadOBJModel(urfd_joint);
+  }
+
+  addLink(model: any) {
+    console.log(model);
+    const urfd_link = this.kinematicService.addNewLink(model);
+
+    console.log(urfd_link);
+    this.ikService.newLink(urfd_link, this.dragControlService.selected);
+    this.loadOBJModel(urfd_link);
   }
 
 
@@ -131,8 +203,9 @@ export class KinematicsControlComponent {
     group.name = model.id;
 
     for (const item of model.object3D.objectUrls) {
+      console.log(item);
       this.config.loader.load('./assets/models/' + item.url, (object: any) => {   // called when resource is loaded
-
+        console.log(object);
         object.name = item.g;
 
         object.traverseVisible( ( child: any ) => {
@@ -142,7 +215,7 @@ export class KinematicsControlComponent {
               // console.log(child_color);
               if (child_color[0] === "Yellow") {
                 // console.log(model.id);
-                this.kinematicService.updateSelectionPointID(model.id, child.name, child.uuid);
+                // this.kinematicService.updateSelectionPointID(model.id, child.name, child.uuid);
               }
             }
             if (child.name === 'Z') {
@@ -159,14 +232,14 @@ export class KinematicsControlComponent {
       });
     }
 
-    this.kinematicService.joints.filter(j => j.id === model.id)[0].sceneObject = group;
+    // this.kinematicService.urfdJoints.filter(j => j.id === model.id)[0].sceneObject = group;
     this.config.scene.add( group );
 
-    for (const connector of model.connectors) {
-      if (connector.plane !== 'Z') {
-        this.importOBJModelToGroup(connector, model.id, model);
-      }
-    }
+    // for (const connector of model.connectors) {
+    //   if (connector.plane !== 'Z') {
+    //     this.importOBJModelToGroup(connector, model.id, model);
+    //   }
+    // }
     this.updateJoint(model);
     // this.updateJointAngle(this.kinematicService.joints.filter(j => j.id === model.id)[0]);
 
@@ -354,9 +427,9 @@ export class KinematicsControlComponent {
     this.config.control.setMode( 'rotate' );
   }
 
-  stopPropagation(event: Event) {
-    event.stopPropagation();
-  }
+  // stopPropagation(event: Event) {
+  //   event.stopPropagation();
+  // }
 
   inputActive(active: boolean) {
     this.config.inputActive = active;
@@ -410,7 +483,7 @@ export class KinematicsControlComponent {
 
 
   updateJointAngle(joint: JointLink) {
-    console.log(joint.angle);
+    console.log(joint);
     //update all Y connectors and rotary indicator
     const sceneObject = this.config.scene.getObjectByName(joint.id);
     const Yconnectors = joint.connectors.filter(c => c.plane === 'Y');

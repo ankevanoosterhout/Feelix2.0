@@ -1,9 +1,9 @@
 import { Component, OnInit, Inject } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { ElectronService } from 'ngx-electron';
-import { DataSet, Model } from 'src/app/models/ml5js.model';
+import { DataSet, Model } from 'src/app/models/tensorflow.model';
 import { DataSetService } from 'src/app/services/dataset.service';
-import { ML5ModelService } from 'src/app/services/ml5-model.service';
+import { TensorFlowModelService } from 'src/app/services/tensorFlow-model.service';
 import { Router } from '@angular/router';
 
 
@@ -111,11 +111,11 @@ export class LoadDataSetsComponent implements OnInit {
 
   // tslint:disable-next-line: variable-name
   constructor(@Inject(DOCUMENT) private document: Document, private electronService: ElectronService, private dataSetService: DataSetService,
-             private ml5ModelService: ML5ModelService, private router: Router) {
+             private tensorFlowModelService: TensorFlowModelService, private router: Router) {
 
               if (this.router.url === '/load-model') {
                 this.mode = 'model';
-                this.data = this.ml5ModelService.getAllModels();
+                this.data = this.tensorFlowModelService.getAllModels();
               } else {
                 this.mode = 'data';
                 this.data = this.dataSetService.getAllDataSets();
@@ -154,7 +154,7 @@ export class LoadDataSetsComponent implements OnInit {
 
   delete() {
     for (const item of this.data.filter(d => d.selected)) {
-      this.mode === 'data' ? this.dataSetService.deleteDataSet(item.id) : this.ml5ModelService.deleteModel(item.id);
+      this.mode === 'data' ? this.dataSetService.deleteDataSet(item.id) : this.tensorFlowModelService.deleteModel(item.id);
     }
   }
 

@@ -4,7 +4,10 @@ import * as THREE from 'three';
 import { KinematicsConfig } from 'src/app/models/kinematics-config.model';
 import { KinematicsDrawingService } from 'src/app/services/kinematics-drawing.service';
 import { DOCUMENT } from '@angular/common';
-import { ClosedChainIKService } from 'src/app/services/closed-chain-ik.service';
+import { DragControlsService } from 'src/app/services/drag-controls.service';
+import { Subject } from 'rxjs';
+import { Raycaster } from 'three';
+// import { ClosedChainIKService } from 'src/app/services/closed-chain-ik.service';
 
 @Component({
     selector: 'app-kinematics',
@@ -19,6 +22,10 @@ export class KinematicsComponent implements OnInit, AfterViewInit {
   public status = 'Ready';
   public progress = 0;
   list = 'models';
+  public controlsActive = false;
+
+  raycaster = new Raycaster();
+
 
   params = {
     controls: 'translate',
@@ -29,7 +36,7 @@ export class KinematicsComponent implements OnInit, AfterViewInit {
 
   // tslint:disable-next-line: variable-name
   constructor(@Inject(DOCUMENT) private document: Document, private kinematicsDrawingService: KinematicsDrawingService,
-              private electronService: ElectronService, private closedChainService: ClosedChainIKService) {
+              private electronService: ElectronService, private dragControlsService: DragControlsService) {
 
     this.config = this.kinematicsDrawingService.config;
 
@@ -71,9 +78,9 @@ export class KinematicsComponent implements OnInit, AfterViewInit {
       this.openExample(data);
     });
 
-    this.kinematicsDrawingService.selectObjectFromScene.subscribe(res => {
-      this.kinematicsDrawingService.selectObject(res);
-    });
+    // this.kinematicsDrawingService.selectObjectFromScene.subscribe(res => {
+    //   this.kinematicsDrawingService.selectObject(res);
+    // });
 
     this.kinematicsDrawingService.updateCameraView.subscribe(res => {
       this.updateCamera();
@@ -94,6 +101,10 @@ export class KinematicsComponent implements OnInit, AfterViewInit {
 
     });
 
+    this.kinematicsDrawingService.setControlsActive.subscribe(data => {
+      this.controlsActive = data;
+    })
+
   }
 
 
@@ -110,6 +121,10 @@ export class KinematicsComponent implements OnInit, AfterViewInit {
     this.kinematicsDrawingService.loadSavedModels();
   }
 
+  setActivateControls(activate: boolean) {
+    this.controlsActive = activate;
+  }
+
   getWindowSize() {
     this.config.height = window.innerHeight;
     this.config.width = window.innerWidth;
@@ -120,7 +135,7 @@ export class KinematicsComponent implements OnInit, AfterViewInit {
   @HostListener('window:resize', ['$event'])
   onResize(e: Event) {
     this.onWindowResize();
-    this.closedChainService.updateResolution(window.innerWidth, window.innerHeight);
+    // this.closedChainService.updateResolution(window.innerWidth, window.innerHeight);
   }
 
 
@@ -139,74 +154,108 @@ export class KinematicsComponent implements OnInit, AfterViewInit {
     this.kinematicsDrawingService.animate();
   }
 
+  updateMouse(e) {
+    this.config.mousePosition.x = (e.clientX / this.config.width) * 2 - 1;
+    this.config.mousePosition.y = - (e.clientY / this.config.height) * 2 + 1;
+  }
+
 
   @HostListener('document:mousemove', ['$event'])
   onMouseMove(e: MouseEvent) {
-    e.preventDefault();
+    if (!this.controlsActive) {
+      e.preventDefault();
 
-    this.config.mousePosition.x = (e.clientX / this.config.width) * 2 - 1;
-    this.config.mousePosition.y = - (e.clientY / this.config.height) * 2 + 1;
+      this.updateMouse(e);
+      this.raycaster.setFromCamera(this.config.mousePosition, this.config.currentCamera);
+      this.dragControlsService.moveRay(this.raycaster.ray);
+      // this.kinematicsDrawingService.getIntersects(this.config.shift);
+      // this.dragControlsService.moveRay(this.config.rayCaster.ray);
 
-    if (this.config.draggableObject) {
-      this.kinematicsDrawingService.getIntersects(this.config.shift);
-      this.config.rayCaster.setFromCamera(this.config.mousePosition, this.config.currentCamera);
-      this.config.rayCaster.ray.intersectPlane(this.config.plane, this.config.intersectPoint);
+      // if (this.config.draggableObject) {
+      //   this.kinematicsDrawingService.getIntersects(this.config.shift);
+      //   this.config.rayCaster.setFromCamera(this.config.mousePosition, this.config.currentCamera);
+      //   this.config.rayCaster.ray.intersectPlane(this.config.plane, this.config.intersectPoint);
 
-      const matrix = new THREE.Matrix4();
-      const finalPosition = this.config.intersectPoint.clone();
-      finalPosition.x = -this.config.intersectPoint.y;
-      finalPosition.y = this.config.intersectPoint.x;
-      // console.log(this.config.intersectPoint);
-      matrix.lookAt(
-        finalPosition,
-        new THREE.Vector3(0, 0, 0),
-        new THREE.Vector3(0, 0, 1)
-      );
-      // console.log(matrix);
-      if (this.config.draggableObject) {
-        this.config.draggableObject.quaternion.setFromRotationMatrix(matrix);
-        this.config.draggableObject.rotateX(Math.PI/2);
-      }
+      //   const matrix = new THREE.Matrix4();
+      //   const finalPosition = this.config.intersectPoint.clone();
+      //   finalPosition.x = -this.config.intersectPoint.y;
+      //   finalPosition.y = this.config.intersectPoint.x;
+      //   // console.log(this.config.intersectPoint);
+      //   matrix.lookAt(
+      //     finalPosition,
+      //     new THREE.Vector3(0, 0, 0),
+      //     new THREE.Vector3(0, 0, 1)
+      //   );
+      //   // console.log(matrix);
+      //   if (this.config.draggableObject) {
+      //     this.config.draggableObject.quaternion.setFromRotationMatrix(matrix);
+      //     this.config.draggableObject.rotateX(Math.PI/2);
+      //   }
+      // }
+
+      this.kinematicsDrawingService.animate();
     }
-
-    this.kinematicsDrawingService.animate();
   }
+
+
 
   @HostListener('document:mousedown', ['$event'])
   onMouseDown(e: MouseEvent) {
-    this.config.mousedown = true;
-    // this.config.mousePosition.x = (e.clientX / this.config.width) * 2 - 1;
-    // this.config.mousePosition.y = - (e.clientY / this.config.height) * 2 + 1;
-    this.kinematicsDrawingService.getIntersects(this.config.shift);
+    if (!this.controlsActive) {
+      this.config.mousedown = true;
+      // console.log('mousedown');
+      this.updateMouse(e);
+      this.raycaster.setFromCamera(this.config.mousePosition, this.config.currentCamera);
+      this.dragControlsService.moveRay(this.raycaster.ray);
 
-    if (this.config.draggableObject) {
-      this.config.orbit.enabled = false;
+      this.dragControlsService.setGrabbed(true);
+      this.dragControlsService.setSelected();
+
+      // if (this.dragControlsService.manipulating !== null) {
+      //   this.config.orbit.enabled = false;
+      // }
+
+      // if (this.config.draggableObject) {
+      //   this.config.orbit.enabled = false;
+      // }
     }
   }
-
-  // @HostListener('document:mouseup', ['$event'])
-  // onMouseUp(e: MouseEvent) {
-  //   this.config.mousedown = false;
-  // }
 
 
   @HostListener('document:mouseup', ['$event'])
   onMouseUp(e:MouseEvent) {
     e.preventDefault();
+    if (!this.controlsActive) {
+      this.config.mousedown = false;
+      this.kinematicsDrawingService.config.orbit.enabled = true;
 
-    if (this.config.draggableObject) {
-      console.log('deselect draggable object');
-      this.config.draggableObject = undefined;
-      this.config.orbit.enabled = true;
+      this.config.rayCaster.setFromCamera(this.config.mousePosition, this.config.currentCamera);
+      // console.log('mouseup');
+      this.updateMouse(e);
+      this.dragControlsService.moveRay(this.config.rayCaster.ray);
+      this.dragControlsService.setGrabbed(false);
+
+      // if (this.dragControlsService.manipulating === null) {
+      //   this.config.orbit.enabled = true;
+      // }
+
     }
+    // this.dragControlsService.setGrabbed(false);
 
 
-    if (this.config.rootActive) {
-      this.closedChainService.updateRoot();
-    }
+    // if (this.config.draggableObject) {
+    //   console.log('deselect draggable object');
+    //   this.config.draggableObject = undefined;
+    //   this.config.orbit.enabled = true;
+    // }
 
-
+    // if (this.config.rootActive) {
+      // this.closedChainService.updateRoot();
+    // }
   }
+
+
+
 
   @HostListener('window:keydown', ['$event'])
   onKeyDown(e: KeyboardEvent) {

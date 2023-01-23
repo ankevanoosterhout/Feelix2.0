@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Subject } from 'rxjs';
 import { v4 as uuid } from 'uuid';
 import { LocalStorageService } from 'ngx-webstorage';
-import { JointLink, Object3D, Connector, Point, ConnectorSize, ModelFile } from '../models/kinematic.model';
+import { JointLink, Object3D, Connector, Point, ConnectorSize, ModelFile, URFD_Joint, Model, URFD_Link } from '../models/kinematic.model';
 import * as THREE from 'three';
 import { FileSaverService } from 'ngx-filesaver';
 import { KinematicLinkService } from './kinematic-link.service';
@@ -18,6 +18,8 @@ export class KinematicService {
   public static readonly MODEL_FILES_LOCATION = 'ngx-webstorage|modelFiles';
 
   joints: Array<JointLink> = [];
+
+  frames: Array<any> = [];
 
   models: Array<ModelFile> = [];
 
@@ -245,6 +247,7 @@ export class KinematicService {
 
   addJoint(model: any): JointLink {
     const joint = new JointLink(uuid(), model);
+    console.log(joint);
     const similarObjects = this.joints.filter(j => j.isMotor === joint.isMotor && j.isJoint === joint.isJoint).length;
     joint.name += '-' + (similarObjects + 1);
     this.joints.push(joint);
@@ -252,6 +255,39 @@ export class KinematicService {
 
     return joint;
   }
+
+  addNewJoint(model: Model): URFD_Joint {
+    const urfd_joint = new URFD_Joint(uuid(), model);
+
+    const similarObjects = this.frames.filter(j => j.config.active).length;
+    urfd_joint.name += '-' + (similarObjects + 1);
+
+    console.log(urfd_joint);
+    this.frames.push(urfd_joint);
+    this.store();
+
+    return urfd_joint;
+  }
+
+  addNewLink(model: Model): URFD_Link {
+    const urfd_link = new URFD_Link(uuid(), model);
+
+    const similarObjects = this.frames.filter(l => l instanceof URFD_Link).length;
+    urfd_link.name += '-' + (similarObjects + 1);
+
+    this.frames.push(urfd_link);
+    return urfd_link;
+  }
+
+  // addJoint(model: any): JointLink {
+  //   const joint = new JointLink(uuid(), model);
+  //   const similarObjects = this.joints.filter(j => j.isMotor === joint.isMotor && j.isJoint === joint.isJoint).length;
+  //   joint.name += '-' + (similarObjects + 1);
+  //   this.joints.push(joint);
+  //   this.store();
+
+  //   return joint;
+  // }
 
   deleteJoint(id: string) {
     this.deselectJoint(id);
@@ -431,6 +467,10 @@ export class KinematicService {
 
   getAllJoints(): Array<JointLink> {
     return this.joints;
+  }
+
+  getObjectWithID(id: string): any {
+    return this.frames.filter(f => f.id === id)[0];
   }
 
   deselectJoint(id: string) {

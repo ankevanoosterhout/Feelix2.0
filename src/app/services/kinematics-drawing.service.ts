@@ -9,7 +9,6 @@ import { TransformControls } from 'three/examples/jsm/controls/TransformControls
 import { KinematicService } from './kinematic.service';
 import { ClosedChainIKService } from './closed-chain-ik.service';
 import { KinematicLinkService } from './kinematic-link.service';
-import { FullIKService } from './full-ik.service';
 
 
 @Injectable()
@@ -17,7 +16,9 @@ export class KinematicsDrawingService {
 
   public config: KinematicsConfig;
 
-  selectObjectFromScene: Subject<any> = new Subject();
+  public targets = [];
+
+  // selectObjectFromScene: Subject<any> = new Subject();
   updateModelPosition: Subject<any> = new Subject();
 
   loadOBJ: Subject<any> = new Subject();
@@ -27,10 +28,11 @@ export class KinematicsDrawingService {
   selectCameraView: Subject<any> = new Subject();
   loadModelFromLink: Subject<any> = new Subject();
   updateJointAngleScene: Subject<any> = new Subject();
+  setControlsActive: Subject<any> = new Subject();
 
 
-  constructor(@Inject(DOCUMENT) private document: Document, private kinematicService: KinematicService, private closedChainIKService: ClosedChainIKService,
-              private kinematicLinkService: KinematicLinkService) {
+  constructor(@Inject(DOCUMENT) private document: Document, private kinematicService: KinematicService,
+              private kinematicLinkService: KinematicLinkService, private closedChainIKService: ClosedChainIKService) {
     this.config = new KinematicsConfig();
 
     this.closedChainIKService.addToScene.subscribe(res => {
@@ -50,6 +52,11 @@ export class KinematicsDrawingService {
       this.animate();
     });
 
+    this.closedChainIKService.updateTargetPosition.subscribe(res => {
+      this.updateTargetObjectPosition(res);
+    })
+
+
     this.kinematicService.loadModels.subscribe(res => {
       this.loadSavedModels();
     });
@@ -58,15 +65,26 @@ export class KinematicsDrawingService {
       this.deleteAllJointsFromScene();
     });
 
+    // this.dragControlsService.getIntersections.subscribe(res => {
+    //   const intersections = this.config.rayCaster.intersectObject(this.config.scene, true);
+    //   if (intersections && intersections.length > 2) {
+    //     this.dragControlsService.processIntersections(intersections);
+    //   }
+    // });
+
+  }
+
+  public getIntersections() {
+    const intersections = this.config.rayCaster.intersectObject(this.config.scene, true);
+    if (intersections && intersections.length > 2) {
+      return intersections;
+    }
   }
 
 
-
-
-
-  public selectSceneObject( object: any ) {
-    this.selectObjectFromScene.next(object);
-  }
+  // public selectSceneObject( object: any ) {
+  //   this.selectObjectFromScene.next(object);
+  // }
 
   updateProgess(_status: String, _progress: number) {
     this.updateKinematicsProgress.next({ status: _status, progress: _progress });
@@ -101,20 +119,23 @@ export class KinematicsDrawingService {
     this.selectControl.next(name);
   }
 
+  drawOriginVectors() {
+    this.drawOrigin({ x: 30, y: 0, z: 0 }, 0xd12304);
+    this.drawOrigin({ x: 0, y: 30, z: 0 }, 0x00c93c);
+    this.drawOrigin({ x: 0, y: 0, z: 30 }, 0x02a3d9);
+  }
+
+
   init() {
     this.config.canvas = this.document.getElementById('canvas');
+    this.config.renderer.setPixelRatio( window.devicePixelRatio );
     this.config.renderer.setSize(this.config.width, this.config.height);
+    this.config.renderer.outputEncoding = THREE.sRGBEncoding;
     this.config.canvas.appendChild( this.config.renderer.domElement );
 
     this.config.scene = new THREE.Scene();
     this.config.scene.background = new THREE.Color( 0xe0e0e0 );
     this.config.scene.fog = new THREE.Fog(0xe0e0e0, 1200, 2000);
-
-    this.drawGrid();
-
-    // this.drawOrigin({ x: 30, y: 0, z: 0 }, 0xd12304);
-    // this.drawOrigin({ x: 0, y: 30, z: 0 }, 0x00c93c);
-    // this.drawOrigin({ x: 0, y: 0, z: 30 }, 0x02a3d9);
 
     const hemiLight = new THREE.HemisphereLight( 0xffffff, 0x444444 );
     hemiLight.position.set( 0, 20, 0 );
@@ -124,7 +145,7 @@ export class KinematicsDrawingService {
     dirLight.position.set( 0, 20, 10 );
     this.config.scene.add( dirLight );
 
-
+    this.drawGrid();
 
 
     this.config.cameraPersp = new THREE.PerspectiveCamera(45, this.config.width/this.config.height, 1, 100000);
@@ -139,49 +160,47 @@ export class KinematicsDrawingService {
     this.config.orbit.update();
 
     this.config.control = new TransformControls( this.config.currentCamera, this.config.renderer.domElement );
+
     this.config.control.name = 'no-pointer-events';
     this.config.control.setSpace( 'local' );
     this.config.control.addEventListener( 'objectChange', (event: any) => {
+      console.log("object change", event);
       if (this.kinematicService.selectedJoints.length === 1) {
         const sceneObject = this.config.scene.getObjectByName(this.kinematicService.selectedJoints[0].id);
         if (sceneObject) {
           this.updatePosition(sceneObject, this.kinematicService.selectedJoints[0], true);
         }
       }
+      //IK needs update
     });
 
-    this.config.control.addEventListener('mouseUp', (event: any) => {
-      if (this.config.move) {
-        console.log('update target');
-        this.closedChainIKService.updateTargetObject();
-      }
-    });
+    // this.config.control.addEventListener('mouseUp', (event: any) => {
+    //   if (this.config.move) {
+    //     console.log('update target');
+
+    //     this.closedChainIKService.updateTargetObject();
+    //   }
+    // });
+
+
 
     this.config.control.addEventListener( 'dragging-changed', ( event: any ) => {
-      // this.config.orbit.enabled = this.config.draggableObject !== undefined ? false : !event.value;
+      console.log('dragging changed ', event.value);
       this.config.orbit.enabled = !event.value;
 
-      // console.log('dragging changed controls', this.config.orbit.enabled);
-      // if (this.kinematicService.selectedJoints.length === 1) {
-      //   const sceneObject = this.config.scene.getObjectByName(this.kinematicService.selectedJoints[0].id);
-      //   if (sceneObject) { this.updatePosition(sceneObject, this.kinematicService.selectedJoints[0]); }
-      // }
+
+      // ikNeedsUpdate = true;
+		  // setIKFromUrdf( ikRoot, urdfRoot );
+
     });
 
     this.config.control.setTranslationSnap( 10 );
     this.config.control.setRotationSnap( THREE.MathUtils.degToRad(15) );
     this.config.control.setScaleSnap( 0.25 );
-
-    this.config.pivotPoint = new THREE.Object3D();
-    this.config.scene.add(this.config.pivotPoint);
-
     this.config.scene.add( this.config.control );
-    this.addRotationCircle();
-    // this.config.rotaryControls.addEventListener( 'dragging-changed', ( event: any ) => {
-    //   this.config.orbit.enabled = !event.value;
-    //   console.log('dragging changed rotary', this.config.orbit.enabled);
-    // });
 
+    this.closedChainIKService.ikConfig.targetObject = new THREE.Group();
+    this.config.scene.add(this.closedChainIKService.ikConfig.targetObject);
 
     this.config.orbit.update();
 
@@ -193,17 +212,16 @@ export class KinematicsDrawingService {
 
     for (const joint of this.kinematicService.joints) {
       if (joint.sceneObject) {
-        if (joint.sceneObject.object) {
 
-          this.config.jsonLoader.parse(joint.sceneObject, (obj: any) => {
-            joint.sceneObject = obj;
-            this.config.scene.add(obj);
-          });
-        } else {
-          this.config.scene.add(joint.sceneObject);
-        }
-        this.setObjectColor(joint.sceneObject);
+        this.config.jsonLoader.parse(joint.sceneObject, (obj: any) => {
+          joint.sceneObject = obj;
+          this.config.scene.add(obj);
+        });
+      } else {
+        this.config.scene.add(joint.sceneObject);
       }
+      this.setObjectColor(joint.sceneObject);
+
     }
     this.animate();
   }
@@ -212,7 +230,6 @@ export class KinematicsDrawingService {
   addObjectToScene(object: any, addControls = false) {
     if (object) {
       this.config.scene.add(object);
-      // console.log(this.config.scene);
       if (addControls) {
         const sceneObject = this.config.scene.getObjectByName(object.name);
         this.config.control.attach(sceneObject);
@@ -229,6 +246,19 @@ export class KinematicsDrawingService {
     this.animate();
   }
 
+  addTargetObject() {
+    const targetObject = new THREE.Group();
+    targetObject.name = 'target';
+    targetObject.position.set(0,0,0);
+    this.config.scene.add(targetObject);
+  }
+
+  updateTargetObjectPosition(position: any) {
+    const targetObject = this.config.scene.getObjectByName('target');
+    targetObject.position.set(position.x, position.y, position.z);
+    targetObject.updateMatrix();
+    this.animate();
+  }
 
 
   drawOrigin(direction: {x: number, y: number, z: number}, color: any) {
@@ -262,11 +292,10 @@ export class KinematicsDrawingService {
     mesh.name = 'no-pointer-events';
     this.config.scene.add( mesh );
 
-    const grid = new THREE.GridHelper( 2000, 50, 0x000000, 0x000000 );
+    const grid = new THREE.GridHelper( 2000, 50, 0xcccccc, 0xcccccc );
     // grid.name = 'grid';
     grid.name = 'no-pointer-events';
-    grid.material.opacity = 0.2;
-    grid.material.transparent = true;
+
     this.config.scene.add( grid );
   }
 
@@ -282,66 +311,55 @@ export class KinematicsDrawingService {
 
   getIntersects(shift: boolean) {
 
-    this.config.rayCaster.setFromCamera(this.config.mousePosition, this.config.currentCamera);
-    const intersects = this.config.rayCaster.intersectObjects(this.config.scene.children);
-    // console.log(intersects);
-
-    // if (intersects && intersects[0].object.parent.name === 'rotary_control') {
-    //   console.log('draggable');
-    //   this.config.draggableObject = intersects[0].object.parent;
-
-    // } else {
-
-
-
-        for (const intersect of intersects) {
-        // console.log(intersect);
-
-          // if (intersects && intersect.object.parent.name === 'rotary_control') {
-          //   this.config.draggableObject = intersect.object.parent;
-          //   console.log('rotate');
-
-          //   this.config.pivotPoint.rotation.z = this.getAngleRotaryElement();
-          //   break;
-
-          // } else
-
-          if (intersect.object && intersect.object instanceof THREE.Mesh) {
-            // console.log(intersect.object);
-            const selectedElement = this.getObjectDetailsFromName(intersect.object.name);
-            // console.log(selectedElement);
-            if (selectedElement) {
-              // console.log(selectedElement);
-              if (selectedElement.color === 'Yellow') {
-                this.selectConnectionElement(intersect.object, shift);
-                break;
-              } else if (selectedElement.color === 'Gray' && selectedElement.axis === 'M') {
-                this.selectMovableElement(intersect.object, selectedElement.val);
-                break;
-              }
-            }
-          }
-
-          if (intersect.object && intersect.object.name !== 'no-pointer-events' && intersect.object.parent.name !== 'rotary_control') {
-            const joint = this.kinematicService.joints.filter(j => j.id === intersect.object.parent.name || (intersect.object.parent.parent && j.id === intersect.object.parent.parent.name))[0];
-
-            // console.log(joint);
-
-            if (joint) {
-              this.selectJoint(joint, shift);
-              this.animate();
-
-              break;
-            }
-
-        }
-
-        // } else {
-          // break;
-        // }
-      // }
-    }
   }
+
+  // getIntersects(shift: boolean) {
+
+  //   this.config.rayCaster.setFromCamera(this.config.mousePosition, this.config.currentCamera);
+  //   const intersects = this.config.rayCaster.intersectObjects(this.config.scene.children);
+
+
+  //       for (const intersect of intersects) {
+  //       // console.log(intersect);
+
+  //         if (intersect.object && intersect.object instanceof THREE.Mesh) {
+  //           // console.log(intersect.object);
+  //           const selectedElement = this.getObjectDetailsFromName(intersect.object.name);
+  //           // console.log(selectedElement);
+  //           if (selectedElement) {
+  //             // console.log(selectedElement);
+  //             if (selectedElement.color === 'Yellow') {
+  //               this.selectConnectionElement(intersect.object, shift);
+  //               break;
+  //             } else if (selectedElement.color === 'Gray' && selectedElement.axis === 'M') {
+  //               console.log(intersect);
+  //               this.selectMovableElement(intersect, selectedElement.val);
+
+  //               break;
+  //             }
+  //           }
+  //         }
+
+  //         if (intersect.object && intersect.object.name !== 'no-pointer-events') {
+  //           const joint = this.kinematicService.joints.filter(j => j.id === intersect.object.parent.name || (intersect.object.parent.parent && j.id === intersect.object.parent.parent.name))[0];
+
+  //           // console.log(joint);
+
+  //           if (joint) {
+  //             this.selectJoint(joint, shift);
+  //             this.animate();
+
+  //             break;
+  //           }
+
+  //       }
+
+  //       // } else {
+  //         // break;
+  //       // }
+  //     // }
+  //   }
+  // }
 
 
 
@@ -440,19 +458,18 @@ export class KinematicsDrawingService {
         this.kinematicService.selectJoint(joint.id);
         this.setObjectColor(joint.sceneObject, this.config.selectColor);
 
-        console.log(this.kinematicService.selectedJoints);
         if (this.kinematicService.selectedJoints.length === 1) {
           if (!this.config.move) {
             this.config.control.attach(joint.sceneObject);
           } else {
-            // this.config.control.attach(target);
-            // this.config.closedChaindService.createRootsFromStructure();
-
+            console.log(joint);
             const root = this.kinematicLinkService.getRootWithObject(joint.sceneObject.name);
             console.log(root);
             if (root) {
               this.closedChainIKService.createRootsFromList(root, this.config.scene.children.filter(c => c.isGroup));
+
               this.closedChainIKService.createTarget(joint.sceneObject);
+
               // this.config.control.attach(joint.sceneObject);
             }
           }
@@ -462,47 +479,9 @@ export class KinematicsDrawingService {
   }
 
   selectObject(object: any, shift = false) {
-    console.log(object, this.kinematicService.joints);
-
     const joint = this.kinematicService.joints.filter(j => j.id === object.name)[0];
-    console.log(joint);
     if (joint) {
-      console.log(joint);
-      const isSelectedIndex = this.kinematicService.selectedJoints.indexOf(joint);
-      console.log(isSelectedIndex);
-      if (isSelectedIndex > -1) {
-        this.deselectObject(object);
-        this.config.control.detach();
-
-      } else {
-        if (!shift && this.kinematicService.selectedJoints.length > 0) {
-          this.deselectAllObjects();
-        } else if (shift && this.kinematicService.selectedJoints.length === 1) {
-          this.config.control.detach();
-        }
-        if (object.isGroup) {
-          this.kinematicService.selectJoint(joint.id);
-          this.setObjectColor(object, this.config.selectColor);
-          // console.log(object);
-
-          if (this.kinematicService.selectedJoints.length === 1) {
-            if (!this.config.move) {
-              this.config.control.attach(object);
-            } else {
-              console.log(object);
-              // const target = this.closedChainIKService.createTarget();
-              // this.config.control.attach(target);
-              // this.config.closedChaindService.createRootsFromStructure();
-              const root = this.kinematicLinkService.getRootWithObject(object.name);
-              console.log(root);
-              if (root) {
-                this.closedChainIKService.createRootsFromList(root, this.config.scene.children.filter(c => c.isGroup));
-                this.closedChainIKService.createTarget(object);
-              }
-            }
-          }
-        }
-      }
+      this.selectJoint(joint, shift);
     }
   }
 
@@ -512,11 +491,11 @@ export class KinematicsDrawingService {
     object.traverse( ( child: any ) => {
       if (child.isGroup) {
         for (const childEl of child) {
-          if ( childEl instanceof THREE.Mesh ){
+          if ( childEl instanceof THREE.Mesh){
             this.updateColor(childEl, color);
           }
         }
-      } else if ( child instanceof THREE.Mesh ) {
+      } else if ( child instanceof THREE.Mesh) {
         this.updateColor(child, color);
       }
     });
@@ -525,7 +504,9 @@ export class KinematicsDrawingService {
   updateColor(child: any, color = null) {
     const child_color = child.name.split(":");
     if (color) {
-      child.material = new THREE.MeshStandardMaterial({ color: color });
+      if (child_color[0] !== 'White') {
+        child.material = new THREE.MeshStandardMaterial({ color: color });
+      }
     } else {
       if (child_color[0] === 'Red') {
         child.material = new THREE.MeshStandardMaterial({ color: 0xf70505 });
@@ -572,26 +553,34 @@ export class KinematicsDrawingService {
     }
   }
 
-  selectMovableElement(object: any, val: any) {
+  selectMovableElement(intersect: any, val: any) {
 
-    if (object && object.parent) {
+    if (intersect.object && intersect.object.parent) {
 
-      const joint = this.kinematicService.joints.filter(j => j.sceneObject.id === object.parent.id || (object.parent.parent && j.sceneObject.id === object.parent.parent.id))[0];
+      const joint = this.kinematicService.joints.filter(j => j.sceneObject.id === intersect.object.parent.id || (intersect.object.parent.parent && j.sceneObject.id === intersect.object.parent.parent.id))[0];
 
       if (joint) {
         if (val && val === 'E') {
           this.deselectAllObjects();
           this.kinematicService.selectedJoints = [ joint ];
           console.log(val);
-          this.setObjectColor(object, this.config.selectColor);
+          this.setObjectColor(intersect.object, this.config.selectColor);
 
           //extend the arm
           //show arrow in direction of
         } else {
-          this.deselectAllObjects();
-          this.kinematicService.selectedJoints = [joint];
-          // this.config.control.detach();
-          this.setObjectColor(object, this.config.selectColor);
+          if (this.config.draggableObject.name !== this.kinematicService.selectedJoints[0].id) {
+            this.deselectAllObjects();
+            this.kinematicService.selectedJoints = [joint];
+            // this.config.control.detach();
+            this.setObjectColor(intersect.object, this.config.selectColor);
+            this.config.draggableObject = intersect.object;
+            this.config.orbit.enabled = false;
+          }
+          console.log(this.config.draggableObject);
+
+          // this.dragControlsService.update(intersect, joint);
+
 
           // // console.log(sceneObject);
           // const circlePosition = joint.sceneObject.position.clone();
@@ -684,7 +673,7 @@ export class KinematicsDrawingService {
     if (this.kinematicService.anySelected()) {
       // console.log('deselect draggable object');
       this.config.draggableObject = undefined;
-      this.toggleRotationCircle(false);
+      // this.toggleRotationCircle(false);
       this.config.control.detach();
 
       for (const object of this.kinematicService.joints) {
@@ -1070,6 +1059,12 @@ export class KinematicsDrawingService {
       }
     }
   }
+
+
+
+
+
+
 
 
 
