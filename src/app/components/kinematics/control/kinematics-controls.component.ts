@@ -35,10 +35,10 @@ export class KinematicsControlComponent {
   // ];
 
   models = [
-    new Model(0, 'motor', 1, true, 'active_joint.png', [ { g:'B', url:'active_joint_1_base.obj'}, { g:'Z', url: 'active_joint_connector_Z.obj' }], 0xff2200),
-    new Model(1, 'motor', 1, true, 'joint_rotor.png', [ { g:'B', url:'joint_rotor.obj'}, { g:'Z', url: 'active_joint_connector_Z.obj' }], 0xff2200),
-    new Model(2, 'motor', 1, true, 'active_joint_1.png', [ { g:'B', url:'active_joint_1_base.obj'}, { g:'Z', url: 'active_joint_connector_Z.obj' }], 0xff2200),
-    new Model(3, 'motor', 2, true, 'active_joint_2.png', [{ g:'B', url:'active_joint_2_base.obj'}, { g:'Z', url: 'active_joint_connector_Z.obj' }], 0xff2200),
+    new Model(0, 'motor', 1, true, 'active_joint.png', [ { g:'B', url:'active_joint_1_base.obj'}, { g:'Z', url: 'active_joint_connector_Z.obj' }], 0xcc0000),
+    new Model(1, 'motor', 1, true, 'joint_rotor.png', [ { g:'B', url:'joint_rotor.obj'}, { g:'Z', url: 'active_joint_connector_Z.obj' }], 0xcc0000),
+    new Model(2, 'motor', 1, true, 'active_joint_1.png', [ { g:'B', url:'active_joint_1_base.obj'}, { g:'Z', url: 'active_joint_connector_Z.obj' }], 0xcc0000),
+    new Model(3, 'motor', 2, true, 'active_joint_2.png', [{ g:'B', url:'active_joint_2_base.obj'}, { g:'Z', url: 'active_joint_connector_Z.obj' }], 0xcc0000),
     new Model(4, 'joint', 1, false, 'passive_joint_1.png', [{ g:'B', url:'passive_joint_1_base.obj'}, { g:'Z', url: 'passive_joint_connector_Z.obj' }], 0x02a3d9 ),
     new Model(5, 'joint', 2,false, 'passive_joint_2.png', [{ g:'B', url:'passive_joint_2_base.obj'}, { g:'Z', url: 'passive_joint_connector_Z.obj' }], 0x02a3d9 ),
     new Model(6, 'joint', 2,false, 'fixed_joint.png', [{ g:'B', url:'fixed_joint_base.obj'}, { g:'X', url: 'fixed_joint_connector_X.obj' }], 0x02a3d9 )
@@ -47,22 +47,22 @@ export class KinematicsControlComponent {
   ];
 
   jointModels = [
-    new Model(0, 'revolute', 1, true, 'active_joint_1.png', [ { g:'B', url:'active_joint_stator.obj'}, { g:'Z', url: 'active_joint_connector_Z.obj' }], 0xff2200),
-    new Model(0, 'revolute', 1, false, 'passive_joint_1.png', [ { g:'B', url:'passive_joint_stator.obj'}, { g:'Z', url: 'active_joint_connector_Z.obj' }], 0xff2200),
-    new Model(0, 'revolute', 1, true, 'active_joint_3.png', [ { g:'B', url:'active_joint_stator.obj'}, { g:'Z', url: 'active_joint_connector_Z.obj' }], 0xff2200),
-    new Model(0, 'revolute', 1, false, 'passive_joint_3.png', [ { g:'B', url:'passive_joint_stator.obj'}, { g:'Z', url: 'passive_joint_connector_Z.obj' }], 0xff2200),
-    new Model(0, 'fixed', 1, false, 'fixed_joint.png', [ { g:'B', url:'fixed_joint_base.obj'}, { g:'Z', url: 'fixed_joint_connector_X.obj' }], 0xff2200)
+    new Model(0, 'revolute', 1, true, 'active_joint_1.png', [ { g:'B', url:'active_joint_stator.obj'}, { g:'Z', url: 'active_joint_connector_Z.obj' }], 0xcc0000, [ { g:'A', url:'joint_rotor.obj'} ]),
+    new Model(0, 'revolute', 1, false, 'passive_joint_1.png', [ { g:'B', url:'passive_joint_stator.obj'}, { g:'Z', url: 'active_joint_connector_Z.obj' }], 0x0000e6),
+    new Model(0, 'revolute', 1, true, 'active_joint_3.png', [ { g:'B', url:'active_joint_stator.obj'}, { g:'Z', url: 'active_joint_connector_Z.obj' }], 0xcc0000),
+    new Model(0, 'revolute', 1, false, 'passive_joint_3.png', [ { g:'B', url:'passive_joint_stator.obj'}, { g:'Z', url: 'passive_joint_connector_Z.obj' }], 0x0000e6),
+    new Model(0, 'fixed', 1, false, 'fixed_joint.png', [ { g:'B', url:'fixed_joint_base.obj'}, { g:'Z', url: 'fixed_joint_connector_X.obj' }], 0x222222)
   ];
 
   linkModels = [
-    new Model(1, 'motor', 1, true, 'joint_rotor.png', [ { g:'B', url:'joint_rotor.obj'}, { g:'Z', url: 'active_joint_connector_Z.obj' }], 0xff2200)
+    new Model(1, 'motor', 1, true, 'joint_rotor.png', [ { g:'B', url:'joint_rotor.obj'}, { g:'Z', url: 'active_joint_connector_Z.obj' }], 0xcc0000)
   ]
 
 
 //this.kinematicService.selectedJoints[0].type === 'motor' && this.kinematicService.selectedJoints[0].subtype === 'b' && type === 'i'
 
   constructor(public kinematicService: KinematicService, private kinematicsDrawingService: KinematicsDrawingService,
-              private electronService: ElectronService, public hardwareService: HardwareService, private ikService: IKService, private dragControlService: DragControlsService) {
+              private electronService: ElectronService, public hardwareService: HardwareService, public ikService: IKService, private dragControlService: DragControlsService) {
 
     this.config = this.kinematicsDrawingService.config;
 
@@ -76,10 +76,6 @@ export class KinematicsControlComponent {
 
     this.kinematicsDrawingService.updateModelPosition.subscribe(res => {
       this.updateJoint(res);
-    });
-
-    this.kinematicsDrawingService.loadOBJ.subscribe(res => {
-      this.importOBJModel(res.url, res.name);
     });
 
     this.kinematicsDrawingService.loadModelFromLink.subscribe(res => {
@@ -98,7 +94,7 @@ export class KinematicsControlComponent {
     //   }
     // });
 
-    console.log(this.infinity);
+    // console.log(this.infinity);
   }
 
   onControlsMouseover() {
@@ -175,7 +171,7 @@ export class KinematicsControlComponent {
   //   this.loadOBJModel(modelObject);
   // }
 
-  addJoint(model: any) {
+  addJoint(model: Model) {
     console.log(model);
     const urfd_joint = this.kinematicService.addNewJoint(model);
     // if (this.dragControlService.selectedObject) {
@@ -186,9 +182,13 @@ export class KinematicsControlComponent {
     this.ikService.newJoint(urfd_joint, this.dragControlService.selected);
     console.log(urfd_joint);
     this.loadOBJModel(urfd_joint);
+
+    if (model.linkObjectUrls) {
+      this.addLink(model);
+    }
   }
 
-  addLink(model: any) {
+  addLink(model: Model) {
     console.log(model);
     const urfd_link = this.kinematicService.addNewLink(model);
 
@@ -196,6 +196,15 @@ export class KinematicsControlComponent {
     this.ikService.newLink(urfd_link, this.dragControlService.selected);
     this.loadOBJModel(urfd_link);
   }
+
+  // addLink(model: any) {
+  //   console.log(model);
+  //   const urfd_link = this.kinematicService.addNewLink(model);
+
+  //   console.log(urfd_link);
+  //   this.ikService.newLink(urfd_link, this.dragControlService.selected);
+  //   this.loadOBJModel(urfd_link);
+  // }
 
 
   loadOBJModel(model: any) {
@@ -275,31 +284,6 @@ export class KinematicsControlComponent {
     }
   }
 
-
-  importOBJModel(url: string, name: string) {
-    this.config.rotaryControls = new THREE.Group();
-    this.config.rotaryControls.name = name;
-    this.config.loader.load('./assets/models/' + url, (object: any) => {   // called when resource is loaded
-      object.name = name;
-
-      object.traverseVisible( ( child: any ) => {
-          if ( child instanceof THREE.Mesh ) {
-            this.kinematicsDrawingService.updateColor(child);
-          }
-      });
-      object.visible = false;
-      this.config.rotaryControls.add(object);
-      this.config.rotaryControls.draggable = true;
-      this.config.scene.add(this.config.rotaryControls);
-
-      this.kinematicsDrawingService.animate();
-
-    }, (xhr: any) => {
-      // console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
-    }, (error: any) => {
-      // console.log( 'Error loading model' );
-    });
-  }
 
 
 

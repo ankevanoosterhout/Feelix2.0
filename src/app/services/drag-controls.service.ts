@@ -43,43 +43,48 @@ export class DragControlsService {
 
     const intersections = this.kinematicDrawingService.getIntersections();
 
-    if (intersections && intersections.length > 2) {
+    if (intersections && intersections.length > 1) {
 
       let hoveredJoint = null;
 
-      if (intersections[0] && intersections[0].object.name !== 'no-pointer-events') {
-
-        if (intersections[0].object.parent && intersections[0].object.parent.name !== 'no-pointer-events' && intersections[0].object.parent.name !== '') {
-
-          const hit = intersections[0];
-          // console.log(hit);
-          this.hitDistance = hit.distance;
-          // console.log(this.hitDistance);
-          hoveredJoint = intersections[0].object.parent;
-          this.initialGrabPoint.copy(hit.point);
-          // console.log(this.initialGrabPoint);
+      if (intersections[0].object.name === 'no-pointer-events') {
+        if (this.selected !== null && !this.kinematicDrawingService.config.move) {
+          this.onDeselect(this.selected);
         }
-        // console.log("hovered joint", hoveredJoint)
-        // console.log("hovered", this.hovered);
-
-        if (hoveredJoint !== this.hovered) {
-
-          if (this.hovered && this.manipulating === null) {
-
-              this.onUnhover(this.hovered);
-
-          }
-
-          this.hovered = hoveredJoint;
-
-          if (hoveredJoint) {
-
-              this.onHover(hoveredJoint);
-
-          }
-        }
-
+        return;
       }
+
+      if (intersections[0].object.parent && intersections[0].object.parent.name !== 'no-pointer-events' && intersections[0].object.parent.name !== '') {
+
+        const hit = intersections[0];
+        // console.log(hit);
+        this.hitDistance = hit.distance;
+        // console.log(this.hitDistance);
+        hoveredJoint = intersections[0].object.parent;
+        this.initialGrabPoint.copy(hit.point);
+        // console.log(this.initialGrabPoint);
+      }
+      // console.log("hovered joint", hoveredJoint)
+      // console.log("hovered", this.hovered);
+
+      if (hoveredJoint !== this.hovered) {
+
+        if (this.hovered && this.manipulating === null) {
+
+            this.onUnhover(this.hovered);
+
+        }
+
+        this.hovered = hoveredJoint;
+
+        if (hoveredJoint) {
+
+            this.onHover(hoveredJoint);
+
+        }
+      }
+
+
     }
 
     // this.distance = intersect.distance;
@@ -122,18 +127,22 @@ export class DragControlsService {
   }
 
   onSelect(object: any) {
-
-    if (object !== null) {
-      console.log('select ', object);
+    if (object !== null && object.name !== 'no-pointer-events') {
       this.kinematicDrawingService.setObjectColor(object, this.kinematicDrawingService.config.selectColor);
+      if (!this.kinematicDrawingService.config.move) {
+        this.kinematicDrawingService.config.control.attach(object.parent);
+      }
     }
   }
 
   onDeselect(object: any) {
 
-    if (object !== null) {
-      console.log('deselect ', object);
+    if (object !== null && object.name !== 'no-pointer-events') {
       this.kinematicDrawingService.setObjectColor(object);
+      if (!this.kinematicDrawingService.config.move) {
+        this.kinematicDrawingService.config.control.detach();
+        this.selected = null;
+      }
     }
   }
 
@@ -175,6 +184,10 @@ export class DragControlsService {
   moveRay(toRay: any) {
     // console.log(toRay);
 
+    // if (!this.kinematicDrawingService.config.move) {
+    //   return;
+    // }
+
     const { ray }  = this.kinematicDrawingService.config.rayCaster;
 
     if (this.manipulating) {
@@ -182,36 +195,37 @@ export class DragControlsService {
       toRay.at(this.hitDistance, this.newHitPoint);
 
       let delta = 0;
-      // console.log(this.manipulating);
       const selectedJoint = this.kinematicService.getObjectWithID(this.manipulating.parent.name);
 
       // console.log(selectedJoint);
 
       if (selectedJoint) {
 
-        if (selectedJoint.type === JointType.revolute || selectedJoint.type === JointType.continuous) {
+        if (this.kinematicDrawingService.config.move) {
 
-            console.log(this.prevHitPoint, this.newHitPoint);
+          if (selectedJoint.type === JointType.revolute || selectedJoint.type === JointType.continuous) {
 
-            delta = this.getRevoluteDelta(this.manipulating.parent, this.prevHitPoint, this.newHitPoint);
+              // console.log(this.prevHitPoint, this.newHitPoint);
 
-        } else if (selectedJoint.type === JointType.prismatic) {
+              delta = this.getRevoluteDelta(this.manipulating.parent, this.prevHitPoint, this.newHitPoint);
 
-            // delta = this.getPrismaticDelta(manipulating, prevHitPoint, newHitPoint);
+          } else if (selectedJoint.type === JointType.prismatic) {
 
-        }
+              // delta = this.getPrismaticDelta(manipulating, prevHitPoint, newHitPoint);
 
-        if (delta !== 0) {
-          console.log(delta);
-          console.log(this.manipulating);
-          this.manipulating.rotation.z += delta;
-          this.kinematicDrawingService.animate();
-          // this.updateJoint(selectedJoint, selectedJoint.angle + delta);
+          }
 
+          if (delta !== 0) {
+            // console.log(delta);
+            // console.log(this.manipulating);
+            this.manipulating.rotation.z += delta;
+            this.kinematicDrawingService.animate();
+            // this.updateJoint(selectedJoint, selectedJoint.angle + delta);
+
+          }
         }
       } else {
         if (this.selected) {
-          console.log('deselect all', this.selected);
           this.onDeselect(this.selected);
         }
       }
@@ -221,10 +235,15 @@ export class DragControlsService {
   }
 
   setSelected() {
-    if (this.manipulating === null && this.selected !== null || this.manipulating !== this.selected) {
-      this.onDeselect(this.selected);
+
+    if ((this.manipulating === null && this.selected !== null) || this.manipulating !== this.selected) {
+      if (this.kinematicDrawingService.config.move || (this.manipulating !== this.selected && this.manipulating !== null && this.selected !== null)) {
+        this.onDeselect(this.selected);
+      }
     }
-    this.selected = this.manipulating;
+    if (this.manipulating !== null || this.kinematicDrawingService.config.move) {
+      this.selected = this.manipulating;
+    }
 
     if (this.selected !== null) {
       this.onSelect(this.selected);
@@ -233,6 +252,7 @@ export class DragControlsService {
   }
 
   setGrabbed(grabbed: boolean) {
+
     // console.log("set grabbed");
     // if (this.manipulating === null) {
 
@@ -272,8 +292,6 @@ export class DragControlsService {
       }
 
       this.manipulating = this.hovered;
-      // this.kinematicDrawingService.config.orbit.enabled = false;
-      console.log('disable orbit controls');
       this.onDragStart(this.hovered);
 
     } else {
@@ -283,8 +301,6 @@ export class DragControlsService {
         }
 
         this.onDragEnd(this.manipulating);
-        console.log('enable orbit controls');
-        // this.kinematicDrawingService.config.orbit.enabled = true;
         this.manipulating = null;
         this.update();
 

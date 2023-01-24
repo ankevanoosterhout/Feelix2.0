@@ -1,4 +1,9 @@
 
+export class DisplaySettings {
+  displayModels = true;
+  displayIK = false;
+}
+
 
 export class IKConfig {
   solver: any;
@@ -13,4 +18,11 @@ export class IKConfig {
   finalLink: any;
 
   createRoot = false;
+
+  animate = false;
+  iterations = 5;
+
+  screen = new DisplaySettings();
+
+
 }

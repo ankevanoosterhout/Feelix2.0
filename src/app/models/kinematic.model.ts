@@ -26,8 +26,9 @@ export class Model {
   objectUrls: Array<ObjectUrl>;
   color: number;
   origin = new Vector3();
+  linkObjectUrls: Array<ObjectUrl>;
 
-  constructor(id: number, type: string, modelType: number, active: boolean, thumbnail: string, objectUrls: Array<ObjectUrl>, color: number) {
+  constructor(id: number, type: string, modelType: number, active: boolean, thumbnail: string, objectUrls: Array<ObjectUrl>, color: number, link = null) {
     this.id = id;
     this.type = type;
     this.modelType = modelType;
@@ -35,6 +36,9 @@ export class Model {
     this.thumbnail = thumbnail;
     this.objectUrls = objectUrls;
     this.color = color;
+    if (link !== null) {
+      this.linkObjectUrls = link;
+    }
   }
 }
 
@@ -152,8 +156,8 @@ export class URFD_Link {
   constructor(id: string, model: Model) {
     this.id = id;
     this.dimensions.origin = model.origin;
-    this.object3D.objectUrls = model.objectUrls;
-    this.object3D.color = model.color;
+    this.object3D.objectUrls = model.linkObjectUrls;
+    this.object3D.color = 0x222222;
     this.dimensions.origin = model.origin;
   }
 }

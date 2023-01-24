@@ -21,7 +21,6 @@ export class KinematicsDrawingService {
   // selectObjectFromScene: Subject<any> = new Subject();
   updateModelPosition: Subject<any> = new Subject();
 
-  loadOBJ: Subject<any> = new Subject();
   updateKinematicsProgress: Subject<any> = new Subject();
   selectControl: Subject<any> = new Subject();
   updateCameraView: Subject<any> = new Subject();
@@ -110,8 +109,11 @@ export class KinematicsDrawingService {
     if (name !== 'rotateAxis' && name !== 'move') {
       this.config.control.setMode( name );
       this.config.move = false;
+      this.document.body.style.cursor = 'default';
     } else if ('move') {
       this.config.move = true;
+      this.document.body.style.cursor = 'grab';
+      this.config.control.detach();
     }
   }
 
@@ -163,14 +165,14 @@ export class KinematicsDrawingService {
 
     this.config.control.name = 'no-pointer-events';
     this.config.control.setSpace( 'local' );
-    this.config.control.addEventListener( 'objectChange', (event: any) => {
-      console.log("object change", event);
-      if (this.kinematicService.selectedJoints.length === 1) {
-        const sceneObject = this.config.scene.getObjectByName(this.kinematicService.selectedJoints[0].id);
-        if (sceneObject) {
-          this.updatePosition(sceneObject, this.kinematicService.selectedJoints[0], true);
-        }
-      }
+    this.config.control.addEventListener('objectChange', (event: any) => {
+      // console.log("object change", event);
+      // if (this.kinematicService.selectedJoints.length === 1) {
+      //   const sceneObject = this.config.scene.getObjectByName(this.kinematicService.selectedJoints[0].id);
+      //   if (sceneObject) {
+      //     this.updatePosition(sceneObject, this.kinematicService.selectedJoints[0], true);
+      //   }
+      // }
       //IK needs update
     });
 
@@ -185,13 +187,10 @@ export class KinematicsDrawingService {
 
 
     this.config.control.addEventListener( 'dragging-changed', ( event: any ) => {
-      console.log('dragging changed ', event.value);
+      // console.log('dragging changed ', event.value);
       this.config.orbit.enabled = !event.value;
-
-
       // ikNeedsUpdate = true;
 		  // setIKFromUrdf( ikRoot, urdfRoot );
-
     });
 
     this.config.control.setTranslationSnap( 10 );
@@ -509,13 +508,13 @@ export class KinematicsDrawingService {
       }
     } else {
       if (child_color[0] === 'Red') {
-        child.material = new THREE.MeshStandardMaterial({ color: 0xf70505 });
+        child.material = new THREE.MeshStandardMaterial({ color: 0xcc0000 });
       } else if (child_color[0] === 'Blue') {
-        child.material = new THREE.MeshStandardMaterial({ color: 0x53d7f5 });
+        child.material = new THREE.MeshStandardMaterial({ color: 0x0000e6 });
       } else if (child_color[0] === 'Yellow') {
         child.material = new THREE.MeshStandardMaterial({ color: 0xfc7f03 });
       } else if (child_color[0] === 'Gray') {
-        child.material = new THREE.MeshStandardMaterial({ color: 0x333333 });
+        child.material = new THREE.MeshStandardMaterial({ color: 0x222222 });
       } else {
         child.material = new THREE.MeshStandardMaterial({ color: 0x7b7b7b });
       }
@@ -602,45 +601,6 @@ export class KinematicsDrawingService {
     }
   }
 
-  addRotationCircle() {
-    this.loadOBJ.next({ url: 'rotary_control.obj', name: 'rotary_control' });
-  }
-
-  updateRotation(p: THREE.Vector3, q: THREE.Quaternion) {
-    // this.loadSVGImage('./assets/images/svg/rotary_control.svg', 'rotary_control', p, q, angle);
-    const circle = this.config.scene.getObjectByName('rotary_control');
-    // console.log(circle);
-    if (circle) {
-      circle.position.set(p.x, p.y, p.z);
-      circle.quaternion.set(q.x, q.y, q.z, q.w);
-      this.animate();
-    }
-  }
-
-
-  updateRotaryAngle(angle: number) {
-    // console.log(angle * (180/Math.PI));
-    const circle = this.config.scene.getObjectByName('rotary_control');
-    if (circle) {
-      circle.rotation.z = angle;
-    }
-    this.animate();
-  }
-
-
-  toggleRotationCircle(visible: boolean) {
-    const circle = this.config.scene.getObjectByName('rotary_control');
-    // console.log(circle, visible);
-
-    circle.traverse( ( child: any ) => {
-      child.visible = visible;
-    });
-    this.animate();
-    // this.config.orbit.enabled = !visible;
-    // this.config.orbit.update();
-
-  }
-
   deselectSelectionPoint(id: string, object: any) {
     this.kinematicService.deleteSelectionPoint(id, object.uuid);
     this.updateColor(object);
@@ -652,7 +612,7 @@ export class KinematicsDrawingService {
     if (this.config.scene) {
       const objectList = [];
       for (const child of this.config.scene.children) {
-        if (child.type == 'Group' && child.name !== 'rotary_control') {
+        if (child.type == 'Group') {
           objectList.push(child.name);
           // this.config.scene.remove(child);
           // console.log(this.config.scene);

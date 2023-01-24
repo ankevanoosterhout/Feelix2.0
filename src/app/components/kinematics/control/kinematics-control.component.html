@@ -13,7 +13,7 @@
           <div class="row">
             <div class="labelRow">animate</div>
             <label class="radio-container inline">
-              <input type="checkbox" class="type" id="animate" name="animate">
+              <input type="checkbox" class="type" id="animate" name="animate" [ngModel]="this.ikService.ikConfig.animate">
               <span class="checkmark radio inline"></span>
             </label>
           </div>
@@ -21,7 +21,7 @@
           <div class="row">
             <div class="labelRow">display models</div>
             <label class="radio-container inline">
-              <input type="checkbox" class="type" id="display_models" name="display_models">
+              <input type="checkbox" class="type" id="display_models" name="display_models" [ngModel]="this.ikService.ikConfig.screen.displayModels">
               <span class="checkmark radio inline"></span>
             </label>
           </div>
@@ -29,14 +29,14 @@
           <div class="row">
             <div class="labelRow">display IK</div>
             <label class="radio-container inline">
-              <input type="checkbox" class="type" id="display_ik" name="display_ik">
+              <input type="checkbox" class="type" id="display_ik" name="display_ik"  [ngModel]="this.ikService.ikConfig.screen.displayIK">
               <span class="checkmark radio inline"></span>
             </label>
           </div>
 
           <div class="row">
             <div class="labelRow">iterations</div>
-            <input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="iterations" name="iterations">
+            <input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="iterations" name="iterations" [ngModel]="this.ikService.ikConfig.iterations">
           </div>
         </li>
       </ul>
