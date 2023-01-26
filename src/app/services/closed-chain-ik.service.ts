@@ -105,7 +105,7 @@ export class ClosedChainIKService {
       // console.log(jointObj.id);
 
       let jointEl = this.ikConfig.frames.filter(f => f.name === jointObj.id && f.isJoint)[0]
-      jointEl = jointEl ? jointEl : this.createNewJointFromObject(jointObj, sceneObjectJoint);
+      // jointEl = jointEl ? jointEl : this.createNewJointFromObject(jointObj, sceneObjectJoint);
       // console.log(jointEl);
 
       const link = parentLink === null || parentLink === undefined ? new Link() : this.ikConfig.frames.filter(f => f.name === parentLink.name && f.isLink)[0];
@@ -137,37 +137,37 @@ export class ClosedChainIKService {
       }
 
 
-      for (const connector of jointObj.connectors) {
-        if (connector.connected) {
-          console.log(connector);
+      // for (const connector of jointObj.connectors) {
+      //   if (connector.connected) {
+      //     console.log(connector);
 
-          const connectedJointObj = this.kinematicService.getJoint(connector.object);
-          const connectedJointInRoot = root.joints.filter(j => j.id === connectedJointObj.id)[0];
-          console.log(connectedJointObj);
-          const connectorToOriginalObject = connectedJointObj.connectors.filter(c => c.object === joint.id)[0];
-          const newConnectedJoint = this.createNewJointFromObject(connectedJointObj, sceneObjectJoint);
+      //     const connectedJointObj = this.kinematicService.getJoint(connector.object);
+      //     const connectedJointInRoot = root.joints.filter(j => j.id === connectedJointObj.id)[0];
+      //     console.log(connectedJointObj);
+      //     const connectorToOriginalObject = connectedJointObj.connectors.filter(c => c.object === joint.id)[0];
+      //     const newConnectedJoint = this.createNewJointFromObject(connectedJointObj, sceneObjectJoint);
 
-          const jointInFrames = this.ikConfig.frames.filter(f => f.name === newConnectedJoint.name)[0];
+      //     const jointInFrames = this.ikConfig.frames.filter(f => f.name === newConnectedJoint.name)[0];
 
-          if (jointInFrames === undefined) {
-            link.addChild(newConnectedJoint);
-            this.ikConfig.frames.push(newConnectedJoint);
-          } else if (jointInFrames !== undefined) {
-            // console.log('add ', jointInFrames, ' to ', link);
-            // jointInFrames.addChild(link);
-            // link.addChild(jointInFrames);
-          }
+      //     if (jointInFrames === undefined) {
+      //       link.addChild(newConnectedJoint);
+      //       this.ikConfig.frames.push(newConnectedJoint);
+      //     } else if (jointInFrames !== undefined) {
+      //       // console.log('add ', jointInFrames, ' to ', link);
+      //       // jointInFrames.addChild(link);
+      //       // link.addChild(jointInFrames);
+      //     }
 
-          for (const connectorJO of connectedJointObj.connectors.filter(c => c.connected)) {
+      //     for (const connectorJO of connectedJointObj.connectors.filter(c => c.connected)) {
 
-            if (connectorJO.object !== joint.id) {
-              console.log('new' + connectorToOriginalObject.plane, connectorJO.plane);
-              this.processJoint(connectedJointInRoot, (connectorToOriginalObject.plane === connectorJO.plane ? link : null), sceneObjects, root);
+      //       if (connectorJO.object !== joint.id) {
+      //         console.log('new' + connectorToOriginalObject.plane, connectorJO.plane);
+      //         this.processJoint(connectedJointInRoot, (connectorToOriginalObject.plane === connectorJO.plane ? link : null), sceneObjects, root);
 
-            }
-          }
-        }
-      }
+      //       }
+      //     }
+      //   }
+      // }
 
 
       console.log("items processed", this.ikConfig.frames.filter(f => f.isJoint).length, root.joints.length);

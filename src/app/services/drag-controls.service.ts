@@ -147,6 +147,14 @@ export class DragControlsService {
   }
 
 
+  rotateAroundAxis(axis: THREE.Vector3, angle: number) {
+    console.log(axis, angle);
+    let rotationMatrix = new THREE.Matrix4();
+
+    rotationMatrix.makeRotationAxis(axis, angle);
+    console.log(rotationMatrix);
+    return rotationMatrix;
+  }
 
   getRevoluteDelta(model: any, startPoint: THREE.Vector3, endPoint: THREE.Vector3) {
     // console.log(model.matrixWorld, startPoint, endPoint);
@@ -197,15 +205,11 @@ export class DragControlsService {
       let delta = 0;
       const selectedJoint = this.kinematicService.getObjectWithID(this.manipulating.parent.name);
 
-      // console.log(selectedJoint);
-
       if (selectedJoint) {
 
         if (this.kinematicDrawingService.config.move) {
 
           if (selectedJoint.type === JointType.revolute || selectedJoint.type === JointType.continuous) {
-
-              // console.log(this.prevHitPoint, this.newHitPoint);
 
               delta = this.getRevoluteDelta(this.manipulating.parent, this.prevHitPoint, this.newHitPoint);
 
@@ -216,9 +220,7 @@ export class DragControlsService {
           }
 
           if (delta !== 0) {
-            // console.log(delta);
-            // console.log(this.manipulating);
-            this.manipulating.rotation.z += delta;
+            this.manipulating.parent.rotation.z += delta;
             this.kinematicDrawingService.animate();
             // this.updateJoint(selectedJoint, selectedJoint.angle + delta);
 
@@ -284,7 +286,7 @@ export class DragControlsService {
     // console.log(this.manipulating);
 
     if (grabbed) {
-
+      console.log(this.manipulating, this.hovered);
       if (this.manipulating !== null || this.hovered === null) {
 
           return;

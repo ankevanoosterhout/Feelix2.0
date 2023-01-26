@@ -27,6 +27,7 @@ export class Model {
   color: number;
   origin = new Vector3();
   linkObjectUrls: Array<ObjectUrl>;
+  rpy = new Vector3();
 
   constructor(id: number, type: string, modelType: number, active: boolean, thumbnail: string, objectUrls: Array<ObjectUrl>, color: number, link = null) {
     this.id = id;
@@ -130,8 +131,10 @@ export class URFD_Joint {
   limits = new Limits();
   object3D = new Object3D();
   config = new JointConfig();
+  angle: number = Math.PI;
 
   constructor(id: string, model: Model) {
+    // console.log(model.origin, model.rpy);
     this.id = id;
     this.config.active = model.active;
     this.object3D.objectUrls = model.objectUrls;
@@ -139,6 +142,7 @@ export class URFD_Joint {
     this.type = JointType.revolute;
     this.axis.z = 1;
     this.dimensions.origin = model.origin;
+    this.dimensions.rpy = model.rpy;
   }
 }
 
@@ -154,11 +158,13 @@ export class URFD_Link {
   object3D = new Object3D();
 
   constructor(id: string, model: Model) {
+    // console.log(model.origin, model.rpy);
     this.id = id;
-    this.dimensions.origin = model.origin;
     this.object3D.objectUrls = model.linkObjectUrls;
     this.object3D.color = 0x222222;
     this.dimensions.origin = model.origin;
+    this.type = JointType.revolute;
+    // this.dimensions.rpy = model.rpy;
   }
 }
 

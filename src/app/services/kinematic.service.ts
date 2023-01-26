@@ -245,32 +245,32 @@ export class KinematicService {
     this.add(defaultFile);
   }
 
-  addJoint(model: any): JointLink {
-    const joint = new JointLink(uuid(), model);
-    console.log(joint);
-    const similarObjects = this.joints.filter(j => j.isMotor === joint.isMotor && j.isJoint === joint.isJoint).length;
-    joint.name += '-' + (similarObjects + 1);
-    this.joints.push(joint);
-    this.store();
+  // addJoint(model: any): JointLink {
+  //   const joint = new JointLink(uuid(), model);
+  //   console.log(joint);
+  //   const similarObjects = this.joints.filter(j => j.isMotor === joint.isMotor && j.isJoint === joint.isJoint).length;
+  //   joint.name += '-' + (similarObjects + 1);
+  //   this.joints.push(joint);
+  //   this.store();
 
-    return joint;
-  }
+  //   return joint;
+  // }
 
   addNewJoint(model: Model): URFD_Joint {
     const urfd_joint = new URFD_Joint(uuid(), model);
 
-    const similarObjects = this.frames.filter(j => j.config.active).length;
+    const similarObjects = this.frames.filter(j => j instanceof URFD_Joint && j.config.active).length;
     urfd_joint.name += '-' + (similarObjects + 1);
 
-    console.log(urfd_joint);
+    // console.log(urfd_joint);
     this.frames.push(urfd_joint);
     this.store();
 
     return urfd_joint;
   }
 
-  addNewLink(model: Model): URFD_Link {
-    const urfd_link = new URFD_Link(uuid(), model);
+  addNewLink(id: string, model: Model): URFD_Link {
+    const urfd_link = new URFD_Link(id + '-link', model);
 
     const similarObjects = this.frames.filter(l => l instanceof URFD_Link).length;
     urfd_link.name += '-' + (similarObjects + 1);
@@ -461,9 +461,14 @@ export class KinematicService {
   }
 
 
-  getJoint(id: string): JointLink {
-    return this.joints.filter(j => j.id === id)[0];
+
+  getJoint(id: string): URFD_Joint {
+    return this.frames.filter(j => j instanceof URFD_Joint && j.id === id)[0];
   }
+
+  // getJoint(id: string): JointLink {
+  //   return this.joints.filter(j => j.id === id)[0];
+  // }
 
   getAllJoints(): Array<JointLink> {
     return this.joints;

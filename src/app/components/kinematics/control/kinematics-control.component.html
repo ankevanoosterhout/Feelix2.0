@@ -29,7 +29,7 @@
           <div class="row">
             <div class="labelRow">display IK</div>
             <label class="radio-container inline">
-              <input type="checkbox" class="type" id="display_ik" name="display_ik"  [ngModel]="this.ikService.ikConfig.screen.displayIK">
+              <input type="checkbox" class="type" id="display_ik" name="display_ik" (change)="showRootsHelper()">
               <span class="checkmark radio inline"></span>
             </label>
           </div>
@@ -83,24 +83,31 @@
 
     <li id="component-item">
       <div class="opencloseArrow" [ngClass]="{ open: visible[5] }" (click)="visible[5] = !visible[5]"><div></div></div>
-      <label class="label header">components</label>
+      <label class="label header">roots</label>
 
-      <ul class="content" [ngClass]="{ open: visible[5] }">
-        <li *ngFor="let object of this.kinematicService.joints">
-          <div class="row" (click)="selectJointObject(object)">
-            <input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="text" class="wide" [ngClass]="{ blue: object.selected }" id="name" name="name" [(ngModel)]="object.name" (change)="updateJoint(object)">
+      <span *ngIf="this.ikService.ikConfig.ikRoot !== null">
+        <ul class="content" [ngClass]="{ open: visible[5] }">
+          <li *ngFor="let root of this.ikService.ikConfig.ikRoot; let i = index" [attr.data-index]="i">
+            <div class="row">
+              <div class="labelRow">root {{ i + 1 }}</div>
+            </div>
 
-            <div class="buttons">
-              <div id="rotate" class="svg-button" (click)="rotate()"><img src="./assets/icons/buttons/rotate.svg"></div>
+            <input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="text" class="wide" id="name" name="name" [(ngModel)]="root.name">
+
+
+            <!-- <input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="text" class="wide" [ngClass]="{ blue:  }" id="name" name="name" [(ngModel)]="root.name"> -->
+
+            <!-- <div class="buttons"> -->
+              <!-- <div id="rotate" class="svg-button" (click)="rotate()"><img src="./assets/icons/buttons/rotate.svg"></div>
               <div id="move" class="svg-button" (click)="move()"><img src="./assets/icons/buttons/move2.svg"></div>
               <div id="not-visible" class="svg-button" *ngIf="object.object3D.hidden"><img src="./assets/icons/layers/not-visible-icon.svg"></div>
               <div id="visible" class="svg-button" *ngIf="!object.object3D.hidden"><img src="./assets/icons/layers/visible-icon.svg"></div>
               <div id="locked" class="svg-button" *ngIf="object.object3D.lock"><img src="./assets/icons/layers/locked-icon.svg"></div>
-              <div id="lock" class="svg-button" *ngIf="!object.object3D.lock"><img src="./assets/icons/layers/lock-icon.svg"></div>
-            </div>
-          </div>
-        </li>
-      </ul>
+              <div id="lock" class="svg-button" *ngIf="!object.object3D.lock"><img src="./assets/icons/layers/lock-icon.svg"></div> -->
+            <!-- </div> -->
+          </li>
+        </ul>
+      </span>
     </li>
 
 
