@@ -177,7 +177,7 @@ export class KinematicsControlComponent {
 
     if (this.dragControlService.selected && this.dragControlService.selected.parent) {
       // const selectedJoint = this.kinematicService.getJoint(this.dragControlService.selected.parent.name);
-      console.log(this.dragControlService.selected);
+      // console.log(this.dragControlService.selected);
 
       const newPosition = new THREE.Vector3(0, 55, 0);
       newPosition.applyMatrix4(this.dragControlService.selected.parent.matrixWorld);
@@ -196,6 +196,8 @@ export class KinematicsControlComponent {
     }
 
     const urfd_joint = this.kinematicService.addNewJoint(model);
+
+    this.ikService.newJoint(urfd_joint, this.dragControlService.selected);
 
     this.loadOBJModel(urfd_joint);
 
@@ -251,16 +253,7 @@ export class KinematicsControlComponent {
         object.traverseVisible( ( child: any ) => {
             if ( child instanceof THREE.Mesh ) {
               this.kinematicsDrawingService.updateColor(child);
-              // const child_color = child.name.split(":");
-              // console.log(child_color);
-              // if (child_color[0] === "Yellow") {
-                // console.log(model.id);
-                // this.kinematicService.updateSelectionPointID(model.id, child.name, child.uuid);
-              // }
             }
-            // if (child.name === 'Z') {
-            //   child.rotation.z = model.angle * (Math.PI/180);
-            // }
         });
 
         group.add(object);

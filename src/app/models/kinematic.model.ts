@@ -165,6 +165,7 @@ export class URFD_Link {
     this.dimensions.origin = model.origin;
     this.type = JointType.revolute;
     this.dimensions.rpy = model.rpy;
+    this.dimensions.rpy.z += Math.PI;
   }
 }
 

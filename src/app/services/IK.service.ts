@@ -16,6 +16,7 @@ export class IKService {
 
   newLink(urfd_link: URFD_Link) {
     const link = new Link();
+    console.log(urfd_link, urfd_link.id.slice(0,-5));
     link.name = urfd_link.id;
 
     if (this.ikConfig.ikRoot !== null) {
@@ -26,7 +27,7 @@ export class IKService {
           if (c.isJoint) {
 
             const name = c.name;
-            if (name === urfd_link.id) {
+            if (name === urfd_link.id.slice(0,-5)) {
               c.addChild(link);
             }
 
@@ -36,32 +37,35 @@ export class IKService {
       }
     }
     this.ikConfig.frames.push(link);
+    console.log(this.ikConfig.frames);
     this.findRootsFromFrames();
   }
 
 
   newJoint(urfd_joint: URFD_Joint, link = null) {
-    // console.log(urfd_joint);
-    // console.log(link);
+    console.log(urfd_joint);
+    console.log(link);
     const joint = new Joint();
     joint.name = urfd_joint.id;
     joint.setDoF(DOF.Z);
-    joint.setPosition(urfd_joint.dimensions.origin.x, urfd_joint.dimensions.origin.y, urfd_joint.dimensions.origin.z);
+    if (link) {
+      joint.setPosition(urfd_joint.dimensions.origin.x - link.parent.position.x, urfd_joint.dimensions.origin.y - link.parent.position.y, urfd_joint.dimensions.origin.z - link.parent.position.z);
+    } else {
+      joint.setPosition(urfd_joint.dimensions.origin.x, urfd_joint.dimensions.origin.y, urfd_joint.dimensions.origin.z);
+    }
 
-    // console.log(joint);
+    console.log(joint);
 
-    if (link && this.ikConfig.ikRoot !== null) {
-      // console.log(link.parent.name, this.ikConfig.ikRoot);
+    if (link !== null && this.ikConfig.ikRoot !== null) {
 
       for (const root of this.ikConfig.ikRoot) {
         root.traverse( c => {
 
           if (c.isLink) {
 
-            const name = c.name;
-            // console.log(name, link.parent.name);
+            console.log('find link', c.name, link.parent.name);
 
-            if (name === link.parent.name) {
+            if (c.name === link.parent.name) {
               c.addChild(joint);
             }
 
@@ -71,6 +75,7 @@ export class IKService {
       }
     }
     this.ikConfig.frames.push(joint);
+    console.log(this.ikConfig.frames);
     this.findRootsFromFrames();
 
     return joint;
@@ -81,7 +86,7 @@ export class IKService {
     if (this.ikConfig.ikRoot === null) {
       this.ikConfig.ikRoot = findRoots(this.ikConfig.frames);
     }
-    // console.log(this.ikConfig.ikRoot);
+    console.log(this.ikConfig.ikRoot);
   }
 
 
@@ -126,7 +131,7 @@ export class IKService {
         c.visible = true;
       });
 
-      // console.log(this.ikConfig.ikHelper);
+      console.log(this.ikConfig.ikHelper);
     }
   }
 

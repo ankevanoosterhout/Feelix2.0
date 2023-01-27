@@ -28,6 +28,9 @@ export class KinematicService {
 
   selectedJoints = [];
 
+  public selectedFrame = null;
+
+
   selConnPoints: Array<Point> = [];
 
   importOBJModelToObjectGroup: Subject<any> = new Subject();

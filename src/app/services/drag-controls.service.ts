@@ -213,17 +213,17 @@ export class DragControlsService {
       toRay.at(this.hitDistance, this.newHitPoint);
 
       let delta = 0;
-      const selectedJoint = this.kinematicService.getObjectWithID(this.manipulating.parent.name);
+      this.kinematicService.selectedFrame = this.kinematicService.getObjectWithID(this.manipulating.parent.name);
 
-      if (selectedJoint) {
+      if (this.kinematicService.selectedFrame) {
 
         if (this.kinematicDrawingService.config.move) {
 
-          if (selectedJoint.type === JointType.revolute || selectedJoint.type === JointType.continuous) {
+          if (this.kinematicService.selectedFrame.type === JointType.revolute || this.kinematicService.selectedFrame.type === JointType.continuous) {
 
               delta = this.getRevoluteDelta(this.manipulating.parent, this.prevHitPoint, this.newHitPoint);
 
-          } else if (selectedJoint.type === JointType.prismatic) {
+          } else if (this.kinematicService.selectedFrame.type === JointType.prismatic) {
 
               // delta = this.getPrismaticDelta(manipulating, prevHitPoint, newHitPoint);
 
@@ -296,7 +296,7 @@ export class DragControlsService {
     // console.log(this.manipulating);
 
     if (grabbed) {
-      console.log(this.manipulating, this.hovered);
+      // console.log(this.manipulating, this.hovered);
       if (this.manipulating !== null || this.hovered === null) {
 
           return;
