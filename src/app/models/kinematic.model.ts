@@ -164,7 +164,7 @@ export class URFD_Link {
     this.object3D.color = 0x222222;
     this.dimensions.origin = model.origin;
     this.type = JointType.revolute;
-    // this.dimensions.rpy = model.rpy;
+    this.dimensions.rpy = model.rpy;
   }
 }
 

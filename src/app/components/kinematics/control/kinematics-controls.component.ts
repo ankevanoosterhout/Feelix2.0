@@ -179,60 +179,25 @@ export class KinematicsControlComponent {
       // const selectedJoint = this.kinematicService.getJoint(this.dragControlService.selected.parent.name);
       console.log(this.dragControlService.selected);
 
-      // console.log(worldDirection);
-      const worldDirection = new THREE.Vector3()
-      // this.dragControlService.selected.getWorldDirection(worldDirection);
-      // worldDirection.normalize();
-      // worldDirection.makeRotationX(Math.PI/2);
-
-      // const worldDirection = new THREE.Vector3()
-        .copy(new THREE.Vector3(0,0,1))
-        .transformDirection(this.dragControlService.selected.parent.matrixWorld)
-        .normalize();
-
-      model.rpy.z = this.dragControlService.selected.parent.rotation.z + Math.PI;
-      console.log(worldDirection);
-      this.kinematicsDrawingService.drawArrowHelper(this.dragControlService.selected.parent.position, worldDirection, 0x000000);
-
-      const rotationMatrix = this.dragControlService.rotateAroundAxis(worldDirection, this.dragControlService.selected.parent.rotation.z);
-
       const newPosition = new THREE.Vector3(0, 55, 0);
-
-      this.kinematicsDrawingService.drawArrowHelper(newPosition, worldDirection, 0x333333);
-
-      newPosition.applyMatrix4(rotationMatrix);
-      // newPosition.applyQuaternion(this.dragControlService.selected.parent.quaternion);
-      // newVector.applyMatrix4(this.dragControlService.selected.parent.matrixWorld);
-      console.log(newPosition, this.dragControlService.selected.parent.position);
-
+      newPosition.applyMatrix4(this.dragControlService.selected.parent.matrixWorld);
+      const updatedPosition = this.dragControlService.getRotatedPosition(this.dragControlService.selected.parent, newPosition);
       const translationMatrix = new THREE.Matrix4()
          .makeTranslation(this.dragControlService.selected.parent.position.x, this.dragControlService.selected.parent.position.y, this.dragControlService.selected.parent.position.z);
-      newPosition.applyMatrix4(translationMatrix);
+         updatedPosition.applyMatrix4(translationMatrix);
 
+      model.origin.x = updatedPosition.x;
+      model.origin.y = updatedPosition.y;
+      model.origin.z = updatedPosition.z;
 
-      this.kinematicsDrawingService.drawArrowHelper(newPosition, worldDirection, 0x666666);
-      model.origin.x = newPosition.x;
-      model.origin.y = newPosition.y;
-      model.origin.z = newPosition.z;
-
-      // const translatedVector = new THREE.Vector3();
-      // translatedVector.multiply()
-      // const connectorOrigin = this.kinematicsDrawingService.getBBoxPnt(this.dragControlService.selected.parent, 'Yellow:XY:0');
-      // const distanceJointOriginToConnector = this.dragControlService.selected.position.distanceTo(connectorOrigin);
-      // console.log(connectorOrigin);
-      // model.origin = connectorOrigin;
-
-      // model.rpy = this.dragControlService.selected.parent.rotation;
+      model.rpy.x = this.dragControlService.selected.parent.rotation.x;
+      model.rpy.y = this.dragControlService.selected.parent.rotation.y;
+      model.rpy.z = this.dragControlService.selected.parent.rotation.z + Math.PI;
     }
 
-
     const urfd_joint = this.kinematicService.addNewJoint(model);
-    // console.log(urfd_joint);
-    // start urfd file
-    // console.log(urfd_joint);
 
     this.loadOBJModel(urfd_joint);
-
 
     if (model.linkObjectUrls) {
       this.addLink(model, urfd_joint);

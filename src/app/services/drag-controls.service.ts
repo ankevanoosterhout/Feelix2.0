@@ -146,15 +146,25 @@ export class DragControlsService {
     }
   }
 
+  getRotatedPosition(model: any, startPoint: THREE.Vector3) {
+    this.tempVector
+      .copy(new THREE.Vector3(0,0,1))
+      .transformDirection(model.matrixWorld)
+      .normalize();
 
-  rotateAroundAxis(axis: THREE.Vector3, angle: number) {
-    console.log(axis, angle);
-    let rotationMatrix = new THREE.Matrix4();
+    this.pivotPoint
+      .set(0, 0, 0)
+      .applyMatrix4(model.matrixWorld);
+    this.plane
+      .setFromNormalAndCoplanarPoint(this.tempVector, this.pivotPoint);
 
-    rotationMatrix.makeRotationAxis(axis, angle);
-    console.log(rotationMatrix);
-    return rotationMatrix;
+    this.plane.projectPoint(startPoint, this.projectedStartPoint);
+    this.projectedStartPoint.sub(this.pivotPoint);
+
+    return this.projectedStartPoint;
   }
+
+
 
   getRevoluteDelta(model: any, startPoint: THREE.Vector3, endPoint: THREE.Vector3) {
     // console.log(model.matrixWorld, startPoint, endPoint);
