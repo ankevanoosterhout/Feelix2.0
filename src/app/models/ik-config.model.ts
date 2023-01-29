@@ -12,8 +12,7 @@ export class IKConfig {
 
   ikRoot = null;
 
-  frames: Array<any> = [];
-  newFrames: Array<string> = [];
+  // newFrames: Array<string> = [];
   targetObject: any;
   finalLink: any;
 

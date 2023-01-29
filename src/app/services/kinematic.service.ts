@@ -5,7 +5,6 @@ import { LocalStorageService } from 'ngx-webstorage';
 import { JointLink, Object3D, Connector, Point, ConnectorSize, ModelFile, URFD_Joint, Model, URFD_Link } from '../models/kinematic.model';
 import * as THREE from 'three';
 import { FileSaverService } from 'ngx-filesaver';
-import { KinematicLinkService } from './kinematic-link.service';
 
 
 @Injectable()
@@ -39,7 +38,7 @@ export class KinematicService {
 
   fs: any;
 
-  constructor(private localSt: LocalStorageService, private _FileSaverService: FileSaverService, private kinematicLinkService: KinematicLinkService) {
+  constructor(private localSt: LocalStorageService, private _FileSaverService: FileSaverService) {
 
     this.fs = (window as any).fs;
 
@@ -94,8 +93,6 @@ export class KinematicService {
         }
       }
     }, false );
-
-
   }
 
 
@@ -111,6 +108,15 @@ export class KinematicService {
     console.log(model);
     this.updateActiveModel();
     this.add(model);
+  }
+
+  inList(id: string) {
+    for (const frame of this.frames) {
+      if (frame.id === id) {
+        return true;
+      }
+    }
+    return false;
   }
 
 
@@ -145,7 +151,7 @@ export class KinematicService {
     const activeModel = this.models.filter(m => m.isActive)[0];
     if (activeModel) {
       activeModel.joints = this.joints;
-      activeModel.links = this.kinematicLinkService.roots;
+      // activeModel.links = this.kinematicLinkService.roots;
       this.store();
     }
     return activeModel;
@@ -155,7 +161,7 @@ export class KinematicService {
     this.deleteJointsScene.next();
     if (model.joints) {
       this.joints = model.joints;
-      this.kinematicLinkService.roots = model.links;
+      // this.kinematicLinkService.roots = model.links;
       this.store();
       this.loadModels.next();
     }
@@ -221,7 +227,7 @@ export class KinematicService {
       const activeModel = this.models.filter(m => m.isActive)[0];
       if (activeModel) {
         activeModel.joints = this.joints;
-        activeModel.links = this.kinematicLinkService.roots;
+        // activeModel.links = this.kinematicLinkService.roots;
         this.store();
       }
     }
@@ -233,7 +239,7 @@ export class KinematicService {
       if (modelObj.isActive) {
         this.deleteJointsScene.next();
         this.joints = [];
-        this.kinematicLinkService.deleteAll();
+        // this.kinematicLinkService.deleteAll();
       }
       const index = this.models.indexOf(modelObj);
       if (index > -1) {
@@ -259,21 +265,20 @@ export class KinematicService {
   //   return joint;
   // }
 
-  addNewJoint(model: Model): URFD_Joint {
-    const urfd_joint = new URFD_Joint(uuid(), model);
+  addNewJoint(id: string, model: Model, parent = false): URFD_Joint {
+    const urfd_joint = new URFD_Joint(id === null ? uuid() : id, model, parent);
 
     const similarObjects = this.frames.filter(j => j instanceof URFD_Joint && j.config.active).length;
     urfd_joint.name += '-' + (similarObjects + 1);
 
-    // console.log(urfd_joint);
     this.frames.push(urfd_joint);
     this.store();
 
     return urfd_joint;
   }
 
-  addNewLink(id: string, model: Model): URFD_Link {
-    const urfd_link = new URFD_Link(id + '-link', model);
+  addNewLink(id: string, model: Model, parent = false): URFD_Link {
+    const urfd_link = new URFD_Link(id === null ? uuid() + '-link' : id + '-link', model, parent);
 
     const similarObjects = this.frames.filter(l => l instanceof URFD_Link).length;
     urfd_link.name += '-' + (similarObjects + 1);
@@ -307,7 +312,7 @@ export class KinematicService {
   deleteAll() {
     this.deselectAll();
     this.joints = [];
-    this.kinematicLinkService.deleteAll();
+    // this.kinematicLinkService.deleteAll();
     const activeModel = this.models.filter(m => m.isActive)[0];
     if (activeModel) {
       activeModel.joints = [];
@@ -467,6 +472,10 @@ export class KinematicService {
 
   getJoint(id: string): URFD_Joint {
     return this.frames.filter(j => j instanceof URFD_Joint && j.id === id)[0];
+  }
+
+  getFrame(id: string) : any {
+    return this.frames.filter(j => j.id === id)[0];
   }
 
   // getJoint(id: string): JointLink {

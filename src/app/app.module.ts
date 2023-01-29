@@ -64,11 +64,8 @@ import { KinematicsToolbarComponent } from './components/interface-elements/tool
 import { KinematicsControlComponent } from './components/kinematics/control/kinematics-controls.component';
 import { KinematicsDrawingService } from './services/kinematics-drawing.service';
 import { KinematicsCursorComponent } from './components/kinematics/control/kinematics-cursor.component';
-import { ClosedChainIKService } from './services/closed-chain-ik.service';
-import { KinematicLinkService } from './services/kinematic-link.service';
 import { DragControlsService } from './services/drag-controls.service';
 import { IKService } from './services/IK.service';
-// import { FullIKService } from './services/full-ik.service';
 
 @NgModule({
   declarations: [
@@ -140,8 +137,6 @@ import { IKService } from './services/IK.service';
     FilterService,
     KinematicService,
     KinematicsDrawingService,
-    ClosedChainIKService,
-    KinematicLinkService,
     DragControlsService,
     IKService
     // FullIKService

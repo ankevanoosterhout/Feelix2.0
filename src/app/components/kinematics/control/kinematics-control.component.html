@@ -21,7 +21,7 @@
           <div class="row">
             <div class="labelRow">display models</div>
             <label class="radio-container inline">
-              <input type="checkbox" class="type" id="display_models" name="display_models" [ngModel]="this.ikService.ikConfig.screen.displayModels">
+              <input type="checkbox" class="type" id="display_models" name="display_models" value="true" (change)="displayModels()">
               <span class="checkmark radio inline"></span>
             </label>
           </div>
@@ -29,7 +29,7 @@
           <div class="row">
             <div class="labelRow">display IK</div>
             <label class="radio-container inline">
-              <input type="checkbox" class="type" id="display_ik" name="display_ik" (change)="showRootsHelper()">
+              <input type="checkbox" class="type" id="display_ik" name="display_ik" value="this.ikService.ikConfig.screen.displayIK" (change)="showRootsHelper()">
               <span class="checkmark radio inline"></span>
             </label>
           </div>
@@ -53,7 +53,7 @@
         <div class="row">
           <ul id="models">
             <li *ngFor="let model of this.jointModels">
-              <div id="item-{{ model.id }}" class="model-item" (click)="addJoint(model)"><img src="./assets/images/models_png/{{ model.thumbnail }}"></div>
+              <div id="item-{{ model.id }}" class="model-item" (click)="addFrame(model)"><img src="./assets/images/models_png/{{ model.thumbnail }}"></div>
             </li>
           </ul>
         </div>

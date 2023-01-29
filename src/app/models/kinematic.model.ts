@@ -131,9 +131,9 @@ export class URFD_Joint {
   limits = new Limits();
   object3D = new Object3D();
   config = new JointConfig();
-  angle: number = Math.PI;
+  angle: number;
 
-  constructor(id: string, model: Model) {
+  constructor(id: string, model: Model, parent = false) {
     // console.log(model.origin, model.rpy);
     this.id = id;
     this.config.active = model.active;
@@ -143,6 +143,10 @@ export class URFD_Joint {
     this.axis.z = 1;
     this.dimensions.origin = model.origin;
     this.dimensions.rpy = model.rpy;
+    if (parent) {
+      this.dimensions.rpy.z += Math.PI;
+    }
+    this.angle = Math.PI;
   }
 }
 
@@ -157,7 +161,7 @@ export class URFD_Link {
   size: number;
   object3D = new Object3D();
 
-  constructor(id: string, model: Model) {
+  constructor(id: string, model: Model, parent = false) {
     // console.log(model.origin, model.rpy);
     this.id = id;
     this.object3D.objectUrls = model.linkObjectUrls;
@@ -165,7 +169,9 @@ export class URFD_Link {
     this.dimensions.origin = model.origin;
     this.type = JointType.revolute;
     this.dimensions.rpy = model.rpy;
-    this.dimensions.rpy.z += Math.PI;
+    if (!parent) {
+      this.dimensions.rpy.z += Math.PI;
+    }
   }
 }
 
