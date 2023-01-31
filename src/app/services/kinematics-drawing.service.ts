@@ -7,6 +7,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls';
 import { KinematicService } from './kinematic.service';
+import { Raycaster } from 'three';
 
 
 @Injectable()
@@ -31,10 +32,6 @@ export class KinematicsDrawingService {
   constructor(@Inject(DOCUMENT) private document: Document, private kinematicService: KinematicService) {
     this.config = new KinematicsConfig();
 
-    this.kinematicService.loadModels.subscribe(res => {
-      this.loadSavedModels();
-    });
-
     this.kinematicService.deleteJointsScene.subscribe(res => {
       this.deleteAllJointsFromScene();
     });
@@ -43,9 +40,6 @@ export class KinematicsDrawingService {
 
   }
 
-  public getIntersections() {
-    return this.config.rayCaster.intersectObject(this.config.scene, true);
-  }
 
 
   // public selectSceneObject( object: any ) {
@@ -170,24 +164,8 @@ export class KinematicsDrawingService {
   }
 
 
-  loadSavedModels() {
-    console.log('load models');
 
-    for (const joint of this.kinematicService.joints) {
-      if (joint.sceneObject) {
 
-        this.config.jsonLoader.parse(joint.sceneObject, (obj: any) => {
-          joint.sceneObject = obj;
-          this.config.scene.add(obj);
-        });
-      } else {
-        this.config.scene.add(joint.sceneObject);
-      }
-      this.setObjectColor(joint.sceneObject);
-
-    }
-    this.animate();
-  }
 
 
   addObjectToScene(object: any, addControls = false) {
@@ -342,6 +320,11 @@ export class KinematicsDrawingService {
   }
 
 
+  getObjectFromScene(name: string) {
+    return this.config.scene.getObjectByName(name);
+  }
+
+
   // updateJointsInRoot(joint: any, position: Array<number>, quaternion: Array<number>) {
 
   //   const sceneObject = this.config.scene.getObjectByName(joint.name);
@@ -443,27 +426,27 @@ export class KinematicsDrawingService {
 
     if (intersect.object && intersect.object.parent) {
 
-      const joint = this.kinematicService.joints.filter(j => j.sceneObject.id === intersect.object.parent.id || (intersect.object.parent.parent && j.sceneObject.id === intersect.object.parent.parent.id))[0];
+      // const joint = this.kinematicService.frames.filter(j => j.sceneObject.id === intersect.object.parent.id || (intersect.object.parent.parent && j.sceneObject.id === intersect.object.parent.parent.id))[0];
 
-      if (joint) {
-        if (val && val === 'E') {
-          this.deselectAllObjects();
-          this.kinematicService.selectedJoints = [ joint ];
-          console.log(val);
-          this.setObjectColor(intersect.object, this.config.selectColor);
+      // if (joint) {
+        // if (val && val === 'E') {
+          // this.deselectAllObjects();
+          // this.kinematicService.selectedFrames = [ joint ];
+          // console.log(val);
+          // this.setObjectColor(intersect.object, this.config.selectColor);
 
           //extend the arm
           //show arrow in direction of
-        } else {
-          if (this.config.draggableObject.name !== this.kinematicService.selectedJoints[0].id) {
-            this.deselectAllObjects();
-            this.kinematicService.selectedJoints = [joint];
+        // } else {
+          // if (this.config.draggableObject.name !== this.kinematicService.selectedFrames[0].id) {
+          //   this.deselectAllObjects();
+          //   this.kinematicService.selectedFrames = [joint];
             // this.config.control.detach();
-            this.setObjectColor(intersect.object, this.config.selectColor);
-            this.config.draggableObject = intersect.object;
-            this.config.orbit.enabled = false;
-          }
-          console.log(this.config.draggableObject);
+            // this.setObjectColor(intersect.object, this.config.selectColor);
+            // this.config.draggableObject = intersect.object;
+            // this.config.orbit.enabled = false;
+          // }
+          // console.log(this.config.draggableObject);
 
           // this.dragControlsService.update(intersect, joint);
 
@@ -483,8 +466,8 @@ export class KinematicsDrawingService {
           // this.config.pivotPoint.rotation.z = object.rotation.z;
 
           // parent.attach(object);
-        }
-      }
+        // }
+      // }
     }
   }
 
@@ -497,20 +480,20 @@ export class KinematicsDrawingService {
   deleteAllJointsFromScene() {
     this.deselectAllObjects();
     if (this.config.scene) {
-      const objectList = [];
+      // const objectList = [];
       for (const child of this.config.scene.children) {
-        if (child.type == 'Group') {
-          objectList.push(child.name);
-          // this.config.scene.remove(child);
+        if (child.type == 'Group' && child.parent === this.config.scene) {
+          // objectList.push(child.name);
+          this.config.scene.remove(child);
           // console.log(this.config.scene);
         }
       }
-      for (const obj of objectList) {
-        const sceneObj = this.config.scene.getObjectByName(obj);
-        if (sceneObj) {
-          this.config.scene.remove(sceneObj);
-        }
-      }
+      // for (const obj of objectList) {
+      //   const sceneObj = this.config.scene.getObjectByName(obj);
+      //   if (sceneObj) {
+      //     this.config.scene.remove(sceneObj);
+      //   }
+      // }
     }
   }
 
@@ -519,11 +502,11 @@ export class KinematicsDrawingService {
     // console.log(this.config.scene.getObjectByName('target'));
     if (this.kinematicService.anySelected()) {
       // console.log('deselect draggable object');
-      this.config.draggableObject = undefined;
+      // this.config.draggableObject = undefined;
       // this.toggleRotationCircle(false);
       this.config.control.detach();
 
-      for (const object of this.kinematicService.joints) {
+      for (const object of this.kinematicService.frames) {
         this.deselectObject(object.sceneObject);
       }
       for (const item of this.kinematicService.selConnPoints) {
@@ -550,17 +533,17 @@ export class KinematicsDrawingService {
 
 
   deselectObject(object: any) {
-    this.kinematicService.deselectJoint(object.name);
+    this.kinematicService.deselectFrame(object.name);
     this.setObjectColor(object);
   }
 
 
   deleteSelectedJoints() {
-    if (this.kinematicService.selectedJoints.length > 0) {
-      if (this.kinematicService.selectedJoints.length === 1) {
+    if (this.kinematicService.selectedFrames.length > 0) {
+      if (this.kinematicService.selectedFrames.length === 1) {
         this.config.control.detach();
       }
-      for (const joint of this.kinematicService.selectedJoints) {
+      for (const joint of this.kinematicService.selectedFrames) {
         this.deleteObjectFromScene(joint.id);
         // this.kinematicLinkService.deleteAllLinks(joint.id);
         this.kinematicService.deleteJoint(joint.id);
@@ -570,10 +553,10 @@ export class KinematicsDrawingService {
   }
 
   deleteAllJoints() {
-    if (this.kinematicService.selectedJoints.length === 1) {
+    if (this.kinematicService.selectedFrames.length === 1) {
       this.config.control.detach();
     }
-    for (const joint of this.kinematicService.joints) {
+    for (const joint of this.kinematicService.frames) {
       const sceneObject = this.config.scene.getObjectByName(joint.id);
       if (sceneObject) {
         this.config.scene.remove(sceneObject);
@@ -588,8 +571,8 @@ export class KinematicsDrawingService {
 
   copySelectedJoints() {
     const newSelectedJoints = [];
-    if (this.kinematicService.selectedJoints.length > 0) {
-      for (const joint of this.kinematicService.selectedJoints) {
+    if (this.kinematicService.selectedFrames.length > 0) {
+      for (const joint of this.kinematicService.selectedFrames) {
         const copySceneObject = joint.sceneObject.clone();
         const newJoint = this.kinematicService.copyJoint(joint.id, copySceneObject);
         newSelectedJoints.push(newJoint);
@@ -636,19 +619,19 @@ export class KinematicsDrawingService {
         //   z: object.rotation.z - model.object3D.rotation.z * (Math.PI / 180)
         // };
 
-        const diffTranslation = {
-          x: object.position.x - model.object3D.position.x,
-          y: object.position.y - model.object3D.position.y,
-          z: object.position.z - model.object3D.position.z
-        };
+        // const diffTranslation = {
+        //   x: object.position.x - model.object3D.position.x,
+        //   y: object.position.y - model.object3D.position.y,
+        //   z: object.position.z - model.object3D.position.z
+        // };
 
-        model.object3D.rotation.x = object.rotation.x * (180 / Math.PI);
-        model.object3D.rotation.y = object.rotation.y * (180 / Math.PI);
-        model.object3D.rotation.z = object.rotation.z * (180 / Math.PI);
+        // model.object3D.rotation.x = object.rotation.x * (180 / Math.PI);
+        // model.object3D.rotation.y = object.rotation.y * (180 / Math.PI);
+        // model.object3D.rotation.z = object.rotation.z * (180 / Math.PI);
 
-        model.object3D.position.x += diffTranslation.x;
-        model.object3D.position.y += diffTranslation.y;
-        model.object3D.position.z += diffTranslation.z;
+        // model.object3D.position.x += diffTranslation.x;
+        // model.object3D.position.y += diffTranslation.y;
+        // model.object3D.position.z += diffTranslation.z;
 
 
         // if (updateChildren) {
@@ -665,7 +648,7 @@ export class KinematicsDrawingService {
     for (const item of model.connectors) {
       if (item.connected) {
         if (prevModel === null || prevModel.id !== item.object) {
-          const connectedObject = this.kinematicService.joints.filter(j => j.id === item.object)[0];
+          const connectedObject = this.kinematicService.frames.filter(j => j.id === item.object)[0];
           if (connectedObject) {
             // console.log('translate children ', diffTranslation);
             this.translateObject(connectedObject, diffTranslation);
@@ -680,9 +663,9 @@ export class KinematicsDrawingService {
     const sceneObject = this.config.scene.getObjectByName(model.id);
     sceneObject.position.set(sceneObject.position.x + diffTranslation.x, sceneObject.position.y + diffTranslation.y, sceneObject.position.z + diffTranslation.z);
     model.sceneObject = sceneObject;
-    model.object3D.position.x += diffTranslation.x;
-    model.object3D.position.y += diffTranslation.y;
-    model.object3D.position.z += diffTranslation.z;
+    // model.object3D.position.x += diffTranslation.x;
+    // model.object3D.position.y += diffTranslation.y;
+    // model.object3D.position.z += diffTranslation.z;
   }
 
 
@@ -697,10 +680,10 @@ export class KinematicsDrawingService {
 
 
   groupObjects() {
-    if (this.kinematicService.selectedJoints.length > 0) {
+    if (this.kinematicService.selectedFrames.length > 0) {
       const group = new THREE.Group();
 
-      for (const joint of this.kinematicService.selectedJoints) {
+      for (const joint of this.kinematicService.selectedFrames) {
         const object = this.config.scene.getObjectByName(joint.id);
         group.add(object);
         // this.deleteObjectFromScene(object.name);

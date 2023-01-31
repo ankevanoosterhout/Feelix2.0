@@ -50,11 +50,11 @@ export class Vector3 {
 }
 
 export class Object3D {
-  position = new Vector3();
-  rotation = new Vector3();
+  // position = new Vector3();
+  // rotation = new Vector3();
   objectID: number;
   objectUrls: Array<ObjectUrl> = [];
-  obj: any;
+  // obj: any;
   color: number;
   hidden = false;
   lock = false;
@@ -112,16 +112,15 @@ export class Dimensions {
 
 export class JointConfig {
   active: boolean;
-  grounded: boolean;
+  grounded: boolean = false;
   control: MicroController;
   motorIndex: number;
-  selected = false;
 }
 
 
 export class URFD_Joint {
   id: string;
-  name: string;
+  name: string = 'joint';
   parent: URFD_Link;
   child: URFD_Link;
   type: JointType;
@@ -132,46 +131,62 @@ export class URFD_Joint {
   object3D = new Object3D();
   config = new JointConfig();
   angle: number;
+  modelID: number;
+  selected = false;
 
   constructor(id: string, model: Model, parent = false) {
-    // console.log(model.origin, model.rpy);
+    console.log(model.rpy, parent);
     this.id = id;
     this.config.active = model.active;
+    if (this.config.active) {
+      this.name = 'actuator';
+    }
     this.object3D.objectUrls = model.objectUrls;
     this.object3D.color = model.color;
     this.type = JointType.revolute;
     this.axis.z = 1;
+    this.angle = Math.PI;
     this.dimensions.origin = model.origin;
     this.dimensions.rpy = model.rpy;
     if (parent) {
       this.dimensions.rpy.z += Math.PI;
     }
-    this.angle = Math.PI;
+    console.log(this.dimensions.rpy.z);
+
+    this.modelID = model.id;
   }
 }
 
 
 export class URFD_Link {
   id: string;
-  name: string;
+  name: string = 'link';
   type: JointType;
   parent: URFD_Joint;
   children: Array<any>;
   dimensions = new Dimensions();
   size: number;
   object3D = new Object3D();
+  modelID: number;
+  selected = false;
 
   constructor(id: string, model: Model, parent = false) {
-    // console.log(model.origin, model.rpy);
+    console.log(model.rpy, parent);
     this.id = id;
+    if (this.id.length > 43) {
+      this.id.slice(0, -5);
+    }
     this.object3D.objectUrls = model.linkObjectUrls;
     this.object3D.color = 0x222222;
     this.dimensions.origin = model.origin;
     this.type = JointType.revolute;
     this.dimensions.rpy = model.rpy;
+    // this.dimensions.rpy.z += Math.PI;
     if (!parent) {
       this.dimensions.rpy.z += Math.PI;
     }
+    console.log(this.dimensions.rpy.z);
+    this.modelID = model.id;
   }
 }
 

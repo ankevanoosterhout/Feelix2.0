@@ -26,6 +26,7 @@ export class IKService {
     const data = this.localSt.retrieve('roots');
 
     if (data) {
+      console.log(data);
       this.ikFrames = data;
     }
   }

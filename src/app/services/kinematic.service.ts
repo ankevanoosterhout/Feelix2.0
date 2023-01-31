@@ -5,6 +5,7 @@ import { LocalStorageService } from 'ngx-webstorage';
 import { JointLink, Object3D, Connector, Point, ConnectorSize, ModelFile, URFD_Joint, Model, URFD_Link } from '../models/kinematic.model';
 import * as THREE from 'three';
 import { FileSaverService } from 'ngx-filesaver';
+import { RAD2DEG } from 'three/src/math/MathUtils';
 
 
 @Injectable()
@@ -13,27 +14,24 @@ export class KinematicService {
   public static readonly  LOAD_FILE = 'loadModel';
   public static readonly  LOAD_FILE_LOCATION = 'loadModelLocation';
 
-  public static readonly MODEL_LOCATION = 'ngx-webstorage|models';
+  public static readonly MODEL_LOCATION = 'ngx-webstorage|frames';
   public static readonly MODEL_FILES_LOCATION = 'ngx-webstorage|modelFiles';
 
-  joints: Array<JointLink> = [];
+  // joints: Array<JointLink> = [];
 
   frames: Array<any> = [];
 
   models: Array<ModelFile> = [];
 
   public modelObservable = new Subject<ModelFile[]>();
-  public jointObservable = new Subject<JointLink[]>();
+  public framesObservable = new Subject<any>();
 
-  selectedJoints = [];
-
-  public selectedFrame = null;
+  selectedFrames = [];
 
 
   selConnPoints: Array<Point> = [];
 
-  importOBJModelToObjectGroup: Subject<any> = new Subject();
-  loadModels: Subject<any> = new Subject();
+  // importOBJModelToObjectGroup: Subject<any> = new Subject();
   deleteJointsScene: Subject<any> = new Subject();
 
   fs: any;
@@ -121,12 +119,12 @@ export class KinematicService {
 
 
   setActive(activeModel: ModelFile) {
-    // console.log(activeModel);
-    // if (!activeModel.isActive) {
-    this.loadFile(activeModel);
-      // this.loadJoints(activeModel.joints);
+    console.log(activeModel);
+    if (!activeModel.isActive) {
+      this.loadFile(activeModel);
+      // this.loadFrames(activeModel.joints);
       // this.loadLinks(activeModel.links);
-    // }
+    }
     for (const model of this.models) {
       model.isActive = model.id === activeModel.id ? true : false;
     }
@@ -150,7 +148,7 @@ export class KinematicService {
   getActiveModel() {
     const activeModel = this.models.filter(m => m.isActive)[0];
     if (activeModel) {
-      activeModel.joints = this.joints;
+      activeModel.joints = this.frames;
       // activeModel.links = this.kinematicLinkService.roots;
       this.store();
     }
@@ -159,11 +157,11 @@ export class KinematicService {
 
   loadFile(model: ModelFile) {
     this.deleteJointsScene.next();
+    console.log(model.joints);
     if (model.joints) {
-      this.joints = model.joints;
+      this.frames = model.joints;
       // this.kinematicLinkService.roots = model.links;
       this.store();
-      this.loadModels.next();
     }
   }
 
@@ -177,7 +175,7 @@ export class KinematicService {
     const model = modelObj ? modelObj : this.models.filter(m => m.isActive)[0];
 
     if (model && model.isActive) {
-      model.joints = this.joints;
+      model.joints = this.frames;
     }
     if (model) {
       if (model.path) {
@@ -226,7 +224,7 @@ export class KinematicService {
     if (this.models.length > 0) {
       const activeModel = this.models.filter(m => m.isActive)[0];
       if (activeModel) {
-        activeModel.joints = this.joints;
+        activeModel.joints = this.frames;
         // activeModel.links = this.kinematicLinkService.roots;
         this.store();
       }
@@ -238,7 +236,7 @@ export class KinematicService {
     if (modelObj) {
       if (modelObj.isActive) {
         this.deleteJointsScene.next();
-        this.joints = [];
+        this.frames = [];
         // this.kinematicLinkService.deleteAll();
       }
       const index = this.models.indexOf(modelObj);
@@ -254,16 +252,6 @@ export class KinematicService {
     this.add(defaultFile);
   }
 
-  // addJoint(model: any): JointLink {
-  //   const joint = new JointLink(uuid(), model);
-  //   console.log(joint);
-  //   const similarObjects = this.joints.filter(j => j.isMotor === joint.isMotor && j.isJoint === joint.isJoint).length;
-  //   joint.name += '-' + (similarObjects + 1);
-  //   this.joints.push(joint);
-  //   this.store();
-
-  //   return joint;
-  // }
 
   addNewJoint(id: string, model: Model, parent = false): URFD_Joint {
     const urfd_joint = new URFD_Joint(id === null ? uuid() : id, model, parent);
@@ -271,11 +259,15 @@ export class KinematicService {
     const similarObjects = this.frames.filter(j => j instanceof URFD_Joint && j.config.active).length;
     urfd_joint.name += '-' + (similarObjects + 1);
 
+    console.log(urfd_joint);
+
     this.frames.push(urfd_joint);
-    this.store();
+    // this.store();
 
     return urfd_joint;
   }
+
+
 
   addNewLink(id: string, model: Model, parent = false): URFD_Link {
     const urfd_link = new URFD_Link(id === null ? uuid() + '-link' : id + '-link', model, parent);
@@ -283,27 +275,23 @@ export class KinematicService {
     const similarObjects = this.frames.filter(l => l instanceof URFD_Link).length;
     urfd_link.name += '-' + (similarObjects + 1);
 
+    console.log(urfd_link);
     this.frames.push(urfd_link);
+    // this.store();
+
     return urfd_link;
   }
 
-  // addJoint(model: any): JointLink {
-  //   const joint = new JointLink(uuid(), model);
-  //   const similarObjects = this.joints.filter(j => j.isMotor === joint.isMotor && j.isJoint === joint.isJoint).length;
-  //   joint.name += '-' + (similarObjects + 1);
-  //   this.joints.push(joint);
-  //   this.store();
 
-  //   return joint;
-  // }
+
 
   deleteJoint(id: string) {
-    this.deselectJoint(id);
-    const joint = this.joints.filter(j => j.id === id)[0];
+    this.deselectFrame(id);
+    const joint = this.frames.filter(j => j.id === id)[0];
     if (joint) {
-      const index = this.joints.indexOf(joint);
+      const index = this.frames.indexOf(joint);
       if (index > -1) {
-        this.joints.splice(index, 1);
+        this.frames.splice(index, 1);
         this.store();
       }
     }
@@ -311,7 +299,7 @@ export class KinematicService {
 
   deleteAll() {
     this.deselectAll();
-    this.joints = [];
+    this.frames = [];
     // this.kinematicLinkService.deleteAll();
     const activeModel = this.models.filter(m => m.isActive)[0];
     if (activeModel) {
@@ -321,8 +309,9 @@ export class KinematicService {
     this.store();
   }
 
+  //adjust
   copyJoint(id: string, sceneObject: any) {
-    const joint = this.joints.filter(j => j.id === id)[0];
+    const joint = this.frames.filter(j => j.id === id)[0];
     console.log(joint.id, joint.connectors);
     if (joint) {
       const newID = uuid();
@@ -339,7 +328,7 @@ export class KinematicService {
       newJoint.sceneObject = sceneObject;
       newJoint.connectors = joint.connectors;
       console.log(newJoint.id, newJoint.connectors);
-      this.joints.push(newJoint);
+      this.frames.push(newJoint);
       // console.log(this.joints);
       this.store();
 
@@ -348,6 +337,32 @@ export class KinematicService {
   }
 
 
+  updateAngle(id: string, rotationZ: number, linkAngle: number) {
+    const frame = this.frames.filter(f => f.id === id)[0];
+
+    if (frame) {
+
+        const delta = frame instanceof URFD_Joint ? linkAngle - rotationZ : rotationZ - linkAngle;
+
+        if (frame instanceof URFD_Joint) {
+          frame.angle = delta;
+
+          if (this.selectedFrames[0] && this.selectedFrames[0].id === frame.id) {
+            this.selectedFrames[0].angle = frame.angle;
+          }
+          // console.log('angle ', frame.angle, rotationZ);
+        }
+      }
+
+      frame.dimensions.rpy.z = rotationZ;
+
+      if (this.selectedFrames[0] && this.selectedFrames[0].id === id) {
+        this.selectedFrames[0].dimensions.rpy.z = frame.dimensions.rpy.z;
+      }
+    // }
+  }
+
+//delete or adjusst
   updateObjectDetails(object: any, model_id: string, point_name: string, color = null) {
     // console.log(object);
     object.traverse( ( child: any ) => {
@@ -378,7 +393,8 @@ export class KinematicService {
 
 
   anySelected(): boolean {
-    if (this.selConnPoints.length > 0 || this.selectedJoints.length > 0) {
+    // if (this.selConnPoints.length > 0 || this.selectedFrames.length > 0) {
+    if (this.selectedFrames && this.selectedFrames.length > 0) {
       return true;
     }
     return false;
@@ -386,7 +402,7 @@ export class KinematicService {
   }
 
   deselectAll() {
-    this.selectedJoints = [];
+    this.selectedFrames = [];
     this.selConnPoints = [];
   }
 
@@ -394,10 +410,11 @@ export class KinematicService {
   //   return this.selConnPoints.filter(p => p.parent.id === parent_id && p.point.uuid === point_id)[0];
   // }
 
+  //delete or adjust
   getSelectionPoint(parent_id: string, id: string) {
     // console.log(parent_id, id);
 
-    const joint = this.joints.filter(j => j.id === parent_id)[0];
+    const joint = this.frames.filter(j => j.id === parent_id)[0];
     // console.log(joint);
 
     if (joint) {
@@ -421,7 +438,7 @@ export class KinematicService {
 
   updateSelectionPointID(model_id: string, name: string, id: string) {
     // console.log(name);
-    const joint = this.joints.filter(j => j.id === model_id)[0];
+    const joint = this.frames.filter(j => j.id === model_id)[0];
     // console.log(joint);
 
     if (joint) {
@@ -440,7 +457,7 @@ export class KinematicService {
 
   updateArmExtensionID(model_id: string, name: string, id: string) {
     // console.log(name);
-    const joint = this.joints.filter(j => j.id === model_id)[0];
+    const joint = this.frames.filter(j => j.id === model_id)[0];
     // console.log(joint);
 
     if (joint) {
@@ -475,43 +492,52 @@ export class KinematicService {
   }
 
   getFrame(id: string) : any {
-    return this.frames.filter(j => j.id === id)[0];
-  }
-
-  // getJoint(id: string): JointLink {
-  //   return this.joints.filter(j => j.id === id)[0];
-  // }
-
-  getAllJoints(): Array<JointLink> {
-    return this.joints;
-  }
-
-  getObjectWithID(id: string): any {
     return this.frames.filter(f => f.id === id)[0];
   }
 
-  deselectJoint(id: string) {
-    const joint = this.selectedJoints.filter(j => j.id === id)[0];
-    if (joint) {
-      const index = this.selectedJoints.indexOf(joint);
-      this.joints.filter(j => j.id === id)[0].selected = false;
-      if (index > -1) {
-        this.selectedJoints.splice(index, 1);
+
+  getAllJoints(): Array<any> {
+    return this.frames;
+  }
+
+
+  deselectFrame(id: string) {
+    const frame = this.selectedFrames.filter(j => j.id === id)[0];
+    console.log(frame);
+    if (frame) {
+      this.frames.filter(j => j.id === id)[0].selected = false;
+      if (this.selectedFrames.length === 1) {
+        this.selectedFrames = [];
+      } else {
+        const index = this.selectedFrames.indexOf(frame);
+        if (index > -1) {
+          this.selectedFrames.splice(index, 1);
+        }
       }
     }
   }
 
-  selectJoint(id: string) {
-    const joint = this.joints.filter(j => j.id === id)[0];
-    if (joint) {
-      joint.selected = true;
-      this.selectedJoints.push(joint);
+
+
+  selectFrame(id: string, shift = false) {
+    console.log('select frame ', id);
+    // console.log(this.frames);
+    const frame = this.frames.filter(j => j.id === id)[0];
+    console.log(frame);
+    if (!shift) {
+      this.selectedFrames = [];
     }
+    if (frame) {
+      frame.selected = true;
+      this.selectedFrames.push(frame);
+      console.log(this.selectedFrames);
+    }
+
   }
 
 
   updateJointVisualization(id: string, object3D: Object3D) : JointLink {
-    const joint = this.joints.filter(j => j.id === id)[0];
+    const joint = this.frames.filter(j => j.id === id)[0];
     if (joint) {
       joint.object3D = object3D;
       this.store();
@@ -521,7 +547,7 @@ export class KinematicService {
   }
 
   getJointColor(id: string): number {
-    const joint = this.joints.filter(j => j.id === id)[0];
+    const joint = this.frames.filter(j => j.id === id)[0];
     if (joint) {
       return joint.object3D.color;
     }
@@ -530,7 +556,7 @@ export class KinematicService {
 
 
   updateConnectionPoint(id: string, point_: Connector): JointLink {
-    const joint = this.joints.filter(j => j.id === id)[0];
+    const joint = this.frames.filter(j => j.id === id)[0];
     if (joint) {
       let point = joint.connectors.filter(p => p.id === point_.id)[0];
       if (point) {
@@ -542,24 +568,25 @@ export class KinematicService {
     return;
   }
 
-  updateJoint(joint: JointLink) {
-    let jointInList = this.joints.filter(j => j.id === joint.id)[0];
-    if (jointInList) {
-      jointInList = joint;
-      this.store();
-    }
+  updateJoint(frame: any) {
+    console.log('update frame ', frame);
+    // let frameInList = this.frames.filter(f => f.id === frame.id)[0];
+    // if (frameInList) {
+    //   frameInList = frame;
+    //   this.store();
+    // }
   }
 
-  getPoint(joint_id: string, point_id: string): Connector {
-    const joint = this.joints.filter(j => j.id === joint_id)[0];
-    if (joint) {
-      const point = joint.connectors.filter(p => p.id === point_id)[0];
-      if (point) {
-        return point;
-      }
-    }
-    return;
-  }
+  // getPoint(joint_id: string, point_id: string): Connector {
+  //   const joint = this.frames.filter(j => j.id === joint_id)[0];
+  //   if (joint) {
+  //     const point = joint.connectors.filter(p => p.id === point_id)[0];
+  //     if (point) {
+  //       return point;
+  //     }
+  //   }
+  //   return;
+  // }
 
 
   getConnectorSize(plane: string, type: number, isMotor: boolean) {
@@ -573,33 +600,34 @@ export class KinematicService {
   }
 
 
-  addPoint(id: string) {
-    const joint = this.joints.filter(j => j.id === id)[0];
-    if (joint) {
+  // addPoint(id: string) {
+  //   const joint = this.frames.filter(j => j.id === id)[0];
+  //   if (joint) {
 
-      const axis = joint.connectors.filter(p => p.plane === 'X').length > joint.connectors.filter(p => p.plane === 'Y').length ? 'Y' : 'X';
-      const connectorsWithAxis = joint.connectors.filter(p => p.plane === axis);
-      const angle = connectorsWithAxis.length === 0 ? 0 : connectorsWithAxis[connectorsWithAxis.length - 1].angle + 60;
-      const vector = new THREE.Vector3(-Math.cos(angle * Math.PI/180 + (Math.PI / 2)), -Math.sin(angle * Math.PI/180 + (Math.PI / 2)),0);
-      vector.normalize();
+  //     const axis = joint.connectors.filter(p => p.plane === 'X').length > joint.connectors.filter(p => p.plane === 'Y').length ? 'Y' : 'X';
+  //     const connectorsWithAxis = joint.connectors.filter(p => p.plane === axis);
+  //     const angle = connectorsWithAxis.length === 0 ? 0 : connectorsWithAxis[connectorsWithAxis.length - 1].angle + 60;
+  //     const vector = new THREE.Vector3(-Math.cos(angle * Math.PI/180 + (Math.PI / 2)), -Math.sin(angle * Math.PI/180 + (Math.PI / 2)),0);
+  //     vector.normalize();
 
-      const point = new Connector(null,'Yellow:' + axis + ':' + connectorsWithAxis.length, angle, axis, vector);
-      point.size = this.getConnectorSize(point.plane, joint.modelType, joint.isMotor);
-      joint.connectors.push(point);
-      this.store();
+  //     const point = new Connector(null,'Yellow:' + axis + ':' + connectorsWithAxis.length, angle, axis, vector);
+  //     point.size = this.getConnectorSize(point.plane, joint.modelType, joint.isMotor);
+  //     joint.connectors.push(point);
+  //     this.store();
 
-      this.importOBJModelToObjectGroup.next({ pnt: point, model_id: joint.id });
-    }
-  }
+  //     this.importOBJModelToObjectGroup.next({ pnt: point, model_id: joint.id });
+  //   }
+  // }
 
 
 
 
   store() {
     this.modelObservable.next(this.models);
-    this.jointObservable.next(this.joints);
-    this.localSt.store('models', this.joints);
+    this.framesObservable.next(this.frames);
+    this.localSt.store('frames', this.frames);
     this.localSt.store('modelFiles', this.models);
+    console.log(this.models, this.frames);
   }
 
 

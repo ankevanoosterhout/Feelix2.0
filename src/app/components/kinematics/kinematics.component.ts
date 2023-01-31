@@ -1,4 +1,4 @@
-import { Component, OnInit, HostListener, Inject, AfterViewInit } from '@angular/core';
+import { Component, OnInit, HostListener, Inject } from '@angular/core';
 import { ElectronService } from 'ngx-electron';
 import * as THREE from 'three';
 import { KinematicsConfig } from 'src/app/models/kinematics-config.model';
@@ -14,7 +14,7 @@ import { Raycaster } from 'three';
     templateUrl: './kinematics.component.html',
     styleUrls: ['../windows/effects/effects.component.css','./kinematics.component.css']
 })
-export class KinematicsComponent implements OnInit, AfterViewInit {
+export class KinematicsComponent implements OnInit {
 
   public config: KinematicsConfig;
 
@@ -32,6 +32,7 @@ export class KinematicsComponent implements OnInit, AfterViewInit {
     solvePosition: true,
     solveRotation: false,
   };
+
 
 
   // tslint:disable-next-line: variable-name
@@ -60,6 +61,7 @@ export class KinematicsComponent implements OnInit, AfterViewInit {
     this.electronService.ipcRenderer.on('delete', (event: Event, data: string) => {
       data === 'seleted' ? this.kinematicsDrawingService.deleteSelectedJoints() : this.kinematicsDrawingService.deleteAllJoints();
     });
+
 
 
     this.electronService.ipcRenderer.on('save', (event: Event) => {
@@ -117,9 +119,7 @@ export class KinematicsComponent implements OnInit, AfterViewInit {
 
   }
 
-  ngAfterViewInit(): void {
-    this.kinematicsDrawingService.loadSavedModels();
-  }
+
 
   setActivateControls(activate: boolean) {
     this.controlsActive = activate;
@@ -155,8 +155,8 @@ export class KinematicsComponent implements OnInit, AfterViewInit {
   }
 
   updateMouse(e) {
-    this.config.mousePosition.x = (e.clientX / this.config.width) * 2 - 1;
-    this.config.mousePosition.y = - (e.clientY / this.config.height) * 2 + 1;
+    this.dragControlsService.c.drag.mousePosition.x = (e.clientX / this.config.width) * 2 - 1;
+    this.dragControlsService.c.drag.mousePosition.y = - (e.clientY / this.config.height) * 2 + 1;
   }
 
 
@@ -166,33 +166,8 @@ export class KinematicsComponent implements OnInit, AfterViewInit {
       e.preventDefault();
 
       this.updateMouse(e);
-      this.raycaster.setFromCamera(this.config.mousePosition, this.config.currentCamera);
+      this.raycaster.setFromCamera(this.dragControlsService.c.drag.mousePosition, this.config.currentCamera);
       this.dragControlsService.moveRay(this.raycaster.ray);
-      // this.kinematicsDrawingService.getIntersects(this.config.shift);
-      // this.dragControlsService.moveRay(this.config.rayCaster.ray);
-
-      // if (this.config.draggableObject) {
-      //   this.kinematicsDrawingService.getIntersects(this.config.shift);
-      //   this.config.rayCaster.setFromCamera(this.config.mousePosition, this.config.currentCamera);
-      //   this.config.rayCaster.ray.intersectPlane(this.config.plane, this.config.intersectPoint);
-
-      //   const matrix = new THREE.Matrix4();
-      //   const finalPosition = this.config.intersectPoint.clone();
-      //   finalPosition.x = -this.config.intersectPoint.y;
-      //   finalPosition.y = this.config.intersectPoint.x;
-      //   // console.log(this.config.intersectPoint);
-      //   matrix.lookAt(
-      //     finalPosition,
-      //     new THREE.Vector3(0, 0, 0),
-      //     new THREE.Vector3(0, 0, 1)
-      //   );
-      //   // console.log(matrix);
-      //   if (this.config.draggableObject) {
-      //     this.config.draggableObject.quaternion.setFromRotationMatrix(matrix);
-      //     this.config.draggableObject.rotateX(Math.PI/2);
-      //   }
-      // }
-
       this.kinematicsDrawingService.animate();
     }
   }
@@ -205,19 +180,11 @@ export class KinematicsComponent implements OnInit, AfterViewInit {
       this.config.mousedown = true;
       // console.log('mousedown');
       this.updateMouse(e);
-      this.raycaster.setFromCamera(this.config.mousePosition, this.config.currentCamera);
+      this.raycaster.setFromCamera(this.dragControlsService.c.drag.mousePosition, this.config.currentCamera);
       this.dragControlsService.moveRay(this.raycaster.ray);
 
       this.dragControlsService.setGrabbed(true);
       this.dragControlsService.setSelected();
-
-      // if (this.dragControlsService.manipulating !== null) {
-      //   this.config.orbit.enabled = false;
-      // }
-
-      // if (this.config.draggableObject) {
-      //   this.config.orbit.enabled = false;
-      // }
     }
   }
 
@@ -229,10 +196,10 @@ export class KinematicsComponent implements OnInit, AfterViewInit {
       this.config.mousedown = false;
       this.kinematicsDrawingService.config.orbit.enabled = true;
 
-      this.config.rayCaster.setFromCamera(this.config.mousePosition, this.config.currentCamera);
+      this.dragControlsService.c.drag.rayCaster.setFromCamera(this.dragControlsService.c.drag.mousePosition, this.config.currentCamera);
       // console.log('mouseup');
       this.updateMouse(e);
-      this.dragControlsService.moveRay(this.config.rayCaster.ray);
+      this.dragControlsService.moveRay(this.dragControlsService.c.drag.rayCaster.ray);
       this.dragControlsService.setGrabbed(false);
 
       // if (this.dragControlsService.manipulating === null) {
@@ -253,6 +220,7 @@ export class KinematicsComponent implements OnInit, AfterViewInit {
       // this.closedChainService.updateRoot();
     // }
   }
+
 
 
 

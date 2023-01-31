@@ -1,7 +1,10 @@
 import { Injectable } from '@angular/core';
 import { Subject } from 'rxjs';
 import * as THREE from 'three';
-import { JointLink, URFD_Joint, JointType } from '../models/kinematic.model';
+import { RAD2DEG } from 'three/src/math/MathUtils';
+import { IKConfig } from '../models/ik-config.model';
+import { JointType, URFD_Joint, URFD_Link } from '../models/kinematic.model';
+import { IKService } from './IK.service';
 import { KinematicService } from './kinematic.service';
 import { KinematicsDrawingService } from './kinematics-drawing.service';
 
@@ -9,47 +12,38 @@ import { KinematicsDrawingService } from './kinematics-drawing.service';
 @Injectable()
 export class DragControlsService {
 
-  distance: number;
-  initialGrabPoint = new THREE.Vector3();
-  grabPoint = new THREE.Vector3();
-  prevHitPoint = new THREE.Vector3();
-  newHitPoint = new THREE.Vector3();
-  tempVector = new THREE.Vector3();
-  pivotPoint = new THREE.Vector3();
-  plane = new THREE.Plane();
-  projectedStartPoint = new THREE.Vector3();
-  projectedEndPoint = new THREE.Vector3();
-  mouse = new THREE.Vector2();
-  hitDistance = -1;
-  manipulating = null;
-  hovered = null;
-  selected = null;
-  // updateJointAngleScene: Subject<any> = new Subject();
+
+  public c: IKConfig;
 
 
-  constructor(private kinematicDrawingService: KinematicsDrawingService, private kinematicService: KinematicService) {}
+  // selectFrame: Subject<any> = new Subject();
+
+  constructor(private kinematicDrawingService: KinematicsDrawingService, private kinematicService: KinematicService, ikService: IKService) {
+    this.c = ikService.ikConfig;
+  }
 
 
+  getIntersections() {
+    this.c.drag.rayCaster.setFromCamera(this.c.drag.mousePosition, this.kinematicDrawingService.config.currentCamera);
+    return this.c.drag.rayCaster.intersectObject(this.kinematicDrawingService.config.scene, true);
+  }
 
-
-//previous hitpoint on mousedown, newhitpoint on mouse move ->
-//update previous hitpoint at end of function
 
   update() {
 
-    if (this.manipulating) {
+    if (this.c.drag.manipulating) {
       return;
     }
 
-    const intersections = this.kinematicDrawingService.getIntersections();
+    const intersections = this.getIntersections();
 
     if (intersections && intersections.length > 1) {
 
       let hoveredJoint = null;
 
       if (intersections[0].object.name === 'no-pointer-events') {
-        if (this.selected !== null && !this.kinematicDrawingService.config.move) {
-          this.onDeselect(this.selected);
+        if (this.c.drag.selected !== null && !this.kinematicDrawingService.config.move) {
+          this.onDeselect(this.c.drag.selected);
         }
         return;
       }
@@ -58,24 +52,24 @@ export class DragControlsService {
 
         const hit = intersections[0];
         // console.log(hit);
-        this.hitDistance = hit.distance;
+        this.c.drag.hitDistance = hit.distance;
         // console.log(this.hitDistance);
         hoveredJoint = intersections[0].object.parent;
-        this.initialGrabPoint.copy(hit.point);
+        this.c.drag.initialGrabPoint.copy(hit.point);
         // console.log(this.initialGrabPoint);
       }
       // console.log("hovered joint", hoveredJoint)
       // console.log("hovered", this.hovered);
 
-      if (hoveredJoint !== this.hovered) {
+      if (hoveredJoint !== this.c.drag.hovered) {
 
-        if (this.hovered && this.manipulating === null) {
+        if (this.c.drag.hovered && this.c.drag.manipulating === null) {
 
-            this.onUnhover(this.hovered);
+            this.onUnhover(this.c.drag.hovered);
 
         }
 
-        this.hovered = hoveredJoint;
+        this.c.drag.hovered = hoveredJoint;
 
         if (hoveredJoint) {
 
@@ -83,25 +77,7 @@ export class DragControlsService {
 
         }
       }
-
-
     }
-
-    // this.distance = intersect.distance;
-    // console.log(this.distance, joint);
-    // this.newHitPoint.copy(intersect.point);
-    // console.log(this.prevHitPoint, this.newHitPoint);
-
-    // const delta = this.getRevoluteDelta(joint, this.prevHitPoint, this.newHitPoint);
-    // console.log(delta);
-
-    // if (delta) {
-    //   this.updateJointAngleScene.next({ joint: joint.id, delta: delta });
-
-    // }
-
-    // this.prevHitPoint.copy(this.newHitPoint);
-
   }
 
 
@@ -132,6 +108,7 @@ export class DragControlsService {
       if (!this.kinematicDrawingService.config.move) {
         this.kinematicDrawingService.config.control.attach(object.parent);
       }
+      this.kinematicService.selectFrame(object.parent.name);
     }
   }
 
@@ -141,183 +118,184 @@ export class DragControlsService {
       this.kinematicDrawingService.setObjectColor(object);
       if (!this.kinematicDrawingService.config.move) {
         this.kinematicDrawingService.config.control.detach();
-        this.selected = null;
+        this.c.drag.selected = null;
+        this.kinematicService.deselectFrame(object.parent.name);
       }
     }
   }
 
   getRotatedPosition(model: any, startPoint: THREE.Vector3) {
-    this.tempVector
+    this.c.drag.tempVector
       .copy(new THREE.Vector3(0,0,1))
       .transformDirection(model.matrixWorld)
       .normalize();
 
-    this.pivotPoint
+    this.c.drag.pivotPoint
       .set(0, 0, 0)
       .applyMatrix4(model.matrixWorld);
-    this.plane
-      .setFromNormalAndCoplanarPoint(this.tempVector, this.pivotPoint);
+    this.c.drag.plane
+      .setFromNormalAndCoplanarPoint(this.c.drag.tempVector, this.c.drag.pivotPoint);
 
-    this.plane.projectPoint(startPoint, this.projectedStartPoint);
-    this.projectedStartPoint.sub(this.pivotPoint);
+    this.c.drag.plane.projectPoint(startPoint, this.c.drag.projectedStartPoint);
+    this.c.drag.projectedStartPoint.sub(this.c.drag.pivotPoint);
 
-    return this.projectedStartPoint;
+    return this.c.drag.projectedStartPoint;
   }
 
 
 
   getRevoluteDelta(model: any, startPoint: THREE.Vector3, endPoint: THREE.Vector3) {
     // console.log(model.matrixWorld, startPoint, endPoint);
-    this.tempVector
+    this.c.drag.tempVector
       .copy(new THREE.Vector3(0,0,1))
       .transformDirection(model.matrixWorld)
       .normalize();
 
-    this.pivotPoint
+    this.c.drag.pivotPoint
       .set(0, 0, 0)
       .applyMatrix4(model.matrixWorld);
-    this.plane
-      .setFromNormalAndCoplanarPoint(this.tempVector, this.pivotPoint);
+    this.c.drag.plane
+      .setFromNormalAndCoplanarPoint(this.c.drag.tempVector, this.c.drag.pivotPoint);
 
     // console.log(this.plane);
-    this.plane.projectPoint(startPoint, this.projectedStartPoint);
-    this.plane.projectPoint(endPoint, this.projectedEndPoint);
+    this.c.drag.plane.projectPoint(startPoint, this.c.drag.projectedStartPoint);
+    this.c.drag.plane.projectPoint(endPoint, this.c.drag.projectedEndPoint);
 
 
 
     // get the directions relative to the pivot
-    this.projectedStartPoint.sub(this.pivotPoint);
-    this.projectedEndPoint.sub(this.pivotPoint);
+    this.c.drag.projectedStartPoint.sub(this.c.drag.pivotPoint);
+    this.c.drag.projectedEndPoint.sub(this.c.drag.pivotPoint);
 
     // console.log(this.pivotPoint, this.projectedStartPoint, this.projectedEndPoint);
 
-    this.tempVector.crossVectors(this.projectedStartPoint, this.projectedEndPoint);
+    this.c.drag.tempVector.crossVectors(this.c.drag.projectedStartPoint, this.c.drag.projectedEndPoint);
 
-    const direction = Math.sign(this.tempVector.dot(this.plane.normal));
+    const direction = Math.sign(this.c.drag.tempVector.dot(this.c.drag.plane.normal));
 
-    return direction * this.projectedEndPoint.angleTo(this.projectedStartPoint);
+    return direction * this.c.drag.projectedEndPoint.angleTo(this.c.drag.projectedStartPoint);
   }
 
 
   moveRay(toRay: any) {
-    // console.log(toRay);
 
-    // if (!this.kinematicDrawingService.config.move) {
-    //   return;
-    // }
+    const { ray }  = this.c.drag.rayCaster;
 
-    const { ray }  = this.kinematicDrawingService.config.rayCaster;
-
-    if (this.manipulating) {
-      ray.at(this.hitDistance, this.prevHitPoint);
-      toRay.at(this.hitDistance, this.newHitPoint);
+    if (this.c.drag.manipulating) {
+      ray.at(this.c.drag.hitDistance, this.c.drag.prevHitPoint);
+      toRay.at(this.c.drag.hitDistance, this.c.drag.newHitPoint);
 
       let delta = 0;
-      this.kinematicService.selectedFrame = this.kinematicService.getObjectWithID(this.manipulating.parent.name);
+      const frame = this.kinematicService.getFrame(this.c.drag.manipulating.parent.name);
+      // console.log(frame);
 
-      if (this.kinematicService.selectedFrame) {
+      if (frame) {
+
+        // this.kinematicService.selectFrame(frame);
 
         if (this.kinematicDrawingService.config.move) {
 
-          if (this.kinematicService.selectedFrame.type === JointType.revolute || this.kinematicService.selectedFrame.type === JointType.continuous) {
+          if (frame.type === JointType.revolute || frame.type === JointType.continuous) {
 
-              delta = this.getRevoluteDelta(this.manipulating.parent, this.prevHitPoint, this.newHitPoint);
+              delta = this.getRevoluteDelta(this.c.drag.manipulating.parent, this.c.drag.prevHitPoint, this.c.drag.newHitPoint);
 
-          } else if (this.kinematicService.selectedFrame.type === JointType.prismatic) {
+          } else if (frame.type === JointType.prismatic) {
 
               // delta = this.getPrismaticDelta(manipulating, prevHitPoint, newHitPoint);
 
           }
 
           if (delta !== 0) {
-            this.manipulating.parent.rotation.z += delta;
-            this.kinematicDrawingService.animate();
-            // this.updateJoint(selectedJoint, selectedJoint.angle + delta);
 
+            this.c.drag.manipulating.parent.rotation.z += delta;
+
+            if (frame) {
+              const linkedObject = this.kinematicDrawingService.getObjectFromScene((frame instanceof URFD_Joint ? frame.id + '-link' : frame.id.slice(0,-5)));
+              if (linkedObject) {
+                this.kinematicService.updateAngle(this.c.drag.manipulating.parent.name, this.c.drag.manipulating.parent.rotation.z, linkedObject.rotation.z);
+              }
+
+              // this.updateAngle(frame, this.c.drag.manipulating.parent.rotation.z);
+            }
+            // this.updateJoint(selectedJoint, selectedJoint.angle + delta);
+            // console.log(this.c.drag.manipulating.parent.name);
+
+            this.kinematicDrawingService.animate();
           }
         }
       } else {
-        if (this.selected) {
-          this.onDeselect(this.selected);
+        if (this.c.drag.selected) {
+          this.onDeselect(this.c.drag.selected);
         }
       }
     }
-    this.kinematicDrawingService.config.rayCaster.ray.copy(toRay);
+    this.c.drag.rayCaster.ray.copy(toRay);
     this.update();
   }
 
-  setSelected() {
 
-    if ((this.manipulating === null && this.selected !== null) || this.manipulating !== this.selected) {
-      if (this.kinematicDrawingService.config.move || (this.manipulating !== this.selected && this.manipulating !== null && this.selected !== null)) {
-        this.onDeselect(this.selected);
+  // updateAngle(frame: any, angle: number) {
+  //   console.log(frame.id, angle);
+  //   const idOfConnComp = frame instanceof URFD_Link ? frame.id.slice(0,-5) : frame.id + '-link';
+  //   console.log(idOfConnComp);
+  //   console.log(frame.dimensions.rpy.z - angle);
+
+    // frame.dimensions.rpy.z = angle;
+
+    // console.log(frame.dimensions.rpy);
+
+    // if (idOfConnComp) {
+    //   const connComp = this.kinematicService.getFrame(idOfConnComp);
+      // console.log(connComp);
+      // if (connComp) {
+      //   console.log(frame.dimensions.rpy.z - connComp.dimensions.rpy.z);
+    //     frame instanceof URFD_Joint ? frame.angle += delta : connComp.angle += delta;
+  //     }
+  //   }
+  // }
+
+  setSelected() {
+    console.log('set selected ', this.c.drag.manipulating, this.c.drag.selected, (this.c.drag.manipulating !== this.c.drag.selected));
+    if ((this.c.drag.manipulating === null && this.c.drag.selected !== null) || this.c.drag.manipulating !== this.c.drag.selected) {
+      if (this.kinematicDrawingService.config.move || (this.c.drag.manipulating !== this.c.drag.selected && this.c.drag.manipulating !== null && this.c.drag.selected !== null)) {
+        this.onDeselect(this.c.drag.selected);
       }
     }
-    if (this.manipulating !== null || this.kinematicDrawingService.config.move) {
-      this.selected = this.manipulating;
+    if (this.c.drag.manipulating !== null || this.kinematicDrawingService.config.move) {
+      this.c.drag.selected = this.c.drag.manipulating;
     }
 
-    if (this.selected !== null) {
-      this.onSelect(this.selected);
+    if (this.c.drag.selected !== null) {
+      this.onSelect(this.c.drag.selected);
     }
 
   }
 
   setGrabbed(grabbed: boolean) {
 
-    // console.log("set grabbed");
-    // if (this.manipulating === null) {
-
-    //   if (this.hovered === null) {
-
-    //     return;
-
-    //   }
-
-    //   this.manipulating = this.hovered;
-    //   this.kinematicDrawingService.config.orbit.enabled = false;
-    //   // console.log(this.manipulating);
-    //   this.onDragStart(this.hovered);
-
-    // } else {
-
-    //   // if (this.manipulating === null) {
-
-    //   //   return;
-
-    //   // }
-
-    //   this.onDragEnd(this.manipulating);
-    //   this.kinematicDrawingService.config.orbit.enabled = true;
-    //   this.manipulating = null;
-
-
-    // }
-    // console.log(this.manipulating);
-
     if (grabbed) {
       // console.log(this.manipulating, this.hovered);
-      if (this.manipulating !== null || this.hovered === null) {
+      if (this.c.drag.manipulating !== null || this.c.drag.hovered === null) {
 
           return;
 
       }
 
-      this.manipulating = this.hovered;
-      this.onDragStart(this.hovered);
+      this.c.drag.manipulating = this.c.drag.hovered;
+      this.onDragStart(this.c.drag.hovered);
 
     } else {
 
-        if (this.manipulating === null) {
+        if (this.c.drag.manipulating === null) {
             return;
         }
 
-        this.onDragEnd(this.manipulating);
-        this.manipulating = null;
+        this.onDragEnd(this.c.drag.manipulating);
+        this.c.drag.manipulating = null;
         this.update();
 
     }
-    this.kinematicDrawingService.config.orbit.enabled = this.manipulating === null ? true : false;
+    this.kinematicDrawingService.config.orbit.enabled = this.c.drag.manipulating === null ? true : false;
   }
 
 
