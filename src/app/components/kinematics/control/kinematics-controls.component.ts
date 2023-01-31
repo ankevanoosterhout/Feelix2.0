@@ -157,14 +157,14 @@ export class KinematicsControlComponent implements AfterViewInit {
 
 
   loadSavedModels() {
-    console.log('load models');
-    console.log(this.kinematicService.frames);
+    // console.log('load models');
+    // console.log(this.kinematicService.frames);
     for (const frame of this.kinematicService.frames) {
 
       this.loadOBJModel(frame);
       this.kinematicsDrawingService.animate();
     }
-    console.log(this.config.scene);
+    // console.log(this.config.scene);
 
   }
 
@@ -199,17 +199,17 @@ export class KinematicsControlComponent implements AfterViewInit {
   addFrame(model: Model) {
 
     if (this.ikService.ikConfig.drag.selected && this.ikService.ikConfig.drag.selected.parent) {
-      const updatedModel = this.updatePosition(new THREE.Vector3(0, 55, 0), model);
-      console.log(updatedModel);
-      const getSelectedFrame = this.kinematicService.getFrame(this.ikService.ikConfig.drag.selected.parent.name);
+      const selectedFrame = this.kinematicService.getFrame(this.ikService.ikConfig.drag.selected.parent.name);
 
-      if (getSelectedFrame instanceof URFD_Joint) {
+      if (selectedFrame instanceof URFD_Joint) {
+        const updatedModel = this.updatePosition(new THREE.Vector3(0, selectedFrame.size.value + model.linkSize.value, 0), model);
         this.addLink(updatedModel, this.ikService.ikConfig.drag.selected, null, true);
       } else {
+        const updatedModel = this.updatePosition(new THREE.Vector3(0, selectedFrame.size.value + model.baseSize.value, 0), model);
         this.addJoint(updatedModel, this.ikService.ikConfig.drag.selected, null, false);
       }
     } else {
-      console.log(model);
+      // console.log(model);
       this.addJoint(model, null, null, false);
     }
 
@@ -272,7 +272,7 @@ export class KinematicsControlComponent implements AfterViewInit {
     modelCopy.origin.y = updatedPosition.y;
     modelCopy.origin.z = updatedPosition.z;
 
-    console.log('update position', this.ikService.ikConfig.drag.selected.parent.rotation.z);
+    // console.log('update position', this.ikService.ikConfig.drag.selected.parent.rotation.z);
 
     modelCopy.rpy.x = this.ikService.ikConfig.drag.selected.parent.rotation.x;
     modelCopy.rpy.y = this.ikService.ikConfig.drag.selected.parent.rotation.y;
@@ -285,7 +285,7 @@ export class KinematicsControlComponent implements AfterViewInit {
 
 
   loadOBJModel(model: any) {
-    console.log(model);
+    // console.log(model);
     const group = new THREE.Group();
     group.name = model.id;
 
@@ -321,7 +321,7 @@ export class KinematicsControlComponent implements AfterViewInit {
     frame.dimensions.rpy.z = group.rotation.z;
 
 
-    console.log(group, frame);
+    // console.log(group, frame);
 
   }
 
@@ -549,25 +549,36 @@ export class KinematicsControlComponent implements AfterViewInit {
   }
 
 
-  changeSize(element: JointLink) {
-    const sceneObject = this.config.scene.getObjectByName(element.id);
-    const newScale = element.size / 40;
-    if (sceneObject) {
-      sceneObject.traverseVisible( ( child: any ) => {
-        if ( child.name === 'Gray:A' ) {
-          child.scale.z = newScale;
-        } else if( child.name === 'Yellow:Z:1') {
-          child.position.z = (newScale * 20) - 20;
-        } else if( child.name === 'Yellow:Z:-1') {
-          child.position.z = (newScale * -20) + 20;
-        }
-      });
+  changeSize(frame: any) {
+    const sceneObject = this.config.scene.getObjectByName(frame.id);
+    if (frame.size.value - frame.size.offset >= 0) {
+      frame.size.scale = (frame.size.value - frame.size.offset) / frame.size.original;
+      if (sceneObject) {
+        sceneObject.traverseVisible( ( child: any ) => {
+          if ( child.name === 'Gray:A:0' ) {
+            child.scale.y = frame.size.scale;
+            child.position.y = (frame.size.scale - 1) * -frame.size.offset;
+          } else if( child.name === 'Yellow:XY:0') {
+            child.position.y = frame.size.value - frame.size.offset - frame.size.original;
+          }
+        });
+
+        this.kinematicsDrawingService.animate();
+      }
+
+    } else {
+      frame.size.value = frame.size.offset;
     }
   }
 
 
 
   updateJointAngle(frame: any) {
+
+    const frameObject = this.config.scene.getObjectByName(frame.id);
+    // console.log(frameObject);
+
+
     // console.log(joint);
     //update all Y connectors and rotary indicator
     // const sceneObject = this.config.scene.getObjectByName(joint.id);

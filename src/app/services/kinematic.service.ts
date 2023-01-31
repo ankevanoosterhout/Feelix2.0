@@ -312,7 +312,7 @@ export class KinematicService {
   //adjust
   copyJoint(id: string, sceneObject: any) {
     const joint = this.frames.filter(j => j.id === id)[0];
-    console.log(joint.id, joint.connectors);
+    // console.log(joint.id, joint.connectors);
     if (joint) {
       const newID = uuid();
       sceneObject.name = newID;
@@ -520,17 +520,17 @@ export class KinematicService {
 
 
   selectFrame(id: string, shift = false) {
-    console.log('select frame ', id);
+    // console.log('select frame ', id);
     // console.log(this.frames);
     const frame = this.frames.filter(j => j.id === id)[0];
-    console.log(frame);
+    // console.log(frame);
     if (!shift) {
       this.selectedFrames = [];
     }
     if (frame) {
       frame.selected = true;
       this.selectedFrames.push(frame);
-      console.log(this.selectedFrames);
+      // console.log(this.selectedFrames);
     }
 
   }

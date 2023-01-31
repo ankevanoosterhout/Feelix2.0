@@ -116,16 +116,16 @@
 
           <div class="row" *ngIf="this.kinematicService.selectedFrames[0].angle !== 'undefined'">
             <div class="label">angle</div>
-             <p> </p><input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="angle" name="angle"
+             <p> </p><input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="angle{{ this.kinematicService.selectedFrames[0].id }}" name="angle{{ this.kinematicService.selectedFrames[0].id }}"
                 [(ngModel)]="this.kinematicService.selectedFrames[0].angle" (change)="this.updateJointAngle(this.kinematicService.selectedFrames[0])">
           </div>
 
           <div class="row" *ngIf="this.kinematicService.selectedFrames[0].limits">
             <div class="label">limits</div>
             <div class="values">
-              <p> </p><input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="limits_min" name="limits_min"
+              <p> </p><input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="limits_min{{ this.kinematicService.selectedFrames[0].id }}" name="limits_min{{ this.kinematicService.selectedFrames[0].id }}"
                [(ngModel)]="this.kinematicService.selectedFrames[0].limits.min" (change)="updateJoint(this.kinematicService.selectedFrames[0])">
-              <p> </p><input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="limits_max" name="limits_max"
+              <p> </p><input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="limits_max{{ this.kinematicService.selectedFrames[0].id }}" name="limits_max{{ this.kinematicService.selectedFrames[0].id }}"
                [(ngModel)]="this.kinematicService.selectedFrames[0].limits.max" (change)="updateJoint(this.kinematicService.selectedFrames[0])">
             </div>
           </div>
@@ -133,18 +133,18 @@
           <div class="row">
             <div class="label">position</div>
             <div class="values">
-              <p>x </p><input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="pos_x" name="pos_x" [(ngModel)]="this.kinematicService.selectedFrames[0].dimensions.origin.x" (change)="updateJoint(this.kinematicService.selectedFrames[0])">
-              <p>y </p><input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="pos_y" name="pos_y" [(ngModel)]="this.kinematicService.selectedFrames[0].dimensions.origin.y" (change)="updateJoint(this.kinematicService.selectedFrames[0])">
-              <p>z </p><input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="pos_z" name="pos_z" [(ngModel)]="this.kinematicService.selectedFrames[0].dimensions.origin.z" (change)="updateJoint(this.kinematicService.selectedFrames[0])">
+              <p>x </p><input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="pos_x{{ this.kinematicService.selectedFrames[0].id }}" name="pos_x{{ this.kinematicService.selectedFrames[0].id }}" [(ngModel)]="this.kinematicService.selectedFrames[0].dimensions.origin.x" (change)="updateJoint(this.kinematicService.selectedFrames[0])">
+              <p>y </p><input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="pos_y{{ this.kinematicService.selectedFrames[0].id }}" name="pos_y{{ this.kinematicService.selectedFrames[0].id }}" [(ngModel)]="this.kinematicService.selectedFrames[0].dimensions.origin.y" (change)="updateJoint(this.kinematicService.selectedFrames[0])">
+              <p>z </p><input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="pos_z{{ this.kinematicService.selectedFrames[0].id }}" name="pos_z{{ this.kinematicService.selectedFrames[0].id }}" [(ngModel)]="this.kinematicService.selectedFrames[0].dimensions.origin.z" (change)="updateJoint(this.kinematicService.selectedFrames[0])">
             </div>
           </div>
 
           <div class="row">
             <div class="label">rotation</div>
             <div class="values">
-              <p>x </p><input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="rot_x" name="rot_x" [(ngModel)]="this.kinematicService.selectedFrames[0].dimensions.rpy.x" (change)="updateJoint(this.kinematicService.selectedFrames[0])">
-              <p>y </p><input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="rot_y" name="rot_y" [(ngModel)]="this.kinematicService.selectedFrames[0].dimensions.rpy.y" (change)="updateJoint(this.kinematicService.selectedFrames[0])">
-              <p>z </p><input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="rot_z" name="rot_z" [(ngModel)]="this.kinematicService.selectedFrames[0].dimensions.rpy.z" (change)="updateJoint(this.kinematicService.selectedFrames[0])">
+              <p>x </p><input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="rot_x{{ this.kinematicService.selectedFrames[0].id }}" name="rot_x{{ this.kinematicService.selectedFrames[0].id }}" [(ngModel)]="this.kinematicService.selectedFrames[0].dimensions.rpy.x" (change)="updateJoint(this.kinematicService.selectedFrames[0])">
+              <p>y </p><input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="rot_y{{ this.kinematicService.selectedFrames[0].id }}" name="rot_y{{ this.kinematicService.selectedFrames[0].id }}" [(ngModel)]="this.kinematicService.selectedFrames[0].dimensions.rpy.y" (change)="updateJoint(this.kinematicService.selectedFrames[0])">
+              <p>z </p><input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="rot_z{{ this.kinematicService.selectedFrames[0].id }}" name="rot_z{{ this.kinematicService.selectedFrames[0].id }}" [(ngModel)]="this.kinematicService.selectedFrames[0].dimensions.rpy.z" (change)="updateJoint(this.kinematicService.selectedFrames[0])">
             </div>
           </div>
 
@@ -215,11 +215,11 @@
 
 
 
-          <!-- <div class="row" *ngIf="!this.kinematicService.selectedJoints[0].isJoint && this.kinematicService.selectedJoints[0].connectors.length === 2">
+          <div class="row" *ngIf="this.kinematicService.selectedFrames[0].size">
             <div class="label">length</div>
-            <input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="size{{ this.kinematicService.selectedJoints[0].id }}"
-              name="size_{{ this.kinematicService.selectedJoints[0].id }}" [(ngModel)]="this.kinematicService.selectedJoints[0].size" (change)="this.changeSize(this.kinematicService.selectedJoints[0])">
-          </div> -->
+            <input (focus)="inputActive(true)" (focusout)="inputActive(false)" min="this.kinematicService.selectedFrames[0].size.offset" type="number" class="small" id="size{{ this.kinematicService.selectedFrames[0].id }}"
+              name="size_{{ this.kinematicService.selectedFrames[0].id }}" [(ngModel)]="this.kinematicService.selectedFrames[0].size.value" (change)="this.changeSize(this.kinematicService.selectedFrames[0])">
+          </div>
 
         </li>
       </ul>

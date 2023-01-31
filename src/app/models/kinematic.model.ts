@@ -28,6 +28,8 @@ export class Model {
   origin = new Vector3();
   linkObjectUrls: Array<ObjectUrl>;
   rpy = new Vector3();
+  baseSize = new ConnectorSize(1.5, 1, 25.075, 23.575);
+  linkSize = new ConnectorSize(2.5, 1, 29, 26.5);
 
   constructor(id: number, type: string, modelType: number, active: boolean, thumbnail: string, objectUrls: Array<ObjectUrl>, color: number, link = null) {
     this.id = id;
@@ -118,6 +120,7 @@ export class JointConfig {
 }
 
 
+
 export class URFD_Joint {
   id: string;
   name: string = 'joint';
@@ -130,12 +133,13 @@ export class URFD_Joint {
   limits = new Limits();
   object3D = new Object3D();
   config = new JointConfig();
+  size = new ConnectorSize(1.5, 1, 25.075, 23.575);
   angle: number;
   modelID: number;
   selected = false;
 
   constructor(id: string, model: Model, parent = false) {
-    console.log(model.rpy, parent);
+    // console.log(model.rpy, parent);
     this.id = id;
     this.config.active = model.active;
     if (this.config.active) {
@@ -151,7 +155,7 @@ export class URFD_Joint {
     if (parent) {
       this.dimensions.rpy.z += Math.PI;
     }
-    console.log(this.dimensions.rpy.z);
+    // console.log(this.dimensions.rpy.z);
 
     this.modelID = model.id;
   }
@@ -165,13 +169,13 @@ export class URFD_Link {
   parent: URFD_Joint;
   children: Array<any>;
   dimensions = new Dimensions();
-  size: number;
+  size = new ConnectorSize(2.5, 1, 29, 26.5);
   object3D = new Object3D();
   modelID: number;
   selected = false;
 
   constructor(id: string, model: Model, parent = false) {
-    console.log(model.rpy, parent);
+    // console.log(model.rpy, parent);
     this.id = id;
     if (this.id.length > 43) {
       this.id.slice(0, -5);
@@ -185,7 +189,7 @@ export class URFD_Link {
     if (!parent) {
       this.dimensions.rpy.z += Math.PI;
     }
-    console.log(this.dimensions.rpy.z);
+    // console.log(this.dimensions.rpy.z);
     this.modelID = model.id;
   }
 }

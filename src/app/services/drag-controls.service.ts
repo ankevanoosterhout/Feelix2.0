@@ -255,7 +255,7 @@ export class DragControlsService {
   // }
 
   setSelected() {
-    console.log('set selected ', this.c.drag.manipulating, this.c.drag.selected, (this.c.drag.manipulating !== this.c.drag.selected));
+    // console.log('set selected ', this.c.drag.manipulating, this.c.drag.selected, (this.c.drag.manipulating !== this.c.drag.selected));
     if ((this.c.drag.manipulating === null && this.c.drag.selected !== null) || this.c.drag.manipulating !== this.c.drag.selected) {
       if (this.kinematicDrawingService.config.move || (this.c.drag.manipulating !== this.c.drag.selected && this.c.drag.manipulating !== null && this.c.drag.selected !== null)) {
         this.onDeselect(this.c.drag.selected);
