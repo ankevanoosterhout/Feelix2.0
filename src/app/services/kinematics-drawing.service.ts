@@ -35,16 +35,8 @@ export class KinematicsDrawingService {
     this.kinematicService.deleteJointsScene.subscribe(res => {
       this.deleteAllJointsFromScene();
     });
-
-
-
   }
 
-
-
-  // public selectSceneObject( object: any ) {
-  //   this.selectObjectFromScene.next(object);
-  // }
 
   updateProgess(_status: String, _progress: number) {
     this.updateKinematicsProgress.next({ status: _status, progress: _progress });

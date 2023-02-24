@@ -93,6 +93,13 @@ export class MotorSettingsComponent implements OnInit {
     { name: 'PWM' }
   ];
 
+
+  public I2C_communicationType = [
+    { name: 'no_communication', value: 0 },
+    { name: 'master', value: 1 },
+    { name: 'slave', value: 2 }
+  ];
+
   constructor(@Inject(DOCUMENT) private document: Document, private electronService: ElectronService, private uploadService: UploadService,
               private hardwareService: HardwareService, private fileService: FileService, private router: Router ) {
 
@@ -285,12 +292,13 @@ export class MotorSettingsComponent implements OnInit {
   updateNrOfMotors() {
     const nr = (this.document.getElementById('numberOfMotors-' + this.selectedMicrocontroller.id) as HTMLInputElement).value;
     if (parseInt(nr) > 0) {
-      const microControllerLength = this.selectedMicrocontroller.motors.length;
-      const diff = parseInt(nr) - microControllerLength;
+      const numberOfMotors = this.selectedMicrocontroller.motors.length;
+      const diff = parseInt(nr) - numberOfMotors;
       if (diff > 0) {
         for (let n = 0; n < diff; n++) {
-          const newMotor = new Motor((microControllerLength + n));
+          const newMotor = new Motor((numberOfMotors + n), (this.selectedMicrocontroller.motors[0].I2C_communication === 1 ? 2 : 0));
           this.selectedMicrocontroller.motors.push(newMotor);
+          console.log(this.selectedMicrocontroller);
         }
       } else if (diff < 0) {
         for (let n = diff; n < 0; n++) {
@@ -311,6 +319,15 @@ export class MotorSettingsComponent implements OnInit {
       this.selectedMicrocontroller = this.microcontrollers[this.microcontrollers.length - 1];
       this.showSelectMicrocontroller = false;
     }
+  }
+
+  updateI2C(motor: Motor, microcontroller: MicroController) {
+    const id = parseInt(motor.I2C_address, 16);
+    if (microcontroller.motors.filter(m => m.id == id.toString()).length === 0) {
+      motor.id = id.toString(16).toUpperCase();
+    }
+    motor.I2C_address = '0x' + motor.id;
+    this.updateMicrocontroller(microcontroller);
   }
 
 

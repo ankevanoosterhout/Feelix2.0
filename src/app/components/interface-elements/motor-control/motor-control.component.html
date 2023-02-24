@@ -22,7 +22,7 @@
           </div>
 
           <div class="form-row left" *ngIf="collection.microcontroller && this.motorControlService.width > 200" title="motor identifier">
-            <select class="form-control" id="motorID" [(ngModel)]="collection.motorID.name" (change)="saveCollection(collection)" name="comport" [compareWith]="compareID">
+            <select class="form-control" id="motorID" [(ngModel)]="collection.motorID.name" (change)="updateMotorID(collection)" name="comport" [compareWith]="compareID">
                 <option *ngFor="let motor of collection.microcontroller.motors" [ngValue]="motor.id">{{ motor.id }}</option>
             </select>
           </div>
@@ -41,14 +41,14 @@
 
           <div id="rangeValues" *ngIf="collection.effectDataList.length === 0 && this.motorControlService.file.configuration.collectionDisplay === 'large' && this.motorControlService.width > 600">
             <label>x</label>
-            <input type="number" (focus)="this.motorControlService.deselectElements()" *ngIf="collection.rotation.units.name !== 'ms'" id="range-start" name="rotation-start" [(ngModel)]="collection.rotation.start" (change)="this.motorControlService.updateCollection(collection)">
+            <input type="number" (focus)="this.motorControlService.deselectElements()" *ngIf="collection.rotation.units.name !== 'ms'" id="range-start" name="rotation-start-{{ collection.id }}" [(ngModel)]="collection.rotation.start" (change)="this.motorControlService.updateCollection(collection)">
             <input type="number" (focus)="this.motorControlService.deselectElements()" id="range-end" name="rotation-end" [(ngModel)]="collection.rotation.end" (change)="this.motorControlService.updateCollection(collection)">
 
-            <select class="form-control" *ngIf="collection.visualizationType !== 'velocity'" id="unitsDropdown" (focus)="this.oldUnits = collection.rotation.units" [(ngModel)]="collection.rotation.units" (change)="changeUnits(collection)" name="units" [compareWith]="compareName">
+            <select class="form-control" *ngIf="collection.visualizationType !== 'velocity'" id="unitsDropdown" (focus)="this.oldUnits = collection.rotation.units" [(ngModel)]="collection.rotation.units" (change)="changeUnits(collection)" name="units-r-{{ collection.id }}" [compareWith]="compareName">
               <option *ngFor="let unit of unitOptions" [ngValue]="unit">{{ unit.name }}</option>
             </select>
 
-            <select class="form-control" *ngIf="collection.visualizationType === 'velocity'" id="unitsDropdown" (focus)="this.oldUnits = collection.rotation.units" [(ngModel)]="collection.rotation.units" (change)="changeUnits(collection)" name="units" [compareWith]="compareName">
+            <select class="form-control" *ngIf="collection.visualizationType === 'velocity'" id="unitsDropdown" (focus)="this.oldUnits = collection.rotation.units" [(ngModel)]="collection.rotation.units" (change)="changeUnits(collection)" name="units-r-vel-{{ collection.id }}" [compareWith]="compareName">
               <option *ngFor="let unit of unitOptionsVelocity" [ngValue]="unit">{{ unit.name }}</option>
             </select>
 
@@ -57,7 +57,7 @@
           <div id="rangeValues" *ngIf="collection.visualizationType === 'velocity' && collection.effectDataList.length === 0 && this.motorControlService.file.configuration.collectionDisplay === 'large' && this.motorControlService.width > 800">
             <label>y</label>
 
-            <select class="form-control" id="unitsDropdown" [(ngModel)]="collection.rotation.units_y" (change)="changeUnitsY(collection)" name="units" [compareWith]="compareName">
+            <select class="form-control" id="unitsDropdown" [(ngModel)]="collection.rotation.units_y" (change)="changeUnitsY(collection)" name="units-{{ collection.id }}" [compareWith]="compareName">
               <option *ngFor="let unit of unitOptionsVelocityY" [ngValue]="unit">{{ unit.name }}</option>
             </select>
 
@@ -73,49 +73,49 @@
 
           <div class="form-row left collection_pid" id="PID_angle" *ngIf="(collection.visualizationType === 'position' || collection.rotation.units_y.name === 'deg') && collection.microcontroller && this.motorControlService.width > 500 && collection.effectDataList.length > 0" title="PID controller (P)">
             <label>P</label>
-            <input type="number" id="collection-PID" name="collection-PID_P" (focus)="this.motorControlService.deselectElements()" [(ngModel)]="collection.microcontroller.motors[collection.motorID.index].position_pid.p"
+            <input type="number" id="collection-PID" name="collection-PID_P-{{ collection.id }}" (focus)="this.motorControlService.deselectElements()" [(ngModel)]="collection.microcontroller.motors[collection.motorID.index].position_pid.p"
               (change)="saveMotorData(collection, 'A', [collection.microcontroller.motors[collection.motorID.index].position_pid.p, collection.microcontroller.motors[collection.motorID.index].position_pid.i, collection.microcontroller.motors[collection.motorID.index].position_pid.d] )">
           </div>
 
           <div class="form-row left collection_pid" id="PID_angle" *ngIf="(collection.visualizationType === 'position' || collection.rotation.units_y.name === 'deg') && collection.microcontroller && this.motorControlService.width > 500 && collection.effectDataList.length > 0" title="PID controller (I)">
             <label>I</label>
-            <input type="number" id="collection-PID" name="collection-PID_I" (focus)="this.motorControlService.deselectElements()" [(ngModel)]="collection.microcontroller.motors[collection.motorID.index].position_pid.i"
+            <input type="number" id="collection-PID" name="collection-PID_I-{{ collection.id }}" (focus)="this.motorControlService.deselectElements()" [(ngModel)]="collection.microcontroller.motors[collection.motorID.index].position_pid.i"
               (change)="saveMotorData(collection, 'A', [collection.microcontroller.motors[collection.motorID.index].position_pid.p, collection.microcontroller.motors[collection.motorID.index].position_pid.i, collection.microcontroller.motors[collection.motorID.index].position_pid.d] )">
           </div>
 
           <div class="form-row left collection_pid" id="PID_angle" *ngIf="(collection.visualizationType === 'position' || collection.rotation.units_y.name === 'deg') && collection.microcontroller && this.motorControlService.width > 500 && collection.effectDataList.length > 0" title="PID controller (D)">
             <label>D</label>
-            <input type="number" id="collection-PID" name="collection-PID_D" (focus)="this.motorControlService.deselectElements()" [(ngModel)]="collection.microcontroller.motors[collection.motorID.index].position_pid.d"
+            <input type="number" id="collection-PID" name="collection-PID_D-{{ collection.id }}" (focus)="this.motorControlService.deselectElements()" [(ngModel)]="collection.microcontroller.motors[collection.motorID.index].position_pid.d"
               (change)="saveMotorData(collection, 'A', [collection.microcontroller.motors[collection.motorID.index].position_pid.p, collection.microcontroller.motors[collection.motorID.index].position_pid.i, collection.microcontroller.motors[collection.motorID.index].position_pid.d] )">
           </div>
 
           <div class="form-row left collection_pid" id="PID_velocity" *ngIf="(collection.visualizationType === 'velocity' && collection.rotation.units_y.name !== 'deg') && collection.microcontroller && this.motorControlService.width > 500 && collection.effectDataList.length > 0" title="PID controller (P)">
             <label>P</label>
-            <input type="number" id="collection-PID" name="collection-PID_P" (focus)="this.motorControlService.deselectElements()" [(ngModel)]="collection.microcontroller.motors[collection.motorID.index].velocity_pid.p"
+            <input type="number" id="collection-PID" name="collection-PID_P-{{ collection.id }}" (focus)="this.motorControlService.deselectElements()" [(ngModel)]="collection.microcontroller.motors[collection.motorID.index].velocity_pid.p"
               (change)="saveMotorData(collection, 'Q', [collection.microcontroller.motors[collection.motorID.index].velocity_pid.p, collection.microcontroller.motors[collection.motorID.index].velocity_pid.i, collection.microcontroller.motors[collection.motorID.index].velocity_pid.d] )">
           </div>
 
           <div class="form-row left collection_pid" id="PID_velocity" *ngIf="(collection.visualizationType === 'velocity' && collection.rotation.units_y.name !== 'deg') && collection.microcontroller && this.motorControlService.width > 500 && collection.effectDataList.length > 0" title="PID controller (I)">
             <label>I</label>
-            <input type="number" id="collection-PID" name="collection-PID_I" (focus)="this.motorControlService.deselectElements()" [(ngModel)]="collection.microcontroller.motors[collection.motorID.index].velocity_pid.i"
+            <input type="number" id="collection-PID" name="collection-PID_I-{{ collection.id }}" (focus)="this.motorControlService.deselectElements()" [(ngModel)]="collection.microcontroller.motors[collection.motorID.index].velocity_pid.i"
               (change)="saveMotorData(collection, 'Q', [collection.microcontroller.motors[collection.motorID.index].velocity_pid.p, collection.microcontroller.motors[collection.motorID.index].velocity_pid.i, collection.microcontroller.motors[collection.motorID.index].velocity_pid.d] )">
           </div>
 
           <div class="form-row left collection_pid" id="PID_velocity" *ngIf="(collection.visualizationType === 'velocity' && collection.rotation.units_y.name !== 'deg') && collection.microcontroller && this.motorControlService.width > 500 && collection.effectDataList.length > 0" title="PID controller (D)">
             <label>D</label>
-            <input type="number" id="collection-PID" name="collection-PID_D" (focus)="this.motorControlService.deselectElements()" [(ngModel)]="collection.microcontroller.motors[collection.motorID.index].velocity_pid.d"
+            <input type="number" id="collection-PID" name="collection-PID_D-{{ collection.id }}" (focus)="this.motorControlService.deselectElements()" [(ngModel)]="collection.microcontroller.motors[collection.motorID.index].velocity_pid.d"
               (change)="saveMotorData(collection, 'Q', [collection.microcontroller.motors[collection.motorID.index].velocity_pid.p, collection.microcontroller.motors[collection.motorID.index].velocity_pid.i, collection.microcontroller.motors[collection.motorID.index].velocity_pid.d] )">
           </div>
 
           <div class="form-row left collection_pid" id="max" *ngIf="(collection.visualizationType === 'velocity' && collection.rotation.units_y.name !== 'deg') && collection.microcontroller && this.motorControlService.width > 550 && collection.effectDataList.length > 0" title="Maximum velocity (rad/s)">
             <label>max vel.</label>
-            <input type="number" id="collection-PID" name="collection-max-vel" (focus)="this.motorControlService.deselectElements()" [(ngModel)]="collection.microcontroller.motors[collection.motorID.index].config.velocityLimit" title="Maximum velocity (rad/s)"
+            <input type="number" id="collection-PID" name="collection-max-vel-{{ collection.id }}" (focus)="this.motorControlService.deselectElements()" [(ngModel)]="collection.microcontroller.motors[collection.motorID.index].config.velocityLimit" title="Maximum velocity (rad/s)"
               (change)="saveMotorData(collection, 'V', [collection.microcontroller.motors[collection.motorID.index].config.velocityLimit] )">
           </div>
 
           <div class="form-row left collection_pid" id="max" *ngIf="collection.visualizationType === 'torque' && collection.microcontroller && this.motorControlService.width > 400 && collection.effectDataList.length > 0" title="Maximum voltage (V)">
             <label>max volt.</label>
-            <input type="number" id="collection-PID" name="collection-max-vol" (focus)="this.motorControlService.deselectElements()" [(ngModel)]="collection.microcontroller.motors[collection.motorID.index].config.voltageLimit"
+            <input type="number" id="collection-PID" name="collection-max-vol-{{ collection.id }}" (focus)="this.motorControlService.deselectElements()" [(ngModel)]="collection.microcontroller.motors[collection.motorID.index].config.voltageLimit"
               (change)="saveMotorData(collection, 'L', [collection.microcontroller.motors[collection.motorID.index].config.voltageLimit] )">
           </div>
 

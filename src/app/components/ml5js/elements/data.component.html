@@ -4,14 +4,15 @@
   <div class="row" id="toolbar-content">
 
     <ul class="buttons-list">
-      <li id="new" (click)="this.ml5jsService.addDataSet()"><img src="./assets/icons/tools/collections.svg" title="New data set"></li>
-      <li id="load" (click)="this.ml5jsService.loadDataSet()"><img src="./assets/icons/buttons/open.svg" title="Load data set"></li>
-      <li id="save" (click)="this.ml5jsService.saveDataSet()"><img src="./assets/icons/buttons/save.svg" title="Save data set"></li>
-      <!-- <li id="export_json" (click)="this.ml5jsService.exportDataSet()"><img src="./assets/icons/buttons/export.svg" title="Export datasets as json file"></li>
-      <li id="export_json" (click)="this.ml5jsService.importDataSet()"><img src="./assets/icons/buttons/import.svg" title="Import datasets as json file"></li> -->
-      <li id="delete" (click)="this.ml5jsService.deleteDataSet()"><img src="./assets/icons/buttons/bin.svg" title="Delete data set"></li>
+      <li id="new" (click)="this.tensorFlowService.addDataSet()"><img src="./assets/icons/tools/collections.svg" title="New data set"></li>
+      <li id="load" (click)="this.tensorFlowService.loadDataSet()"><img src="./assets/icons/buttons/open.svg" title="Load data set"></li>
+      <li id="save" (click)="this.tensorFlowService.saveDataSet()"><img src="./assets/icons/buttons/save.svg" title="Save data set"></li>
+      <!-- <li id="export_json" (click)="this.tensorFlowService.exportDataSet()"><img src="./assets/icons/buttons/export.svg" title="Export datasets as json file"></li>
+      <li id="export_json" (click)="this.tensorFlowService.importDataSet()"><img src="./assets/icons/buttons/import.svg" title="Import datasets as json file"></li> -->
+      <li id="delete" (click)="this.tensorFlowService.deleteDataSet()"><img src="./assets/icons/buttons/bin.svg" title="Delete data set"></li>
+      <li id="trim" (click)="this.tensorFlowService.trimDataSet()"><img src="./assets/icons/buttons/trim.svg" title="Trim data"></li>
     </ul>
-    <div id="record-button" class="record-button" (click)="this.record()" [ngClass]="{ red: this.ml5jsService.recording.active }">
+    <div id="record-button" class="record-button" (click)="this.record()" [ngClass]="{ red: this.tensorFlowService.recording.active }">
       <div class="circle"></div>
       <div class="rec-text">rec</div>
     </div>
@@ -28,19 +29,19 @@
     </div>
 
     <div class="form-group microcontroller">
-      <select class="form-control playWindow microcontroller" id="microcontroller" name="microcontroller" [(ngModel)]="this.ml5jsService.selectOptionMicrocontroller" required>
+      <select class="form-control playWindow microcontroller" id="microcontroller" name="microcontroller" [(ngModel)]="this.tensorFlowService.selectOptionMicrocontroller" required>
         <option class="placeholder" value="" selected>-- select microcontroller --</option>
         <option *ngFor="let item of this.hardwareService.microcontrollers" [ngValue]="item">{{ item.name }}</option>
       </select>
-      <button class="add" (click)="this.ml5jsService.addMicrocontroller()" title="add">Add</button>
+      <button class="add" (click)="this.tensorFlowService.addMicrocontroller()" title="add">Add</button>
     </div>
 
     <ul>
-      <li *ngFor="let microcontroller of this.ml5jsService.selectedMicrocontrollers">
+      <li *ngFor="let microcontroller of this.tensorFlowService.selectedMicrocontrollers">
         <div class="row">
           <div class="opencloseArrow open" id="open_microcontroller" (click)="openCloseItem('microcontroller')"><div></div></div>
           <label class="labelRow nextToArrow">{{ microcontroller.name }}</label>
-          <div class="buttonPlayWindow dataSetList delete" (click)="this.ml5jsService.deleteMicrocontroller(microcontroller.id)" title="delete">
+          <div class="buttonPlayWindow dataSetList delete" (click)="this.tensorFlowService.deleteMicrocontroller(microcontroller.id)" title="delete">
             <img src="./assets/icons/buttons/bin.svg">
           </div>
         </div>
@@ -73,46 +74,46 @@
 
     <div class="dataset_column">
       <ul>
-        <li *ngFor="let set of this.ml5jsService.dataSets">
-          <div class="row inset dataset" (click)="this.ml5jsService.selectDataSet(set.id)" id="dataSetItem-{{ set.id }}">
+        <li *ngFor="let set of this.tensorFlowService.dataSets">
+          <div class="row inset dataset" (click)="this.tensorFlowService.selectDataSet(set.id)" id="dataSetItem-{{ set.id }}">
             <div class="opencloseArrow" [ngClass]="{ open: set.open }"><div></div></div>
-            <input type="text" class="nextToArrow dataSet" [ngClass]="{ active: set.open }" id="dataSet-{{ set.id }}" value="{{ set.name }}" name="dataSet-{{ set.id }}" (change)="this.ml5jsService.updateDataSetName(set.id)">
+            <input type="text" class="nextToArrow dataSet" [ngClass]="{ active: set.open }" id="dataSet-{{ set.id }}" value="{{ set.name }}" name="dataSet-{{ set.id }}" (change)="this.tensorFlowService.updateDataSetName(set.id)">
           </div>
         </li>
       </ul>
     </div>
-    <div class="data_content">
+    <!-- <div class="data_content">
 
       <ul id="data_input_list" class="data-list-header">
 
         <li id="datalist-header">
 
-          <div class="row variable_name" class="data_element header" *ngFor="let input of this.ml5jsService.selectedModel.inputs; let i=index;" [ngClass]="{ invisible: !input.active }">
+          <div class="row variable_name" class="data_element header" *ngFor="let input of this.tensorFlowService.selectedModel.inputs; let i=index;" [ngClass]="{ invisible: !input.active }">
             <div class="row"><span>{{ input.name }}</span></div>
             <div class="row" *ngIf="input.name === 'angle' || input.name === 'velocity' || input.name === 'direction' || input.name === 'target'">
               <ul class="motor-list">
-                <li *ngFor="let microcontroller of this.ml5jsService.selectedMicrocontrollers">
+                <li *ngFor="let microcontroller of this.tensorFlowService.selectedMicrocontrollers">
                   <span *ngFor="let motor of microcontroller.motors"><span *ngIf="motor.record">{{ motor.id }}</span></span>
                 </li>
               </ul>
             </div>
           </div>
-          <div class="row variable_name" class="data_element header" *ngFor="let output of this.ml5jsService.selectedModel.outputs" [ngClass]="{ invisible: !output.active }">
+          <div class="row variable_name" class="data_element header" *ngFor="let output of this.tensorFlowService.selectedModel.outputs" [ngClass]="{ invisible: !output.active }">
             <div class="row"><span *ngIf="output.active">{{ output.name }}</span></div>
           </div>
         </li>
       </ul>
 
-      <div *ngFor="let set of this.ml5jsService.dataSets; let i=index;" class="dataSet_data">
+      <div *ngFor="let set of this.tensorFlowService.dataSets; let i=index;" class="dataSet_data">
 
         <ul id="data_input_list" class="variable-column" *ngIf="set.open">
           <li *ngFor="let data of set.d.inputs; let j=index;" class="values" class="data-list-row">
 
             <div class="row flexbox-row-even">
-              <div class="row variables" class="data_element" *ngFor="let input of this.ml5jsService.selectedModel.inputs; let n=index;" [ngClass]="{ invisible: !input.active }">
+              <div class="row variables" class="data_element" *ngFor="let input of this.tensorFlowService.selectedModel.inputs; let n=index;" [ngClass]="{ invisible: !input.active }">
                 <div class="row" *ngIf="input.name === 'angle' || input.name === 'velocity' || input.name === 'direction' || input.name === 'target'">
                   <ul class="motor-list">
-                    <li *ngFor="let microcontroller of this.ml5jsService.selectedMicrocontrollers; let c=index">
+                    <li *ngFor="let microcontroller of this.tensorFlowService.selectedMicrocontrollers; let c=index">
                       <span *ngFor="let motor of microcontroller.motors; let q=index">
                         <span [ngClass]="{ invisible: !motor.record}" *ngIf="data.port === microcontroller.serialPort.path">
                           {{ data.motors[q][n].data.value }}
@@ -127,9 +128,9 @@
               </div>
 
 
-              <div class="row variable_name" class="data_element selectbox" *ngFor="let output of this.ml5jsService.selectedModel.outputs; let o=index;" [ngClass]="{ invisible: !output.active }">
+              <div class="row variable_name" class="data_element selectbox" *ngFor="let output of this.tensorFlowService.selectedModel.outputs; let o=index;" [ngClass]="{ invisible: !output.active }">
                 <div class="row" *ngIf="j === 0">
-                  <select class="form-control playWindow table" id="{{ set.id }}-output-{{ o }}" name="{{ set.id }}-output-{{ o }}-{{ i }}" [(ngModel)]="set.d.outputs[o]" (change)="this.ml5jsService.updateOutputDataSet(set.id, o)" required>
+                  <select class="form-control playWindow table" id="{{ set.id }}-output-{{ o }}" name="{{ set.id }}-output-{{ o }}-{{ i }}" [(ngModel)]="set.d.outputs[o]" (change)="this.tensorFlowService.updateOutputDataSet(set.id, o)" required>
                     <option value="" disabled selected hidden>select label</option>
                     <option *ngFor="let label of output.labels" [ngValue]="label.name">{{ label.name }}</option>
                   </select>
@@ -143,6 +144,10 @@
         </ul>
 
       </div>
+    </div> -->
+
+    <div class="data_content">
+      <div id="svg_graph"></div>
     </div>
 
   </div>

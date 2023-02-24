@@ -2,51 +2,51 @@
 
   <!-- option column -->
 
-  <div class="column fixed-height" id="NN_options" *ngIf="this.ml5jsService.selectedModel">
+  <div class="column fixed-height" id="NN_options" *ngIf="this.tensorFlowService.selectedModel">
 
     <div class="form-group">
       <label class="labelRow">Model</label>
-      <select class="form-control playWindow" id="model_type" name="model_type" [(ngModel)]="this.ml5jsService.selectedModel.type">
-        <option *ngFor="let item of this.ml5jsService.modelOptions" [ngValue]="item">{{ item }}</option>
+      <select class="form-control playWindow" id="model_type" name="model_type" [(ngModel)]="this.tensorFlowService.selectedModel.type">
+        <option *ngFor="let item of this.tensorFlowService.modelOptions" [ngValue]="item">{{ item }}</option>
       </select>
     </div>
 
     <div class="form-group">
       <label class="label">Name</label>
-      <input type="text" class="number blue" id="modelName" [(ngModel)]="this.ml5jsService.selectedModel.name" name="modelName">
+      <input type="text" class="number blue" id="modelName" [(ngModel)]="this.tensorFlowService.selectedModel.name" name="modelName">
     </div>
 
     <div class="form-group">
       <label class="label">Task</label>
-      <select class="form-control playWindow" id="task" name="task" [(ngModel)]="this.ml5jsService.selectedModel.options.task">
-        <option *ngFor="let item of this.ml5jsService.NN_task_options" [ngValue]="item">{{ item }}</option>
+      <select class="form-control playWindow" id="task" name="task" [(ngModel)]="this.tensorFlowService.selectedModel.options.task">
+        <option *ngFor="let item of this.tensorFlowService.NN_task_options" [ngValue]="item">{{ item }}</option>
       </select>
     </div>
 
     <div class="form-group">
       <label class="label">Learning rate</label>
-      <input type="number" class="number small blue" id="learningRate" [(ngModel)]="this.ml5jsService.selectedModel.options.learningRate" name="learningRate">
+      <input type="number" class="number small blue" id="learningRate" [(ngModel)]="this.tensorFlowService.selectedModel.options.learningRate" name="learningRate">
     </div>
 
     <div class="form-group">
       <label class="label">Hidden units</label>
-      <input type="number" class="number small blue" id="hiddenUnits" [(ngModel)]="this.ml5jsService.selectedModel.options.hiddenUnits" name="hiddenUnits">
+      <input type="number" class="number small blue" id="hiddenUnits" [(ngModel)]="this.tensorFlowService.selectedModel.options.hiddenUnits" name="hiddenUnits">
     </div>
 
 
     <div class="form-group">
       <label class="label">Epochs</label>
-      <input type="number" class="number small blue" id="epochs" [(ngModel)]="this.ml5jsService.selectedModel.trainingOptions.epochs" name="epochs">
+      <input type="number" class="number small blue" id="epochs" [(ngModel)]="this.tensorFlowService.selectedModel.trainingOptions.epochs" name="epochs">
     </div>
 
     <div class="form-group">
       <label class="label">Batch size</label>
-      <input type="number" class="number small blue" id="batchsize" [(ngModel)]="this.ml5jsService.selectedModel.trainingOptions.batchSize" name="batchsize">
+      <input type="number" class="number small blue" id="batchsize" [(ngModel)]="this.tensorFlowService.selectedModel.trainingOptions.batchSize" name="batchsize">
     </div>
 
     <!-- <div class="form-group">
       <label class="radio-container">Debug
-        <input type="checkbox" class="type" id="debug" name="debug" [(ngModel)]="this.ml5jsService.selectedModel.options.debug" [checked]="this.ml5jsService.selectedModel.options.debug">
+        <input type="checkbox" class="type" id="debug" name="debug" [(ngModel)]="this.tensorFlowService.selectedModel.options.debug" [checked]="this.tensorFlowService.selectedModel.options.debug">
         <span class="checkmark radio ml5js"></span>
       </label>
     </div> -->
@@ -59,7 +59,7 @@
   <div id="inputs" class="column">
     <label class="labelRow">Inputs</label>
     <ul>
-      <li *ngFor="let input of this.ml5jsService.selectedModel.inputs">
+      <li *ngFor="let input of this.tensorFlowService.selectedModel.inputs">
         <label class="radio-container"><span id="label-{{ input.id }}">{{ input.name }}</span>
           <input type="checkbox" class="type" id="{{ input.id }}" name="{{ input.id }}" [(ngModel)]="input.active" [checked]="input.active">
           <span class="checkmark radio ml5js"></span>
@@ -75,7 +75,7 @@
   <div id="outputs" class="column">
     <label class="labelRow">Outputs</label>
     <ul>
-      <li *ngFor="let output of this.ml5jsService.selectedModel.outputs">
+      <li *ngFor="let output of this.tensorFlowService.selectedModel.outputs">
         <label class="radio-container"><span id="label-{{ output.id }}">{{ output.name }}</span>
           <input type="checkbox" class="type" id="{{ output.id }}" name="{{ output.id }}" [(ngModel)]="output.active" [checked]="output.active">
           <span class="checkmark radio ml5js"></span>

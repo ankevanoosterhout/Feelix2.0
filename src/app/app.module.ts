@@ -57,6 +57,7 @@ import { ModelComponent } from './components/ml5js/elements/model.component';
 import { DataSetService } from './services/dataset.service';
 import { LoadDataSetsComponent } from './components/ml5js/datasets/load-datasets.component';
 import { TensorFlowModelService } from './services/tensorFlow-model.service';
+import { TensorFlowDrawService } from './services/tensorflow-draw.service';
 import { FilterService } from './services/filter.service';
 import { KinematicsComponent } from './components/kinematics/kinematics.component';
 import { KinematicService } from './services/kinematic.service';
@@ -132,6 +133,7 @@ import { IKService } from './services/IK.service';
     MotorControlService,
     CloneService,
     TensorFlowMainService,
+    TensorFlowDrawService,
     DataSetService,
     TensorFlowModelService,
     FilterService,

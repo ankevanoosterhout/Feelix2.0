@@ -17,8 +17,18 @@ export class IKService {
   public rootsObservable = new Subject<any>();
 
   updateIKhelper: Subject<any> = new Subject();
+  updateModels: Subject<any> = new Subject();
 
-
+  solverOptions = {
+    maxIterations: 5,
+    divergeThreshold: 0.005,
+    stallThreshold: 1e-3,
+    translationErrorClamp: 0.25,
+    rotationErrorClamp: 0.25,
+    translationConvergeThreshold: 1e-3,
+    rotationConvergeThreshold: 1e-3,
+    restPoseFactor: 0.001,
+  };
 
   constructor(private localSt: LocalStorageService) {
     this.ikConfig = new IKConfig();
@@ -29,6 +39,8 @@ export class IKService {
       console.log(data);
       this.ikFrames = data;
     }
+
+
   }
 
 
@@ -76,6 +88,8 @@ export class IKService {
     const joint = new Joint();
     joint.name = urfd_joint.id;
     joint.setDoF(DOF.Z);
+    // joint.setDoFValue(DOF.EZ, Math.PI * 2);
+
     joint.setPosition(urfd_joint.dimensions.origin.x, urfd_joint.dimensions.origin.y, urfd_joint.dimensions.origin.z);
 
 
@@ -118,6 +132,8 @@ export class IKService {
     if (this.ikConfig.ikRoot === null) {
       this.ikConfig.ikRoot = findRoots(this.ikFrames);
     }
+    this.ikConfig.solver = new Solver( this.ikConfig.ikRoot );
+    Object.assign( this.ikConfig.solver, this.solverOptions );
     // console.log(this.ikFrames);
     console.log(this.ikConfig.ikRoot);
   }
@@ -128,17 +144,33 @@ export class IKService {
   }
 
 
-  updateAngle(id: string, delta: number) {
-    this.ikConfig.ikRoot.traverse( c => {
+  updateAngle(id: string, quaternion: any) {
+    // console.log('update root angles ', id, quaternion);
+    for (const root of this.ikConfig.ikRoot) {
+      root.traverse( c => {
 
-      if ( c.isJoint ) {
+        // if ( c.isJoint ) {
 
-        const name = c.name;
-        if (name === id) {
-          c.setDoFValues( c.angle + delta );
-        }
-      }
-    });
+          const name = c.name;
+          if (name === id) {
+
+            // c.setWorldPosition( position.x, position.y, position.z);
+            c.setWorldQuaternion( quaternion._x, quaternion._y, quaternion._z, quaternion._w );
+            c.updateMatrixWorld(true);
+            // console.log(c);
+          }
+        // }
+        // this.createRootsHelper(root);
+      });
+    }
+    this.ikConfig.solver.updateStructure();
+    // this.ikConfig.ikRoot.updateStructure();
+    this.ikConfig.ikHelper.updateStructure();
+
+    this.updateModels.next(this.ikConfig.ikRoot);
+
+    this.showRootsHelper(true);
+
   }
 
 
@@ -154,21 +186,44 @@ export class IKService {
       this.ikConfig.ikHelper.setJointScale(80);
       this.ikConfig.ikHelper.name = 'ikHelper';
       // this.ikHelper.setColor( this.ikHelper.color );
-      this.ikConfig.ikHelper.traverse( c => {
-        if (c.material) {
-          c.material.color.setHex( 0xe91e63 );
-        }
-        c.visible = true;
-      });
+      this.showRootsHelper(true);
       this.updateIKhelper.next(this.ikConfig.ikHelper);
       // console.log(this.ikConfig.ikHelper);
     }
+  }
+
+  showRootsHelper(visible: boolean) {
+    this.ikConfig.ikHelper.traverse( c => {
+      if (c.material) {
+        c.material.color.setHex( 0xe91e63 );
+      }
+      c.visible = visible;
+    });
   }
 
 
   store() {
     this.rootsObservable.next(this.ikFrames);
     this.localSt.store('roots', this.ikFrames);
+  }
+
+
+  updateObjectQuaternion(id: string, quaternion: any, updateChildren = false) {
+    console.log('update quaternion ', id);
+    for (const root of this.ikConfig.ikRoot) {
+      root.traverse( c => {
+
+        // if ( c.isJoint ) {
+
+        const name = c.name;
+        if (name === id) {
+          c.setQuaternion( quaternion.x, quaternion.y, quaternion.z, quaternion.w );
+          c.updateMatrix();
+          console.log(c);
+        }
+        // }
+      });
+    }
   }
 
 

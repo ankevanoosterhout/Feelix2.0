@@ -1,22 +1,22 @@
-<div id="create_classifiers" class="row" *ngIf="!this.ml5jsService.classify">
+<div id="create_classifiers" class="row" *ngIf="!this.tensorFlowService.classify">
   <div class="row">
     <div class="row">
-      <label class="labelRow auto_width" *ngIf="this.ml5jsService.selectedModel.type === 'NeuralNetwork' && this.ml5jsService.selectedModel.options.task === 'regression'">Output variable</label>
-      <label class="labelRow auto_width" *ngIf="this.ml5jsService.selectedModel.type === 'NeuralNetwork' && this.ml5jsService.selectedModel.options.task === 'classification'">Classifiers</label>
-      <button class="add labelRowItem" (click)="this.ml5jsService.addClassifier()" title="add new classifier">Add</button>
+      <label class="labelRow auto_width" *ngIf="this.tensorFlowService.selectedModel.type === 'NeuralNetwork' && this.tensorFlowService.selectedModel.options.task === 'regression'">Output variable</label>
+      <label class="labelRow auto_width" *ngIf="this.tensorFlowService.selectedModel.type === 'NeuralNetwork' && this.tensorFlowService.selectedModel.options.task === 'classification'">Classifiers</label>
+      <button class="add labelRowItem" (click)="this.tensorFlowService.addClassifier()" title="add new classifier">Add</button>
     </div>
 
 
     <ul id="data_output_list" class="classifiers">
-      <li *ngFor="let classifier of this.ml5jsService.selectedModel.outputs; let i=index;" class="dataSet">
+      <li *ngFor="let classifier of this.tensorFlowService.selectedModel.outputs; let i=index;" class="dataSet">
         <div class="row inset">
           <div class="opencloseArrow" [ngClass]="{ open: classifier.open }" (click)="classifier.open = !classifier.open"><div></div></div>
-          <input type="text" class="nextToArrow classifier_input" id="classifier-{{ i }}" value="{{ classifier.name }}" name="classifier-{{ i }}" (change)="this.ml5jsService.updateClassifier(i)">
+          <input type="text" class="nextToArrow classifier_input" id="classifier-{{ i }}" value="{{ classifier.name }}" name="classifier-{{ i }}" (change)="this.tensorFlowService.updateClassifier(i)">
 
-          <div class="buttonPlayWindow dataSetList" (click)="this.ml5jsService.deleteClassifier(i)" title="delete">
+          <div class="buttonPlayWindow dataSetList" (click)="this.tensorFlowService.deleteClassifier(i)" title="delete">
             <img src="./assets/icons/buttons/bin.svg">
           </div>
-          <div class="buttonPlayWindow dataSetList" (click)="this.ml5jsService.addLabelToClassifier(i)" title="add label">
+          <div class="buttonPlayWindow dataSetList" (click)="this.tensorFlowService.addLabelToClassifier(i)" title="add label">
             +
           </div>
 
@@ -24,8 +24,8 @@
         <ul *ngIf="classifier.open">
           <li *ngFor="let label of classifier.labels; let i=index;" class="values" class="data-list-{{ i }}-row">
             <div class="row flexbox-row-even">
-              <input type="text" class="list-item" id="{{ classifier.name }}-label-{{ i }}" value="{{ label.name }}" name="{{ classifier.name }}-label-{{ i }}" (change)="this.ml5jsService.updateClassifierLabel(classifier.name, i)">
-              <div class="buttonPlayWindow dataSetList text-button" (click)="this.ml5jsService.deleteLabel(classifier.name, i)" title="delete label">
+              <input type="text" class="list-item" id="{{ classifier.name }}-label-{{ i }}" value="{{ label.name }}" name="{{ classifier.name }}-label-{{ i }}" (change)="this.tensorFlowService.updateClassifierLabel(classifier.name, i)">
+              <div class="buttonPlayWindow dataSetList text-button" (click)="this.tensorFlowService.deleteLabel(classifier.name, i)" title="delete label">
                 -
               </div>
             </div>
@@ -36,7 +36,7 @@
 
     <div class="row">
       <label class="radio-container"><div class="question-mark" title="classify multiple inputs simultaneously">?</div>classify batch
-        <input type="checkbox" class="type" id="multiple" name="interpolate" [(ngModel)]="this.ml5jsService.selectedModel.multiple" [checked]="this.ml5jsService.selectedModel.multiple">
+        <input type="checkbox" class="type" id="multiple" name="interpolate" [(ngModel)]="this.tensorFlowService.selectedModel.multiple" [checked]="this.tensorFlowService.selectedModel.multiple">
         <span class="checkmark radio ml5js"></span>
       </label>
     </div>
@@ -53,12 +53,12 @@
       <button class="add" id="select-filter" (click)="this.filterService.addFilter()" title="add new filter">Add</button>
     </div>
     <ul id="data_output_list" class="results">
-      <li *ngFor="let filter of this.ml5jsService.selectedModel.filters" class="dataSet">
+      <li *ngFor="let filter of this.tensorFlowService.selectedModel.filters" class="dataSet">
         <div class="row inset">
           <div class="opencloseArrow" [ngClass]="{ open: filter.open }" (click)="filter.open = !filter.open"><div></div></div>
           <label class="labelRow nextToArrow align-left">{{ filter.type.name }}</label>
           <!-- <input type="text" class="nextToArrow" id="filter-{{ filter.id }}" value="{{ filter.type.name }}" name="filter-{{ filter.id }}" disabled> -->
-          <div class="buttonPlayWindow dataSetList text-button" (click)="this.ml5jsService.deleteFilter(filter.id)" title="delete filter">
+          <div class="buttonPlayWindow dataSetList text-button" (click)="this.tensorFlowService.deleteFilter(filter.id)" title="delete filter">
             -
           </div>
         </div>
@@ -68,7 +68,7 @@
             <div class="row flexbox-row-even">
               <label class="label">classifier</label>
               <select class="form-control playWindow" id="classifier-filter" name="classifier-filter" [(ngModel)]="filter.classifier">
-                <option *ngFor="let classifier of this.ml5jsService.selectedModel.outputs" [ngValue]="classifier">{{ classifier.name }}</option>
+                <option *ngFor="let classifier of this.tensorFlowService.selectedModel.outputs" [ngValue]="classifier">{{ classifier.name }}</option>
               </select>
             </div>
           </li>
@@ -87,7 +87,7 @@
                 <input type="range" class="html-slider" id="{{ label.name }}-{{ filter.id }}" name="min-{{ label.name }}-{{ filter.id }}" [(ngModel)]="filter.functionVariable.value[i]" step="0.01" min=".00" max="1.00">
               </div>
             </div>
-            <div class="row" *ngIf="this.ml5jsService.selectedModel && this.ml5jsService.selectedModel.type === 'NeuralNetwork' && this.ml5jsService.selectedModel.options.task === 'classification'">
+            <div class="row" *ngIf="this.tensorFlowService.selectedModel && this.tensorFlowService.selectedModel.type === 'NeuralNetwork' && this.tensorFlowService.selectedModel.options.task === 'classification'">
               <!-- <label class="radio-container"><div class="question-mark" title="select to interpolate values between classifiers based on confidence level, default: discrete changes based on highest confidence level">?</div>Interpolate
                 <input type="checkbox" class="type" id="interpolate" name="interpolate" [(ngModel)]="filter.type.interpolate" [checked]="filter.type.interpolate">
                 <span class="checkmark radio ml5js"></span>
@@ -109,12 +109,12 @@
 
 
 
-<div id="results" class="row" *ngIf="this.ml5jsService.classify">
+<div id="results" class="row" *ngIf="this.tensorFlowService.classify">
 
   <label class="labelRow auto_width">Results</label>
 
   <ul id="data_output_list" class="results">
-    <li *ngFor="let classifier of this.ml5jsService.selectedModel.outputs">
+    <li *ngFor="let classifier of this.tensorFlowService.selectedModel.outputs">
       <ul>
         <li *ngFor="let label of classifier.labels; let i=index;">
           <label class="label label-title">{{ label.name }}</label>
@@ -128,9 +128,9 @@
   <label class="labelRow auto_width">Filters</label>
 
   <ul id="data_output_list" class="results">
-    <li *ngFor="let filter of this.ml5jsService.selectedModel.filters">
+    <li *ngFor="let filter of this.tensorFlowService.selectedModel.filters">
       <label class="label label-title">{{ filter.type.name }}</label>
-      <div class="buttonPlayWindow dataSetList text-button" (click)="this.ml5jsService.deleteFilter(filter.id)" title="delete filter">
+      <div class="buttonPlayWindow dataSetList text-button" (click)="this.tensorFlowService.deleteFilter(filter.id)" title="delete filter">
         -
       </div>
     </li>

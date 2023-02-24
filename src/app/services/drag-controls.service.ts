@@ -18,8 +18,8 @@ export class DragControlsService {
 
   // selectFrame: Subject<any> = new Subject();
 
-  constructor(private kinematicDrawingService: KinematicsDrawingService, private kinematicService: KinematicService, ikService: IKService) {
-    this.c = ikService.ikConfig;
+  constructor(private kinematicDrawingService: KinematicsDrawingService, private kinematicService: KinematicService, private ikService: IKService) {
+    this.c = this.ikService.ikConfig;
   }
 
 
@@ -125,10 +125,14 @@ export class DragControlsService {
   }
 
   getRotatedPosition(model: any, startPoint: THREE.Vector3) {
+    console.log(model, startPoint);
     this.c.drag.tempVector
-      .copy(new THREE.Vector3(0,0,1))
+      .copy(new THREE.Vector3(0,0,1))//0,0,1
       .transformDirection(model.matrixWorld)
       .normalize();
+
+    this.kinematicDrawingService.drawArrowHelper(model.position, this.c.drag.tempVector, 0x000000);
+    console.log(this.c.drag.tempVector);
 
     this.c.drag.pivotPoint
       .set(0, 0, 0)
@@ -208,13 +212,22 @@ export class DragControlsService {
           if (delta !== 0) {
 
             this.c.drag.manipulating.parent.rotation.z += delta;
+            this.c.drag.manipulating.parent.updateMatrix();
 
             if (frame) {
               const linkedObject = this.kinematicDrawingService.getObjectFromScene((frame instanceof URFD_Joint ? frame.id + '-link' : frame.id.slice(0,-5)));
+              // console.log(linkedObject);
               if (linkedObject) {
                 this.kinematicService.updateAngle(this.c.drag.manipulating.parent.name, this.c.drag.manipulating.parent.rotation.z, linkedObject.rotation.z);
               }
+              // const framePosition = new THREE.Vector3();
+              // this.c.drag.manipulating.getWorldPosition(framePosition);
+              const frameQuaternion = new THREE.Quaternion();
+              this.c.drag.manipulating.parent.getWorldQuaternion(frameQuaternion);
 
+              if (frameQuaternion.x !== NaN && frameQuaternion.x !== undefined) {
+                this.ikService.updateAngle(frame.id, frameQuaternion);
+              }
               // this.updateAngle(frame, this.c.drag.manipulating.parent.rotation.z);
             }
             // this.updateJoint(selectedJoint, selectedJoint.angle + delta);

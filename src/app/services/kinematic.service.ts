@@ -254,14 +254,16 @@ export class KinematicService {
 
 
   addNewJoint(id: string, model: Model, parent = false): URFD_Joint {
+    console.log(model);
     const urfd_joint = new URFD_Joint(id === null ? uuid() : id, model, parent);
-
+    console.log(urfd_joint);
     const similarObjects = this.frames.filter(j => j instanceof URFD_Joint && j.config.active).length;
     urfd_joint.name += '-' + (similarObjects + 1);
 
     console.log(urfd_joint);
 
     this.frames.push(urfd_joint);
+    console.log(this.frames);
     // this.store();
 
     return urfd_joint;
@@ -275,14 +277,23 @@ export class KinematicService {
     const similarObjects = this.frames.filter(l => l instanceof URFD_Link).length;
     urfd_link.name += '-' + (similarObjects + 1);
 
-    console.log(urfd_link);
+    // console.log(urfd_link);
     this.frames.push(urfd_link);
+    console.log(this.frames);
     // this.store();
 
     return urfd_link;
   }
 
 
+
+  updateFramePositionFromObject(object: any) {
+    const frame = this.frames.filter(f => f.id === object.name)[0];
+    if (frame) {
+      frame.dimensions.origin = { x: object.position.x, y: object.position.y, z: object.position.z };
+      frame.dimensions.rpy = { x: object.rotation.x, y:  object.rotation.y, z:  object.rotation.z };
+    }
+  }
 
 
   deleteJoint(id: string) {
@@ -322,7 +333,6 @@ export class KinematicService {
       newJoint.object3D = joint.object3D;
       newJoint.isJoint = joint.isJoint;
       newJoint.isMotor = joint.isMotor;
-      newJoint.modelType = joint.modelType;
       newJoint.name = joint.name + '-copy';
       newJoint.motor = null;
       newJoint.sceneObject = sceneObject;
@@ -342,24 +352,23 @@ export class KinematicService {
 
     if (frame) {
 
-        const delta = frame instanceof URFD_Joint ? linkAngle - rotationZ : rotationZ - linkAngle;
+      const delta = frame instanceof URFD_Joint ? linkAngle - rotationZ : rotationZ - linkAngle;
+      // console.log('delta ', delta);
+      if (frame instanceof URFD_Joint) {
+        frame.angle = delta;
 
-        if (frame instanceof URFD_Joint) {
-          frame.angle = delta;
-
-          if (this.selectedFrames[0] && this.selectedFrames[0].id === frame.id) {
-            this.selectedFrames[0].angle = frame.angle;
-          }
-          // console.log('angle ', frame.angle, rotationZ);
+        if (this.selectedFrames[0] && this.selectedFrames[0].id === frame.id) {
+          this.selectedFrames[0].angle = frame.angle;
         }
+        // console.log('angle ', frame.angle, rotationZ);
       }
+    }
 
-      frame.dimensions.rpy.z = rotationZ;
+    frame.dimensions.rpy.z = rotationZ;
 
-      if (this.selectedFrames[0] && this.selectedFrames[0].id === id) {
-        this.selectedFrames[0].dimensions.rpy.z = frame.dimensions.rpy.z;
-      }
-    // }
+    if (this.selectedFrames[0] && this.selectedFrames[0].id === id) {
+      this.selectedFrames[0].dimensions.rpy.z = frame.dimensions.rpy.z;
+    }
   }
 
 //delete or adjusst
@@ -589,15 +598,15 @@ export class KinematicService {
   // }
 
 
-  getConnectorSize(plane: string, type: number, isMotor: boolean) {
-    if (plane === 'X' || type === 2) {
-      return new ConnectorSize(1.5, 1, 1.5, isMotor ? 23.575 : 18.48);
-    } else if (plane === 'Y') {
-      return new ConnectorSize(2.5, 1, 2.5, isMotor ? 26.5 : 23);
-    } else if (plane === 'Z') {
-      return new ConnectorSize(1, 1, 1, 17.2);
-    }
-  }
+  // getConnectorSize(plane: string, type: number, isMotor: boolean) {
+  //   if (plane === 'X' || type === 2) {
+  //     return new ConnectorSize(1.5, 1, 1.5, isMotor ? 23.575 : 18.48);
+  //   } else if (plane === 'Y') {
+  //     return new ConnectorSize(2.5, 1, 2.5, isMotor ? 26.5 : 23);
+  //   } else if (plane === 'Z') {
+  //     return new ConnectorSize(1, 1, 1, 17.2);
+  //   }
+  // }
 
 
   // addPoint(id: string) {

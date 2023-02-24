@@ -39,6 +39,7 @@ export class UploadService {
       }
       n++;
     }
+    console.log(collection);
   }
 
   createNewEffectListWithRepeatedEffects(collEffects: Array<Details>) {
@@ -232,6 +233,7 @@ export class UploadService {
   }
 
   translateEffectData(collEffect: Details, effectData: Effect) {
+    console.log(effectData);
     let copyEffectList = this.cloneService.deepClone(effectData);
     let multiply = 1;
     if (effectData.grid.xUnit.name === 'rad') { multiply = (180 / Math.PI); }
@@ -431,8 +433,9 @@ export class UploadService {
 
 
   createUploadModel(collection: Collection, microcontroller: MicroController) {
+    console.log(collection, microcontroller);
     let model = new UploadModel(collection, microcontroller);
-    // console.log(model);
+    console.log(model.config);
     return model;
   }
 

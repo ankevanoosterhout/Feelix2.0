@@ -4,8 +4,6 @@ import { v4 as uuid } from 'uuid';
 import { MicroController } from '../models/hardware.model';
 import { Model, DataSet, Classifier, Data, NN_options, Label } from '../models/tensorflow.model';
 import { HardwareService } from './hardware.service';
-// import p5 from 'p5';
-// import ml5 from 'ml5';
 import { DataSetService } from './dataset.service';
 import { Subject } from 'rxjs';
 import { TensorFlowModelService } from './tensorFlow-model.service';
@@ -14,6 +12,7 @@ import { ElectronService } from 'ngx-electron';
 import { FileSaverService } from 'ngx-filesaver';
 import * as tf from '@tensorflow/tfjs';
 import { Tensor2D } from '@tensorflow/tfjs';
+import { TensorFlowDrawService } from './tensorflow-draw.service';
 
 @Injectable()
 export class TensorFlowMainService {
@@ -52,12 +51,12 @@ export class TensorFlowMainService {
     loss: any = null;
     serialPath: any;
 
-    updateML5jsProgress: Subject<any> = new Subject();
+    updateTensorflowProgress: Subject<any> = new Subject();
     reloadPage: Subject<any> = new Subject();
     updateResizeElements: Subject<any> = new Subject();
 
     constructor(@Inject(DOCUMENT) private document: Document, public hardwareService: HardwareService, private dataSetService: DataSetService,
-                private tensorflowService: TensorFlowModelService, private electronService: ElectronService, private _FileSaverService: FileSaverService) {}
+                private tensorflowService: TensorFlowModelService, private tensorflowDrawService: TensorFlowDrawService, private electronService: ElectronService, private _FileSaverService: FileSaverService) {}
 
 
 
@@ -101,6 +100,14 @@ export class TensorFlowMainService {
 
     importDataSet() {
       //open dialogue window
+    }
+
+    trimDataSet() {
+      const dataSet = this.dataSets.filter(d => d.open)[0];
+      if (dataSet) {
+        //remove empty spots at start/end
+        console.log('write remove empty data function');
+      }
     }
 
     loadDataSet() {
@@ -261,7 +268,7 @@ export class TensorFlowMainService {
 
 
     updateProgess(_status: String, _progress: number) {
-      this.updateML5jsProgress.next({ status: _status, progress: _progress });
+      this.updateTensorflowProgress.next({ status: _status, progress: _progress });
     }
 
 
@@ -583,6 +590,10 @@ export class TensorFlowMainService {
         }
       }
     }
+
+
+
+
 
 
 }

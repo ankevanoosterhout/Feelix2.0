@@ -38,6 +38,7 @@ export class ConfigModel {
   range: number;
   constrain_range: number;
   loop: number;
+  motorID: string;
 
   constructor(collection: Collection, microcontroller: MicroController) {
     this.serialPort = microcontroller.serialPort;
@@ -53,9 +54,12 @@ export class ConfigModel {
         this.range *= (Math.PI / 180);
       }
       this.constrain_range = collection.rotation.constrain ? 1 : 0;
+      this.motorID = collection.motorID.name;
     } else {
       this.motors = microcontroller.motors;
+      this.motorID = microcontroller.motors[0].id;
     }
+    console.log(this.motorID);
   }
 }
 

@@ -61,8 +61,26 @@
             <div class="inputfield-inset-title">Motor {{ motor.id }}</div>
 
             <div class="form-group">
+              <label class="labelRow select motorsettings inset">Communication</label>
+              <select class="form-control playWindow" id="select-communication-type-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" [(ngModel)]="motor.I2C_communicationType"
+                      name="select-communication-type-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" (change)="updateMicrocontroller(this.selectedMicrocontroller)">
+                <option *ngFor="let type of I2C_communicationType" [ngValue]="type.value">{{ type.name }}</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="labelRow motorsettings inset">
+                <div class="question-mark" title="I2C address for communication between motors">?</div>I2C address</label>
+              <input type="text" class="small motor-settings" id="I2C_address-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}"
+                     name="I2C_address-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" [(ngModel)]="motor.I2C_address" (change)="updateI2C(motor, this.selectedMicrocontroller)">
+            </div>
+
+
+
+
+            <div class="form-group">
               <label class="labelRow select motorsettings inset">Type</label>
-              <select class="form-control playWindow" id="select-controller-type" [(ngModel)]="motor.type" name="controller" (change)="updateMicrocontroller(this.selectedMicrocontroller)">
+              <select class="form-control playWindow" id="select-controller-type-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" [(ngModel)]="motor.type" name="controller-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" (change)="updateMicrocontroller(this.selectedMicrocontroller)">
                 <option *ngFor="let type of motorType" [ngValue]="type.name" [disabled]="type.disabled === true">{{ type.name }}</option>
               </select>
             </div>
@@ -70,7 +88,13 @@
             <div class="form-group" *ngIf="motor.type === 'BLDC Motor'">
               <label class="labelRow motorsettings inset">
                 <div class="question-mark" title="Number of pole pairs of the motor. Can be found in motor specifications. E.g. a configuration of 12N14P has 14 poles / 2 = 7 polepairs.">?</div>Pole pairs</label>
-              <input type="number" class="small motor-settings" id="polepairs" name="polepairs" [(ngModel)]="motor.config.polepairs" (change)="updateMicrocontroller(this.selectedMicrocontroller)">
+              <input type="number" class="small motor-settings" id="polepairs-{{ selectedMicrocontroller.serialPort.path }}--{{ motor.id }}" name="polepairs-{{ selectedMicrocontroller.serialPort.path }}--{{ motor.id }}" [(ngModel)]="motor.config.polepairs" (change)="updateMicrocontroller(this.selectedMicrocontroller)">
+            </div>
+
+            <div class="form-group" *ngIf="motor.type === 'BLDC Motor'">
+              <label class="labelRow motorsettings inset">
+                <div class="question-mark" title="Phase resistance of the motor (see specs)">?</div>Phase resistance</label>
+              <input type="number" class="small motor-settings" id="phaseResistance-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" name="phaseResistance-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" [(ngModel)]="motor.config.phaseResistance" (change)="updateMicrocontroller(this.selectedMicrocontroller)">
             </div>
 
             <div class="form-group">
@@ -83,7 +107,7 @@
             <div class="form-group">
               <div class="row">
                 <label class="labelRow motorsettings inset"><div class="question-mark" title="Voltage applied to the motor. Usually between 10V and 20V, check your pcb and motor type for the specifications">?</div>Supply voltage</label>
-                <input type="number" class="motor-settings" name="supply-voltage" id="supply-voltage" [(ngModel)]="motor.config.supplyVoltage" disabled><span class="units motor-settings disabled">V</span>
+                <input type="number" class="motor-settings" name="supply-voltage-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" id="supply-voltage-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" [(ngModel)]="motor.config.supplyVoltage" disabled><span class="units motor-settings disabled">V</span>
               </div>
               <div class="row-slider">
                 <div class="slider">
@@ -94,12 +118,12 @@
 
             <div class="form-group">
               <label class="labelRow motorsettings inset"><div class="question-mark" title="Voltage limitting variable. Optional, overflowing values will be cut off.">?</div>Voltage limit</label>
-              <input type="number" class="motor-settings" id="voltage-limit" name="voltage-limit" [(ngModel)]="motor.config.voltageLimit" (change)="updateMicrocontroller(selectedMicrocontroller)"><span class="units motor-settings">V</span>
+              <input type="number" class="motor-settings" id="voltage-limit-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" name="voltage-limit-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" [(ngModel)]="motor.config.voltageLimit" (change)="updateMicrocontroller(selectedMicrocontroller)"><span class="units motor-settings">V</span>
             </div>
 
             <div class="form-group">
               <label class="labelRow motorsettings inset"><div class="question-mark" title="Velocity limitting variable. Optional">?</div>Velocity limit</label>
-              <input type="number" class="motor-settings" id="velocity-limit" name="velocity-limit" [(ngModel)]="motor.config.velocityLimit" (change)="updateMicrocontroller(selectedMicrocontroller)"><span class="units motor-settings">rad/s</span>
+              <input type="number" class="motor-settings" id="velocity-limit-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" name="velocity-limit-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" [(ngModel)]="motor.config.velocityLimit" (change)="updateMicrocontroller(selectedMicrocontroller)"><span class="units motor-settings">rad/s</span>
             </div>
 
 
@@ -114,7 +138,7 @@
             <div class="form-group">
               <div class="row">
                 <label class="radio-container motorsettings">Reverse direction <div class="question-mark" title="Reverse sensor direction">?</div>
-                  <input type="checkbox" class="type" id="reverse-sensor-direction" name="direction" [(ngModel)]="motor.config.encoder.direction" [checked]="motor.config.encoder.direction" (change)="updateMicrocontroller(selectedMicrocontroller)">
+                  <input type="checkbox" class="type" id="direction-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" name="direction-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" [(ngModel)]="motor.config.encoder.direction" [checked]="motor.config.encoder.direction" (change)="updateMicrocontroller(selectedMicrocontroller)">
                   <span class="checkmark radio playwindow"></span>
                 </label>
               </div>

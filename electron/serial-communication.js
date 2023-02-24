@@ -48,6 +48,8 @@ function writeDataString(data, COM) {
       if (err) {
           // reconnect(data, COM);
           return console.log('Error: ', err.message);
+      } else {
+        console.log('write data ', data);
       }
   });
 }
@@ -107,6 +109,7 @@ function ifSerialAvailable(serialData, portlist, connect) {
 
 
 function createConnection(serialData) {
+  console.log(serialData);
   if (serialData && serialData.port) {
     if (ports.filter(d => d.path === serialData.port.path).length === 0) {
       const sp = new newSerialPort(serialData, port);
@@ -131,7 +134,7 @@ class newSerialPort {
     this.sp.write(data, function (err) {
         if (err) { return console.log('Error: ', err.message); }
         else {
-          //  console.log('written ', data);
+           console.log('written ', data);
         }
     });
   }
@@ -187,7 +190,7 @@ class newSerialPort {
       });
 
       parser.on('data', (d) => {
-        // console.log(d);
+        console.log(d);
         if (d.charAt(0) === '*') {
           // console.log('received data ', d);
           if (dataSendWaitList.filter(d => d.port === this.COM)) {
@@ -310,6 +313,7 @@ function prepareMotorData(uploadContent, motor, datalist) {
   // datalist.unshift('FM' + motor.id + 'F');
 
   datalist.unshift('FM' + motor.id + 'I' + motor.id);
+  datalist.unshift('FM' + motor.id + '&' + (motor.I2C_communication));
   if (motor.config.supplyVoltage) {
     datalist.unshift('FM' + motor.id + 'S' + motor.config.supplyVoltage);
   }
@@ -346,6 +350,7 @@ function prepareMotorData(uploadContent, motor, datalist) {
   }
   datalist.unshift('FM' + motor.id + 'X' + (motor.config.overheatProtection ? 1 : 0));
 
+
   // datalist.unshift('FM' + motor.id + 'B' + uploadContent.baudRate);
   return datalist;
 }
@@ -372,27 +377,27 @@ function prepareEffectData(uploadContent, motor, datalist) {
 
 
   for (const d of uploadContent.data.overlay) {
-    datalist.unshift('FE' + i + 'C:' + d.position.start.toFixed(5));
-    datalist.unshift('FE' + i + 'A:' + (d.data.length - 1));
-    datalist.unshift('FE' + i + 'D:' + (d.direction.cw ? 1 : -1) + ':' + (d.direction.ccw ? 1 : -1) );
-    datalist.unshift('FE' + i + 'I:' + (d.infinite ? 1 : -1));
-    datalist.unshift('FE' + i + 'R:' + d.pointer);
+    datalist.unshift('FE' + motor.id + i + 'C:' + d.position.start.toFixed(5));
+    datalist.unshift('FE' + motor.id + i + 'A:' + (d.data.length - 1));
+    datalist.unshift('FE' + motor.id + i + 'D:' + (d.direction.cw ? 1 : -1) + ':' + (d.direction.ccw ? 1 : -1) );
+    datalist.unshift('FE' + motor.id + i + 'I:' + (d.infinite ? 1 : -1));
+    datalist.unshift('FE' + motor.id + i + 'R:' + d.pointer);
     let type = 0;
     if (d.type === 'position') { type = 1; }
     if (d.type === 'velocity' && d.yUnit !== 'deg') { type = 2; }
     if (d.type === 'velocity' && d.yUnit === 'deg') { type = 3; }
-    datalist.unshift('FE' + i + 'T:' + type);
-    datalist.unshift('FE' + i + 'Z:' + (d.type === 'position' ? d.data.length * 2 : d.data.length));
+    datalist.unshift('FE' + motor.id + i + 'T:' + type);
+    datalist.unshift('FE' + motor.id + i + 'Z:' + (d.type === 'position' ? d.data.length * 2 : d.data.length));
 
 
     for (const el of d.data) {
       if (el.d && d.type === 'position') {
-        datalist.unshift('FDI:' + (Math.round(el.d) !== el.d ? el.d.toFixed(6) : el.d));
+        datalist.unshift('FDI' + motor.id + ':' + (Math.round(el.d) !== el.d ? el.d.toFixed(6) : el.d));
       }
       if (d.type === 'velocity' && d.yUnit === 'deg') {
-        datalist.unshift('FDI:' + ((el.y2 * 100) * (Math.PI / 180)).toFixed(6));
+        datalist.unshift('FDI' + motor.id + ':' + ((el.y2 * 100) * (Math.PI / 180)).toFixed(6));
       } else {
-        datalist.unshift('FDI:' + (Math.round(el.y) !== el.y ? el.y.toFixed(6) : el.y));
+        datalist.unshift('FDI' + motor.id + ':' + (Math.round(el.y) !== el.y ? el.y.toFixed(6) : el.y));
       }
     }
     i++;
@@ -400,40 +405,40 @@ function prepareEffectData(uploadContent, motor, datalist) {
 
 
   for (const effect of uploadContent.effects) {
-    datalist.unshift('FE' + i + effect.position.identifier + ':' + effect.position.value[1]);
+    datalist.unshift('FE' + motor.id + i + effect.position.identifier + ':' + effect.position.value[1]);
     if (effect.vis_type !== 'velocity') {
-      datalist.unshift('FE' + i + effect.direction.identifier + ':' + effect.direction.value[0] + ':' + effect.direction.value[1]);
+      datalist.unshift('FE' + motor.id + i + effect.direction.identifier + ':' + effect.direction.value[0] + ':' + effect.direction.value[1]);
     }
-    datalist.unshift('FE' + i + effect.scale.identifier + ':' + effect.scale.value[0] + ':' + effect.scale.value[1]);
-    datalist.unshift('FE' + i + effect.flip.identifier + ':' + effect.flip.value[0] + ':' + effect.flip.value[1] + ':' + effect.flip.value[2]);
-    datalist.unshift('FE' + i + effect.angle.identifier + ':' + effect.angle.value);
-    datalist.unshift('FE' + i + effect.vis_type.identifier + ':' + effect.vis_type.value);
+    datalist.unshift('FE' + motor.id + i + effect.scale.identifier + ':' + effect.scale.value[0] + ':' + effect.scale.value[1]);
+    datalist.unshift('FE' + motor.id + i + effect.flip.identifier + ':' + effect.flip.value[0] + ':' + effect.flip.value[1] + ':' + effect.flip.value[2]);
+    datalist.unshift('FE' + motor.id + i + effect.angle.identifier + ':' + effect.angle.value);
+    datalist.unshift('FE' + motor.id + i + effect.vis_type.identifier + ':' + effect.vis_type.value);
     if (effect.vis_type !== 'velocity') {
-      datalist.unshift('FE' + i + effect.effect_type.identifier + ':' + effect.effect_type.value);
+      datalist.unshift('FE' + motor.id + i + effect.effect_type.identifier + ':' + effect.effect_type.value);
     }
-    datalist.unshift('FE' + i + effect.datasize.identifier + ':' + effect.datasize.value);
-    datalist.unshift('FE' + i + effect.quality.identifier + ':' + effect.quality.value);
-    datalist.unshift('FE' + i + 'C:' + effect.position.value[0]);
-    datalist.unshift('FE' + i + 'R:' + effect.pointer);
+    datalist.unshift('FE' + motor.id + i + effect.datasize.identifier + ':' + effect.datasize.value);
+    datalist.unshift('FE' + motor.id + i + effect.quality.identifier + ':' + effect.quality.value);
+    datalist.unshift('FE' + motor.id + i + 'C:' + effect.position.value[0]);
+    datalist.unshift('FE' + motor.id + i + 'R:' + effect.pointer);
 
     if (effect.repeat) {
       for (const repeat of effect.repeat.value) {
-        datalist.unshift('FE' + i + effect.repeat.identifier + ':' + repeat.x.toFixed(8));
+        datalist.unshift('FE' + motor.id + i + effect.repeat.identifier + ':' + repeat.x.toFixed(8));
       }
     }
-    datalist.unshift('FE' + i + effect.infinite.identifier + ':' + effect.infinite.value);
+    datalist.unshift('FE' + motor.id + i + effect.infinite.identifier + ':' + effect.infinite.value);
 
     i++;
   }
   for (const d of uploadContent.data.effectData) {
     for (const el of d.data) {
       if (d.type === 'position') {
-        datalist.unshift('FDI:' + (Math.round(el.d) !== el.d ? el.d.toFixed(6) : el.d));
+        datalist.unshift('FDI' + motor.id + ':' + (Math.round(el.d) !== el.d ? el.d.toFixed(6) : el.d));
       }
       if (d.type === 'velocity' && d.yUnit === 'deg') {
-        datalist.unshift('FDI:' + ((el.y * 100) * (Math.PI / 180)).toFixed(6));
+        datalist.unshift('FDI' + motor.id + ':' + ((el.y * 100) * (Math.PI / 180)).toFixed(6));
       } else {
-        datalist.unshift('FDI:' + (Math.round(el.y) !== el.y ? el.y.toFixed(6) : el.y));
+        datalist.unshift('FDI' + motor.id + ':' + (Math.round(el.y) !== el.y ? el.y.toFixed(6) : el.y));
       }
     }
   }
@@ -475,28 +480,40 @@ function uploadData(uploadContent) {
 
 function upload_to_receivedPort(port, uploadContent) {
   receivingPort = port;
-
+  console.log(uploadContent.config.motors);
   for (const motor of uploadContent.config.motors) {
-    datalist.unshift('FM' + motor.id + 'F');
-    datalist = prepareMotorData(uploadContent, motor, datalist);
-    if (uploadContent.data) {
-      datalist = prepareEffectData(uploadContent, motor, datalist);
+
+    if (motor.id === uploadContent.config.motorID) {
+      datalist.unshift('FM' + motor.id + 'F');
+      datalist = prepareMotorData(uploadContent, motor, datalist);
+      if (uploadContent.data) {
+        datalist = prepareEffectData(uploadContent, motor, datalist);
+      }
     }
   }
 
+  // for (const motor of uploadContent.config.motors) {
+  //   datalist.unshift('FM' + motor.id + 'F');
+  //   datalist = prepareMotorData(uploadContent, motor, datalist);
+  //   if (uploadContent.data) {
+  //     datalist = prepareEffectData(uploadContent, motor, datalist);
+  //   }
+  // }
+
   dataSendWaitList.push({ port: uploadContent.config.serialPort.path, data: datalist, totalItems: datalist.length, collection: uploadContent.config.collection });
-  dataSendWaitList.filter(d => d.port === uploadContent.config.serialPort.path)[0].data.unshift('FC');
+  dataSendWaitList.filter(d => d.port === uploadContent.config.serialPort.path)[0].data.unshift('FC' + uploadContent.config.motorID);
 
   uploadFromWaitList(receivingPort);
 }
 
 
 function requestData(data)  {
+  console.log(data);
   receivingPort = ports.filter(p => p.COM === data.config.serialPort.path)[0];
 
   tryToEstablishConnection(receivingPort, data, receivedPort);
 
-  sendDataStr([ 'FMQ' ],  data.config.serialPort.path);
+  sendDataStr([ 'FI' ],  data.config.serialPort.path); //'FMQ'
 }
 
 
@@ -515,7 +532,7 @@ function uploadFromWaitList(receivingPort) {
       if (item.length > 19) {
         item = item.slice(0, (19 - item.length));
       }
-      // console.log(item);
+      console.log(item);
       receivingPort.writeData(item + '&');
       datalist.data.pop();
 
@@ -584,7 +601,7 @@ function calibrate_current_sense(port, uploadContent) {
     datalist.unshift('FM' + motor.id + 'Z' + motor.config.calibration.value.toFixed(12));
     datalist.unshift('FM' + motor.id + 'N' + (motor.config.calibration.direction === 'CW' ? 1 : -1));
     datalist.unshift('FM' + motor.id + 'U');
-    // datalist.unshift('FC');
+    // datalist.unshift('FC' + motor.id);
 
     dataSendWaitList.push({ port: uploadContent.config.serialPort.path, data: datalist, totalItems: datalist.length });
 
@@ -600,6 +617,7 @@ function calibrate_current_sense(port, uploadContent) {
 
 
 function calibrateMotor(uploadContent) {
+  console.log(uploadContent);
   if (uploadContent.config) {
     receivingPort = ports.filter(p => p.COM === uploadContent.config.serialPort.path)[0];
     // motor = microcontroller.motors.filter(m => m.id === motor_id)[0];
@@ -621,7 +639,7 @@ function calibrate_motor(port, uploadContent) {
     datalist.unshift('FM' + motor.id + 'S' + motor.config.supplyVoltage);
     datalist.unshift('FM' + motor.id + 'P' + motor.config.polepairs);
     datalist.unshift('FM' + motor.id + 'R');
-    datalist.unshift('FC');
+    datalist.unshift('FC' + motor.id);
 
     // console.log('datalist: ' + datalist);
 
@@ -655,7 +673,7 @@ function update_filter(port, uploadContent) {
       datalist.unshift('FF' + filter.type + ':' + filter.value.toFixed(2) + ':' + filter.smoothness);
     }
     // console.log('datalist: ' + datalist);
-    // datalist.unshift('FC');
+    // datalist.unshift('FC' + motor.id);
 
     dataSendWaitList.push({ port: uploadContent.config.serialPort.path, data: datalist, totalItems: datalist.length });
     main.updateSerialProgress({ progress: 0, str: 'Update filter ' + receivingPort.COM });
@@ -717,7 +735,7 @@ function updateMotorSettingCallback(port, uploadContent) {
 
 
     if (datalist.length > 0) {
-      datalist.unshift('FC');
+      datalist.unshift('FC' + motor.id);
 
       dataSendWaitList.push({ port: uploadContent.config.serialPort.path, data: datalist, totalItems: datalist.length });
 

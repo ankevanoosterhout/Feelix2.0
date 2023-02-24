@@ -821,7 +821,7 @@ function drawTemporaryWindow(width, height, title, resizable, hash, details = nu
     mainWindow.webContents.send('resetCursor');
   })
 
-  // tmpWindow.webContents.openDevTools();
+  tmpWindow.webContents.openDevTools();
 
   tmpWindow.on('close', function () {
     tmpWindow = null
@@ -1139,6 +1139,7 @@ ipcMain.on('listSerialPorts', function (e, data) {
 
 
 ipcMain.on('addMicrocontroller', function (e, data) {
+  console.log('add microcontroller ', data);
   serialPort.createConnection(data);
   mainWindow.webContents.send('updateStatus', { microcontroller: data, connected: false, error: false });
 });

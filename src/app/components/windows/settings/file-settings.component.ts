@@ -73,6 +73,7 @@ export class FileSettingsComponent implements OnInit {
         this.electronService.ipcRenderer.send('updateNumberOfNewFiles');
         if (this.file.collections.length === 0) {
           this.file.collections.push(new Collection(uuid(), 'Collection-' + (this.file.collections.length + 1)));
+          console.log(this.file.collections);
         }
         if (this.file.effects.length === 0) {
           this.file.effects.push(new Effect(uuid()));

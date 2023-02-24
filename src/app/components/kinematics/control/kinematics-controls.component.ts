@@ -2,14 +2,13 @@ import { Component, Inject, AfterViewInit } from '@angular/core';
 import { ElectronService } from 'ngx-electron';
 import * as THREE from 'three';
 import { KinematicService } from 'src/app/services/kinematic.service';
-import { Connector, JointLink, Model, Point, URFD_Joint, URFD_Link } from 'src/app/models/kinematic.model';
+import { Connector, ConnectorSize, JointLink, Model, Point, URFD_Joint, URFD_Link, Vector3 } from 'src/app/models/kinematic.model';
 import { HardwareService } from 'src/app/services/hardware.service';
 
 import { KinematicsConfig } from 'src/app/models/kinematics-config.model';
 import { KinematicsDrawingService } from 'src/app/services/kinematics-drawing.service';
 import { DragControlsService } from 'src/app/services/drag-controls.service';
 import { IKService } from 'src/app/services/IK.service';
-import { Event } from '@angular/router';
 import { DOCUMENT } from '@angular/common';
 
 @Component({
@@ -25,41 +24,24 @@ export class KinematicsControlComponent implements AfterViewInit {
 
   infinity = -3.4576917263943217389012348562315E+1203466;
 
-  // selectedFrame: any;
-
-  // models = [
-  //   new Model(0, 'motor', 1, true, 'active_joint_1.png', [ { g:'B', url:'active_joint_1_base.obj'}, { g:'Z', url: 'active_joint_connector_Z.obj' }], 0xff2200),
-  //   new Model(1, 'motor', 2, true, 'active_joint_2.png', [{ g:'B', url:'active_joint_2_base.obj'}, { g:'Z', url: 'active_joint_connector_Z.obj' }], 0xff2200),
-  //   new Model(2, 'joint', 1, false, 'passive_joint_1.png', [{ g:'B', url:'passive_joint_1_base.obj'}, { g:'Z', url: 'passive_joint_connector_Z.obj' }], 0x02a3d9 ),
-  //   new Model(3, 'joint', 2,false, 'passive_joint_2.png', [{ g:'B', url:'passive_joint_2_base.obj'}, { g:'Z', url: 'passive_joint_connector_Z.obj' }], 0x02a3d9 ),
-  //   new Model(4, 'joint', 2,false, 'fixed_joint.png', [{ g:'B', url:'fixed_joint_base.obj'}, { g:'X', url: 'fixed_joint_connector_X.obj' }], 0x02a3d9 )
-  //   // new Model(4, 'arm', 0, false, 'arm.png', [{ g:'C', url:'arm.obj'} ], 0x333333),
-  //   // new Model(5, 'connector', 0,false, 'cube.png', [{ g:'C', url:'cube.obj'}], 0x333333)
-  // ];
-
-  // models = [
-  //   new Model(0, 'motor', 1, true, 'active_joint.png', [ { g:'B', url:'active_joint_1_base.obj'}, { g:'Z', url: 'active_joint_connector_Z.obj' }], 0xcc0000),
-  //   new Model(1, 'motor', 1, true, 'joint_rotor.png', [ { g:'B', url:'joint_rotor.obj'}, { g:'Z', url: 'active_joint_connector_Z.obj' }], 0xcc0000),
-  //   new Model(2, 'motor', 1, true, 'active_joint_1.png', [ { g:'B', url:'active_joint_1_base.obj'}, { g:'Z', url: 'active_joint_connector_Z.obj' }], 0xcc0000),
-  //   new Model(3, 'motor', 2, true, 'active_joint_2.png', [{ g:'B', url:'active_joint_2_base.obj'}, { g:'Z', url: 'active_joint_connector_Z.obj' }], 0xcc0000),
-  //   new Model(4, 'joint', 1, false, 'passive_joint_1.png', [{ g:'B', url:'passive_joint_1_base.obj'}, { g:'Z', url: 'passive_joint_connector_Z.obj' }], 0x02a3d9 ),
-  //   new Model(5, 'joint', 2,false, 'passive_joint_2.png', [{ g:'B', url:'passive_joint_2_base.obj'}, { g:'Z', url: 'passive_joint_connector_Z.obj' }], 0x02a3d9 ),
-  //   new Model(6, 'joint', 2,false, 'fixed_joint.png', [{ g:'B', url:'fixed_joint_base.obj'}, { g:'X', url: 'fixed_joint_connector_X.obj' }], 0x02a3d9 )
-  //   // new Model(4, 'arm', 0, false, 'arm.png', [{ g:'C', url:'arm.obj'} ], 0x333333),
-  //   // new Model(5, 'connector', 0,false, 'cube.png', [{ g:'C', url:'cube.obj'}], 0x333333)
-  // ];
 
   models = [
-    new Model(0, 'revolute', 1, true, 'active_joint_1.png', [ { g:'B', url:'active_joint_stator.obj'} ], 0xcc0000, [ { g:'A', url:'joint_rotor.obj'} ]),
-    new Model(0, 'revolute', 1, false, 'passive_joint_1.png', [ { g:'B', url:'passive_joint_stator.obj'}, { g:'Z', url: 'active_joint_connector_Z.obj' }], 0x0000e6),
-    new Model(0, 'revolute', 1, true, 'active_joint_3.png', [ { g:'B', url:'active_joint_stator.obj'}, { g:'Z', url: 'active_joint_connector_Z.obj' }], 0xcc0000),
-    new Model(0, 'revolute', 1, false, 'passive_joint_3.png', [ { g:'B', url:'passive_joint_stator.obj'}, { g:'Z', url: 'passive_joint_connector_Z.obj' }], 0x0000e6),
-    new Model(0, 'fixed', 1, false, 'fixed_joint.png', [ { g:'B', url:'fixed_joint_base.obj'}, { g:'Z', url: 'fixed_joint_connector_X.obj' }], 0x222222)
+    new Model(0, 'revolute', true, 'active_joint_1.png', [ { g:'B', url:'active_joint_stator.obj'} ], 0xcc0000, { x: 0, y: 0, z: Math.PI },
+    new ConnectorSize(1.5, 1, 25.075, 23.575, new THREE.Vector3(0,1,0)), new ConnectorSize(2.5, 1, 29, 26.5, new THREE.Vector3(0,1,0)), Math.PI, [ { g:'A', url:'joint_rotor.obj'} ]),
+
+    new Model(0, 'revolute', false, 'passive_joint_1.png', [ { g:'B', url:'passive_joint_stator.obj'} ], 0x0000e6, { x: 0, y: 0, z: Math.PI },
+    new ConnectorSize(1.5, 1, 19.93, 18.43, new THREE.Vector3(0,1,0)), new ConnectorSize(2.5, 1, 25.5, 23, new THREE.Vector3(0,1,0)), Math.PI, [ { g:'A', url:'passive_joint_rotor.obj'} ]),
+
+    new Model(0, 'revolute', true, 'active_joint_3.png', [ { g:'A', url:'active_joint_stator_Z_top.obj'} ], 0xcc0000, { x: -(Math.PI/2), y:0, z: 0 },
+    new ConnectorSize(1, 1, 16.5, 15.5, new THREE.Vector3(0,1,0)), new ConnectorSize(1, 1, 16.5, 15.5, new THREE.Vector3(0,1,0)), 0, [ { g:'A', url:'active_joint_stator_Z_bottom.obj'} ]),
+
+    new Model(0, 'revolute', false, 'passive_joint_3.png', [ { g:'B', url:'passive_joint_stator_Y.obj'} ], 0x0000e6, {   x: -(Math.PI/2), y:0, z: 0 },
+    new ConnectorSize(1, 1, 16.5, 15.5, new THREE.Vector3(0,1,0)), new ConnectorSize(1, 1, 16.5, 15.5, new THREE.Vector3(0,1,0)), 0),
+
+    new Model(0, 'fixed', false, 'fixed_joint.png', [ { g:'B', url:'fixed_joint_base.obj'}, { g:'Z', url: 'fixed_joint_connector_X.obj' }], 0x222222, { x: 0, y: 0, z: Math.PI },
+    new ConnectorSize(1.5, 1, 25.075, 23.575, new THREE.Vector3(0,1,0)), new ConnectorSize(1.5, 1, 25.075, 23.575, new THREE.Vector3(0,1,0)))
   ];
 
-  // linkModels = [
-  //   new Model(1, 'motor', 1, true, 'joint_rotor.png', [ { g:'B', url:'joint_rotor.obj'}, { g:'Z', url: 'active_joint_connector_Z.obj' }], 0xcc0000)
-  // ]
 
 
 //this.kinematicService.selectedJoints[0].type === 'motor' && this.kinematicService.selectedJoints[0].subtype === 'b' && type === 'i'
@@ -72,6 +54,9 @@ export class KinematicsControlComponent implements AfterViewInit {
     this.electronService.ipcRenderer.on('controlsVisible', (event: any, data: any) => {
       this.visible[0] = data;
     });
+
+    console.log(this.models);
+
 
     // this.kinematicService.importOBJModelToObjectGroup.subscribe(res => {
     //   this.importOBJModelToGroup(res.pnt, res.model_id);
@@ -88,6 +73,11 @@ export class KinematicsControlComponent implements AfterViewInit {
 
     this.ikService.updateIKhelper.subscribe(res => {
       this.kinematicsDrawingService.updateRootsHelper(res);
+    });
+
+
+    this.ikService.updateModels.subscribe(res => {
+      this.updateModelsFromRoot(res);
     });
 
 
@@ -169,18 +159,6 @@ export class KinematicsControlComponent implements AfterViewInit {
   }
 
 
-  // updateJoint(joint: JointLink) {
-  //   // this.kinematicService.updateJointVisualization(joint.id, joint.object3D);
-  //   this.updateJoint(joint);
-  // }
-
-  // selectJointObject(object: JointLink) {
-  //   const sceneObject = this.config.scene.getObjectByName(object.id);
-  //   if (sceneObject) {
-      // this.kinematicsDrawingService.selectSceneObject(sceneObject);
-    // }
-  // }
-
 
   deletePoint(id: string, point_id: string) {
     const joint = this.kinematicService.frames.filter(j => j.id === id)[0];
@@ -200,16 +178,15 @@ export class KinematicsControlComponent implements AfterViewInit {
 
     if (this.ikService.ikConfig.drag.selected && this.ikService.ikConfig.drag.selected.parent) {
       const selectedFrame = this.kinematicService.getFrame(this.ikService.ikConfig.drag.selected.parent.name);
-
+      console.log(selectedFrame);
+      const updatedModel = this.updatePosition(selectedFrame, model);
       if (selectedFrame instanceof URFD_Joint) {
-        const updatedModel = this.updatePosition(new THREE.Vector3(0, selectedFrame.size.value + model.linkSize.value, 0), model);
         this.addLink(updatedModel, this.ikService.ikConfig.drag.selected, null, true);
       } else {
-        const updatedModel = this.updatePosition(new THREE.Vector3(0, selectedFrame.size.value + model.baseSize.value, 0), model);
         this.addJoint(updatedModel, this.ikService.ikConfig.drag.selected, null, false);
       }
     } else {
-      // console.log(model);
+      console.log(model);
       this.addJoint(model, null, null, false);
     }
 
@@ -223,7 +200,7 @@ export class KinematicsControlComponent implements AfterViewInit {
       selectedName = selected !== null ? selected.parent.name : urfd_link.id.slice(0, -5);
     }
 
-    const urfd_joint = this.kinematicService.addNewJoint(selectedName, model, parent);
+    const urfd_joint = this.kinematicService.addNewJoint(!parent ? null : selectedName, model, parent);
 
     this.ikService.newJoint(urfd_joint, selected, parent);
     this.loadOBJModel(urfd_joint);
@@ -258,26 +235,60 @@ export class KinematicsControlComponent implements AfterViewInit {
 
 
 
-  updatePosition(position: THREE.Vector3, model: Model) : Model {
+  updatePosition(SF: any, model: Model) : Model {
 
+    console.log('update position');
+    console.log(SF, model, this.ikService.ikConfig.drag.selected.parent);
     // const frame = this.kinematicService.getFrame(this.dragControlService.selected.parent.name);
+    const modelType = SF instanceof URFD_Link ? model.baseSize : model.linkSize;
     const modelCopy = JSON.parse(JSON.stringify(model));
+    const x = SF.size.axis.x === 1 ? SF.size.value + modelType.value : 0;
+    const y = SF.size.axis.y === 1 ? SF.size.value + modelType.value : 0;
+    const z = SF.size.axis.z === 1 ? SF.size.value + modelType.value : 0;
+
+    // const x2 = modelType.axis.x === 1 ? SF.size.value + modelType.value : 0;
+    // const y2 = modelType.axis.y === 1 ? SF.size.value + modelType.value : 0;
+    // const z2 = modelType.axis.z === 1 ? SF.size.value + modelType.value : 0;
+
+    const position = new THREE.Vector3(x, y, z);
+
+    // const position2 = new THREE.Vector3(x2, y2, z2);
+
+    console.log(position, this.ikService.ikConfig.drag.selected.parent.position);
+
     position.applyMatrix4(this.ikService.ikConfig.drag.selected.parent.matrixWorld);
     const updatedPosition = this.dragControlService.getRotatedPosition(this.ikService.ikConfig.drag.selected.parent, position);
+
+    console.log(updatedPosition);
+
     const translationMatrix = new THREE.Matrix4()
-        .makeTranslation(this.ikService.ikConfig.drag.selected.parent.position.x, this.ikService.ikConfig.drag.selected.parent.position.y, this.ikService.ikConfig.drag.selected.parent.position.z);
-        updatedPosition.applyMatrix4(translationMatrix);
+        .makeTranslation(this.ikService.ikConfig.drag.selected.parent.position.x,
+                         this.ikService.ikConfig.drag.selected.parent.position.y,
+                         this.ikService.ikConfig.drag.selected.parent.position.z);
+
+
+    console.log(translationMatrix);
+
+    updatedPosition.applyMatrix4(translationMatrix);
+
+    console.log(updatedPosition);
+    //lookAt
+    //const rotationMatrix = new THREE.Matrix4().makeRotationFromQuaternion(this.ikService.ikConfig.drag.selected.parent.quaternion);
 
     modelCopy.origin.x = updatedPosition.x;
     modelCopy.origin.y = updatedPosition.y;
     modelCopy.origin.z = updatedPosition.z;
 
-    // console.log('update position', this.ikService.ikConfig.drag.selected.parent.rotation.z);
+    // console.log('updated position ', updatedPosition);
 
-    modelCopy.rpy.x = this.ikService.ikConfig.drag.selected.parent.rotation.x;
-    modelCopy.rpy.y = this.ikService.ikConfig.drag.selected.parent.rotation.y;
-    // modelCopy.rpy.z = this.ikService.ikConfig.drag.selected.parent.rotation.z;
-    modelCopy.rpy.z = this.ikService.ikConfig.drag.selected.parent.rotation.z + Math.PI;
+    const a = new THREE.Euler();
+    a.setFromQuaternion(this.ikService.ikConfig.drag.selected.parent.quaternion);
+
+    modelCopy.rpy.x += a.x;
+    modelCopy.rpy.y += a.y;
+    modelCopy.rpy.z += modelCopy.startAngle;
+
+    if (model.rpy.x !== 0) { modelCopy.rpy.y -= a.z }
 
     return modelCopy;
   }
@@ -320,6 +331,10 @@ export class KinematicsControlComponent implements AfterViewInit {
     frame.dimensions.rpy.y = group.rotation.y;
     frame.dimensions.rpy.z = group.rotation.z;
 
+    // group.matrixAutoUpdate = false;
+
+    // this.ikService.updateObjectQuaternion(frame.id, group.quaternion, false);
+
 
     // console.log(group, frame);
 
@@ -356,34 +371,61 @@ export class KinematicsControlComponent implements AfterViewInit {
 
 
 
+  updateModelsFromRoot(roots: any) {
+    // console.log(roots);
+    // for (const root of roots) {
+      // root.traverse( c => {
+      //   console.log(c.position, c.quaternion);
+      //   const frameObject = this.config.scene.getObjectByName(c.name);
+      //   console.log(frameObject.position, frameObject.quaternion);
+      //   // if (frameObject) {
+      //     // frameObject.quaternion.set(c.quaternion.x, c.quaternion.y, c.quaternion.z, c.quaternion.w);
+      //     // frameObject.position.set(c.position.x, c.position.y, c.position.z);
+      //   //   // frameObject.applyMatrix4(c.matrixWorld);
+      //     // frameObject.updateMatrix();
+      //   //   this.kinematicService.updateFramePositionFromObject(frameObject);
+      //   // }
+      // });
+    // }
+    // console.log(this.ikService.ikFrames);
 
+    // for (const frame of this.ikService.ikFrames) {
+    //   const frameObject = this.config.scene.getObjectByName(frame.name);
+    //   console.log(frame, frameObject.position, frameObject.quaternion);
+    //   frameObject.quaternion.set(frame.quaternion.x, frame.quaternion.y, frame.quaternion.z, frame.quaternion.w);
+    //   frameObject.position.set(frame.position.x, frame.position.y, frame.position.z);
+    //   frameObject.updateMatrix();
+    // }
 
-
-  importOBJModelToGroup(point: Connector, model_id: string, joint = null) {
-    if (joint === null) {
-      joint = this.kinematicService.selectedFrames[0];
-    }
-    const sceneObject = this.config.scene.getObjectByName(joint.id);
-
-    if (sceneObject && sceneObject.isGroup && point) {
-      const imageUrl = (joint.active ? 'active':'passive') + '_joint_' + joint.modelType + '_connector_' + point.plane + '.obj';
-
-      this.config.loader.load('./assets/models/' + imageUrl, (object: any) => {   // called when resource is loaded
-        // console.log(object);
-        object = this.kinematicService.updateObjectDetails(object, model_id, point.name, this.config.selectColor);
-
-        object.rotation.z = point.plane === 'Y' ? (point.angle + joint.angle) * (Math.PI/180) : point.angle * (Math.PI/180);
-        sceneObject.add(object);
-
-        this.updatePointSize(model_id, point);
-
-      }, (xhr: any) => {
-        // console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
-      }, (error: any) => {
-        // console.log( 'Error loading model' );
-      });
-    }
+    // this.kinematicsDrawingService.animate();
   }
+
+
+  // importOBJModelToGroup(point: Connector, model_id: string, joint = null) {
+  //   if (joint === null) {
+  //     joint = this.kinematicService.selectedFrames[0];
+  //   }
+  //   const sceneObject = this.config.scene.getObjectByName(joint.id);
+
+  //   if (sceneObject && sceneObject.isGroup && point) {
+  //     const imageUrl = (joint.active ? 'active':'passive') + '_joint_' + joint.modelType + '_connector_' + point.plane + '.obj';
+
+  //     this.config.loader.load('./assets/models/' + imageUrl, (object: any) => {   // called when resource is loaded
+  //       // console.log(object);
+  //       object = this.kinematicService.updateObjectDetails(object, model_id, point.name, this.config.selectColor);
+
+  //       object.rotation.z = point.plane === 'Y' ? (point.angle + joint.angle) * (Math.PI/180) : point.angle * (Math.PI/180);
+  //       sceneObject.add(object);
+
+  //       // this.updatePointSize(model_id, point);
+
+  //     }, (xhr: any) => {
+  //       // console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
+  //     }, (error: any) => {
+  //       // console.log( 'Error loading model' );
+  //     });
+  //   }
+  // }
 
 
 
@@ -405,71 +447,71 @@ export class KinematicsControlComponent implements AfterViewInit {
         }
       });
 
-      this.updateJointLimits(this.kinematicService.selectedFrames[0]);
+      // this.updateJointLimits(this.kinematicService.selectedFrames[0]);
     }
   }
 
 
 
-  updatePointType(id: string, point: Connector) {
-    const joint = this.kinematicService.frames.filter(j => j.id === id)[0];
-    if (joint) {
-      const connector = joint.connectors.filter(p => p.id === point.id)[0];
-      if (connector) {
-        connector.plane = connector.plane === 'X' ? 'Y' : 'X';
-        connector.size = this.kinematicService.getConnectorSize(connector.plane, joint.modelType, joint.isMotor);
-      }
-      this.kinematicService.selectedFrames[0] = this.kinematicService.updateConnectionPoint(id, point);
-      this.removeConnectorImage(point);
-      this.importOBJModelToGroup(point, joint.id);
-      this.kinematicsDrawingService.animate();
-      // this.updateJointLimits(this.kinematicService.selectedJoints[0]);
-    }
-  }
+  // updatePointType(id: string, point: Connector) {
+  //   const joint = this.kinematicService.frames.filter(j => j.id === id)[0];
+  //   if (joint) {
+  //     const connector = joint.connectors.filter(p => p.id === point.id)[0];
+  //     if (connector) {
+  //       connector.plane = connector.plane === 'X' ? 'Y' : 'X';
+  //       // connector.size = this.kinematicService.getConnectorSize(connector.plane, joint.modelType, joint.isMotor);
+  //     }
+  //     this.kinematicService.selectedFrames[0] = this.kinematicService.updateConnectionPoint(id, point);
+  //     this.removeConnectorImage(point);
+  //     this.importOBJModelToGroup(point, joint.id);
+  //     this.kinematicsDrawingService.animate();
+  //     // this.updateJointLimits(this.kinematicService.selectedJoints[0]);
+  //   }
+  // }
 
 
 
-  updateJointLimits(joint: JointLink) {
-    if (joint) {
-      const connY = joint.connectors.filter(c => c.plane === 'Y');
-      const connX = joint.connectors.filter(c => c.plane === 'X');
+  // updateJointLimits(joint: URFD_Joint) {
+  //   if (joint) {
+  //     const connY = joint.connectors.filter(c => c.plane === 'Y');
+  //     const connX = joint.connectors.filter(c => c.plane === 'X');
 
-      if ((connY.length === 0 || connX.length === 0) || joint.modelType === 2) {
-        joint.limits.min = -this.infinity;
-        joint.limits.max = this.infinity
-      } else {
-        let min = 360;
-        let max = 0;
-        for (const connector of connY) {
+  //     if ((connY.length === 0 || connX.length === 0) || joint.modelType === 2) {
+  //       joint.limits.min = -this.infinity;
+  //       joint.limits.max = this.infinity
+  //     } else {
+  //       let min = 360;
+  //       let max = 0;
+  //       for (const connector of connY) {
 
-          if (connector.angle < min) {
-            min = connector.angle;
-            if (max === 0) { max = min; }
-          }
-          if (connector.angle > max) {
-            max = connector.angle;
-          }
-        }
+  //         if (connector.angle < min) {
+  //           min = connector.angle;
+  //           if (max === 0) { max = min; }
+  //         }
+  //         if (connector.angle > max) {
+  //           max = connector.angle;
+  //         }
+  //       }
 
-        let minX = 0;
-        let maxX = 360;
+  //       let minX = 0;
+  //       let maxX = 360;
 
-        for (const connector of connX) {
-          console.log(connector.angle, minX, maxX);
-          if (connector.angle > minX && connector.angle < min) {
-            minX = connector.angle;
-          }
-          if (connector.angle < maxX && connector.angle > max) {
-            maxX = connector.angle;
-          }
-        }
+  //       for (const connector of connX) {
+  //         console.log(connector.angle, minX, maxX);
+  //         if (connector.angle > minX && connector.angle < min) {
+  //           minX = connector.angle;
+  //         }
+  //         if (connector.angle < maxX && connector.angle > max) {
+  //           maxX = connector.angle;
+  //         }
+  //       }
 
-        joint.limits.min = min - minX;
-        joint.limits.max = maxX - max;
-      }
-    }
-    this.updateJoint(this.kinematicService.selectedFrames[0]);
-  }
+  //       joint.limits.min = min - minX;
+  //       joint.limits.max = maxX - max;
+  //     }
+  //   }
+  //   this.updateJoint(this.kinematicService.selectedFrames[0]);
+  // }
 
 
 
@@ -522,31 +564,31 @@ export class KinematicsControlComponent implements AfterViewInit {
 
 
 
-  updatePointSize(joint_id: string, point: Connector) {
-    const sceneObject = this.config.scene.getObjectByName(joint_id);
-    const joint = this.kinematicService.frames.filter(j => j.id === joint_id)[0];
-    if (joint) {
-      const connector = joint.connectors.filter(c => c.id === point.id)[0];
-      connector.size.scale = point.size.value / point.size.original;
-      connector.size.value = point.size.value;
-      // console.log(point);
-      if (sceneObject) {
-        sceneObject.traverseVisible( ( child: any ) => {
-          if (child.uuid === point.block_id ) {
-            child.scale.y = connector.size.scale;
-            child.position.y = -point.size.offset * (connector.size.scale - 1);
-            // console.log(child.position);
-          } else if( child.uuid === point.id) {
-            child.position.y = point.plane === 'Y'? connector.size.value - 2.5 : connector.size.value - 2;
-          }
-        });
-        joint.sceneObject = sceneObject;
-        this.kinematicService.selectedFrames = [ joint ];
-      }
-      this.kinematicsDrawingService.animate();
+  // updatePointSize(joint_id: string, point: Connector) {
+  //   const sceneObject = this.config.scene.getObjectByName(joint_id);
+  //   const joint = this.kinematicService.frames.filter(j => j.id === joint_id)[0];
+  //   if (joint) {
+  //     const connector = joint.connectors.filter(c => c.id === point.id)[0];
+  //     connector.size.scale = point.size.value / point.size.original;
+  //     connector.size.value = point.size.value;
+  //     // console.log(point);
+  //     if (sceneObject) {
+  //       sceneObject.traverseVisible( ( child: any ) => {
+  //         if (child.uuid === point.block_id ) {
+  //           child.scale.y = connector.size.scale;
+  //           child.position.y = -point.size.offset * (connector.size.scale - 1);
+  //           // console.log(child.position);
+  //         } else if( child.uuid === point.id) {
+  //           child.position.y = point.plane === 'Y'? connector.size.value - 2.5 : connector.size.value - 2;
+  //         }
+  //       });
+  //       joint.sceneObject = sceneObject;
+  //       this.kinematicService.selectedFrames = [ joint ];
+  //     }
+  //     this.kinematicsDrawingService.animate();
 
-    }
-  }
+  //   }
+  // }
 
 
   changeSize(frame: any) {
@@ -558,6 +600,9 @@ export class KinematicsControlComponent implements AfterViewInit {
           if ( child.name === 'Gray:A:0' ) {
             child.scale.y = frame.size.scale;
             child.position.y = (frame.size.scale - 1) * -frame.size.offset;
+          } else if ( child.name === 'Gray:A:1' ) {
+            child.scale.z = frame.size.scale;
+            child.position.z = (frame.size.scale - 1) * -frame.size.offset;
           } else if( child.name === 'Yellow:XY:0') {
             child.position.y = frame.size.value - frame.size.offset - frame.size.original;
           }

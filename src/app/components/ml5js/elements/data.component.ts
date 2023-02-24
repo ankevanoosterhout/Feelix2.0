@@ -1,25 +1,36 @@
 
-import { Component, Inject } from '@angular/core';
+import { Component, Inject, AfterViewInit } from '@angular/core';
 import { HardwareService } from 'src/app/services/hardware.service';
 import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service';
 import { ElectronService } from 'ngx-electron';
 import { ConnectModel } from 'src/app/models/effect-upload.model';
 import { UploadService } from 'src/app/services/upload.service';
 import { DOCUMENT } from '@angular/common';
+import { TensorFlowDrawService } from 'src/app/services/tensorflow-draw.service';
+
+
 
 @Component({
   selector: 'app-data',
   templateUrl: 'data.component.html',
   styleUrls: ['../../windows/effects/effects.component.css', './../tensorFlowJS.component.css'],
 })
-export class DataComponent {
+export class DataComponent implements AfterViewInit {
 
 
   dataVisible = true;
 
-  constructor(@Inject(DOCUMENT) private document: Document,public tensorFlowService: TensorFlowMainService, public hardwareService: HardwareService,
-              private electronService: ElectronService, private uploadService: UploadService) {
 
+
+  constructor(@Inject(DOCUMENT) private document: Document,public tensorFlowService: TensorFlowMainService, public hardwareService: HardwareService,
+              private electronService: ElectronService, private uploadService: UploadService, private tensorflowDrawService: TensorFlowDrawService) {
+
+
+  }
+
+
+  ngAfterViewInit(): void {
+    this.tensorflowDrawService.drawGraph(window.innerWidth, window.innerHeight);
   }
 
 
@@ -33,12 +44,14 @@ export class DataComponent {
       microcontroller.record = this.tensorFlowService.recording.active;
 
       if (microcontroller.record) {
-        for (const motor of microcontroller.motors) {
-          if (motor.record) {
-            this.tensorFlowService.updateProgess('connecting to motor ' + motor.id + ' at ' +  microcontroller.serialPort.path, 0);
-             // this.electronService.ipcRenderer.send('requestData', new ConnectModel(microcontroller));
-          }
-        }
+        // for (const motor of microcontroller.motors) {
+          // if (motor.record) {
+          this.tensorFlowService.updateProgess('connecting to motor ' + microcontroller.serialPort.path, 0);
+          const model = new ConnectModel(microcontroller);
+          console.log(model);
+          this.electronService.ipcRenderer.send('requestData', model);
+          // }
+        // }
       } else {
         this.tensorFlowService.classify = false;
       }
@@ -77,6 +90,8 @@ export class DataComponent {
       }
     }
   }
+
+
 
 
 

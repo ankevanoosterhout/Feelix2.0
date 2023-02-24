@@ -224,6 +224,7 @@ export class MotorControlService {
       .attr('pointer-events', 'none')
       .attr('transform', () => this.file.configuration.collectionDisplay === 'small' ? 'translate(0, 0)' : 'translate(0, 26)');
 
+
     if ((collection.effectDataList.length > 0 && collection.visualizationType === 'torque' && collection.microcontroller && collection.motorID) ||
         (collection.rotation.constrain && collection.rotation.units_y.name === 'deg' && collection.visualizationType === 'velocity')) {
       if (collection.microcontroller.motors[collection.motorID.index].config.voltageLimit || collection.visualizationType === 'velocity') {

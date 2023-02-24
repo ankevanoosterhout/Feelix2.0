@@ -241,10 +241,13 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
     }, time);
   }
 
+
+
   upload(collection: Collection) {
     if (collection.effectDataList.length > 0) {
       const microcontroller = this.hardwareService.getMicroControllerByCOM(collection.microcontroller.serialPort.path);
       const uploadModel = this.uploadService.createUploadModel(collection, microcontroller);
+
 
       const activeCollection = this.motorControlService.file.collections.filter(c => c.microcontroller && c.microcontroller.serialPort.path === collection.microcontroller.serialPort.path && c.playing)[0];
       if (activeCollection) {
@@ -418,14 +421,18 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
     this.motorControlService.drawCollection(collection);
   }
 
-  saveCollection(collection: Collection) {
-    if (collection.microcontroller && collection.microcontroller.id) {
-      if (collection.motorID.name === 'A') { collection.motorID.index = 0; }
-      if (collection.motorID.name === 'B') { collection.motorID.index = 1; }
-      if (collection.motorID.name === 'C') { collection.motorID.index = 2; }
-      if (collection.motorID.name === 'D') { collection.motorID.index = 3; }
-      if (collection.motorID.name === 'E') { collection.motorID.index = 4; }
+  updateMotorID(collection: Collection) {
+    let _index = 0;
+    for (const motor of collection.microcontroller.motors) {
+      if (collection.motorID.name === motor.id) {
+        collection.motorID.index = _index;
+      }
+      _index++;
     }
+    this.saveCollection(collection);
+  }
+
+  saveCollection(collection: Collection) {
     this.motorControlService.updateCollection(collection);
   }
 

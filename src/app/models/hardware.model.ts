@@ -72,7 +72,7 @@ export class CurrentSense {
 
 
 export class Config {
-  polepairs: number = 14;
+  polepairs: number = 7;
   phaseResistance: number = 15.2;
   motionControl: string = 'position';
   supplyVoltage: number = 12;
@@ -109,12 +109,14 @@ export class Motor {
   position_pid = new PID(20.0, 0.0, 0.0);
   velocity_pid = new PID(0.5, 10, .001);
   record = false;
+  I2C_address: any;
+  I2C_communication = 0;
 
 
-
-  constructor(id: number) {
-    const charArray = [ 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U'];
-    this.id = charArray[id];
+  constructor(id: number, i2cComm = 0) {
+    this.id = (id + 10).toString(16).toUpperCase();
+    this.I2C_address = '0x' + this.id;
+    this.I2C_communication = i2cComm;
   }
 }
 
@@ -138,7 +140,7 @@ export class MicroController {
   serialPort: any = null;
   name: string = null;
   vendor: string = null;
-  motors = [ new Motor(0) ];
+  motors = [ new Motor(0, 1) ];
   storageSpace: number = null;
   connected = false;
   playing = false;
@@ -159,6 +161,8 @@ export class MicroController {
     this.lastDataSend = new Date().getTime();
     this.name = serialPort.path + '-' + vendor;
   }
+
+
 }
 
 

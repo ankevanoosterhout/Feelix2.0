@@ -7,6 +7,7 @@ import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service'
 import { MotorControlService } from 'src/app/services/motor-control.service';
 import { UploadService } from 'src/app/services/upload.service';
 import { v4 as uuid } from 'uuid';
+import { TensorFlowDrawService } from 'src/app/services/tensorflow-draw.service';
 
 @Component({
   selector: 'app-ml5js',
@@ -29,12 +30,14 @@ export class TensorFlowJSComponent implements OnInit {
   inputArray = [];
 
   constructor(@Inject(DOCUMENT) private document: Document, public motorControlService: MotorControlService, public hardwareService: HardwareService,
-    private uploadService: UploadService, private electronService: ElectronService, public tensorflowService: TensorFlowMainService) {
+    private uploadService: UploadService, private electronService: ElectronService, public tensorflowService: TensorFlowMainService, private tensorflowDrawService: TensorFlowDrawService) {
 
 
       this.electronService.ipcRenderer.on('motorData', (event: Event, data: any) => {
-
+        // console.log(data);
         if (data.velocity > 0.1 || data.velocity < -0.1) {
+
+          //when classifying input data
           if (this.tensorflowService.classify && this.tensorflowService.selectedModel.model) {
             let inputs = [];
             for (const input of this.tensorflowService.selectedModel.inputs) {
@@ -73,10 +76,12 @@ export class TensorFlowJSComponent implements OnInit {
               this.tensorflowService.NN_Deploy(inputs, this.tensorflowService.selectedModel, data.serialPath);
             }
 
+            //when gathering input data
           } else if (this.tensorflowService.dataSets.length > 0) {
 
             if (this.tensorflowService.recording.active) {
               let dataset = this.tensorflowService.dataSets.filter(d => d.open)[0];
+              // let dataset = this.tensorflowService.dataSets[0];
               for (const microcontroller of this.tensorflowService.selectedMicrocontrollers) {
 
                 if (microcontroller.serialPort.path === data.serialPath) {
@@ -113,14 +118,17 @@ export class TensorFlowJSComponent implements OnInit {
                     m++;
                   }
                   microcontrollerObject.inputdata = { name: "time", value: new Date().getTime() - this.tensorflowService.recording.starttime };
+                  console.log(dataset);
                   if (dataset.d) {
                     dataset.d.inputs.push(microcontrollerObject);
+                    this.tensorflowDrawService.drawGraphData(dataset);
                   }
                   break;
                 }
+
               }
-              const item = this.document.getElementById('dataSetItem-' + dataset.id);
-              if (item) { item.click(); }
+              // const item = this.document.getElementById('dataSetItem-' + dataset.id);
+              // if (item) { item.click(); }
             }
           }
 
@@ -152,7 +160,7 @@ export class TensorFlowJSComponent implements OnInit {
         }
       });
 
-      this.tensorflowService.updateML5jsProgress.subscribe(data => {
+      this.tensorflowService.updateTensorflowProgress.subscribe(data => {
         this.progress = data.progress;
         this.status = data.status;
         this.document.getElementById('msg').innerHTML = this.status;
@@ -191,6 +199,7 @@ export class TensorFlowJSComponent implements OnInit {
   ngOnInit(): void {
     this.tensorflowService.dataSets.push(new DataSet(uuid(), 'Data set ' + (this.tensorflowService.dataSets.length + 1)));
     this.tensorflowService.selectedModel.outputs.push(new Classifier('Classifier-' + (this.tensorflowService.selectedModel.outputs.length + 1)));
+
   }
 
 
@@ -235,6 +244,15 @@ export class TensorFlowJSComponent implements OnInit {
       this.updateVerticalScreenDivision = false;
     }
   }
+
+
+
+  @HostListener('window:resize', ['$event'])
+  onResize(event: Event) {
+    this.tensorflowDrawService.drawGraph(window.innerWidth, window.innerHeight);
+    this.tensorflowDrawService.drawGraphData(this.tensorflowService.dataSets.filter(d => d.open)[0]);
+  }
+
 
   updateScreenDivisionY(coord: number) {
     if (coord > 60 && coord <= window.innerHeight - 60) {

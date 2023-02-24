@@ -28,13 +28,14 @@ export class Model {
   origin = new Vector3();
   linkObjectUrls: Array<ObjectUrl>;
   rpy = new Vector3();
-  baseSize = new ConnectorSize(1.5, 1, 25.075, 23.575);
-  linkSize = new ConnectorSize(2.5, 1, 29, 26.5);
+  baseSize = new ConnectorSize(1.5, 1, 25.075, 23.575, new THREE.Vector3(0,1,0));
+  linkSize = new ConnectorSize(2.5, 1, 29, 26.5, new THREE.Vector3(0,1,0));
+  startAngle = 0;
 
-  constructor(id: number, type: string, modelType: number, active: boolean, thumbnail: string, objectUrls: Array<ObjectUrl>, color: number, link = null) {
+  constructor(id: number, type: string, active: boolean, thumbnail: string, objectUrls: Array<ObjectUrl>,
+              color: number, rpy: Vector3, baseSize: ConnectorSize, linkSize: ConnectorSize, angle = 0, link = null) {
     this.id = id;
     this.type = type;
-    this.modelType = modelType;
     this.active = active;
     this.thumbnail = thumbnail;
     this.objectUrls = objectUrls;
@@ -42,6 +43,12 @@ export class Model {
     if (link !== null) {
       this.linkObjectUrls = link;
     }
+    this.rpy.x = rpy.x;
+    this.rpy.y = rpy.y;
+    this.rpy.z = rpy.z;
+    this.startAngle = angle;
+    this.baseSize = baseSize;
+    this.linkSize = linkSize;
   }
 }
 
@@ -49,6 +56,14 @@ export class Vector3 {
   x: number = 0;
   y: number = 0;
   z: number = 0;
+
+  constructor (x: number = null, y: number = null, z: number = null) {
+    if (x && y && z) {
+      this.x = x;
+      this.y = y;
+      this.z = z;
+    }
+  }
 }
 
 export class Object3D {
@@ -68,12 +83,14 @@ export class ConnectorSize {
   scale: number;
   value: number;
   offset: number;
+  axis: Vector3;
 
-  constructor(original: number, scale: number, value: number, offset: number) {
+  constructor(original: number, scale: number, value: number, offset: number, axis: THREE.Vector3) {
     this.original = original;
     this.scale = scale;
     this.value = value;
     this.offset = offset;
+    this.axis = axis;
   }
 }
 
@@ -88,7 +105,7 @@ export class Connector {
   plane: string;
   block_id: string;
   connected = false;
-  size = new ConnectorSize(2.5, 1, 2.5, 26.5);
+  size = new ConnectorSize(2.5, 1, 2.5, 26.5, new THREE.Vector3(0,1,0));
   vector3 = new THREE.Vector3(0,0,0);
   processed = false;
 
@@ -133,13 +150,12 @@ export class URFD_Joint {
   limits = new Limits();
   object3D = new Object3D();
   config = new JointConfig();
-  size = new ConnectorSize(1.5, 1, 25.075, 23.575);
+  size = new ConnectorSize(1.5, 1, 25.075, 23.575, new THREE.Vector3(0,1,0));
   angle: number;
   modelID: number;
   selected = false;
 
   constructor(id: string, model: Model, parent = false) {
-    // console.log(model.rpy, parent);
     this.id = id;
     this.config.active = model.active;
     if (this.config.active) {
@@ -149,14 +165,14 @@ export class URFD_Joint {
     this.object3D.color = model.color;
     this.type = JointType.revolute;
     this.axis.z = 1;
-    this.angle = Math.PI;
+    this.angle = model.startAngle;
     this.dimensions.origin = model.origin;
     this.dimensions.rpy = model.rpy;
     if (parent) {
-      this.dimensions.rpy.z += Math.PI;
+      this.dimensions.rpy.z += model.startAngle;
     }
-    // console.log(this.dimensions.rpy.z);
 
+    this.size = model.baseSize;
     this.modelID = model.id;
   }
 }
@@ -169,13 +185,12 @@ export class URFD_Link {
   parent: URFD_Joint;
   children: Array<any>;
   dimensions = new Dimensions();
-  size = new ConnectorSize(2.5, 1, 29, 26.5);
+  size = new ConnectorSize(2.5, 1, 29, 26.5, new THREE.Vector3(0,1,0));
   object3D = new Object3D();
   modelID: number;
   selected = false;
 
   constructor(id: string, model: Model, parent = false) {
-    // console.log(model.rpy, parent);
     this.id = id;
     if (this.id.length > 43) {
       this.id.slice(0, -5);
@@ -185,11 +200,10 @@ export class URFD_Link {
     this.dimensions.origin = model.origin;
     this.type = JointType.revolute;
     this.dimensions.rpy = model.rpy;
-    // this.dimensions.rpy.z += Math.PI;
     if (!parent) {
-      this.dimensions.rpy.z += Math.PI;
+      this.dimensions.rpy.z += model.startAngle;
     }
-    // console.log(this.dimensions.rpy.z);
+    this.size = model.linkSize;
     this.modelID = model.id;
   }
 }
@@ -221,7 +235,6 @@ export class JointLink {
     if (model) {
       this.name = model.type === 'arm' || model.type === 'connector' ? 'link' : model.type;
       // this.type = model.type;
-      this.modelType = model.modelType;
       this.active = model.active;
       this.object3D.objectUrls = model.objectUrls;
       this.object3D.color = model.color;
