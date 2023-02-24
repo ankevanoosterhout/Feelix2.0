@@ -253,6 +253,10 @@ class newSerialPort {
         } else if (d.charAt(0) === 'O') { // receive custom variable
           updateProgress(progress, 'Overheat protection activitated');
 
+        } else if (d.charAt(0) === 'L') { // receive custom variable
+          console.log('listed devices ' + d);
+          updateProgress(progress, d);
+
         } else if (d.charAt(0) === 'S') { // receive custom variable
           const dataArray = d.substr(1).split('.');
           const data = {
@@ -313,7 +317,7 @@ function prepareMotorData(uploadContent, motor, datalist) {
   // datalist.unshift('FM' + motor.id + 'F');
 
   datalist.unshift('FM' + motor.id + 'I' + motor.id);
-  datalist.unshift('FM' + motor.id + '&' + (motor.I2C_communication));
+  // datalist.unshift('FM' + motor.id + '' + (motor.I2C_communication));
   if (motor.config.supplyVoltage) {
     datalist.unshift('FM' + motor.id + 'S' + motor.config.supplyVoltage);
   }
@@ -331,10 +335,10 @@ function prepareMotorData(uploadContent, motor, datalist) {
   }
   // datalist.unshift('FM' + motor.id + 'E' + motor.config.encoder.part_number);
   if (motor.config.sensorOffset !== undefined) {
-    datalist.unshift('FM' + motor.id + 'O' + (motor.config.sensorOffset * (Math.PI / 180)).toFixed(12));
+    datalist.unshift('FM' + motor.id + 'O' + (motor.config.sensorOffset * (Math.PI / 180)).toFixed(14));
   }
   if (motor.config.transmission !== 1) {
-    datalist.unshift('FM' + motor.id + 'X' + (motor.config.encoder.transmission.toFixed(12))); //new
+    datalist.unshift('FM' + motor.id + 'X' + (motor.config.encoder.transmission.toFixed(14))); //new
   }
   datalist.unshift('FM' + motor.id + 'C' + motor.config.encoder.clock_speed);
   datalist.unshift('FM' + motor.id + 'H' + uploadContent.config.loop);
@@ -449,6 +453,7 @@ function prepareEffectData(uploadContent, motor, datalist) {
 
 
 
+
 function tryToEstablishConnection(receivingPort, uploadContent, callback) {
 
   if (!receivingPort && uploadContent && uploadContent.config) {
@@ -480,28 +485,29 @@ function uploadData(uploadContent) {
 
 function upload_to_receivedPort(port, uploadContent) {
   receivingPort = port;
-  console.log(uploadContent.config.motors);
-  for (const motor of uploadContent.config.motors) {
-
-    if (motor.id === uploadContent.config.motorID) {
-      datalist.unshift('FM' + motor.id + 'F');
-      datalist = prepareMotorData(uploadContent, motor, datalist);
-      if (uploadContent.data) {
-        datalist = prepareEffectData(uploadContent, motor, datalist);
-      }
-    }
-  }
-
+  // console.log(uploadContent.config.motors);
   // for (const motor of uploadContent.config.motors) {
-  //   datalist.unshift('FM' + motor.id + 'F');
-  //   datalist = prepareMotorData(uploadContent, motor, datalist);
-  //   if (uploadContent.data) {
-  //     datalist = prepareEffectData(uploadContent, motor, datalist);
+
+  //   if (motor.id === uploadContent.config.motorID) {
+  //     datalist.unshift('FM' + motor.id + 'F');
+  //     datalist = prepareMotorData(uploadContent, motor, datalist);
+  //     if (uploadContent.data) {
+  //       datalist = prepareEffectData(uploadContent, motor, datalist);
+  //     }
   //   }
   // }
 
+  for (const motor of uploadContent.config.motors) {
+    datalist.unshift('FM' + motor.id + 'F');
+    datalist = prepareMotorData(uploadContent, motor, datalist);
+    if (uploadContent.data) {
+      datalist = prepareEffectData(uploadContent, motor, datalist);
+    }
+  }
+
   dataSendWaitList.push({ port: uploadContent.config.serialPort.path, data: datalist, totalItems: datalist.length, collection: uploadContent.config.collection });
-  dataSendWaitList.filter(d => d.port === uploadContent.config.serialPort.path)[0].data.unshift('FC' + uploadContent.config.motorID);
+  dataSendWaitList.filter(d => d.port === uploadContent.config.serialPort.path)[0].data.unshift('FC' + (uploadContent.config.motorID ? uploadContent.config.motorID : 'A'));
+  console.log('FC' + (uploadContent.config.motorID ? uploadContent.config.motorID : 'A'));
 
   uploadFromWaitList(receivingPort);
 }
@@ -528,13 +534,15 @@ function uploadFromWaitList(receivingPort) {
 
     if (datalist && datalist.data.length > 0) {
       let item = datalist.data[datalist.data.length - 1];
-
-      if (item.length > 19) {
-        item = item.slice(0, (19 - item.length));
-      }
       console.log(item);
-      receivingPort.writeData(item + '&');
-      datalist.data.pop();
+      if (item) {
+        if (item.length > 19) {
+          item = item.slice(0, (19 - item.length));
+        }
+        // console.log(item);
+        receivingPort.writeData(item + '&');
+        datalist.data.pop();
+      }
 
       if (datalist.data.length === 0) {
         const index = dataSendWaitList.indexOf(datalist);
@@ -735,7 +743,7 @@ function updateMotorSettingCallback(port, uploadContent) {
 
 
     if (datalist.length > 0) {
-      datalist.unshift('FC' + motor.id);
+      datalist.unshift('FC' + uploadContent.config.motorID);
 
       dataSendWaitList.push({ port: uploadContent.config.serialPort.path, data: datalist, totalItems: datalist.length });
 
@@ -758,7 +766,12 @@ function updateMotorSettingCallback(port, uploadContent) {
 //   }
 // }
 
-
+function listDevices(motor_id, port) {
+  const datastr = 'FL' + motor_id;
+  console.log(datastr + ' ' + port);
+  sendDataStr([ datastr ], port);
+  main.updateSerialProgress({ progress: 50, str: 'list devices at ' + port + ' motor ' + motor_id });
+}
 
 function updateEffectData(char, data, effectIndex, port) {
   const datastr = 'FE' + char + effectIndex + ':' + data;
@@ -775,6 +788,7 @@ function updateMotorControlVariable(char, data, motor_id, port) {
 
 function getValue(motor_id, port, char) {
   const datastr = 'FG' + motor_id + char;
+  console.log(datastr + ' ' + port);
   sendDataStr([ datastr ], port);
   main.updateSerialProgress({ progress: 50, str: 'request value' });
 }
@@ -783,6 +797,7 @@ function getValue(motor_id, port, char) {
 function sendDataStr(str, port) {
   receivingPort = ports.filter(p => p.COM === port)[0];
   dataSendWaitList.push({ port: port, data: str, totalItems: 1 });
+  console.log(dataSendWaitList);
   uploadFromWaitList(receivingPort);
 }
 
@@ -807,3 +822,4 @@ exports.updateEffectData = updateEffectData;
 exports.requestData = requestData;
 exports.sendDataString = sendDataString;
 exports.getValue = getValue;
+exports.listDevices = listDevices;

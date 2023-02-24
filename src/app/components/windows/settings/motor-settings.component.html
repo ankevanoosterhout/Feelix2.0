@@ -41,6 +41,7 @@
     <div class="form-group">
       <label class="labelRow motorsettings inset"><div class="question-mark" title="Number of motors that are controlled by the microcontroller.">?</div>Number of motors</label>
       <input type="number" class="small motor-settings" id="numberOfMotors-{{ selectedMicrocontroller.id }}" name="numberOfMotors" value="{{ selectedMicrocontroller.motors.length }}" (change)="updateNrOfMotors()">
+
     </div>
 
     <div class="form-group">
@@ -73,6 +74,9 @@
                 <div class="question-mark" title="I2C address for communication between motors">?</div>I2C address</label>
               <input type="text" class="small motor-settings" id="I2C_address-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}"
                      name="I2C_address-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" [(ngModel)]="motor.I2C_address" (change)="updateI2C(motor, this.selectedMicrocontroller)">
+              <span *ngIf="motor.I2C_communicationType == 1">
+                <button (click)="listDevices(motor.id, selectedMicrocontroller)">List devices</button>
+              </span>
             </div>
 
 
@@ -88,7 +92,7 @@
             <div class="form-group" *ngIf="motor.type === 'BLDC Motor'">
               <label class="labelRow motorsettings inset">
                 <div class="question-mark" title="Number of pole pairs of the motor. Can be found in motor specifications. E.g. a configuration of 12N14P has 14 poles / 2 = 7 polepairs.">?</div>Pole pairs</label>
-              <input type="number" class="small motor-settings" id="polepairs-{{ selectedMicrocontroller.serialPort.path }}--{{ motor.id }}" name="polepairs-{{ selectedMicrocontroller.serialPort.path }}--{{ motor.id }}" [(ngModel)]="motor.config.polepairs" (change)="updateMicrocontroller(this.selectedMicrocontroller)">
+              <input type="number" class="small motor-settings" id="polepairs-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" name="polepairs-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" [(ngModel)]="motor.config.polepairs" (change)="updateMicrocontroller(this.selectedMicrocontroller)">
             </div>
 
             <div class="form-group" *ngIf="motor.type === 'BLDC Motor'">

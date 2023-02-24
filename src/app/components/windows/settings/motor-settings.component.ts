@@ -116,7 +116,8 @@ export class MotorSettingsComponent implements OnInit {
       this.microcontrollers.filter(m => m.serialPort.path === data.serialPath)[0].motors.filter(m => m.id === data.motorID)[0].config.calibration.value = data.zero_electric_angle;
       this.microcontrollers.filter(m => m.serialPort.path === data.serialPath)[0].motors.filter(m => m.id === data.motorID)[0].config.calibration.direction = data.direction === 1 ? 'CW' : 'CCW';
 
-      (this.document.getElementById('calibrationValue-' + data.serialPath + '-' + data.motorID) as HTMLInputElement).value = data.zero_electric_angle.toString();;
+      console.log('calibrationValue-' + data.serialPath + '-' + data.motorID);
+      (this.document.getElementById('calibrationValue-' + data.serialPath + '-' + data.motorID) as HTMLInputElement).value = data.zero_electric_angle.toString();
       (this.document.getElementById('calibrationDirection-' + data.serialPath + '-' + data.motorID) as HTMLInputElement).value = data.direction === 1 ? 'CW' : 'CCW';
 
     });
@@ -220,7 +221,7 @@ export class MotorSettingsComponent implements OnInit {
   //     microcontroller: { port: microcontroller.serialPort, type: microcontroller.vendor } });
   // }
 
-  findRange(microcontroller: any, motor_id: string) {
+  findRange(microcontroller: MicroController, motor_id: string) {
     this.searchRange = 1;
     this.hardwareService.updateMicroController(microcontroller);
 
@@ -234,6 +235,12 @@ export class MotorSettingsComponent implements OnInit {
       this.electronService.ipcRenderer.send('run', { motor_id: motor_id, port: microcontroller.serialPort.path, run: 1 });
     }
 
+  }
+
+  listDevices(motor_id: string, microcontroller: MicroController) {
+    if (microcontroller) {
+      this.electronService.ipcRenderer.send('listDevices', { motor_id: motor_id, port: microcontroller.serialPort.path });
+    }
   }
 
   confirmPosition(microcontroller: any, motor_id: string) {

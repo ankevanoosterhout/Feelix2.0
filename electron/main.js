@@ -1389,6 +1389,10 @@ ipcMain.on('newModel', (event, data) => {
   }
 });
 
+ipcMain.on('listDevices', (event, data) => {
+  serialPort.listDevices(data.motor_id, data.port);
+});
+
 
 //ML5js communication
 

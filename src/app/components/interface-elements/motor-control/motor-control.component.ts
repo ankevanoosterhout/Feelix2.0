@@ -249,7 +249,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
       const uploadModel = this.uploadService.createUploadModel(collection, microcontroller);
 
 
-      const activeCollection = this.motorControlService.file.collections.filter(c => c.microcontroller && c.microcontroller.serialPort.path === collection.microcontroller.serialPort.path && c.playing)[0];
+      const activeCollection = this.motorControlService.file.collections.filter(c => c.microcontroller && c.microcontroller.serialPort.path === collection.microcontroller.serialPort.path && c.playing && c.motorID === collection.motorID)[0];
       if (activeCollection) {
         activeCollection.playing = false;
         this.motorControlService.updateCollection(activeCollection);
