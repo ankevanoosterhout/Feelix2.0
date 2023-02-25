@@ -16,7 +16,7 @@ export class NN_options {
   task: string; // 'classification', 'regression', 'imageClassificaiton'
   debug: boolean = false; // determines whether or not to show the training visualization
   learningRate: number = 0.2;
-  hiddenUnits: number = 16;
+  hiddenUnits: number = 4;
   inputs: Array<any> = [];
   outputs: Array<any> = [];
 

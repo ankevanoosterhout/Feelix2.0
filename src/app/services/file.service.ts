@@ -84,7 +84,7 @@ export class FileService {
   createDefault(name: string) {
     const defaultFile = new File(name, uuid(), true);
     const collection = new Collection(uuid(), 'Collection-' + (defaultFile.collections.length + 1));
-    console.log(collection);
+    // console.log(collection);
     const defaultEffect = new Effect(uuid());
     defaultFile.collections.push(collection);
     defaultFile.effects.push(defaultEffect);
@@ -117,7 +117,7 @@ export class FileService {
     if (selectedFile) {
       const collection = new Collection(uuid(), 'Collection-' + (selectedFile.collections.length + 1));
       selectedFile.collections.push(collection);
-      console.log(selectedFile.collections);
+      // console.log(selectedFile.collections);
       this.store();
     }
   }

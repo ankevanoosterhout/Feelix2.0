@@ -49,7 +49,7 @@ export class FileListComponent implements OnInit {
 
     this.electronService.ipcRenderer.on('saveActiveFile', (event: Event, type: any) => {
       const activeFile = this._list === 'designFiles' ? this.fileService.getAllFileData() : this.kinematicService.getActiveModel();
-      console.log(activeFile);
+      // console.log(activeFile);
       if (activeFile.overwrite) { // prevent overwrite example files
         const data = {
           file: activeFile,

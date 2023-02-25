@@ -116,7 +116,6 @@ export class MotorSettingsComponent implements OnInit {
       this.microcontrollers.filter(m => m.serialPort.path === data.serialPath)[0].motors.filter(m => m.id === data.motorID)[0].config.calibration.value = data.zero_electric_angle;
       this.microcontrollers.filter(m => m.serialPort.path === data.serialPath)[0].motors.filter(m => m.id === data.motorID)[0].config.calibration.direction = data.direction === 1 ? 'CW' : 'CCW';
 
-      console.log('calibrationValue-' + data.serialPath + '-' + data.motorID);
       (this.document.getElementById('calibrationValue-' + data.serialPath + '-' + data.motorID) as HTMLInputElement).value = data.zero_electric_angle.toString();
       (this.document.getElementById('calibrationDirection-' + data.serialPath + '-' + data.motorID) as HTMLInputElement).value = data.direction === 1 ? 'CW' : 'CCW';
 
@@ -139,22 +138,39 @@ export class MotorSettingsComponent implements OnInit {
     });
 
     this.electronService.ipcRenderer.on('receiveData', (event: Event, data: any) => {
-      console.log(data);
+      // console.log(data);
       const microcontroller = this.microcontrollers.filter(m => m.serialPort.path === data.serialPath)[0];
       if (microcontroller && data.type === 'A') {
         if (this.searchRange === 1) {
           this.searchRange++;
-          microcontroller.motors.filter(m => m.id === data.motorID)[0].state.position.start = data.value * (180/Math.PI);
-          (this.document.getElementById('instruction-' + data.serialPath + '-' + data.motorID) as HTMLElement).innerHTML = "rotate motor to end position and press 'OK'";
-          if (this.document.getElementById('startPosition-' + data.serialPath + '-' + data.motorID)) {
-            (this.document.getElementById('startPosition-' + data.serialPath + '-' + data.motorID) as HTMLInputElement).value = microcontroller.motors.filter(m => m.id === data.motorID)[0].state.position.start.toString();
+          const motor = microcontroller.motors.filter(m => m.id === data.motorID)[0];
+          if (motor) {
+            motor.state.position.start = data.value * (180/Math.PI);
+            (this.document.getElementById('instruction-' + data.serialPath + '-' + data.motorID) as HTMLElement).innerHTML = "rotate motor to end position and press 'OK'";
+            if (this.document.getElementById('startPosition-' + data.serialPath + '-' + data.motorID)) {
+              (this.document.getElementById('startPosition-' + data.serialPath + '-' + data.motorID) as HTMLInputElement).value = motor.state.position.start.toString();
+              (this.document.getElementById('startPosition-offset-' + data.serialPath + '-' + data.motorID) as HTMLInputElement).value = (motor.state.position.start + motor.config.sensorOffset).toString();
+            }
           }
 
         } else if (this.searchRange > 1) {
           this.searchRange = 0;
-          microcontroller.motors.filter(m => m.id === data.motorID)[0].state.position.end = data.value * (180/Math.PI);
-          if (this.document.getElementById('endPosition-' + data.serialPath + '-' + data.motorID)) {
-            (this.document.getElementById('endPosition-' + data.serialPath + '-' + data.motorID) as HTMLInputElement).value = microcontroller.motors.filter(m => m.id === data.motorID)[0].state.position.end.toString();
+          const motor = microcontroller.motors.filter(m => m.id === data.motorID)[0];
+          if (motor) {
+            motor.state.position.end = data.value * (180/Math.PI);
+            if (motor.state.position.end < motor.state.position.start) {
+              const tmp = motor.state.position.end;
+              motor.state.position.end = motor.state.position.start;
+              motor.state.position.start = tmp;
+              if (this.document.getElementById('startPosition-' + data.serialPath + '-' + data.motorID)) {
+                (this.document.getElementById('startPosition-' + data.serialPath + '-' + data.motorID) as HTMLInputElement).value = motor.state.position.start.toString();
+                (this.document.getElementById('startPosition-offset-' + data.serialPath + '-' + data.motorID) as HTMLInputElement).value = (motor.state.position.start + motor.config.sensorOffset).toString();
+              }
+            }
+            if (this.document.getElementById('endPosition-' + data.serialPath + '-' + data.motorID)) {
+              (this.document.getElementById('endPosition-' + data.serialPath + '-' + data.motorID) as HTMLInputElement).value = motor.state.position.end.toString();
+              (this.document.getElementById('endPosition-offset-' + data.serialPath + '-' + data.motorID) as HTMLInputElement).value = (motor.state.position.end + motor.config.sensorOffset).toString();
+            }
           }
           this.hardwareService.updateMicroController(microcontroller);
           (this.document.getElementById('find-range') as HTMLElement).classList.add('hidden');
@@ -205,14 +221,39 @@ export class MotorSettingsComponent implements OnInit {
 
     const uploadModel = this.uploadService.createUploadModel(null, this.selectedMicrocontroller);
     const motor = this.selectedMicrocontroller.motors.filter(m => m.id === motor_id)[0];
-    const sensorOffset = motor.config.sensorOffset;
-    if (motor.state.position.start != 0) { motor.state.position.start -= sensorOffset; }
-    if (motor.state.position.end != 0) { motor.state.position.end -= sensorOffset; }
+    const newSensorOffset = (this.document.getElementById('sensorOffset-' + this.selectedMicrocontroller.serialPort.path + '-' + motor_id) as HTMLInputElement).value;
+    const newStartValue = motor.state.position.start + parseFloat(newSensorOffset);
+    const newEndValue = motor.state.position.end + parseFloat(newSensorOffset);
+    (this.document.getElementById('startPosition-offset-' + this.selectedMicrocontroller.serialPort.path + '-' + motor_id) as HTMLInputElement).value = newStartValue.toString();
+    (this.document.getElementById('endPosition-offset-' + this.selectedMicrocontroller.serialPort.path + '-' + motor_id) as HTMLInputElement).value = newEndValue.toString();
+    // motor.state.position.start -= sensorOffset;
+    // motor.state.position.end -= sensorOffset;
     uploadModel.config.motors = [ motor ];
     if (this.selectedMicrocontroller) {
       this.electronService.ipcRenderer.send('updateMotorSetting', uploadModel);
     }
   }
+
+
+  updateRange(position: string, motor_id: string, microcontroller: MicroController) {
+    const value = (this.document.getElementById(position + 'Position-offset-' + microcontroller.serialPort.path + '-' + motor_id) as HTMLInputElement).value;
+    if (value) {
+      const motor = microcontroller.motors.filter(m => m.id === motor_id)[0];
+      if (motor) {
+        const newOffset = position === 'start' ? parseFloat(value) - motor.state.position.start : parseFloat(value) - motor.state.position.end;
+        if (newOffset) {
+          motor.config.sensorOffset = newOffset;
+          this.updateStartPosition(microcontroller, motor_id);
+        }
+        const otherPos = position === 'start' ? 'end' : 'start';
+        const newValue = (position === 'start' ? motor.state.position.end : motor.state.position.start) + motor.config.sensorOffset;
+        (this.document.getElementById(otherPos + 'Position-offset-' + microcontroller.serialPort.path + '-' + motor_id) as HTMLInputElement).value = newValue.toString();
+      }
+    }
+    this.updateMicrocontroller(microcontroller);
+  }
+
+
 
   // calibrateMotor(microcontroller: any, motorIndex: number) {
 
@@ -305,7 +346,6 @@ export class MotorSettingsComponent implements OnInit {
         for (let n = 0; n < diff; n++) {
           const newMotor = new Motor((numberOfMotors + n), (this.selectedMicrocontroller.motors[0].I2C_communication === 1 ? 2 : 0));
           this.selectedMicrocontroller.motors.push(newMotor);
-          console.log(this.selectedMicrocontroller);
         }
       } else if (diff < 0) {
         for (let n = diff; n < 0; n++) {

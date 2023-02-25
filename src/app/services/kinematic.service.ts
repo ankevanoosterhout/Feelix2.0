@@ -52,7 +52,7 @@ export class KinematicService {
 
 
     const storedFiles = this.localSt.retrieve('modelFiles');
-    console.log(storedFiles);
+    // console.log(storedFiles);
     if (storedFiles && storedFiles.length > 0) {
       this.models = storedFiles;
       // console.log(this.models);
@@ -67,14 +67,14 @@ export class KinematicService {
       if (event.storageArea === localStorage) {
         if (event.key === KinematicService.MODEL_FILES_LOCATION) {
           const models: ModelFile[] = JSON.parse(localStorage.getItem(KinematicService.MODEL_FILES_LOCATION));
-          console.log(models);
+          // console.log(models);
           this.models = models;
           this.modelObservable.next(this.models);
         }
 
         if (event.key.startsWith(KinematicService.LOAD_FILE)) {
           const fileLocation: string = JSON.parse(localStorage.getItem(KinematicService.LOAD_FILE_LOCATION));
-          console.log(fileLocation);
+          // console.log(fileLocation);
           this.parseFile(localStorage.getItem(KinematicService.LOAD_FILE)).then((model: ModelFile) => {
             try {
               model.path = fileLocation;
@@ -103,7 +103,7 @@ export class KinematicService {
 
 
   newModel(model: ModelFile) {
-    console.log(model);
+    // console.log(model);
     this.updateActiveModel();
     this.add(model);
   }
@@ -119,7 +119,7 @@ export class KinematicService {
 
 
   setActive(activeModel: ModelFile) {
-    console.log(activeModel);
+    // console.log(activeModel);
     if (!activeModel.isActive) {
       this.loadFile(activeModel);
       // this.loadFrames(activeModel.joints);
@@ -157,7 +157,7 @@ export class KinematicService {
 
   loadFile(model: ModelFile) {
     this.deleteJointsScene.next();
-    console.log(model.joints);
+    // console.log(model.joints);
     if (model.joints) {
       this.frames = model.joints;
       // this.kinematicLinkService.roots = model.links;
@@ -254,16 +254,16 @@ export class KinematicService {
 
 
   addNewJoint(id: string, model: Model, parent = false): URFD_Joint {
-    console.log(model);
+    // console.log(model);
     const urfd_joint = new URFD_Joint(id === null ? uuid() : id, model, parent);
-    console.log(urfd_joint);
+    // console.log(urfd_joint);
     const similarObjects = this.frames.filter(j => j instanceof URFD_Joint && j.config.active).length;
     urfd_joint.name += '-' + (similarObjects + 1);
 
-    console.log(urfd_joint);
+    // console.log(urfd_joint);
 
     this.frames.push(urfd_joint);
-    console.log(this.frames);
+    // console.log(this.frames);
     // this.store();
 
     return urfd_joint;
@@ -279,7 +279,7 @@ export class KinematicService {
 
     // console.log(urfd_link);
     this.frames.push(urfd_link);
-    console.log(this.frames);
+    // console.log(this.frames);
     // this.store();
 
     return urfd_link;
@@ -327,9 +327,9 @@ export class KinematicService {
     if (joint) {
       const newID = uuid();
       sceneObject.name = newID;
-      console.log(sceneObject.name, newID);
+      // console.log(sceneObject.name, newID);
       const newJoint = new JointLink(newID, null);
-      console.log(newJoint.id);
+      // console.log(newJoint.id);
       newJoint.object3D = joint.object3D;
       newJoint.isJoint = joint.isJoint;
       newJoint.isMotor = joint.isMotor;
@@ -337,7 +337,7 @@ export class KinematicService {
       newJoint.motor = null;
       newJoint.sceneObject = sceneObject;
       newJoint.connectors = joint.connectors;
-      console.log(newJoint.id, newJoint.connectors);
+      // console.log(newJoint.id, newJoint.connectors);
       this.frames.push(newJoint);
       // console.log(this.joints);
       this.store();
@@ -512,7 +512,7 @@ export class KinematicService {
 
   deselectFrame(id: string) {
     const frame = this.selectedFrames.filter(j => j.id === id)[0];
-    console.log(frame);
+    // console.log(frame);
     if (frame) {
       this.frames.filter(j => j.id === id)[0].selected = false;
       if (this.selectedFrames.length === 1) {
@@ -578,7 +578,7 @@ export class KinematicService {
   }
 
   updateJoint(frame: any) {
-    console.log('update frame ', frame);
+    // console.log('update frame ', frame);
     // let frameInList = this.frames.filter(f => f.id === frame.id)[0];
     // if (frameInList) {
     //   frameInList = frame;
@@ -636,7 +636,7 @@ export class KinematicService {
     this.framesObservable.next(this.frames);
     this.localSt.store('frames', this.frames);
     this.localSt.store('modelFiles', this.models);
-    console.log(this.models, this.frames);
+    // console.log(this.models, this.frames);
   }
 
 

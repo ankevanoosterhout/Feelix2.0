@@ -15,11 +15,7 @@ export class ModelComponent {
 
 
 
-  constructor(@Inject(DOCUMENT) private document: Document, public tensorFlowService: TensorFlowMainService, private electronService: ElectronService) {
-
-
-
-  }
+  constructor(@Inject(DOCUMENT) private document: Document, public tensorFlowService: TensorFlowMainService, private electronService: ElectronService) { }
 
 
 

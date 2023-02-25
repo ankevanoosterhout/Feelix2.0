@@ -125,14 +125,14 @@ export class DragControlsService {
   }
 
   getRotatedPosition(model: any, startPoint: THREE.Vector3) {
-    console.log(model, startPoint);
+    //console.log(model, startPoint);
     this.c.drag.tempVector
       .copy(new THREE.Vector3(0,0,1))//0,0,1
       .transformDirection(model.matrixWorld)
       .normalize();
 
     this.kinematicDrawingService.drawArrowHelper(model.position, this.c.drag.tempVector, 0x000000);
-    console.log(this.c.drag.tempVector);
+    //console.log(this.c.drag.tempVector);
 
     this.c.drag.pivotPoint
       .set(0, 0, 0)

@@ -66,7 +66,7 @@ export class HardwareService {
         this.microcontrollers.push(new MicroController(uuid(), COM.serialPort, type));
         this.store();
       }
-      console.log(this.microcontrollers);
+      // console.log(this.microcontrollers);
     }
   }
 

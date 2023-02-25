@@ -59,7 +59,6 @@ export class ConfigModel {
       this.motors = microcontroller.motors;
       this.motorID = microcontroller.motors[0].id;
     }
-    console.log(this.motorID);
   }
 }
 

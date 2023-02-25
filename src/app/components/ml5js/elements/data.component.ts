@@ -30,7 +30,7 @@ export class DataComponent implements AfterViewInit {
 
 
   ngAfterViewInit(): void {
-    this.tensorflowDrawService.drawGraph(window.innerWidth, window.innerHeight);
+    // this.tensorflowDrawService.drawGraph(window.innerWidth, window.innerHeight);
   }
 
 
@@ -48,7 +48,6 @@ export class DataComponent implements AfterViewInit {
           // if (motor.record) {
           this.tensorFlowService.updateProgess('connecting to motor ' + microcontroller.serialPort.path, 0);
           const model = new ConnectModel(microcontroller);
-          console.log(model);
           this.electronService.ipcRenderer.send('requestData', model);
           // }
         // }
@@ -70,7 +69,7 @@ export class DataComponent implements AfterViewInit {
       this.hardwareService.updateMicroController(microcontroller);
       const uploadModel = this.uploadService.createUploadModel(null, microcontroller);
       uploadModel.config.motors = microcontroller.motors;
-      console.log(uploadModel);
+      // console.log(uploadModel);
       this.electronService.ipcRenderer.send('updateMotorSetting', uploadModel);
       // console.log(microcontroller.updateSpeed);
     }

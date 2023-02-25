@@ -44,7 +44,7 @@ export class KinematicsComponent implements OnInit {
     this.electronService.ipcRenderer.on('gridVisible', (event: Event, visible: boolean) => {
       // const items = ['mesh', 'grid'];
       const objects = this.config.scene.getObjectsByName('no-pointer-events');
-      console.log(objects);
+      // console.log(objects);
       if (objects) {
         for (const object of objects) {
           object.visible = visible;
@@ -293,7 +293,7 @@ export class KinematicsComponent implements OnInit {
 
   openExample(example: string) {
 
-    console.log(example);
+    // console.log(example);
 
   }
 

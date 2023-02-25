@@ -598,7 +598,7 @@ function openFileDialog(extension, storage, location) {
       jsonfile.readFile(fileName[0], function (err, obj) {
         let loadFile = JSON.stringify(JSON.stringify(obj));
         let loadFileLocation = JSON.stringify(JSON.stringify(fileName[0]));
-        console.log(obj);
+        // console.log(obj);
         // localStorage.removeItem('loadFile');
         // localStorage.removeItem('loadFileLocation');
 
@@ -613,7 +613,7 @@ function openFileDialog(extension, storage, location) {
 /****** save file data *****/
 
 ipcMain.on('saveFile', function (e, data) {
-  console.log(data);
+  // console.log(data);
   if (data.overwrite && data.file.path) {
     const existingFile = fs.existsSync(data.file.path);
     if (!existingFile) {
@@ -821,7 +821,7 @@ function drawTemporaryWindow(width, height, title, resizable, hash, details = nu
     mainWindow.webContents.send('resetCursor');
   })
 
-  tmpWindow.webContents.openDevTools();
+  // tmpWindow.webContents.openDevTools();
 
   tmpWindow.on('close', function () {
     tmpWindow = null
@@ -1139,7 +1139,7 @@ ipcMain.on('listSerialPorts', function (e, data) {
 
 
 ipcMain.on('addMicrocontroller', function (e, data) {
-  console.log('add microcontroller ', data);
+  // console.log('add microcontroller ', data);
   serialPort.createConnection(data);
   mainWindow.webContents.send('updateStatus', { microcontroller: data, connected: false, error: false });
 });

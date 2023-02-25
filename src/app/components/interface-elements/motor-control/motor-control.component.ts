@@ -254,6 +254,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
         activeCollection.playing = false;
         this.motorControlService.updateCollection(activeCollection);
       }
+      // console.log(uploadModel);
       this.electronService.ipcRenderer.send('upload', uploadModel);
 
     } else {

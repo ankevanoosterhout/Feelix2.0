@@ -25,7 +25,7 @@ export class Calibration {
 
 export class Position {
   start = 0.0;
-  end: number;
+  end = 0.0;
   current = 0;
 }
 

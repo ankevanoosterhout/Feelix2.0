@@ -10,7 +10,7 @@ let progress = 0;
 let dataSendWaitList = [];
 let datalist = [];
 
-const softwareVersion = { major: 2, minor: 2, patch: 1 };
+const softwareVersion = { major: 3, minor: 0, patch: 0 };
 
 
 function listSerialPorts(callback) {
@@ -49,7 +49,7 @@ function writeDataString(data, COM) {
           // reconnect(data, COM);
           return console.log('Error: ', err.message);
       } else {
-        console.log('write data ', data);
+        // console.log('write data ', data);
       }
   });
 }
@@ -109,7 +109,7 @@ function ifSerialAvailable(serialData, portlist, connect) {
 
 
 function createConnection(serialData) {
-  console.log(serialData);
+  // console.log(serialData);
   if (serialData && serialData.port) {
     if (ports.filter(d => d.path === serialData.port.path).length === 0) {
       const sp = new newSerialPort(serialData, port);
@@ -134,7 +134,7 @@ class newSerialPort {
     this.sp.write(data, function (err) {
         if (err) { return console.log('Error: ', err.message); }
         else {
-           console.log('written ', data);
+          //  console.log('written ', data);
         }
     });
   }
@@ -190,7 +190,7 @@ class newSerialPort {
       });
 
       parser.on('data', (d) => {
-        console.log(d);
+        // console.log(d);
         if (d.charAt(0) === '*') {
           // console.log('received data ', d);
           if (dataSendWaitList.filter(d => d.port === this.COM)) {
@@ -254,8 +254,8 @@ class newSerialPort {
           updateProgress(progress, 'Overheat protection activitated');
 
         } else if (d.charAt(0) === 'L') { // receive custom variable
-          console.log('listed devices ' + d);
-          updateProgress(progress, d);
+          // console.log('listed devices ' + d.substr(1));
+          updateProgress(progress, d.substr(1));
 
         } else if (d.charAt(0) === 'S') { // receive custom variable
           const dataArray = d.substr(1).split('.');
@@ -341,11 +341,18 @@ function prepareMotorData(uploadContent, motor, datalist) {
     datalist.unshift('FM' + motor.id + 'X' + (motor.config.encoder.transmission.toFixed(14))); //new
   }
   datalist.unshift('FM' + motor.id + 'C' + motor.config.encoder.clock_speed);
-  datalist.unshift('FM' + motor.id + 'H' + uploadContent.config.loop);
   datalist.unshift('FM' + motor.id + 'D' + (motor.config.encoder.direction ? 1 : -1));
-  datalist.unshift('FM' + motor.id + 'T' + uploadContent.config.updateSpeed);
-  datalist.unshift('FM' + motor.id + 'J' + Math.round(uploadContent.config.range));
-  datalist.unshift('FM' + motor.id + 'M' + uploadContent.config.constrain_range);
+
+  if (uploadContent.config) {
+    datalist.unshift('FM' + motor.id + 'T' + uploadContent.config.updateSpeed);
+    datalist.unshift('FM' + motor.id + 'J' + uploadContent.config.range);
+    datalist.unshift('FM' + motor.id + 'H' + uploadContent.config.loop);
+    datalist.unshift('FM' + motor.id + 'M' + uploadContent.config.constrain_range);
+  }
+  if (motor.state.position.start) {
+    datalist.unshift('FM' + motor.id + '%' + motor.state.position.start.toFixed(14));
+  }
+
   datalist.unshift('FM' + motor.id + 'A' + ':' + motor.position_pid.p + ':' + motor.position_pid.i + ':' + motor.position_pid.d);
   datalist.unshift('FM' + motor.id + 'Q' + ':' + motor.velocity_pid.p + ':' + motor.velocity_pid.i + ':' + motor.velocity_pid.d);
   datalist.unshift('FM' + motor.id + 'G' + (motor.config.inlineCurrentSensing ? 1 : 0));
@@ -507,14 +514,14 @@ function upload_to_receivedPort(port, uploadContent) {
 
   dataSendWaitList.push({ port: uploadContent.config.serialPort.path, data: datalist, totalItems: datalist.length, collection: uploadContent.config.collection });
   dataSendWaitList.filter(d => d.port === uploadContent.config.serialPort.path)[0].data.unshift('FC' + (uploadContent.config.motorID ? uploadContent.config.motorID : 'A'));
-  console.log('FC' + (uploadContent.config.motorID ? uploadContent.config.motorID : 'A'));
+  // console.log('FC' + (uploadContent.config.motorID ? uploadContent.config.motorID : 'A'));
 
   uploadFromWaitList(receivingPort);
 }
 
 
 function requestData(data)  {
-  console.log(data);
+  // console.log(data);
   receivingPort = ports.filter(p => p.COM === data.config.serialPort.path)[0];
 
   tryToEstablishConnection(receivingPort, data, receivedPort);
@@ -534,7 +541,7 @@ function uploadFromWaitList(receivingPort) {
 
     if (datalist && datalist.data.length > 0) {
       let item = datalist.data[datalist.data.length - 1];
-      console.log(item);
+      // console.log(item);
       if (item) {
         if (item.length > 19) {
           item = item.slice(0, (19 - item.length));
@@ -625,7 +632,7 @@ function calibrate_current_sense(port, uploadContent) {
 
 
 function calibrateMotor(uploadContent) {
-  console.log(uploadContent);
+  // console.log(uploadContent);
   if (uploadContent.config) {
     receivingPort = ports.filter(p => p.COM === uploadContent.config.serialPort.path)[0];
     // motor = microcontroller.motors.filter(m => m.id === motor_id)[0];
@@ -768,7 +775,7 @@ function updateMotorSettingCallback(port, uploadContent) {
 
 function listDevices(motor_id, port) {
   const datastr = 'FL' + motor_id;
-  console.log(datastr + ' ' + port);
+  // console.log(datastr + ' ' + port);
   sendDataStr([ datastr ], port);
   main.updateSerialProgress({ progress: 50, str: 'list devices at ' + port + ' motor ' + motor_id });
 }
@@ -788,7 +795,7 @@ function updateMotorControlVariable(char, data, motor_id, port) {
 
 function getValue(motor_id, port, char) {
   const datastr = 'FG' + motor_id + char;
-  console.log(datastr + ' ' + port);
+  // console.log(datastr + ' ' + port);
   sendDataStr([ datastr ], port);
   main.updateSerialProgress({ progress: 50, str: 'request value' });
 }
@@ -797,7 +804,7 @@ function getValue(motor_id, port, char) {
 function sendDataStr(str, port) {
   receivingPort = ports.filter(p => p.COM === port)[0];
   dataSendWaitList.push({ port: port, data: str, totalItems: 1 });
-  console.log(dataSendWaitList);
+  // console.log(dataSendWaitList);
   uploadFromWaitList(receivingPort);
 }
 

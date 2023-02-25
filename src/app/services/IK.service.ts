@@ -36,7 +36,7 @@ export class IKService {
     const data = this.localSt.retrieve('roots');
 
     if (data) {
-      console.log(data);
+      // console.log(data);
       this.ikFrames = data;
     }
 
@@ -135,7 +135,7 @@ export class IKService {
     this.ikConfig.solver = new Solver( this.ikConfig.ikRoot );
     Object.assign( this.ikConfig.solver, this.solverOptions );
     // console.log(this.ikFrames);
-    console.log(this.ikConfig.ikRoot);
+    // console.log(this.ikConfig.ikRoot);
   }
 
 
@@ -209,7 +209,7 @@ export class IKService {
 
 
   updateObjectQuaternion(id: string, quaternion: any, updateChildren = false) {
-    console.log('update quaternion ', id);
+    // console.log('update quaternion ', id);
     for (const root of this.ikConfig.ikRoot) {
       root.traverse( c => {
 
@@ -219,7 +219,7 @@ export class IKService {
         if (name === id) {
           c.setQuaternion( quaternion.x, quaternion.y, quaternion.z, quaternion.w );
           c.updateMatrix();
-          console.log(c);
+          // console.log(c);
         }
         // }
       });

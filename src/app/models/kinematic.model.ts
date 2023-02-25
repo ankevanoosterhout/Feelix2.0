@@ -298,7 +298,7 @@ export class ModelFile {
   id: string;
   name: string;
   path: string;
-  softwareVersion = '2.2.1';
+  softwareVersion = '3.0.0';
   date = new Dates();
   joints: Array<JointLink> = [];
   links: Array<Root> = [];

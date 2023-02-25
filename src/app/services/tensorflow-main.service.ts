@@ -302,7 +302,7 @@ export class TensorFlowMainService {
 
         const iTensor = tf.tensor(inputs, [ inputs.length, inputs[0].length ]);
         const oTensor = tf.tensor(outputs, [ outputs.length, outputs[0].length ]);
-        console.log(iTensor, oTensor);
+        // console.log(iTensor, oTensor);
 
         for (let layer = 0; layer < modelObj.options.hiddenUnits; layer++) {
           const hiddenLayer = tf.layers.dense({
@@ -335,7 +335,9 @@ export class TensorFlowMainService {
 
         this.updateProgess('training model', 60);
 
-        this.train(iTensor, oTensor, modelObj.trainingOptions).then(() => { console.log('training is complete') });
+        this.train(iTensor, oTensor, modelObj.trainingOptions).then(() => {
+          console.log('training is complete')
+        });
 
       //   this.selectedModel.model.train(model.trainingOptions, this.whileTraining, this.finishedTraining);
       } else {
@@ -357,10 +359,10 @@ export class TensorFlowMainService {
       iTensor.dispose();
       oTensor.dispose();
 
-      console.log(tf.memory().numTensors);
+      // console.log(tf.memory().numTensors);
       // console.log(response.history.loss[0]);
       this.updateProgess('training is complete, loss = ' + response.history.loss[response.history.loss.length - 1], 100);
-      console.log(response);
+      // console.log(response);
     }
 
 
@@ -383,9 +385,9 @@ export class TensorFlowMainService {
       this.serialPath = path;
 
       if (selectedModel.options.task === 'classification') {
-        const iTensor = selectedModel.multiple ? tf.tensor2d(input) : tf.tensor2d([input]);
+        const iTensor = tf.tensor2d(input);
         const outputs = this.selectedModel.model.predict(iTensor).dataSync();
-        console.log(outputs);
+        // console.log(outputs);
         this.updatePredictionClassifiers(outputs);
 
         iTensor.dispose();
@@ -590,10 +592,6 @@ export class TensorFlowMainService {
         }
       }
     }
-
-
-
-
 
 
 }

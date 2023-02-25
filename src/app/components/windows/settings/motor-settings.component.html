@@ -158,11 +158,15 @@
             <div class="form-group">
               <label class="labelRow motorsettings inset"><div class="question-mark" title="Optional: Set start position">?</div>Start position</label>
               <input type="text" class="small motor-settings" id="startPosition-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" name="startPosition-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}"
-              [(ngModel)]="motor.state.position.start" (change)="updateMicrocontroller(this.selectedMicrocontroller)">
-              <div class="units motor-setting">&deg;</div>
+              [(ngModel)]="motor.state.position.start" disabled>
+              <div class="units motor-setting disabled">&deg;</div>
+
+              <span *ngIf="motor.state.position.start">
+                <input type="text" class="small motor-settings" id="startPosition-offset-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" name="startPosition-offset-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}"
+                value="{{ (motor.state.position.start + motor.config.sensorOffset) }}" (change)="updateRange('start', motor.id, this.selectedMicrocontroller)">
+                <div class="units motor-setting">&deg;</div>
+              </span>
             </div>
-
-
 
             <!-- <div class="form-group" *ngIf="motor.config.encoderType === 'Magnetic sensor'">
               <label class="labelRow select motorsettings inset"><div class="question-mark" title="Rotational direction opposed to sensor direction">?</div>Rotation direction</label>
@@ -174,8 +178,15 @@
             <div class="form-group">
               <label class="labelRow motorsettings inset"><div class="question-mark" title="Optional: set end position">?</div>End position</label>
               <input type="text" class="small motor-settings" id="endPosition-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" name="endPosition-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}"
-              [(ngModel)]="motor.state.position.end" (change)="updateMicrocontroller(this.selectedMicrocontroller)">
+              [(ngModel)]="motor.state.position.end" disabled>
               <div class="units motor-setting disabled">&deg;</div>
+
+              <span *ngIf="motor.state.position.end">
+                <input type="text" class="small motor-settings" id="endPosition-offset-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" name="endPosition-offset-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}"
+                value="{{ (motor.state.position.end + motor.config.sensorOffset) }}" (change)="updateRange('end', motor.id, this.selectedMicrocontroller)">
+                <!-- (change)="updateRange('end', motor.id, this.selectedMicrocontroller)" -->
+                <div class="units motor-setting">&deg;</div>
+              </span>
             </div>
 
             <div class="form-group" id="find-range" class="hidden">

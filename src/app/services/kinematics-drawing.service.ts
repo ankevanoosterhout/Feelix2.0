@@ -713,18 +713,18 @@ export class KinematicsDrawingService {
 
 
   getDirectionVector(object: any, axis:any): THREE.Vector3 {
-    console.log(object, axis);
+    // console.log(object, axis);
     const worldDirection = new THREE.Vector3();
     object.getWorldDirection(worldDirection);
     worldDirection.normalize();
-    console.log(worldDirection);
+    // console.log(worldDirection);
     // this.drawArrowHelper(object.position, worldDirection, 0x2121d8);
     // const updatedWorldDirect = new THREE.Vector3( axis.vector3.x, axis.vector3.y, axis.vector3.z );
     const updatedWorldDirect = new THREE.Vector3( worldDirection.x, worldDirection.y, worldDirection.z );
-    console.log(object.quaternion);
+    // console.log(object.quaternion);
     updatedWorldDirect.applyQuaternion(object.quaternion);
     updatedWorldDirect.normalize();
-    console.log(updatedWorldDirect);
+    // console.log(updatedWorldDirect);
     this.drawArrowHelper(object.position, updatedWorldDirect, 0x000000);
     return updatedWorldDirect;
   }
@@ -798,7 +798,7 @@ export class KinematicsDrawingService {
       const pnt_dir_origin = this.getDirectionVector(sceneModels[0], connPnts[0]);
       const pnt_dir_target = this.getDirectionVector(sceneModels[1], connPnts[1]);
 
-      console.log(pnt_dir_origin, pnt_dir_target);
+      // console.log(pnt_dir_origin, pnt_dir_target);
 
       const quaternion = new THREE.Quaternion();
       const reverseOrigin = new THREE.Vector3();
@@ -809,14 +809,14 @@ export class KinematicsDrawingService {
       sceneModels[1].applyMatrix4( matrix );
       sceneModels[1].updateMatrix();
 
-      console.log('update angle', connPnts[0].plane, connPnts[1].plane);
+      // console.log('update angle', connPnts[0].plane, connPnts[1].plane);
       if (connPnts[0].plane !== 'Z' && connPnts[1].plane !== 'Z' && !(pnt_dir_origin.x === pnt_dir_target.x && pnt_dir_origin.y === pnt_dir_target.y && pnt_dir_origin.z === pnt_dir_target.z)) {
-        console.log(pnt_dir_origin, pnt_dir_target, reverseOrigin);
+        // console.log(pnt_dir_origin, pnt_dir_target, reverseOrigin);
         // if (connPnts[0].angle !== connPnts[1].angle && connPnts[0].angle%90 !== 0) {
           const angle1 = connPnts[0].plane === 'Y' ? (connPnts[0].angle + models[0].angle) * (Math.PI/180) : connPnts[0].angle * (Math.PI/180);
           const angle2 = connPnts[1].plane === 'Y' ? (connPnts[1].angle + models[1].angle) * (Math.PI/180) : connPnts[1].angle * (Math.PI/180);
           const updatedAngle = (sceneModels[0].rotation.z + angle1) - (angle2 + Math.PI);
-          console.log(connPnts[0].angle, connPnts[1].angle, updatedAngle);
+          // console.log(connPnts[0].angle, connPnts[1].angle, updatedAngle);
           sceneModels[1].rotation.z = updatedAngle;
           sceneModels[1].updateMatrix();
         // }

@@ -55,7 +55,7 @@ export class KinematicsControlComponent implements AfterViewInit {
       this.visible[0] = data;
     });
 
-    console.log(this.models);
+    // console.log(this.models);
 
 
     // this.kinematicService.importOBJModelToObjectGroup.subscribe(res => {
@@ -178,7 +178,7 @@ export class KinematicsControlComponent implements AfterViewInit {
 
     if (this.ikService.ikConfig.drag.selected && this.ikService.ikConfig.drag.selected.parent) {
       const selectedFrame = this.kinematicService.getFrame(this.ikService.ikConfig.drag.selected.parent.name);
-      console.log(selectedFrame);
+      // console.log(selectedFrame);
       const updatedModel = this.updatePosition(selectedFrame, model);
       if (selectedFrame instanceof URFD_Joint) {
         this.addLink(updatedModel, this.ikService.ikConfig.drag.selected, null, true);
@@ -186,7 +186,7 @@ export class KinematicsControlComponent implements AfterViewInit {
         this.addJoint(updatedModel, this.ikService.ikConfig.drag.selected, null, false);
       }
     } else {
-      console.log(model);
+      // console.log(model);
       this.addJoint(model, null, null, false);
     }
 
@@ -237,8 +237,8 @@ export class KinematicsControlComponent implements AfterViewInit {
 
   updatePosition(SF: any, model: Model) : Model {
 
-    console.log('update position');
-    console.log(SF, model, this.ikService.ikConfig.drag.selected.parent);
+    // console.log('update position');
+    // console.log(SF, model, this.ikService.ikConfig.drag.selected.parent);
     // const frame = this.kinematicService.getFrame(this.dragControlService.selected.parent.name);
     const modelType = SF instanceof URFD_Link ? model.baseSize : model.linkSize;
     const modelCopy = JSON.parse(JSON.stringify(model));
@@ -254,12 +254,12 @@ export class KinematicsControlComponent implements AfterViewInit {
 
     // const position2 = new THREE.Vector3(x2, y2, z2);
 
-    console.log(position, this.ikService.ikConfig.drag.selected.parent.position);
+    // console.log(position, this.ikService.ikConfig.drag.selected.parent.position);
 
     position.applyMatrix4(this.ikService.ikConfig.drag.selected.parent.matrixWorld);
     const updatedPosition = this.dragControlService.getRotatedPosition(this.ikService.ikConfig.drag.selected.parent, position);
 
-    console.log(updatedPosition);
+    // console.log(updatedPosition);
 
     const translationMatrix = new THREE.Matrix4()
         .makeTranslation(this.ikService.ikConfig.drag.selected.parent.position.x,
@@ -267,11 +267,11 @@ export class KinematicsControlComponent implements AfterViewInit {
                          this.ikService.ikConfig.drag.selected.parent.position.z);
 
 
-    console.log(translationMatrix);
+    // console.log(translationMatrix);
 
     updatedPosition.applyMatrix4(translationMatrix);
 
-    console.log(updatedPosition);
+    // console.log(updatedPosition);
     //lookAt
     //const rotationMatrix = new THREE.Matrix4().makeRotationFromQuaternion(this.ikService.ikConfig.drag.selected.parent.quaternion);
 
@@ -518,7 +518,7 @@ export class KinematicsControlComponent implements AfterViewInit {
   getClosestConnector(connectors: any, angle: number) {
     let movableRange = 360;
     for (const conn of connectors) {
-      console.log(conn.angle, angle);
+      // console.log(conn.angle, angle);
       if (conn.angle - angle < movableRange && conn.angle - angle > 0) {
         movableRange = conn.angle - angle;
       }
