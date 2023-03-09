@@ -84,7 +84,7 @@ export class BBoxService {
                 // x: this.config.dragStartPoint.x - (this.config.startPosBox.left - this.config.margin.left),
                 y: this.config.dragStartPoint.y - (this.config.startPosBox.top - this.config.margin.offsetTop - this.config.margin.top)
             };
-            this.document.getElementById('field-inset').style.cursor = 'url(./assets/icons/tools/cursor-drag.png), none';
+            this.drawingService.setCursor('url(./assets/icons/tools/cursor-drag.png), none');
           }
         })
         .on('drag', (event: any, d: any) => {
@@ -117,7 +117,7 @@ export class BBoxService {
         })
         .on('end', (event) => {
           if (!this.config.zoomable) {
-            this.document.getElementById('field-inset').style.cursor = this.config.cursor.cursor;
+            this.drawingService.setCursor(this.config.cursor.cursor);
 
             const newPosBox = this.config.svg.select('#bbox').node().getBoundingClientRect();
             this.config.boxRef = {

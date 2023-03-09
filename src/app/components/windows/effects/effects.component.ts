@@ -54,18 +54,18 @@ export class EffectsComponent implements OnInit, AfterViewInit {
     { name: 'date created', slug: 'date-created' }
   ]
 
-  DVs = [
-    { name: 'position', val: null },
-    { name: 'force intensity', val: null },
-    { name: 'force direction',  val: null },
-    { name: 'scale', val: null },
-  ];
+  // DVs = [
+  //   { name: 'position', val: null },
+  //   { name: 'force intensity', val: null },
+  //   { name: 'force direction',  val: null },
+  //   { name: 'scale', val: null },
+  // ];
 
-  IVs = [
-    { name: 'time', val: null },
-    { name: 'speed', val: null },
-    { name: 'relative position',  val: null },
-  ];
+  // IVs = [
+  //   { name: 'time', val: null },
+  //   { name: 'speed', val: null },
+  //   { name: 'relative position',  val: null },
+  // ];
 
   qualityOptions = [
     { level: 0, name: 'low', division: 8 },
@@ -74,7 +74,7 @@ export class EffectsComponent implements OnInit, AfterViewInit {
     { level: 3, name: 'maximum', division: 1 }
   ];
 
-  repeatOptions = ['position', 'time'];
+  // repeatOptions = ['position', 'time'];
 
   // tslint:disable-next-line: variable-name
   constructor(@Inject(DOCUMENT) private document: Document, private electronService: ElectronService, public effectLibraryService: EffectLibraryService,

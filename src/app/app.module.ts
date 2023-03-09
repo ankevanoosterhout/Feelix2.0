@@ -45,7 +45,6 @@ import { UploadService } from './services/upload.service';
 import { HistoryService } from './services/history.service';
 import { EffectLibraryService } from './services/effect-library.service';
 import { EffectVisualizationService } from './services/effect-visualization.service';
-import { ComponentService } from './services/component.service';
 import { ExportDialogComponent } from './components/windows/export-dialog.component';
 import { CloneService } from './services/clone.service';
 import { GridService } from './services/grid.service';
@@ -129,7 +128,6 @@ import { IKService } from './services/IK.service';
     HistoryService,
     EffectLibraryService,
     EffectVisualizationService,
-    ComponentService,
     MotorControlService,
     CloneService,
     TensorFlowMainService,

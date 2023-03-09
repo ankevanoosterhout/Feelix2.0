@@ -11,7 +11,7 @@ import { FileService } from './file.service';
 import { EffectVisualizationService } from './effect-visualization.service';
 import { Details, Effect, Unit } from '../models/effect.model';
 import { Collection } from '../models/collection.model';
-import { Configuration } from '../models/configuration.model';
+import { Configuration, EffectType } from '../models/configuration.model';
 
 
 
@@ -95,7 +95,7 @@ export class DrawingService {
             if (event.altKey) {
               direction = -1;
             } else {
-              this.document.getElementById('field-inset').style.cursor = this.config.cursor.cursor;
+              this.setCursor(this.config.cursor.cursor);
             }
             this.clickToZoom(direction);
           }
@@ -116,6 +116,12 @@ export class DrawingService {
         this.drawRulers();
       }
       this.drawSliderDrawplane();
+    }
+  }
+
+  setCursor(cursor: string) {
+    if (this.document.body.style.cursor !== 'wait') {
+      this.document.getElementById('field-inset').style.cursor = cursor;
     }
   }
 
@@ -582,7 +588,9 @@ export class DrawingService {
       this.config.cursor.slug === 'thick' || this.config.cursor.slug === 'drag')) {
       this.config.svg.select('.cpSVG').remove();
     }
-    this.document.getElementById('field-inset').style.cursor = details.cursor;
+    if (this.document.body.style.cursor !== 'wait') {
+      this.setCursor(details.cursor);
+    }
 
   }
 
@@ -613,6 +621,7 @@ export class DrawingService {
   }
 
   updateConfigActiveFile(config: Configuration) {
+    console.log(config);
     this.fileService.updateConfig(config);
   }
 
@@ -655,8 +664,8 @@ export class DrawingService {
         .attr('x', 0)
         .attr('class', 'axis')
         .attr('fill', '#222')
-        .on('mouseover', () => this.document.getElementById('field-inset').style.cursor = 'default')
-        .on('mouseleave', () => this.document.getElementById('field-inset').style.cursor = this.config.cursor.cursor)
+        .on('mouseover', () => this.setCursor('default'))
+        .on('mouseleave', () => this.setCursor(this.config.cursor.cursor))
       .append('title')
         .text(() => 'position (' + this.file.activeEffect.grid.xUnit.name + ')');
 
@@ -672,8 +681,8 @@ export class DrawingService {
         .attr('x', 0)
         .attr('class', 'axis')
         .attr('fill', '#222')
-        .on('mouseover', () => this.document.getElementById('field-inset').style.cursor = 'default')
-        .on('mouseleave', () => this.document.getElementById('field-inset').style.cursor = this.config.cursor.cursor)
+        .on('mouseover', () => this.setCursor('default'))
+        .on('mouseleave', () => this.setCursor(this.config.cursor.cursor))
       .append('title')
         .text(() => 'intensity (%)');
 
@@ -976,45 +985,7 @@ export class DrawingService {
     }
   }
 
-  /*
-  drawGrid(gridSettings: any) {
 
-    if (this.file.activeEffect.grid.visible) {
-
-      this.config.svg.selectAll('.gridSVG').remove();
-
-      this.config.gridSVG = this.config.svg.append('g')
-          .attr('id', 'gridSVG')
-          .attr('class', 'gridSVG')
-          .attr('clip-path', 'url(#clip)')
-          .attr('transform', 'translate(0, ' + this.config.margin.top + ')');
-
-      this.config.gridSVG.selectAll('line.verticalGrid').data(this.nodeService.scale.scaleX.ticks(20)).enter()
-        .append('line')
-        .attr('class', 'verticalGrid')
-        .attr('x1', (d) => this.nodeService.scale.scaleX(d))
-        .attr('x2', (d) => this.nodeService.scale.scaleX(d))
-        .attr('y1', 0)
-        .attr('y2', this.config.chartDy)
-        .style('fill', 'transparent')
-        .style('shape-rendering', 'crispEdges')
-        .style('stroke', '#666')
-        .style('stroke-width', 0.5);
-
-      this.config.gridSVG.selectAll('line.horizontalGrid').data(this.nodeService.scale.scaleY.ticks(10)).enter()
-        .append('line')
-        .attr('class', 'horizontalGrid')
-        .attr('y1', (d) => this.nodeService.scale.scaleY(d))
-        .attr('y2', (d) => this.nodeService.scale.scaleY(d))
-        .attr('x1', 0)
-        .attr('x2', this.config.chartDx)
-        .style('fill', 'transparent')
-        .style('shape-rendering', 'crispEdges')
-        .style('stroke', '#666')
-        .style('stroke-width', 0.5);
-    }
-  }
-  */
 
 
   scaleActiveEffectFromTorqueToPosition(scaleFactor: number, offset: number) {
@@ -1029,26 +1000,37 @@ export class DrawingService {
   }
 
   updateEffectType() {
-    if (this.file.activeEffect.type === 'velocity' && this.file.activeEffect.grid.yUnit.name === '%') {
+    console.log(this.file.activeEffect);
+    if (this.file.activeEffect.type === EffectType.velocity || this.file.activeEffect.type === EffectType.pneumatic) {
       this.file.activeEffect.grid.yUnit = new Unit('%', 100);
-      this.file.activeEffect.grid.xUnit = new Unit('ms', 1000);
+      if (this.file.activeEffect.grid.xUnit.name !== 'ms') {
+        this.file.activeEffect.grid.xUnit = new Unit('ms', 1000);
+      }
       this.file.activeEffect.range.start = 0;
       this.file.activeEffect.range.end = 1000;
-    }
-    if (this.file.activeEffect.type !== 'velocity') {
+    } else {
+      if (this.file.activeEffect.grid.xUnit.name === 'ms') {
+        this.file.activeEffect.grid.xUnit = new Unit('deg', 360);
+        this.file.activeEffect.range.start = 0;
+        this.file.activeEffect.range.end = 360;
+      }
       this.file.activeEffect.grid.yUnit = new Unit('%', 100);
-      this.file.activeEffect.range.start = 0;
-      this.file.activeEffect.range.end = 360;
     }
-    this.file.activeEffect.range_y.start = this.file.activeEffect.type === 'position' ? 0 : -100;
+    this.file.activeEffect.range_y.start = (this.file.activeEffect.type === EffectType.position || this.file.activeEffect.type === EffectType.pneumatic) ? 0 : -100;
     this.file.activeEffect.range_y.end = 100;
 
-    if (this.config.editBounds.yMin < 0 && this.file.activeEffect.type === 'position' ) {
+    console.log(this.config.editBounds);
+
+    if (this.config.editBounds.yMin < 0 && (this.file.activeEffect.type === EffectType.position || this.file.activeEffect.type === EffectType.pneumatic)) {
       this.scaleActiveEffectFromTorqueToPosition(0.5, 100);
-    } else if (this.config.editBounds.yMin >= 0 && this.file.activeEffect.type !== 'position') {
+    } else if (this.config.editBounds.yMin >= 0 && (this.file.activeEffect.type === EffectType.velocity || this.file.activeEffect.type === EffectType.torque)) {
       this.scaleActiveEffectFromTorqueToPosition(2, 100);
     }
-    this.dataService.color = this.file.configuration.colors.filter(c => c.type === this.file.activeEffect.type)[0].hash;
+    const effectColor = this.file.configuration.colors.filter(c => c.type === this.file.activeEffect.type)[0];
+    if (effectColor) {
+      this.dataService.color = effectColor.hash[0];
+    }
+
     this.updateConfigActiveFile(this.file.configuration);
 
     this.updateActiveEffect(this.file);

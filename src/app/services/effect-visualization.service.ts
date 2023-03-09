@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import * as d3 from 'd3';
 import { Subject } from 'rxjs';
 import { Collection, Layer } from '../models/collection.model';
-import { effectTypeColor } from '../models/configuration.model';
+import { EffectType, EffectTypeColor } from '../models/configuration.model';
 import { Details, Direction, Effect, RepeatInstance, Size } from '../models/effect.model';
 import { CloneService } from './clone.service';
 import { DataService } from './data.service';
@@ -29,7 +29,7 @@ export class EffectVisualizationService {
   }
 
 
-  drawEffect(effect: Effect, colors: Array<effectTypeColor>, viewSettings = 'large-thumbnails', storedIn: string) {
+  drawEffect(effect: Effect, colors: Array<EffectTypeColor>, viewSettings = 'large-thumbnails', storedIn: string) {
 
     const height = storedIn === 'file' ? 86 : 55;
     let windowDivisionWidth = (window.innerWidth * this.verticalDivision / 100);
@@ -74,7 +74,7 @@ export class EffectVisualizationService {
   }
 
 
-  drawCollectionEffect(svg: any, collection: Collection, collEffect: Details, effect: Effect, pixHeight: number, activeCollEffect: Details, colors: Array<effectTypeColor>, tmp = false) {
+  drawCollectionEffect(svg: any, collection: Collection, collEffect: Details, effect: Effect, pixHeight: number, activeCollEffect: Details, colors: Array<EffectTypeColor>, tmp = false) {
 
     d3.selectAll('.coll-effect-' + collEffect.id).remove();
 
@@ -89,7 +89,7 @@ export class EffectVisualizationService {
 
       const yPos = collection.config.newYscale(collEffect.position.top * (collEffect.scale.y / 100)) - (pixHeight * (collEffect.position.y / domainSize));
 
-      const offset = effect.type === 'position' ? pixHeight * ((100-collEffect.scale.y)/100) - (pixHeight * (collEffect.position.y / 100)) :
+      const offset = effect.type === EffectType.position ? pixHeight * ((100-collEffect.scale.y)/100) - (pixHeight * (collEffect.position.y / 100)) :
                                                   pixHeight * (((100-collEffect.scale.y)/100) / 2) - (pixHeight * (collEffect.position.y / 100) / 2);
 
       const height = pixHeight * (collEffect.scale.y/100);
@@ -135,7 +135,7 @@ export class EffectVisualizationService {
         .attr('y', this.checkIfEffectTypeEqualsVisualizationType(effect, collection) ? yPos : 0)
         .attr('width', width === 0 ? 10 : width)
         .attr('height', this.checkIfEffectTypeEqualsVisualizationType(effect, collection) ? heightEffect : pixHeight)
-        .style('fill', colors.filter(c => c.type === effect.type)[0].hash)
+        .style('fill', colors.filter(c => c.type === effect.type)[0].hash[0])
         .style('opacity', activeCollEffect !== null && activeCollEffect.id === collEffect.id ? 0.6 : 0.2)
         .style('shape-rendering', 'crispEdges')
         .attr('pointer-events', tmp ? 'none': 'auto')
@@ -188,8 +188,8 @@ export class EffectVisualizationService {
 
   checkIfEffectTypeEqualsVisualizationType(effect: Effect, collection: Collection) {
     if (effect.paths.length > 0) {
-      if (effect.type !== 'velocity' && effect.type === collection.visualizationType) { return true; }
-      if (effect.type === 'velocity' && effect.grid.yUnit.name === collection.rotation.units_y.name) { return true; }
+      if (effect.type !== EffectType.velocity && effect.type === collection.visualizationType) { return true; }
+      if (effect.type === EffectType.velocity && effect.grid.yUnit.name === collection.rotation.units_y.name) { return true; }
     }
     return false;
   }
@@ -205,7 +205,7 @@ export class EffectVisualizationService {
   }
 
 
-  drawEffectData(nodes: any, effect: any, height: number, colors: Array<effectTypeColor>, width = (window.innerWidth * this.verticalDivision / 100) - 120, domain: any, reflect = { x: false, y: false }, multiply = 1) {
+  drawEffectData(nodes: any, effect: any, height: number, colors: Array<EffectTypeColor>, width = (window.innerWidth * this.verticalDivision / 100) - 120, domain: any, reflect = { x: false, y: false }, multiply = 1) {
 
     if (effect.size) {
       const xScale = d3.scaleLinear()
@@ -224,7 +224,7 @@ export class EffectVisualizationService {
 
           const paths = this.returnPathAsString(effectPath, xScale, yScale, 'pos', multiply);
 
-          if (effect.type === 'position') {
+          if (effect.type === EffectType.position) {
             const planes = this.returnPlaneAsString(effectPath, xScale, yScale, multiply);
 
             if (planes) {
@@ -233,7 +233,7 @@ export class EffectVisualizationService {
                 .enter()
                 .append('path')
                 .attr('d', (d: { svgPath: string }) => d.svgPath)
-                .attr('fill', colors.filter(c => c.type === effect.type)[0].hash)
+                .attr('fill', colors.filter(c => c.type === effect.type)[0].hash[0])
                 .attr('class', 'plane_' + path.id)
                 .style('opacity', 0.3)
                 .attr('pointer-events', 'none');
@@ -246,7 +246,7 @@ export class EffectVisualizationService {
               .enter()
               .append('path')
               .attr('d', (d: { svgPath: string }) => d.svgPath)
-              .attr('stroke', () => colors.filter(c => c.type === effect.type)[0].hash)
+              .attr('stroke', () => colors.filter(c => c.type === effect.type)[0].hash[0])
               .attr('stroke-width', () => effect.rotation === 'dependent' ? 2.0 : 4.0)
               .attr('stroke-linecap', effect.rotation === 'dependent' ? 'butt' : 'round')
               .attr('class', 'path_' + path.id)
@@ -298,7 +298,7 @@ export class EffectVisualizationService {
     // const multiply = { x: multiply_x, y: collection.rotation.units_y.name === 'deg' ? collection.rotation.end_y - collection.rotation.start_y : 100 };
     const multiply = { x: multiply_x, y: 100 };
 
-    const offset = renderedData && renderedData.type === 'position' ? pixHeight * ((100-collEffect.scale.y)/100) - (pixHeight * (collEffect.position.y / 100)) :
+    const offset = renderedData && renderedData.type === EffectType.position ? pixHeight * ((100-collEffect.scale.y)/100) - (pixHeight * (collEffect.position.y / 100)) :
                                                       pixHeight * (((100-collEffect.scale.y)/100) / 2) - (pixHeight * (collEffect.position.y / 100) / 2);
 
 
@@ -332,11 +332,11 @@ export class EffectVisualizationService {
   }
 
 
-  drawRenderedData(grp: any, dataCopy: any, type: string, collection: Collection, collEffect: any, x: number, multiply: any, offset: any, color: string, render = true) {
+  drawRenderedData(grp: any, dataCopy: any, type: EffectType, collection: Collection, collEffect: any, x: number, multiply: any, offset: any, color: string, render = true) {
 
-    const min_radius = (0.4 * multiply.x);
+    // const min_radius = (0.4 * multiply.x);
 
-    if (type === 'position') {
+    if (type === EffectType.position) {
       grp.selectAll('line.offset-' + collection.id + '-' + collEffect.id + '-' + Math.round(x * 1000))
         .data(dataCopy)
         .enter()
@@ -401,7 +401,7 @@ export class EffectVisualizationService {
 
     for (const overlap of collection.renderedData) {
       if (overlap.position) {
-        if (overlap.type === 'velocity' || (collection.layers.filter(l => l.name === 'CW')[0].visible && overlap.direction.cw) || (collection.layers.filter(l => l.name === 'CCW')[0].visible && overlap.direction.ccw)) {
+        if (overlap.type === EffectType.velocity || (collection.layers.filter(l => l.name === 'CW')[0].visible && overlap.direction.cw) || (collection.layers.filter(l => l.name === 'CCW')[0].visible && overlap.direction.ccw)) {
           this.drawRenderedData(grp, overlap.data, overlap.type, collection, { scale: { x: 100, y: 100 }, id: i }, overlap.position.start * multiply.x, multiply, 0, color, false);
         }
       }

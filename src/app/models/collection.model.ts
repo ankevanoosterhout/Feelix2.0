@@ -1,5 +1,6 @@
+import { EffectType } from './configuration.model';
 import { SliderDrawplane } from './drawing-plane-config.model';
-import { Details } from './effect.model';
+import { Details, Effect } from './effect.model';
 import { MicroController, Unit } from './hardware.model';
 
 export class Rotation {
@@ -65,7 +66,7 @@ export class Collection {
   motorID = new motorid();
   rotation = new Rotation();
   config = new Config();
-  visualizationType = 'torque';
+  visualizationType: EffectType = EffectType.torque;
   layers = [ new Layer('CW'), new Layer('CCW') ];
   overlappingData = [];
   effectDataList = [];

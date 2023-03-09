@@ -154,6 +154,23 @@ export class FileService {
     }
   }
 
+  copyCollection(collectionID: string) {
+    const activeFile = this.files.filter(f => f.isActive)[0];
+    if (activeFile) {
+      const collection = activeFile.collections.filter(c => c.id === collectionID)[0];
+      if (collection) {
+        const collectionCopy = this.cloneService.deepClone(collection);
+        collectionCopy.id = uuid();
+        collectionCopy.name += '-copy';
+        for (const effect of collectionCopy.effects) {
+          effect.id = uuid();
+        }
+        activeFile.collections.push(collectionCopy);
+        this.store();
+      }
+    }
+  }
+
   deleteCollection(collectionID: string) {
     const activeFile = this.files.filter(f => f.isActive)[0];
     if (activeFile) {
@@ -167,24 +184,14 @@ export class FileService {
   addEffect(effect: Effect) {
     const activeFile = this.files.filter(f => f.isActive)[0];
     if (activeFile) {
-      if (activeFile.activeEffect) {
-        this.updateActiveEffectData(activeFile);
-      }
-
       activeFile.effects.push(effect);
-      activeFile.activeEffect = null;
-      this.nodeService.reset();
 
       const tab = new OpenTab(effect.id, effect.name);
       const tabIndex = activeFile.configuration.openTabs.indexOf(tab);
       if (tabIndex === -1) {
         activeFile.configuration.openTabs.push(tab);
       }
-      for (const tab of activeFile.configuration.openTabs) {
-        tab.isActive = tab.id === effect.id ? true : false;
-      }
-      activeFile.activeEffect = effect;
-      this.nodeService.loadFile(activeFile.activeEffect.paths);
+      this.setEffectActive(effect);
       this.sortEffects(activeFile.configuration.sortType);
 
     }
@@ -631,7 +638,7 @@ export class FileService {
 
 
   updateUnits(oldUnits: any, newUnits: any) {
-
+    console.log(oldUnits, newUnits);
     const activeFile = this.files.filter(f => f.isActive)[0];
     if (activeFile && activeFile.activeEffect) {
       activeFile.activeEffect.paths = this.nodeService.updateUnits(oldUnits.PR, newUnits.PR);

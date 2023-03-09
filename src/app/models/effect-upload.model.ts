@@ -1,4 +1,5 @@
 import { Collection } from './collection.model';
+import { EffectType } from './configuration.model';
 import { Details, Effect } from './effect.model';
 import { MicroController, Motor } from './hardware.model';
 
@@ -94,13 +95,13 @@ export class EffectModel {
 
     this.infinite = new Model ('I', collEffect.infinite ? 1 : 0);
 
-    this.datasize = new Model ('Z', (effect.type === 'position' ? effect.data.length * 2 : effect.data.length));
+    this.datasize = new Model ('Z', (effect.type === EffectType.position ? effect.data.length * 2 : effect.data.length));
 
-    if (effect.type === 'torque') {
+    if (effect.type === EffectType.torque) {
       this.vis_type = new Model('T', 0);
-    } else if (effect.type === 'position') {
+    } else if (effect.type === EffectType.position) {
       this.vis_type = new Model('T', 1);
-    } else if (effect.type === 'velocity') {
+    } else if (effect.type === EffectType.velocity) {
       if (effect.yUnit === 'deg') {
         this.vis_type = new Model('T', 3);
       } else {

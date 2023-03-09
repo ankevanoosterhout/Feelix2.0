@@ -105,11 +105,10 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
 
 
     this.electronService.ipcRenderer.on('resetCursor', (event: Event) => {
-      this.document.getElementById('field-inset').style.cursor = this.config.cursor.cursor;
+      this.document.body.style.cursor = 'default';
     });
 
     this.electronService.ipcRenderer.on('transform', (event: Event, data: any) => {
-
       // console.log(data.horizontal, data.vertical);
       this.nodeService.translateSelectedPaths(data);
       this.drawFileData();
@@ -194,7 +193,10 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
 
     if (this.file.activeEffect) {
       this.nodeService.loadFile(this.file.activeEffect.paths);
-      this.dataService.setColor(this.file.configuration.colors.filter(c => c.type === this.file.activeEffect.type)[0].hash, this.file.configuration.colors.filter(c => c.type === 'position2')[0].hash);
+      const activeEffectInFile = this.file.configuration.colors.filter(c => c.type === this.file.activeEffect.type)[0];
+      if (activeEffectInFile) {
+        this.dataService.setColor(activeEffectInFile.hash[0], activeEffectInFile.hash.length > 1 ? activeEffectInFile.hash[1] : null);
+      }
       this.nodeService.setGridLayer(this.file.activeEffect.grid);
       this.updateGridSettingsInMenu(this.file);
       this.electronService.ipcRenderer.send('updateToolbar', { type: this.drawingService.file.activeEffect.type });
@@ -214,7 +216,10 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
         if ((this.file.activeEffect && newFile.activeEffect.id !== this.file.activeEffect.id) || !this.file.activeEffect) {
           this.loadEffectData(newFile);
         }
-        this.dataService.setColor(newFile.configuration.colors.filter(c => c.type === newFile.activeEffect.type)[0].hash, this.file.configuration.colors.filter(c => c.type === 'position2')[0].hash);
+        const activeEffectColor = newFile.configuration.colors.filter(c => c.type === newFile.activeEffect.type)[0];
+        if (activeEffectColor) {
+          this.dataService.setColor(activeEffectColor.hash[0], activeEffectColor.hash.length > 1 ? activeEffectColor.hash[1] : null);
+        }
         this.nodeService.setGridLayer(newFile.activeEffect.grid);
       } else {
         this.nodeService.reset();
@@ -334,7 +339,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
         this.drawElements.drawPath(this.config.newNode.path, 'pos');
         this.drawElements.drawNodes(this.config.newNode.path);
         this.config.svg.select('.cursorConnection').remove();
-        this.document.getElementById('field-inset').style.cursor = 'url(./assets/icons/tools/cursor-drag.png), none';
+        this.drawingService.setCursor('url(./assets/icons/tools/cursor-drag.png), none');
 
       } else if (this.config.newNode !== null && this.config.cursor.slug === 'brush') {
 
@@ -472,7 +477,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
           }
         }
       } else if (this.config.cursor.slug === 'pen') {
-        this.document.getElementById('field-inset').style.cursor = this.config.cursor.cursor;
+        this.drawingService.setCursor(this.config.cursor.cursor);
 
 
       } else if (this.config.cursor.slug === 'brush') {
@@ -512,7 +517,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
         if (this.config.activeInput === null && !this.nodeService.inputFieldsActive) {
           this.drawingService.deselectAllElements();
           this.config.svg.call(this.config.zoom);
-          this.document.getElementById('field-inset').style.cursor = 'url(./assets/icons/tools/cursor-move.png), none';
+          this.drawingService.setCursor('url(./assets/icons/tools/cursor-move.png), none');
           this.config.zoomable = true;
         }
 
@@ -589,13 +594,11 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
       } else if (e.altKey && this.config.cursor.slug === 'pen') {
         // this.electronService.ipcRenderer.send('selectCursor', 'q');
         this.config.cursor.selectedSubcursor = 'remove-cp';
-        this.document.getElementById('field-inset').style.cursor =
-            this.config.cursor.subcursor.filter(c => c.name === this.config.cursor.selectedSubcursor)[0].cursor;
+        this.drawingService.setCursor(this.config.cursor.subcursor.filter(c => c.name === this.config.cursor.selectedSubcursor)[0].cursor);
 
       } else if (e.altKey && this.config.cursor.slug === 'zoom') {
         this.config.cursor.selectedSubcursor = 'min';
-        this.document.getElementById('field-inset').style.cursor =
-            this.config.cursor.subcursor.filter(c => c.name === this.config.cursor.selectedSubcursor)[0].cursor;
+        this.drawingService.setCursor(this.config.cursor.subcursor.filter(c => c.name === this.config.cursor.selectedSubcursor)[0].cursor);
       }
     }
   }
@@ -607,7 +610,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
       if (this.config.zoomable) {
         this.config.zoomable = false;
         this.config.svg.on('.zoom', null);
-        this.document.getElementById('field-inset').style.cursor = this.config.cursor.cursor;
+        this.drawingService.setCursor(this.config.cursor.cursor);
       }
     } else if ((key === 'p' || key === 'v' || key === 'a' || key === 'l' ||
       key === 'd' || key === 's' || key === 'i' || key === 'q') && !(e.ctrlKey || e.metaKey))  {
@@ -653,7 +656,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
     }
     if (this.config.cursor.selectedSubcursor !== null) {
       this.config.cursor.selectedSubcursor = null;
-      this.document.getElementById('field-inset').style.cursor = this.config.cursor.cursor;
+      this.drawingService.setCursor(this.config.cursor.cursor);
     }
   }
 

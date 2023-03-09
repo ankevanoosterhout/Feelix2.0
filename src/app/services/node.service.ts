@@ -1192,7 +1192,6 @@ export class NodeService {
 
 
   mirrorPath(copypath: Path, mirrorLine: any, reflectX: boolean, reflectY: boolean) {
-    // console.log(path, direction);
     let path = this.cloneService.deepClone(copypath);
     for (const node of path.nodes) {
       const old = { x: node.pos.x, y: node.pos.y, ax: node.angle.x, ay: node.angle.y };
@@ -1231,16 +1230,23 @@ export class NodeService {
 
 
   checkIfNodeIsAtTheEndOfArray(node: Node) {
-    const nodes = this.paths.filter(p => p.id === node.path)[0].nodes.filter(n => n.type === 'node');
-    if (nodes) {
-      const index = nodes.indexOf(node);
-      const arrayLength = nodes.length;
+    const path = this.paths.filter(p => p.id === node.path)[0];
+    if (path) {
+      const nodes = path.nodes.filter(n => n.type === 'node');
+      if (nodes) {
+        const index = nodes.indexOf(node);
+        const arrayLength = nodes.length;
 
-      if (index === 0 || index === arrayLength - 1) {
-        return index;
+        if (index === 0 || index === arrayLength - 1) {
+          return index;
+        } else {
+          return -1;
+        }
       } else {
-        return -1;
+        console.log('no nodes in path ', path);
       }
+    } else {
+      console.log('error identifying path ', node);
     }
   }
 

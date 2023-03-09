@@ -298,7 +298,7 @@ label.select:after {
 label.color-picker:after {
   left: 110px;
 }
-label.color-picker.position:after {
+label.color-picker.t1:after {
   left: 135px;
 }
 label.select.axes:after {

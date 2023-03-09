@@ -66,11 +66,6 @@ export class MotorSettingsComponent implements OnInit {
     { name: 'Stepper Motor', disabled: true },
   ];
 
-  public motionControlTypes = [
-    { name: 'velocity' },
-    { name: 'position' },
-    { name: 'torque' }
-  ];
 
   public encoderTypes = [
     { name: 'Magnetic sensor', disabled: false },

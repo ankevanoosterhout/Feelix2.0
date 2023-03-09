@@ -8,6 +8,7 @@ import { Collection } from '../models/collection.model';
 import { Details, Effect } from '../models/effect.model';
 import { CloneService } from './clone.service';
 import { v4 as uuid } from 'uuid';
+import { EffectType } from '../models/configuration.model';
 
 @Injectable()
 export class UploadService {
@@ -39,7 +40,7 @@ export class UploadService {
       }
       n++;
     }
-    console.log(collection);
+    // console.log(collection);
   }
 
   createNewEffectListWithRepeatedEffects(collEffects: Array<Details>) {
@@ -113,19 +114,19 @@ export class UploadService {
       const cw = item.effect1.direction.cw && item.effect2.direction.cw ? true : false;
       const ccw = item.effect1.direction.ccw && item.effect2.direction.ccw ? true : false;
 
-      if ((cw || ccw) || (item.type === 'velocity')) {
+      if ((cw || ccw) || (item.type === EffectType.velocity)) {
         for (let i = item.position.x1; i <= item.position.x2; i++) {
 
           const index = item.effect1.flip.x ? item.position.x2 - i : i;
           const y1 = this.bezierService.closestY(index, item.points);
           const x1 = item.points.filter(p => p.y === y1)[0].x;
-          const d1 = item.type === 'position' ? item.points.filter(p => p.y === y1)[0].d * (180 / Math.PI) : null;
-          const o1 = item.type === 'position' ? item.points.filter(p => p.y === y1)[0].o : null;
+          const d1 = item.type === EffectType.position ? item.points.filter(p => p.y === y1)[0].d * (180 / Math.PI) : null;
+          const o1 = item.type === EffectType.position ? item.points.filter(p => p.y === y1)[0].o : null;
 
           const y2 = x1 > i ? this.bezierService.closestY(index - 1, item.points) : this.bezierService.closestY(index + 1, item.points);
           const x2 = item.points.filter(p => p.y === y2)[0].x;
-          const d2 = item.type === 'position' ? item.points.filter(p => p.y === y2)[0].d * (180 / Math.PI) : null;
-          const o2 = item.type === 'position' ? item.points.filter(p => p.y === y2)[0].o : null;
+          const d2 = item.type === EffectType.position ? item.points.filter(p => p.y === y2)[0].d * (180 / Math.PI) : null;
+          const o2 = item.type === EffectType.position ? item.points.filter(p => p.y === y2)[0].o : null;
 
           let newY = (y2 - y1) / (x2 - x1) * (i - x1) + y1;
 
@@ -136,7 +137,7 @@ export class UploadService {
             newO = (o2 - o1) / (x2 - x1) * (i - x1) + o1;
           }
 
-          const pointAtNewArray = newArray.filter(n => n.x === i && n.id !== item.id && (((n.direction.cw === cw) || (n.direction.ccw === ccw)) || item.type === 'velocity'))[0];
+          const pointAtNewArray = newArray.filter(n => n.x === i && n.id !== item.id && (((n.direction.cw === cw) || (n.direction.ccw === ccw)) || item.type === EffectType.velocity))[0];
 
           if (pointAtNewArray) {
             if (!item.effect1.flip.y) {
@@ -195,7 +196,7 @@ export class UploadService {
       let i = 0;
       for (const el of array) {
         if (tmpArray.length > 0 && ((el.x - array[i - 1].x > 1) || i === array.length - 1) &&
-          (el.type === 'velocity' || el.direction.cw === array[i - 1].direction.cw || el.direction.ccw === array[i - 1].direction.ccw)) {
+          (el.type === EffectType.velocity || el.direction.cw === array[i - 1].direction.cw || el.direction.ccw === array[i - 1].direction.ccw)) {
           newArray.push({ data: tmpArray, direction: el.direction, type: el.type, yUnit: el.yUnit, inf: el.inf, position: { start: startPosition, end: array[i - 1].x } });
           tmpArray = [];
           startPosition = array[i].x;
@@ -233,7 +234,7 @@ export class UploadService {
   }
 
   translateEffectData(collEffect: Details, effectData: Effect) {
-    console.log(effectData);
+    // console.log(effectData);
     let copyEffectList = this.cloneService.deepClone(effectData);
     let multiply = 1;
     if (effectData.grid.xUnit.name === 'rad') { multiply = (180 / Math.PI); }
@@ -244,16 +245,16 @@ export class UploadService {
     let start_pos = 0;
 
     for (const path of copyEffectList.paths) {
-      if (effectData.type === 'velocity' && effectData.grid.yUnit.name === 'deg') {
+      if (effectData.type === EffectType.velocity && effectData.grid.yUnit.name === 'deg') {
         const nodes = path.nodes.filter(n => n.type === 'node');
         start_pos = Math.ceil(nodes[0].pos.y * (Math.PI / 180));
       }
       if (path && path.nodes) {
-        data = effectData.type === 'position' ?
+        data = effectData.type === EffectType.position ?
           data.concat(this.translatePositionEffectData(path, multiply, start_offset, collEffect.quality)) :
           data.concat(this.translateTorqueEffectData(path, multiply, effectData.range_y, start_offset, collEffect.quality, start_pos));
 
-        data_complete = effectData.type === 'position' ?
+        data_complete = effectData.type === EffectType.position ?
           data_complete.concat(this.translatePositionEffectData(path, multiply, 0, 1)) :
           data_complete.concat(this.translateTorqueEffectData(path, multiply, effectData.range_y, 0, 1, start_pos));
 
@@ -435,7 +436,7 @@ export class UploadService {
   createUploadModel(collection: Collection, microcontroller: MicroController) {
     console.log(collection, microcontroller);
     let model = new UploadModel(collection, microcontroller);
-    console.log(model.config);
+    console.log(model);
     return model;
   }
 
@@ -448,14 +449,14 @@ export class UploadService {
       if (effect.grid.xUnit.name === 'rad') { multiply = (180 / Math.PI); }
 
       let effect_type = 'Effect_type::NOTSET';
-      if (effect.type !== 'velocity') {
+      if (effect.type !== EffectType.velocity) {
         effect_type = effect.rotation === 'dependent' ? 'Effect_type::DEPENDENT' : 'Effect_type::INDEPENDENT';
       }
 
       let control_type = 'Control_type::POSITION';
-      if (effect.type === 'torque') { control_type = 'Control_type::TORQUE'; }
-      if (effect.type === 'velocity' && effect.grid.yUnit.name === 'deg') { control_type = 'Control_type::VELOCITY_ANGLE'; }
-      if (effect.type === 'velocity' && effect.grid.yUnit.name !== 'deg') { control_type = 'Control_type::VELOCITY'; }
+      if (effect.type === EffectType.torque) { control_type = 'Control_type::TORQUE'; }
+      if (effect.type === EffectType.velocity && effect.grid.yUnit.name === 'deg') { control_type = 'Control_type::VELOCITY_ANGLE'; }
+      if (effect.type === EffectType.velocity && effect.grid.yUnit.name !== 'deg') { control_type = 'Control_type::VELOCITY'; }
 
       if (multiply) {
         const newDetails = new Details(uuid(), effect.id, effect.name);
@@ -465,7 +466,7 @@ export class UploadService {
         let dataArrayAsString = '{';
 
         for (const item of translatedData.data) {
-          if (effect.type === 'position') {
+          if (effect.type === EffectType.position) {
             dataArrayAsString += (Math.round(item.d) === item.d ? item.d.toFixed(1) : item.d.toFixed(9)) + ', ' + (Math.round(item.y) === item.y ? item.y.toFixed(1) : item.y.toFixed(9)) + ', '
           } else {
             dataArrayAsString += (Math.round(item.y) === item.y ? item.y.toFixed(1) : item.y.toFixed(9)) + ', '
@@ -476,7 +477,7 @@ export class UploadService {
 
         const newEffectName = effect.name.replace(/-/g, '_');
 
-        data = '/* initialize */ \nEffectConfig_s ' + newEffectName + '_config { \n\t.data_size = ' + (effect.type !== 'position' ? translatedData.data.length : (translatedData.data.length * 2)) + ',\n\t.angle = ' +
+        data = '/* initialize */ \nEffectConfig_s ' + newEffectName + '_config { \n\t.data_size = ' + (effect.type !== EffectType.position ? translatedData.data.length : (translatedData.data.length * 2)) + ',\n\t.angle = ' +
             angle + ',\n\t.quality = ' + quality + ',\n\t.effect_type = ' + effect_type + ',\n\t.control_type = ' + control_type + '\n };\r\n\n';
 
         data += 'float data_' + newEffectName + '[] = ' + dataArrayAsString + ';\r\n';

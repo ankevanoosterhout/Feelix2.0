@@ -1,5 +1,6 @@
 import { Dates } from './file.model';
 import { Path } from './node.model';
+import { EffectType } from './configuration.model';
 
 export class Color {
   name = 'Light gray';
@@ -133,7 +134,7 @@ export class Effect {
   id: string = null;
   name: string = 'effect-1';
   date = new Dates();
-  type = 'torque';
+  type: EffectType = EffectType.torque;
   rotation = 'dependent';
   paths: Array<Path> = [];
   grid = new Grid();

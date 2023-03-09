@@ -2,6 +2,7 @@ import { Component, OnInit, Inject, HostListener } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { ElectronService } from 'ngx-electron';
 import { ToolService } from 'src/app/services/tool.service';
+import { EffectType } from 'src/app/models/configuration.model';
 
 @Component({
     selector: 'app-toolbar',
@@ -138,7 +139,7 @@ export class ToolbarComponent implements OnInit {
     });
 
     this.electronService.ipcRenderer.on('updateToolbar', (event: Event, data: any) => {
-      if (data.type !== 'position') {
+      if (data.type !== EffectType.position) {
         this.toolService.disable('thick');
         this.electronService.ipcRenderer.send('updateToolbarSize', 'small');
         if (this.selectedTool === 5) { this.selectTool(4); }

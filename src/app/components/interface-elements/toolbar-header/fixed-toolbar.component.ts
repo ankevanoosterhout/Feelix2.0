@@ -8,162 +8,22 @@ import { ElectronService } from 'ngx-electron';
 import { EffectLibraryService } from 'src/app/services/effect-library.service';
 import { Unit } from 'src/app/models/effect.model';
 import { CloneService } from 'src/app/services/clone.service';
+import { EffectType, EffectTypeLabelMapping } from 'src/app/models/configuration.model';
 
 @Component({
   selector: 'app-fixed-toolbar',
-  template: `
-  <div class="fixed-toolbar" id="fixed-toolbar" ondrag="return false">
-
-    <div *ngIf="this.drawingService.file.configuration.horizontalScreenDivision < (100/innerHeight) * (innerHeight - 50)">
-      <div class="form-row">
-        <ul class="buttons-list">
-          <li id="new" (click)="createNewEffect()"><img src="./assets/icons/tools/collections.svg" title="New effect"></li>
-          <li id="settings" (click)="openEffectSettings()"><img src="./assets/icons/tools/settings.svg" title="Effect settings"></li>
-          <li id="save-effect" (click)="saveActiveEffect()"><img src="./assets/icons/buttons/save.svg" title="Save effect"></li>
-          <li id="save-lib-effect" (click)="saveEffectToLibrary()"><img src="./assets/icons/buttons/save-lib.svg" title="Save effect to library"></li>
-        </ul>
-      </div>
-
-      <div class="form-row" *ngIf="this.drawingService.file.activeEffect">
-        <span>
-          <input type="color" id="color-picker" name="color-picker" [(ngModel)]="this.dataService.color" (change)="updateColor()">
-        </span>
-        <span *ngIf="this.drawingService.file.activeEffect.type === 'position'">
-          <input type="color" id="color-picker" name="color-picker-2" [(ngModel)]="this.dataService.color2" (change)="updateColor2()">
-        </span>
-
-        <label class="select color-picker {{ this.drawingService.file.activeEffect.type }}" title="select effect visualization type"></label>
-        <select class="form-control" id="select" (change)="this.updateEffectType()" [(ngModel)]="this.drawingService.file.activeEffect.type" name="type" title="select effect visualization type">
-            <option *ngFor="let type of typeOptions" [ngValue]="type">{{ type }}</option>
-        </select>
-      </div>
-
-      <div class="form-row" *ngIf="this.drawingService.file.activeEffect && this.drawingService.file.activeEffect.type !== 'velocity'" title="select units x-axis">
-        <label class="select axes">x </label>
-        <select class="form-control" id="select" value="{{ this.drawingService.file.activeEffect.grid.xUnit.name }}" (change)="this.drawingService.updateUnitsActiveEffect($event.target.value)"
-          name="x-axis">
-            <option *ngFor="let type of this.drawingService.config.xAxisOptions" [ngValue]="type">{{ type.name }}</option>
-        </select>
-      </div>
-
-      <div class="form-row" *ngIf="this.drawingService.file.activeEffect && this.drawingService.file.activeEffect.type === 'velocity'" title="select units x-axis">
-        <label class="select axes">x </label>
-        <select class="form-control" id="select" value="{{ this.drawingService.file.activeEffect.grid.xUnit.name }}" (change)="this.drawingService.updateUnitsActiveEffect($event.target.value)"
-          name="x-axis">
-            <option *ngFor="let type of this.drawingService.config.xAxisOptions_velocity" [ngValue]="type">{{ type.name }}</option>
-        </select>
-      </div>
-
-      <div class="form-row" *ngIf="this.drawingService.file.activeEffect && this.drawingService.file.activeEffect.type !== 'velocity'" title="units y-axis: % of max voltage">
-        <label class="select axes">y </label>
-        <select class="form-control" id="select" [(ngModel)]="this.drawingService.file.activeEffect.grid.yUnit" name="y-axis" [compareWith]="compareUnits">
-            <option *ngFor="let type of this.drawingService.config.yAxisOptions" [ngValue]="type">{{ type.name }}</option>
-        </select>
-      </div>
-
-      <div class="form-row" *ngIf="this.drawingService.file.activeEffect && this.drawingService.file.activeEffect.type === 'velocity'" title="units y-axis: degrees or % of max velocity">
-        <label class="select axes">y </label>
-        <select class="form-control" id="select" [(ngModel)]="this.drawingService.file.activeEffect.grid.yUnit" name="y-axis" [compareWith]="compareUnits">
-            <option *ngFor="let type of this.drawingService.config.yAxisOptions_velocity" [ngValue]="type">{{ type.name }}</option>
-        </select>
-      </div>
-
-      <div class="form-row" *ngIf="this.drawingService.file.activeEffect && this.drawingService.file.activeEffect.type !== 'velocity'" title="select type of haptic effect">
-        <label class="select"></label>
-        <select class="form-control" id="select" [(ngModel)]="this.drawingService.file.activeEffect.rotation"
-          (change)="this.drawingService.saveEffect(this.drawingService.file.activeEffect)" name="rotation-type">
-            <option *ngFor="let type of rotationOptions" [ngValue]="type">{{ type }}</option>
-        </select>
-      </div>
-
-
-      <div class="form-row range" *ngIf="this.drawingService.file.activeEffect && this.drawingService.file.activeEffect.type === 'velocity' && (this.drawingService.file.activeEffect.grid.yUnit.name === 'rad' || this.drawingService.file.activeEffect.grid.yUnit.name === 'deg')"
-        title="specify range y-axis (deg)">
-        <label>range</label>
-        <input type="number" class="small" id="range-start" name="range-start" [(ngModel)]="this.drawingService.file.activeEffect.range_y.start" (change)="updateRange()">
-        <input type="number" class="small" id="range-end" name="range-end" [(ngModel)]="this.drawingService.file.activeEffect.range_y.end" (change)="updateRange()">
-      </div>
-
-      <ul>
-        <li id="align-buttons" *ngIf="this.innerWidth > 1280">
-          <div>
-            <ul class="align" id="distribute">
-                <li *ngFor="let item of distribute" (click)="selectItem(item.value);">
-                  <img src="{{ item.icon }}" title="align {{ item.value }}"></li>
-            </ul>
-            <ul class="align" id="align">
-                <li *ngFor="let item of align" (click)="selectItem(item.value);">
-                  <img src="{{ item.icon }}" title="align {{ item.value }}"></li>
-            </ul>
-          </div>
-        </li>
-
-        <li id="reference-point" class="scaling-options" [ngClass]="{ active: toolbar.boxSelection }" *ngIf="this.innerWidth > 1070">
-            <div class="bg-line"></div>
-            <div class="row">
-                <div *ngFor="let point of referencePoints" class="point"
-                  [ngClass]="{ active: toolbar.referencePoint.name === point.name }"
-                  (click)="selectReferencePoint(point);"></div>
-            </div>
-        </li>
-
-        <li id="current-x" class="scaling-options" *ngIf="this.innerWidth > 1070">
-          <label class="coordinates-label">x</label>
-          <input type="number" id="x-value" name="points-x" [(ngModel)]="toolbar.points.x"
-          (click)="focus()" (change)="onChange('x-value')">
-          <div class="arrows"><div class="arrow up x" id="upX" name="upX" (click)="transform('x', 1);"></div>
-          <div class="arrow down x" id="downX" name="downX" (click)="transform('x', -1);"></div></div>
-        </li>
-
-        <li id="current-y" class="scaling-options" *ngIf="this.innerWidth > 1070">
-          <label class="coordinates-label">y</label>
-          <input type="number" id="y-value" name="points-y" (change)="onChange('y-value')" [(ngModel)]="toolbar.points.y"
-          (click)="focus()">
-          <div class="arrows"><div class="arrow up y" id="upY" name="upY" (click)="transform('y', 1);"></div>
-          <div class="arrow down y" id="downY" name="downY" (click)="transform('y', -1);"></div></div>
-        </li>
-
-        <li id="current-w" class="scaling-options" *ngIf="this.innerWidth > 1070">
-          <label class="coordinates-label">w</label>
-          <input type="number" id="w-value" name="points-w" (change)="onChange('w-value')" [(ngModel)]="toolbar.points.w"
-          (click)="focus()">
-          <div class="arrows"><div class="arrow up w" id="upW" name="upW" (click)="transform('w', 1);"></div>
-          <div class="arrow down w" id="downW" name="downW" (click)="transform('w', -1);"></div></div>
-        </li>
-
-        <li id="link" class="scaling-options" *ngIf="this.innerWidth > 1070">
-          <div class="aspectRatio active" (click)="toolbar.linked = !toolbar.linked">
-            <img *ngIf="toolbar.linked" src="./assets/icons/align/link.svg" title="aspect ratio">
-            <img *ngIf="!toolbar.linked" src="./assets/icons/align/unlink.svg" title="aspect ratio">
-          </div>
-        </li>
-
-        <li id="current-h" class="scaling-options" *ngIf="this.innerWidth > 1070">
-          <label class="coordinates-label">h</label>
-          <input type="number" id="h-value" name="points-h" (change)="onChange('h-value')" [(ngModel)]="toolbar.points.h"
-          (click)="focus()">
-          <div class="arrows"><div class="arrow up h" id="upH" name="upH" (click)="transform('h', 1, toolbar.points.h);"></div>
-          <div class="arrow down h" id="downH" name="downH" (click)="transform('h', -1, toolbar.points.h);"></div></div>
-        </li>
-      </ul>
-    </div>
-    <div class="attach-toolbar" id="toggleDrawPlane"><div class="attach-arrow" (click)="toggleDrawPlane()"></div></div>
-  </div>
-  `,
+  templateUrl: './fixed-toolbar.component.html',
   styleUrls: ['./fixed-toolbar.component.css']
 })
 export class FixedToolbarComponent implements OnInit {
+
+  public EffectTypeLabelMapping = EffectTypeLabelMapping;
 
   toolbar = new Toolbar();
   public innerHeight: number;
   public innerWidth: number;
 
-  loop = false;
-  rendered = false;
-  play = false;
-  returnToStart = false;
-
-  type = 'torque';
+  type = EffectType.torque;
   xAxis = 'deg';
   yAxis = '%';
   rotationType = 'dependent';
@@ -174,10 +34,9 @@ export class FixedToolbarComponent implements OnInit {
   pointsCopy: any;
   enabled = true;
 
-  typeOptions = ['torque','position','velocity'];
+  // typeOptions = [EffectType.torque, EffectType.position, EffectType.velocity, EffectType.pneumatic];
+  public typeOptions = Object.values(EffectType).filter(value => typeof value === 'number');
   rotationOptions = ['independent', 'dependent'];
-
-
 
   referencePoints = [
     { name: 'nw', id: 0 },
@@ -203,47 +62,11 @@ export class FixedToolbarComponent implements OnInit {
     { id: 5, value: 'right', icon: './assets/icons/align/distributed-right.svg' }
   ];
 
-  playButton = {
-    id: 'play', icon: '../../src/assets/icons/buttons/play.svg',
-    icon2: '../../src/assets/icons/buttons/stop.svg',
-    active: false, hidden: !this.rendered
-  };
-
-  forwardButton = {
-    id: 'forward', icon: '../../src/assets/icons/buttons/forward.svg',
-    active: false, hidden: !this.rendered
-  };
-
-  backButton = {
-    id: 'back', icon: '../../src/assets/icons/buttons/back.svg',
-    active: false, hidden: !this.rendered
-  };
-
-  return = {
-    id: 'return',  alt: 'return to start position before play',
-    icon: '../../src/assets/icons/buttons/rotate-to-start.svg',
-    active: this.returnToStart, hidden: false };
-
-  loopButton = {
-    id: 'loop', icon: '../../src/assets/icons/buttons/refresh.svg',
-    active: this.loop, hidden: false };
-
-  editButtons = [
-    { id: 'upload', alt: 'upload', icon: '../../src/assets/icons/buttons/upload.svg' },
-    { id: 'merge', alt: 'merge keyframes', icon: '../../src/assets/icons/buttons/merge.svg' },
-    { id: 'mirror', alt: 'mirror keyframe', icon: '../../src/assets/icons/buttons/mirror.svg' }
-  ];
 
   // tslint:disable-next-line: variable-name
   constructor(@Inject(DOCUMENT) private document: Document, public dataService: DataService, private bezierService: BezierService,
               public drawingService: DrawingService, private electronService: ElectronService, public effectLibraryService: EffectLibraryService,
               private cloneService: CloneService) {
-
-    // this.electronService.ipcRenderer.on('updateButtonState', (event: Event, data: any) => {
-    //   this.loop = data.loop;
-    //   this.rendered = data.rendered;
-    //   this.returnToStart = data.returnToStart;
-    // });
 
     this.innerHeight = window.innerHeight;
     this.innerWidth = window.innerWidth;
@@ -340,7 +163,7 @@ export class FixedToolbarComponent implements OnInit {
     });
 
     if (this.drawingService.file.activeEffect) {
-      this.dataService.color = this.drawingService.file.configuration.colors.filter(c => c.type === this.drawingService.file.activeEffect.type)[0].hash;
+      this.dataService.color = this.drawingService.file.configuration.colors.filter(c => c.type === this.drawingService.file.activeEffect.type)[0].hash[0];
     }
   }
 
@@ -395,13 +218,13 @@ export class FixedToolbarComponent implements OnInit {
   }
 
   updateColor() {
-    this.drawingService.file.configuration.colors.filter(c => c.type === this.drawingService.file.activeEffect.type)[0].hash = this.dataService.color;
+    this.drawingService.file.configuration.colors.filter(c => c.type === this.drawingService.file.activeEffect.type)[0].hash[0] = this.dataService.color;
     // this.drawingService.saveFile(this.drawingService.file);
     this.drawingService.updateConfigActiveFile(this.drawingService.file.configuration);
   }
 
   updateColor2() {
-    this.drawingService.file.configuration.colors.filter(c => c.type === 'position2')[0].hash = this.dataService.color2;
+    this.drawingService.file.configuration.colors.filter(c => c.type === EffectType.position)[0].hash[1] = this.dataService.color2;
     // this.drawingService.saveFile(this.drawingService.file);
     this.drawingService.updateConfigActiveFile(this.drawingService.file.configuration);
   }
@@ -411,13 +234,13 @@ export class FixedToolbarComponent implements OnInit {
   }
 
   createNewEffect() {
-    // this.document.getElementById('field-inset').style.cursor = 'wait';
+    this.document.body.style.cursor = 'wait';
     // this.drawingService.saveEffect();
     this.electronService.ipcRenderer.send('effectSettings', 'effect-settings');
   }
 
   openEffectSettings() {
-    // this.document.getElementById('field-inset').style.cursor = 'wait';
+    this.document.body.style.cursor = 'wait';
     // this.drawingService.saveEffect();
     this.electronService.ipcRenderer.send('effectSettings', 'effect-update-settings');
   }

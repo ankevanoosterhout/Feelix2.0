@@ -8,6 +8,7 @@ import { Collection, Layer, Scale } from '../models/collection.model';
 import { DrawingService } from './drawing.service';
 import { Details, Direction, Effect, Unit } from '../models/effect.model';
 import { EffectVisualizationService } from './effect-visualization.service';
+import { EffectType } from '../models/configuration.model';
 
 @Injectable()
 export class MotorControlService {
@@ -108,6 +109,10 @@ export class MotorControlService {
     this.fileService.deleteCollection(collection.id);
   }
 
+  copyCollection(collection: Collection) {
+    this.fileService.copyCollection(collection.id);
+  }
+
   saveCollection(collection: Collection) {
     this.fileService.updateCollection(collection);
   }
@@ -191,7 +196,7 @@ export class MotorControlService {
         .attr('fill', '#1c1c1c');
 
     }
-    if (collection.rotation.loop || (collection.rotation.constrain && collection.visualizationType !== 'velocity')) {
+    if (collection.rotation.loop || (collection.rotation.constrain && collection.visualizationType !== EffectType.velocity)) {
       const lineData = [collection.rotation.start, collection.rotation.end];
 
       const lines = collection.config.svg.selectAll('line.range-line')
@@ -225,14 +230,14 @@ export class MotorControlService {
       .attr('transform', () => this.file.configuration.collectionDisplay === 'small' ? 'translate(0, 0)' : 'translate(0, 26)');
 
 
-    if ((collection.effectDataList.length > 0 && collection.visualizationType === 'torque' && collection.microcontroller && collection.motorID) ||
-        (collection.rotation.constrain && collection.rotation.units_y.name === 'deg' && collection.visualizationType === 'velocity')) {
-      if (collection.microcontroller.motors[collection.motorID.index].config.voltageLimit || collection.visualizationType === 'velocity') {
+    if ((collection.effectDataList.length > 0 && collection.visualizationType === EffectType.torque && collection.microcontroller && collection.motorID) ||
+        (collection.rotation.constrain && collection.rotation.units_y.name === 'deg' && collection.visualizationType === EffectType.velocity)) {
+      if (collection.microcontroller.motors[collection.motorID.index].config.voltageLimit || collection.visualizationType === EffectType.velocity) {
         let value: number;
-        if (collection.visualizationType === 'torque') {
+        if (collection.visualizationType === EffectType.torque) {
           value = (100 / collection.microcontroller.motors[collection.motorID.index].config.supplyVoltage) * collection.microcontroller.motors[collection.motorID.index].config.voltageLimit;
         }
-        const limitData = collection.visualizationType === 'torque' ? [ value, -value ] : [ collection.rotation.start_y, collection.rotation.end_y ];
+        const limitData = collection.visualizationType === EffectType.torque ? [ value, -value ] : [ collection.rotation.start_y, collection.rotation.end_y ];
 
         const limitLines = collection.config.svg.selectAll('line.limit')
           .data(limitData)
@@ -245,7 +250,7 @@ export class MotorControlService {
           .attr('y2', (d) => collection.config.newYscale(d))
           .attr('transform', () => this.file.configuration.collectionDisplay === 'small' ? 'translate(0, 0)' : 'translate(0, 26)')
           .attr('shape-rendering', 'crispEdges')
-          .attr('stroke', collection.visualizationType === 'torque' ? '#FF0000' : '#FF9100')
+          .attr('stroke', collection.visualizationType === EffectType.torque ? '#FF0000' : '#FF9100')
           .attr('opacity', 0.6)
           .attr('stroke-width', 0.5)
           .attr('fill', 'none');
@@ -696,10 +701,10 @@ export class MotorControlService {
       collection.config.xAxisSmallThicks.call(collection.config.xAxisSmall.scale(collection.config.newXscale));
     }
 
-    if (collection.rotation.loop || (collection.rotation.constrain && collection.visualizationType !== 'velocity')) {
+    if (collection.rotation.loop || (collection.rotation.constrain && collection.visualizationType !== EffectType.velocity)) {
       collection.config.svg.selectAll('.range-line').attr('x1', (d) => collection.config.newXscale(d)).attr('x2', (d) => collection.config.newXscale(d));
     }
-    if (!collection.rotation.loop && collection.visualizationType !== 'velocity') {
+    if (!collection.rotation.loop && collection.visualizationType !== EffectType.velocity) {
       collection.config.svg.selectAll('.inner-container')
         .attr('x', collection.config.newXscale(collection.rotation.start))
         .attr('width', collection.config.newXscale(collection.rotation.end) - collection.config.newXscale(collection.rotation.start));

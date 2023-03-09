@@ -1,3 +1,19 @@
+export enum EffectType {
+  torque = 0,
+  position = 1,
+  velocity = 2,
+  pneumatic = 3
+};
+
+
+export const EffectTypeLabelMapping: Record<EffectType, string> = {
+  [EffectType.torque]: 'torque',
+  [EffectType.position]: 'position',
+  [EffectType.velocity]: 'velocity',
+  [EffectType.pneumatic]: 'pneumatic'
+};
+
+
 export class ScrollOffset {
   id: string = null;
   value = 0;
@@ -5,7 +21,7 @@ export class ScrollOffset {
   constructor(id: string) {
     this.id = id;
   }
-}
+};
 
 export class OpenTab {
   id: string = null;
@@ -16,17 +32,18 @@ export class OpenTab {
     this.id = id;
     this.name = name;
   }
-}
+};
 
-export class effectTypeColor {
-  type: string;
-  hash: string;
+export class EffectTypeColor {
+  type: EffectType;
+  hash: Array<string>;
 
-  constructor(type: string, hash: string) {
+
+  constructor(type: EffectType, hash: Array<string>) {
     this.type = type;
     this.hash = hash;
   }
-}
+};
 
 export class Configuration {
   horizontalScreenDivision = 35;
@@ -38,9 +55,9 @@ export class Configuration {
   libraryViewSettings = 'large-thumbnails';
   sortType = 'date-modified';
   sortDirection = 'first-last';
-  colors: Array<effectTypeColor> =
-    [ new effectTypeColor('torque', '#0f4d9d'),
-      new effectTypeColor('velocity', '#ed1a75'),
-      new effectTypeColor('position', '#d94313'),
-      new effectTypeColor('position2', '#d5afaf') ];
-}
+  colors: Array<EffectTypeColor> =
+    [ new EffectTypeColor(EffectType.torque, ['#0f4d9d']),
+      new EffectTypeColor(EffectType.velocity, ['#ed1a75']),
+      new EffectTypeColor(EffectType.position, ['#d94313', '#d5afaf']),
+      new EffectTypeColor(EffectType.pneumatic, ['#37DEF8']) ];
+};

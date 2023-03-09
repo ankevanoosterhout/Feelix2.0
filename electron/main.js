@@ -795,6 +795,7 @@ function drawTemporaryWindow(width, height, title, resizable, hash, details = nu
     alwaysOnTop: true,
     frame: false,
     resizable: resizable,
+    // resizable: true,
     center: false,
     movable: true,
     parent: parent,

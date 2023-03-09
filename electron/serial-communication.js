@@ -49,7 +49,7 @@ function writeDataString(data, COM) {
           // reconnect(data, COM);
           return console.log('Error: ', err.message);
       } else {
-        // console.log('write data ', data);
+        console.log('write data ', data);
       }
   });
 }
@@ -191,6 +191,10 @@ class newSerialPort {
 
       parser.on('data', (d) => {
         // console.log(d);
+        if (d.charAt(0) === '#') {
+          console.log('received data ', d);
+        }
+
         if (d.charAt(0) === '*') {
           // console.log('received data ', d);
           if (dataSendWaitList.filter(d => d.port === this.COM)) {
@@ -374,7 +378,7 @@ function prepareEffectData(uploadContent, motor, datalist) {
   let ptr = 0;
   for (const d of uploadContent.data.overlay) {
     d.pointer = ptr;
-    ptr += d.type === 'position' ? d.data.length * 2 : d.data.length;
+    ptr += d.type === 1 ? d.data.length * 2 : d.data.length;
   }
 
   let ptr2 = 0;
@@ -383,7 +387,7 @@ function prepareEffectData(uploadContent, motor, datalist) {
     for (const sameEffect of sameEffectList) {
       sameEffect.pointer = ptr2 + ptr;
     }
-    ptr2 += d.type === 'position' ? d.data.length * 2 : d.data.length;
+    ptr2 += d.type === 1 ? d.data.length * 2 : d.data.length;
   }
 
 
@@ -394,20 +398,25 @@ function prepareEffectData(uploadContent, motor, datalist) {
     datalist.unshift('FE' + motor.id + i + 'I:' + (d.infinite ? 1 : -1));
     datalist.unshift('FE' + motor.id + i + 'R:' + d.pointer);
     let type = 0;
-    if (d.type === 'position') { type = 1; }
-    if (d.type === 'velocity' && d.yUnit !== 'deg') { type = 2; }
-    if (d.type === 'velocity' && d.yUnit === 'deg') { type = 3; }
-    datalist.unshift('FE' + motor.id + i + 'T:' + type);
-    datalist.unshift('FE' + motor.id + i + 'Z:' + (d.type === 'position' ? d.data.length * 2 : d.data.length));
+    if (d.type === 1) { type = 1; }
+    if (d.type === 2 && d.yUnit !== 'deg') { type = 2; }
+    if (d.type === 2 && d.yUnit === 'deg') { type = 3; }
+    datalist.unshift('FE' + motor.id + i + 'T:' + type); //T
+    if (type !== 2) {
+      datalist.unshift('FE' + motor.id + i + 'E:1');
+    }
+    datalist.unshift('FE' + motor.id + i + 'Z:' + (d.type === 1 ? d.data.length * 2 : d.data.length));
 
 
     for (const el of d.data) {
-      if (el.d && d.type === 'position') {
+
+      if (el.d && d.type === 1) {
         datalist.unshift('FDI' + motor.id + ':' + (Math.round(el.d) !== el.d ? el.d.toFixed(6) : el.d));
       }
-      if (d.type === 'velocity' && d.yUnit === 'deg') {
+      if (d.type === 2 && d.yUnit === 'deg') {
         datalist.unshift('FDI' + motor.id + ':' + ((el.y2 * 100) * (Math.PI / 180)).toFixed(6));
       } else {
+        // console.log('overlay ' + 'FDI' + motor.id + ':' + (Math.round(el.y) !== el.y ? el.y.toFixed(6) : el.y));
         datalist.unshift('FDI' + motor.id + ':' + (Math.round(el.y) !== el.y ? el.y.toFixed(6) : el.y));
       }
     }
@@ -417,14 +426,14 @@ function prepareEffectData(uploadContent, motor, datalist) {
 
   for (const effect of uploadContent.effects) {
     datalist.unshift('FE' + motor.id + i + effect.position.identifier + ':' + effect.position.value[1]);
-    if (effect.vis_type !== 'velocity') {
+    if (effect.vis_type !== 2) {
       datalist.unshift('FE' + motor.id + i + effect.direction.identifier + ':' + effect.direction.value[0] + ':' + effect.direction.value[1]);
     }
     datalist.unshift('FE' + motor.id + i + effect.scale.identifier + ':' + effect.scale.value[0] + ':' + effect.scale.value[1]);
     datalist.unshift('FE' + motor.id + i + effect.flip.identifier + ':' + effect.flip.value[0] + ':' + effect.flip.value[1] + ':' + effect.flip.value[2]);
     datalist.unshift('FE' + motor.id + i + effect.angle.identifier + ':' + effect.angle.value);
     datalist.unshift('FE' + motor.id + i + effect.vis_type.identifier + ':' + effect.vis_type.value);
-    if (effect.vis_type !== 'velocity') {
+    if (effect.vis_type !== 2) {
       datalist.unshift('FE' + motor.id + i + effect.effect_type.identifier + ':' + effect.effect_type.value);
     }
     datalist.unshift('FE' + motor.id + i + effect.datasize.identifier + ':' + effect.datasize.value);
@@ -443,12 +452,13 @@ function prepareEffectData(uploadContent, motor, datalist) {
   }
   for (const d of uploadContent.data.effectData) {
     for (const el of d.data) {
-      if (d.type === 'position') {
+      if (d.type === 1) {
         datalist.unshift('FDI' + motor.id + ':' + (Math.round(el.d) !== el.d ? el.d.toFixed(6) : el.d));
       }
-      if (d.type === 'velocity' && d.yUnit === 'deg') {
+      if (d.type === 2 && d.yUnit === 'deg') {
         datalist.unshift('FDI' + motor.id + ':' + ((el.y * 100) * (Math.PI / 180)).toFixed(6));
       } else {
+        // console.log('effect ' + 'FDI' + motor.id + ':' + (Math.round(el.y) !== el.y ? el.y.toFixed(6) : el.y));
         datalist.unshift('FDI' + motor.id + ':' + (Math.round(el.y) !== el.y ? el.y.toFixed(6) : el.y));
       }
     }

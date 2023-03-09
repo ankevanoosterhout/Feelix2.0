@@ -9,6 +9,7 @@ import { DOCUMENT } from '@angular/common';
 import { CloneService } from 'src/app/services/clone.service';
 import { UploadService } from 'src/app/services/upload.service';
 import { ElectronService } from 'ngx-electron';
+import { EffectType } from 'src/app/models/configuration.model';
 
 @Component({
     selector: 'app-motor-control',
@@ -42,9 +43,9 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
   ];
 
   visualizationTypes = [
-    { name: 'torque' },
-    { name: 'position' },
-    { name: 'velocity' }
+    { name: EffectType.torque },
+    { name: EffectType.position },
+    { name: EffectType.velocity }
   ];
 
   unitOptions = [
@@ -307,6 +308,9 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
     this.motorControlService.updateCollection(collection);
   }
 
+  copy(collection: Collection) {
+    this.motorControlService.copyCollection(collection);
+  }
 
   delete(collection: Collection) {
     this.motorControlService.deleteCollection(collection);
@@ -385,7 +389,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
 
 
   updateVisualizationType(collection: Collection) {
-    if (collection.visualizationType === 'position') {
+    if (collection.visualizationType === EffectType.position) {
       collection.rotation.start_y = 0;
       collection.rotation.end_y = 100;
 
@@ -398,7 +402,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
         // this.changeUnitsY(collection);
       }
     }
-    if (collection.visualizationType === 'torque') {
+    if (collection.visualizationType === EffectType.torque) {
       collection.rotation.start_y = -100;
       collection.rotation.end_y = 100;
       if (collection.rotation.units.name === 'ms') {
@@ -410,7 +414,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
         // this.changeUnitsY(collection);
       }
     }
-    if (collection.visualizationType === 'velocity') {
+    if (collection.visualizationType === EffectType.velocity) {
       collection.rotation.start_y = -100;
       collection.rotation.end_y = 100;
       this.oldUnits = collection.rotation.units;
@@ -441,14 +445,14 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
 
     const coll_microcontroller = this.hardwareService.getMicroControllerByCOM(collection.microcontroller.serialPort.path);
     if (coll_microcontroller) {
-      if (collection.visualizationType === 'position' || collection.rotation.units_y.name === 'deg') {
+      if (collection.visualizationType === EffectType.position || collection.rotation.units_y.name === 'deg') {
         coll_microcontroller.motors.filter(m => m.id === collection.motorID.name)[0].position_pid = collection.microcontroller.motors[collection.motorID.index].position_pid;
       }
-      if (collection.visualizationType === 'velocity' && collection.rotation.units_y.name !== 'deg') {
+      if (collection.visualizationType === EffectType.velocity && collection.rotation.units_y.name !== 'deg') {
         coll_microcontroller.motors.filter(m => m.id === collection.motorID.name)[0].velocity_pid = collection.microcontroller.motors[collection.motorID.index].velocity_pid;
         coll_microcontroller.motors.filter(m => m.id === collection.motorID.name)[0].config.velocityLimit = collection.microcontroller.motors[collection.motorID.index].config.velocityLimit;
       }
-      if (collection.visualizationType === 'torque') {
+      if (collection.visualizationType === EffectType.torque) {
         coll_microcontroller.motors.filter(m => m.id === collection.motorID.name)[0].config.voltageLimit = collection.microcontroller.motors[collection.motorID.index].config.voltageLimit;
       }
 
@@ -522,7 +526,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
           if (collection) {
             const multiply = collection.rotation.units.PR / tmpEffect.grid.xUnit.PR;
 
-            if (collection && tmpEffect && !(tmpEffect.type === 'velocity' && collection.visualizationType !== 'velocity')) {
+            if (collection && tmpEffect && !(tmpEffect.type === EffectType.velocity && collection.visualizationType !== EffectType.velocity)) {
 
               const copyTmpEffect = this.cloneService.deepClone(tmpEffect);
 
@@ -551,7 +555,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
               collection.renderedData = [];
               collection.effectDataList = [];
 
-              if (collection.visualizationType === 'velocity' && tmpEffect.type === 'velocity' && tmpEffect.grid.yUnit.name === 'deg') {
+              if (collection.visualizationType === EffectType.velocity && tmpEffect.type === EffectType.velocity && tmpEffect.grid.yUnit.name === 'deg') {
                 if (collection.rotation.start_y > tmpEffect.range_y.start) { collection.rotation.start_y = tmpEffect.range_y.start; }
                 if (collection.rotation.end_y < tmpEffect.range_y.end) { collection.rotation.end_y = tmpEffect.range_y.end; }
 

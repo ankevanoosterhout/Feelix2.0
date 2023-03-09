@@ -5,6 +5,7 @@ import { FileService } from 'src/app/services/file.service';
 import { v4 as uuid } from 'uuid';
 import { Router } from '@angular/router';
 import { Effect, Unit } from 'src/app/models/effect.model';
+import { EffectType, EffectTypeLabelMapping } from 'src/app/models/configuration.model';
 
 
 @Component({
@@ -26,11 +27,11 @@ import { Effect, Unit } from 'src/app/models/effect.model';
                 <div class="form-row">
                   <label class="select units">Control Type</label>
                   <select class="form-control" id="select-type" [(ngModel)]="effect.type" name="type" (change)="updateControlType()">
-                      <option *ngFor="let type of controlTypes" [ngValue]="type">{{ type }}</option>
+                      <option *ngFor="let type of controlTypes" [ngValue]="type">{{ EffectTypeLabelMapping[type] }}</option>
                   </select>
                 </div>
 
-                <div class="form-row" *ngIf="!this.updateMode && effect.type !== 'velocity'">
+                <div class="form-row" *ngIf="!this.updateMode && effect.type < 2">
                     <label class="select units">Units</label>
                     <select class="form-control" id="select-units"
                         (change)="updateRotationRange()" [(ngModel)]="effect.grid.xUnit" name="xUnit" [compareWith]="compareUnits">
@@ -38,7 +39,7 @@ import { Effect, Unit } from 'src/app/models/effect.model';
                     </select>
                 </div>
 
-                <div class="form-row" *ngIf="!this.updateMode && effect.type === 'velocity'">
+                <div class="form-row" *ngIf="!this.updateMode && (effect.type >= 2)">
                     <label class="select units">Units</label>
                     <select class="form-control" id="select-units"
                         (change)="updateRotationRange()" [(ngModel)]="effect.grid.xUnit" name="xUnit" [compareWith]="compareUnits">
@@ -90,11 +91,12 @@ export class EffectSettingsComponent implements OnInit {
     { name: 'ms', PR: 1000 }
   ];
 
-  controlTypes = ['position', 'velocity', 'torque' ];
+  controlTypes = Object.values(EffectType).filter(value => typeof value === 'number');;
 
   prevUnits = { name: 'deg', PR: 360 };
   initialUnits = { name: 'deg', PR: 360 };
 
+  public EffectTypeLabelMapping = EffectTypeLabelMapping;
 
   // tslint:disable-next-line: variable-name
   constructor(@Inject(DOCUMENT) private document: Document, private electronService: ElectronService,
@@ -119,12 +121,13 @@ export class EffectSettingsComponent implements OnInit {
   }
 
   updateControlType() {
-    if (this.effect.type === 'velocity' && this.effect.grid.xUnit.name !== 'ms') {
-      this.prevUnits = this.effect.grid.xUnit;
+    this.prevUnits = this.effect.grid.xUnit;
+    if ((this.effect.type === EffectType.velocity || this.effect.type === EffectType.pneumatic) && this.effect.grid.xUnit.name !== 'ms') {
+      // this.prevUnits = this.effect.grid.xUnit;
       this.effect.grid.xUnit = { name: 'ms', PR: 1000 };
       this.updateRotationRange();
-    } else if (this.effect.type !== 'velocity' && this.effect.grid.xUnit.name === 'ms') {
-      this.prevUnits = { name: 'ms', PR: 1000 };
+    } else if (this.effect.type !== EffectType.velocity && this.effect.type !== EffectType.pneumatic && this.effect.grid.xUnit.name === 'ms') {
+      // this.prevUnits = { name: 'ms', PR: 1000 };
       this.effect.grid.xUnit = { name: 'deg', PR: 360 };
       this.updateRotationRange();
     }
@@ -132,9 +135,14 @@ export class EffectSettingsComponent implements OnInit {
 
   public submit() {
 
-    if (this.effect.type === 'velocity' && this.effect.grid.yUnit.name === '%') { this.effect.grid.yUnit = new Unit('%', 100); }
-
     if (!this.updateMode) {
+      if ((this.effect.type === EffectType.velocity && this.effect.grid.yUnit.name === '%') || this.effect.type === EffectType.pneumatic) {
+        this.effect.grid.yUnit = new Unit('%', 100);
+        this.effect.range_y.start = this.effect.type === EffectType.pneumatic ? 0 : -100;
+        this.effect.range_y.end = 100;
+      } else if (this.effect.type === EffectType.position) {
+        this.effect.range_y.start = 0;
+      }
       this.fileService.addEffect(this.effect);
     } else {
       this.fileService.updateEffect(this.effect);

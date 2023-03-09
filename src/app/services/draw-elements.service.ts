@@ -7,6 +7,7 @@ import { File } from '../models/file.model';
 import { BBoxService } from './bbox.service';
 import { DataService } from './data.service';
 import { BezierService } from './bezier.service';
+import { EffectType } from '../models/configuration.model';
 
 
 @Injectable()
@@ -18,6 +19,13 @@ export class DrawElementsService {
   constructor(@Inject(DOCUMENT) private document: Document, private bezierService: BezierService,
               public nodeService: NodeService, private bboxService: BBoxService, private dataService: DataService) {
               this.config = this.bboxService.config;
+  }
+
+
+  setCursor(cursor: string) {
+    if (this.document.body.style.cursor !== 'wait') {
+      this.document.getElementById('field-inset').style.cursor = cursor;
+    }
   }
 
 
@@ -132,7 +140,7 @@ export class DrawElementsService {
         .attr('d', (d: { svgPath: string }) => d.svgPath)
         .attr('id', (d: { id: string; parent: string }) => 'id_' + d.id + '_' + d.parent)
         .attr('class', (d: { parent: string; }) => 'path_' + d.parent + '_' + type)
-        .attr('stroke', () =>  type === 'pos' ? this.getEffectColor() : this.file.configuration.colors.filter(c => c.type === 'position2')[0].hash)
+        .attr('stroke', () =>  type === 'pos' ? this.getEffectColor() : this.file.configuration.colors.filter(c => c.type === EffectType.position)[0].hash[1])
         .attr('stroke-width', () => {
           if (type === 'angle') { return 0.3; }
           else if (this.file.activeEffect.rotation === 'dependent') { return 2.2; }
@@ -142,7 +150,7 @@ export class DrawElementsService {
         .attr('fill', 'transparent')
         .attr('pointer-events', (d: any) =>
           !this.config.zoomable && !this.nodeService.getPath(d.parent).lock ? 'auto' : 'none')
-        .on('mouseenter', (d: any) => {
+        .on('mouseenter', (event: any, d: any) => {
           if (this.config.cursor.slug === 'thick' || this.config.cursor.slug === 'dsel' || this.config.cursor.slug === 'pen' ||
               this.config.cursor.slug === 'anchor' || this.config.cursor.slug === 'scis' ) {
             if (this.nodeService.selectedNodes.length === 0) {
@@ -166,15 +174,14 @@ export class DrawElementsService {
 
             if (this.config.cursor.slug === 'pen' && event.shiftKey) {
               this.config.cursor.selectedSubcursor = 'add';
-              this.document.getElementById('field-inset').style.cursor =
-                this.config.cursor.subcursor.filter(c => c.name === 'add')[0].cursor;
+              this.setCursor(this.config.cursor.subcursor.filter(c => c.name === 'add')[0].cursor);
             }
           }
         })
         .on('mouseout', (d: any) => {
           if (this.config.cursor.selectedSubcursor === 'add' && this.config.cursor.slug === 'pen') {
             this.config.cursor.selectedSubcursor = null;
-            this.document.getElementById('field-inset').style.cursor = this.config.cursor.cursor;
+            this.setCursor(this.config.cursor.cursor);
           } else if (this.config.cursor.slug === 'thick' || this.config.cursor.slug === 'anchor' ||
                       this.config.cursor.slug === 'scis' || this.config.cursor.slug === 'dsel') {
             if (this.nodeService.selectedPaths.indexOf(d.parent) === -1) {
@@ -249,7 +256,7 @@ export class DrawElementsService {
           this.nodeService.selectPath(d.path, event.sourceEvent.shiftKey);
           this.nodeService.selectNode(d.id, event.sourceEvent.shiftKey);
 
-          this.config.nodesSVG.selectAll('.fn_' + d.path).style('fill', this.file.configuration.colors.filter(c => c.type === 'position2')[0].hash);
+          this.config.nodesSVG.selectAll('.fn_' + d.path).style('fill', this.file.configuration.colors.filter(c => c.type === EffectType.position)[0].hash[1]);
           this.dataService.selectElement(d.id, d.pos.x, d.pos.y, null, null);
 
         } else if (this.config.cursor.slug === 'pen' || this.config.cursor.slug === 'anchor') {
@@ -386,9 +393,7 @@ export class DrawElementsService {
 
 
     const dragForceNode = d3.drag()
-      // .on('start', (d: any) => {
 
-      // })
       .on('drag', (event: any, d: any) => {
         if (this.config.cursor.slug === 'thick') {
           const invertX = this.nodeService.scale.scaleX.invert(event.sourceEvent.pageX - this.config.margin.left);
@@ -421,19 +426,19 @@ export class DrawElementsService {
         !this.config.zoomable && !this.nodeService.getPath(d.path).lock ? 'auto' : 'none')
       .style('fill', (d: { id: string; path: string; }) => {
         if (this.nodeService.selectedNodes.indexOf(d.id) > -1) {
-          return this.file.configuration.colors.filter(c => c.type === 'position2')[0].hash;
+          return this.file.configuration.colors.filter(c => c.type === EffectType.position)[0].hash[1];
         }
         return 'transparent';
       })
-      .on('mouseover', (d: { id: string, path: string }) => {
-        d3.select('#id_nf_' + d.id + '_' + d.path).style('fill', this.file.configuration.colors.filter(c => c.type === 'position2')[0].hash);
+      .on('mouseover', (event: any, d: { id: string, path: string }) => {
+        d3.select('#id_nf_' + d.id + '_' + d.path).style('fill', this.file.configuration.colors.filter(c => c.type === EffectType.position)[0].hash[1]);
       })
       .on('mousedown', (d: any) => {
         this.nodeService.addSelectedNode(d.id);
         this.nodeService.addSelectedPath(d.path);
         this.drawControlPoints(this.nodeService.getCP(d), 'angle');
       })
-      .on('mouseleave', (d: { id: string, path: string }) => {
+      .on('mouseleave', (event: any, d: { id: string, path: string }) => {
         if (this.nodeService.selectedPaths.indexOf(d.path) < 0) {
           d3.select('#id_nf_' + d.id + '_' + d.path).style('fill', 'transparent');
         }
@@ -464,7 +469,7 @@ export class DrawElementsService {
         this.nodeService.selectedPaths.indexOf(d.path) > -1 ? this.getEffectColor() : 'transparent')
       .style('stroke-width', (d: { id: string; path: string; }) => this.nodeService.selectedPaths.indexOf(d.path) > -1 ? 0.5 : 6)
       .style('shape-rendering', 'crispEdges')
-      .on('mouseenter', (d: any) => {
+      .on('mouseenter', (event: any, d: any) => {
         if (this.config.cursor.slug === 'pen' && this.nodeService.selectedNodes.indexOf(d.id) < 0) {
           endNode = this.nodeService.checkIfNodeIsAtTheEndOfArray(d);
           if (endNode > -1) {
@@ -478,8 +483,7 @@ export class DrawElementsService {
             this.config.cursor.selectedSubcursor = 'remove';
           }
           if (this.config.cursor.selectedSubcursor !== null) {
-            this.document.getElementById('field-inset').style.cursor =
-                this.config.cursor.subcursor.filter(c => c.name === this.config.cursor.selectedSubcursor)[0].cursor;
+            this.setCursor(this.config.cursor.subcursor.filter(c => c.name === this.config.cursor.selectedSubcursor)[0].cursor);
           }
         }
 
@@ -501,14 +505,14 @@ export class DrawElementsService {
             .style('stroke-width', 0.5)
             .style('fill', () => this.nodeService.selectedNodes.indexOf(d.id) < 0 ? 'white' : this.getEffectColor());
 
-          this.config.nodesSVG.selectAll('#id_nf_' + d.id + '_' + d.path).style('fill', this.file.configuration.colors.filter(c => c.type === 'position2')[0].hash);
+          this.config.nodesSVG.selectAll('#id_nf_' + d.id + '_' + d.path).style('fill', this.file.configuration.colors.filter(c => c.type === EffectType.position)[0].hash[1]);
         }
       })
       .on('mouseleave', (event: any, d: { id: string; path: string; pos: { x: number; y: number; };  }) => {
 
         if (this.config.cursor.slug === 'pen' && !event.altKey) {
           this.config.cursor.selectedSubcursor = null;
-          this.document.getElementById('field-inset').style.cursor = this.config.cursor.cursor;
+          this.setCursor(this.config.cursor.cursor);
           this.config.svg.select('.cursorConnectionClose').remove();
         }
         if (this.config.cursor.slug === 'dsel' || this.config.cursor.slug === 'pen' ||
@@ -538,7 +542,7 @@ export class DrawElementsService {
   }
 
   getEffectColor() {
-    return this.file.configuration.colors.filter(c => c.type === this.file.activeEffect.type)[0].hash;
+    return this.file.configuration.colors.filter(c => c.type === this.file.activeEffect.type)[0].hash[0];
   }
 
 
@@ -626,7 +630,7 @@ export class DrawElementsService {
         .attr('x2', (d: any) => type === 'pos' ? this.nodeService.scale.scaleX(d.cp.pos.x) : this.nodeService.scale.scaleX(d.cp.angle.x))
         .attr('y2', (d: any) => type === 'pos' ? this.nodeService.scale.scaleY(d.cp.pos.y) : this.nodeService.scale.scaleY(d.cp.angle.y))
         .attr('transform', 'translate(0, ' + this.config.margin.top + ')')
-        .style('stroke', () => type === 'pos' ? this.getEffectColor() : this.file.configuration.colors.filter(c => c.type === 'position2')[0].hash)
+        .style('stroke', () => type === 'pos' ? this.getEffectColor() : this.file.configuration.colors.filter(c => c.type === EffectType.position)[0].hash[1])
         .style('stroke-width', 0.5);
 
       this.config.cpSVG.selectAll('circle.cp')
@@ -639,11 +643,10 @@ export class DrawElementsService {
         .attr('cx', (d: any) => type === 'pos' ? this.nodeService.scale.scaleX(d.cp.pos.x) : this.nodeService.scale.scaleX(d.cp.angle.x))
         .attr('cy', (d: any) => type === 'pos' ? this.nodeService.scale.scaleY(d.cp.pos.y) : this.nodeService.scale.scaleY(d.cp.angle.y))
         .attr('transform', 'translate(0, ' + this.config.margin.top + ')')
-        .style('fill', () => type === 'pos' ? this.getEffectColor() : this.file.configuration.colors.filter(c => c.type === 'position2')[0].hash)
+        .style('fill', () => type === 'pos' ? this.getEffectColor() : this.file.configuration.colors.filter(c => c.type === EffectType.position)[0].hash[1])
         .style('stroke', 'transparent')
         .style('stroke-width', 5)
-        .attr('pointer-events', (d: any) => !this.config.zoomable &&
-          !this.nodeService.getPath(d.cp.path).lock ? 'auto' : 'none')
+        .attr('pointer-events', (d: any) => !this.config.zoomable && !this.nodeService.getPath(d.cp.path).lock ? 'auto' : 'none')
         .call(dragCP);
       }
 
@@ -673,8 +676,8 @@ export class DrawElementsService {
         .attr('id', (d: { id: string; parent: string }) => 'id_' + d.id + '_' + d.parent)
         .attr('class', (d: { parent: string; }) => 'path_' + d.parent)
         .attr('stroke-width', 1.2)
-        .attr('stroke', this.file.configuration.colors.filter(c => c.type === 'position2')[0].hash)
-        .attr('fill', this.file.configuration.colors.filter(c => c.type === 'position2')[0].hash)
+        .attr('stroke', this.file.configuration.colors.filter(c => c.type === EffectType.position)[0].hash[1])
+        .attr('fill', this.file.configuration.colors.filter(c => c.type === EffectType.position)[0].hash[1])
         .style('opacity', 0.2);
 
     }
