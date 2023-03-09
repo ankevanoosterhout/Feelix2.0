@@ -20,9 +20,11 @@ export class MotorControlService {
   public toolList = [
     { id: 0, name: 'new collection', slug: 'collection', disabled: false, icon: './assets/icons/tools/collections.svg' },
     { id: 1, name: 'microcontroller and motor settings', slug: 'settings', disabled: false, icon: './assets/icons/buttons/config.svg' },
-    { id: 2, name: 'display', slug: 'display', disabled: false,
-      icon: this.file.configuration.collectionDisplay === 'small' ? './assets/icons/buttons/small-display.svg' : './assets/icons/buttons/large-display.svg' }
-    // { id: 3, name: 'translation', slug: 'translation', disabled: false,
+    { id: 2, name: 'display', slug: 'change view', disabled: false,
+      icon: this.file.configuration.collectionDisplay === 'small' ? './assets/icons/buttons/small-display.svg' : './assets/icons/buttons/large-display.svg' },
+    { id: 3, name: 'upload all', slug: 'upload to all motors', disabled: false, icon: './assets/icons/buttons/upload_all.svg' },
+    { id: 4, name: 'play all', slug: 'play all uploaded collections', disabled: true, icon: './assets/icons/buttons/play_all.svg' }
+    // { id: 5, name: 'translation', slug: 'translation', disabled: false,
     //   icon: this.file.configuration.collectionDisplayTranslation === 'linear' ? './assets/icons/buttons/translation-circular.svg' : './assets/icons/buttons/translation-linear.svg' }
   ]
 

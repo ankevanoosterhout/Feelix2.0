@@ -30,13 +30,13 @@
 
           <div id="buttonsMotorControl" *ngIf="this.motorControlService.width > 350 && collection.microcontroller">
             <ul class="dropdown-buttons">
-              <li id="render-{{ collection.id }}" [ngClass]="{ active: collection.effectDataList.length > 0 }" (click)="render(collection)" title="render">
-                <img class="no-pointer-events" src="./assets/icons/buttons/refresh.svg"></li>
-              <li id="upload" (click)="upload(collection)" title="upload"><img class="no-pointer-events" src="./assets/icons/buttons/upload.svg"></li>
+              <li id="render-{{ collection.id }}" [ngClass]="{ active: collection.effectDataList.length > 0 }" (click)="render(collection)" title="render collection">
+                <img class="no-pointer-events" src="./assets/icons/buttons/render.svg"></li>
+              <li id="upload" (click)="upload(collection)" title="upload collection"><img class="no-pointer-events" src="./assets/icons/buttons/upload.svg"></li>
               <li id="play"  [ngClass]="{ active: collection.renderedData && collection.renderedData.length > 0 }" (click)="play(!collection.playing, collection)"
-                  *ngIf="collection.visualizationType === 2 || collection.playing">
-                <span class="no-pointer-events" *ngIf="!collection.playing" title="play"><div class="play-arrow no-pointer-events"></div></span>
-                <span class="no-pointer-events" *ngIf="collection.playing" title="stop"><div class="stop-square no-pointer-events"></div></span>
+                  *ngIf="collection.visualizationType === 2 || collection.playing" title="play or stop collection">
+                <span class="no-pointer-events" *ngIf="!collection.playing"><div class="play-arrow no-pointer-events"></div></span>
+                <span class="no-pointer-events" *ngIf="collection.playing"><div class="stop-square no-pointer-events"></div></span>
               </li>
               </ul>
           </div>
@@ -123,7 +123,7 @@
 
           <div id="visualizationType" class="form-row left" *ngIf="collection.effectDataList.length === 0 && this.motorControlService.file.configuration.collectionDisplay === 'large' && this.motorControlService.width > 700">
             <select class="form-control" id="visualizationType" [(ngModel)]="collection.visualizationType" (change)="updateVisualizationType(collection)" name="visualizationType" title="visualization type">
-                <option *ngFor="let type of visualizationTypes" [ngValue]="type.name">{{ type.name }}</option>
+                <option *ngFor="let type of visualizationTypes" [ngValue]="type">{{ EffectTypeLabelMapping[type] }}</option>
             </select>
           </div>
 

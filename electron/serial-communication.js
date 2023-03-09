@@ -47,7 +47,9 @@ function writeDataString(data, COM) {
   sp.write(data, function (err) {
       if (err) {
           // reconnect(data, COM);
-          return console.log('Error: ', err.message);
+          main.updateSerialProgress({ progress: 0, str: err.message });
+          // return console.log('Error: ', err.message);
+          return;
       } else {
         console.log('write data ', data);
       }
@@ -132,8 +134,10 @@ class newSerialPort {
 
   writeData(data) {
     this.sp.write(data, function (err) {
-        if (err) { return console.log('Error: ', err.message); }
-        else {
+        if (err) {
+          main.updateSerialProgress({ progress: 0, str: err.message });
+          return;
+        } else {
           //  console.log('written ', data);
         }
     });
@@ -165,7 +169,8 @@ class newSerialPort {
           autoOpen: true
       }, function (err) {
           if (err) {
-            return console.log('Error: ', err)
+            main.updateSerialProgress({ progress: 0, str: 'Error: ' + err.message });
+            return;
           }
       });
 

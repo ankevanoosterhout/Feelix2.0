@@ -9,7 +9,7 @@ import { DOCUMENT } from '@angular/common';
 import { CloneService } from 'src/app/services/clone.service';
 import { UploadService } from 'src/app/services/upload.service';
 import { ElectronService } from 'ngx-electron';
-import { EffectType } from 'src/app/models/configuration.model';
+import { EffectType, EffectTypeLabelMapping } from 'src/app/models/configuration.model';
 
 @Component({
     selector: 'app-motor-control',
@@ -17,6 +17,8 @@ import { EffectType } from 'src/app/models/configuration.model';
     styleUrls: ['./motor-control.component.css'],
 })
 export class MotorControlComponent implements OnInit, AfterViewInit {
+
+  public EffectTypeLabelMapping = EffectTypeLabelMapping;
 
   microcontrollers = [];
 
@@ -42,11 +44,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
     { name: 'D',  val: 0.15 }
   ];
 
-  visualizationTypes = [
-    { name: EffectType.torque },
-    { name: EffectType.position },
-    { name: EffectType.velocity }
-  ];
+  visualizationTypes = Object.values(EffectType).filter(value => typeof value === 'number');
 
   unitOptions = [
     { name: 'deg', PR: 360 },
@@ -272,10 +270,10 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
             collection.time = 0;
           }
           collection.playing = true;
-          this.motorControlService.saveCollection(collection);
         } else {
           collection.playing = false;
         }
+        this.motorControlService.saveCollection(collection);
       } else {
         this.upload(collection);
       }
@@ -555,9 +553,15 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
               collection.renderedData = [];
               collection.effectDataList = [];
 
-              if (collection.visualizationType === EffectType.velocity && tmpEffect.type === EffectType.velocity && tmpEffect.grid.yUnit.name === 'deg') {
-                if (collection.rotation.start_y > tmpEffect.range_y.start) { collection.rotation.start_y = tmpEffect.range_y.start; }
-                if (collection.rotation.end_y < tmpEffect.range_y.end) { collection.rotation.end_y = tmpEffect.range_y.end; }
+              console.log(tmpEffect);
+
+              if (collection.visualizationType === EffectType.velocity && tmpEffect.type === EffectType.velocity) {
+                if (tmpEffect.grid.yUnit.name === 'deg') {
+                  if (collection.rotation.start_y > tmpEffect.range_y.start) { collection.rotation.start_y = tmpEffect.range_y.start; }
+                  if (collection.rotation.end_y < tmpEffect.range_y.end) { collection.rotation.end_y = tmpEffect.range_y.end; }
+                }
+
+                if (collection.rotation.end - collection.rotation.start < tmpEffect.size.width ) { collection.rotation.end = collection.rotation.start + tmpEffect.size.width; }
 
                 this.motorControlService.drawCollection(collection);
               } else {
