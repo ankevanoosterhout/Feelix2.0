@@ -10,7 +10,7 @@
       </ul>
     </div>
 
-    <div class="form-row" *ngIf="this.drawingService.file.activeEffect">
+    <div class="form-row" *ngIf="this.drawingService.file.activeEffect" title="change color">
       <span>
         <input type="color" id="color-picker" name="color-picker" [(ngModel)]="this.dataService.color" (change)="updateColor()">
       </span>

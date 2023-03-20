@@ -9,6 +9,8 @@ import { DrawingService } from './drawing.service';
 import { Details, Direction, Effect, Unit } from '../models/effect.model';
 import { EffectVisualizationService } from './effect-visualization.service';
 import { EffectType } from '../models/configuration.model';
+import { ElectronService } from 'ngx-electron';
+import { Subject } from 'rxjs';
 
 @Injectable()
 export class MotorControlService {
@@ -17,13 +19,20 @@ export class MotorControlService {
   public config: DrawingPlaneConfig;
   public file = new File(null, null, null);
 
+  uploadAllCollections: Subject<any> = new Subject();
+  playAllCollections: Subject<any> = new Subject();
+  playAllInSequence: Subject<any> = new Subject();
+  playSequence: Subject<any> = new Subject();
+  playAll: Subject<any> = new Subject();
+
   public toolList = [
     { id: 0, name: 'new collection', slug: 'collection', disabled: false, icon: './assets/icons/tools/collections.svg' },
-    { id: 1, name: 'microcontroller and motor settings', slug: 'settings', disabled: false, icon: './assets/icons/buttons/config.svg' },
-    { id: 2, name: 'display', slug: 'change view', disabled: false,
+    { id: 1, name: 'microcontroller and actuator settings', slug: 'settings', disabled: false, icon: './assets/icons/buttons/config.svg' },
+    { id: 2, name: 'change view', slug: 'change_view', disabled: false,
       icon: this.file.configuration.collectionDisplay === 'small' ? './assets/icons/buttons/small-display.svg' : './assets/icons/buttons/large-display.svg' },
-    { id: 3, name: 'upload all', slug: 'upload to all motors', disabled: false, icon: './assets/icons/buttons/upload_all.svg' },
-    { id: 4, name: 'play all', slug: 'play all uploaded collections', disabled: true, icon: './assets/icons/buttons/play_all.svg' }
+    { id: 3, name: 'upload all', slug: 'upload_all', disabled: false, icon: './assets/icons/buttons/upload_all.svg' },
+    { id: 4, name: 'play all uploaded collections', slug: 'play_all', disabled: true, icon: './assets/icons/buttons/play_all.svg', icon2: './assets/icons/buttons/stop.svg' },
+    { id: 5, name: 'play all uploaded collections in sequence', slug: 'play_all_sequence', disabled: true, icon: './assets/icons/buttons/play_all_delay.svg', icon2: './assets/icons/buttons/stop.svg' }
     // { id: 5, name: 'translation', slug: 'translation', disabled: false,
     //   icon: this.file.configuration.collectionDisplayTranslation === 'linear' ? './assets/icons/buttons/translation-circular.svg' : './assets/icons/buttons/translation-linear.svg' }
   ]
@@ -49,8 +58,10 @@ export class MotorControlService {
       this.onResize();
     });
 
-
   }
+
+
+
 
   updateHeight() {
     if (this.file.configuration.collectionDisplay === 'large') {
@@ -84,7 +95,7 @@ export class MotorControlService {
   }
 
   updateToolListDisplay(file: File) {
-    this.toolList.filter(t => t.name === 'display')[0].icon =
+    this.toolList.filter(t => t.slug === 'change_view')[0].icon =
       file.configuration.collectionDisplay === 'small' ? './assets/icons/buttons/large-display.svg' : './assets/icons/buttons/small-display.svg';
   }
   updateToolListTranslation(file: File) {
@@ -103,8 +114,14 @@ export class MotorControlService {
     this.updateViewSettings(this.file);
   }
 
-  addCollection() {
+  addCollection(update = false) {
     this.fileService.addCollection();
+    if (update) {
+      setTimeout(() => {
+        this.drawCollections();
+        this.drawCollections();
+      }, 1000);
+    }
   }
 
   deleteCollection(collection: Collection) {
@@ -142,6 +159,7 @@ export class MotorControlService {
   updateCollectionEffect(collection: Collection, collEffect: Details) {
     this.fileService.updateCollectionEffect(collection, collEffect);
   }
+
 
 
 

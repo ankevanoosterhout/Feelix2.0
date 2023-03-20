@@ -431,14 +431,14 @@ function prepareEffectData(uploadContent, motor, datalist) {
 
   for (const effect of uploadContent.effects) {
     datalist.unshift('FE' + motor.id + i + effect.position.identifier + ':' + effect.position.value[1]);
-    if (effect.vis_type !== 2) {
+    if (effect.vis_type < 2) {
       datalist.unshift('FE' + motor.id + i + effect.direction.identifier + ':' + effect.direction.value[0] + ':' + effect.direction.value[1]);
     }
     datalist.unshift('FE' + motor.id + i + effect.scale.identifier + ':' + effect.scale.value[0] + ':' + effect.scale.value[1]);
     datalist.unshift('FE' + motor.id + i + effect.flip.identifier + ':' + effect.flip.value[0] + ':' + effect.flip.value[1] + ':' + effect.flip.value[2]);
     datalist.unshift('FE' + motor.id + i + effect.angle.identifier + ':' + effect.angle.value);
     datalist.unshift('FE' + motor.id + i + effect.vis_type.identifier + ':' + effect.vis_type.value);
-    if (effect.vis_type !== 2) {
+    if (effect.vis_type < 2) {
       datalist.unshift('FE' + motor.id + i + effect.effect_type.identifier + ':' + effect.effect_type.value);
     }
     datalist.unshift('FE' + motor.id + i + effect.datasize.identifier + ':' + effect.datasize.value);
@@ -611,7 +611,8 @@ function calibrateCurrentSense(uploadContent) {
     receivingPort = ports.filter(p => p.COM === uploadContent.config.serialPort.path)[0];
     // motor = microcontroller.motors.filter(m => m.id === motor_id)[0];
 
-    receivingPort = tryToEstablishConnection(receivingPort, uploadContent, calibrate_current_sense);
+    // receivingPort =
+    tryToEstablishConnection(receivingPort, uploadContent, calibrate_current_sense);
 
   }
 }
@@ -652,7 +653,8 @@ function calibrateMotor(uploadContent) {
     receivingPort = ports.filter(p => p.COM === uploadContent.config.serialPort.path)[0];
     // motor = microcontroller.motors.filter(m => m.id === motor_id)[0];
 
-    receivingPort = tryToEstablishConnection(receivingPort, uploadContent, calibrate_motor);
+    // receivingPort =
+    tryToEstablishConnection(receivingPort, uploadContent, calibrate_motor);
   }
 }
 
@@ -687,7 +689,8 @@ function updateFilter(uploadContent) {
   if (uploadContent.config) {
     receivingPort = ports.filter(p => p.COM === uploadContent.config.serialPort.path)[0];
 
-    receivingPort = tryToEstablishConnection(receivingPort, uploadContent, update_filter);
+    // receivingPort =
+    tryToEstablishConnection(receivingPort, uploadContent, update_filter);
   }
 }
 
@@ -720,8 +723,10 @@ function update_filter(port, uploadContent) {
 function sendDataString(uploadContent) {
   if (uploadContent.config) {
     receivingPort = ports.filter(p => p.COM === uploadContent.config.serialPort.path)[0];
-
-    receivingPort = tryToEstablishConnection(receivingPort, uploadContent, send_data_string);
+    // receivingPort =
+    tryToEstablishConnection(receivingPort, uploadContent, send_data_string);
+  } else {
+    main.updateSerialProgress({ progress: 0, str: 'Error: Not able to send data ' });
   }
 }
 
@@ -747,7 +752,8 @@ function updateMotorSetting(uploadContent) {
   if (uploadContent.config) {
     receivingPort = ports.filter(p => p.COM === uploadContent.config.serialPort.path)[0];
 
-    receivingPort = tryToEstablishConnection(receivingPort, uploadContent, updateMotorSettingCallback);
+    // receivingPort =
+    tryToEstablishConnection(receivingPort, uploadContent, updateMotorSettingCallback);
   }
 }
 

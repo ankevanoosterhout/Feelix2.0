@@ -5,12 +5,10 @@ import { Classifier, DataSet } from 'src/app/models/tensorflow.model';
 import { HardwareService } from 'src/app/services/hardware.service';
 import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service';
 import { MotorControlService } from 'src/app/services/motor-control.service';
-import { UploadService } from 'src/app/services/upload.service';
 import { v4 as uuid } from 'uuid';
-import { TensorFlowDrawService } from 'src/app/services/tensorflow-draw.service';
 
 @Component({
-  selector: 'app-ml5js',
+  selector: 'app-tensorflow-js',
   templateUrl: './tensorFlowJS.component.html',
   styleUrls: ['../windows/effects/effects.component.css', './tensorFlowJS.component.css'],
 })
@@ -23,14 +21,14 @@ export class TensorFlowJSComponent implements OnInit {
   horizontalScreenDivision = 65;
   verticalScreenDivision = 45;
 
-  public page = 'ml5js';
+  public page = 'tensorflow';
   public status = 'Ready';
   public progress = 0;
 
   inputArray = [];
 
   constructor(@Inject(DOCUMENT) private document: Document, public motorControlService: MotorControlService, public hardwareService: HardwareService,
-    private uploadService: UploadService, private electronService: ElectronService, public tensorflowService: TensorFlowMainService, private tensorflowDrawService: TensorFlowDrawService) {
+    private electronService: ElectronService, public tensorflowService: TensorFlowMainService) {
 
 
       this.electronService.ipcRenderer.on('motorData', (event: Event, data: any) => {

@@ -12,8 +12,8 @@ import { MotorControlService } from 'src/app/services/motor-control.service';
           <div class="toolbar-menu-section" id="toolbar-motor-control">
             <div class="detach-toolbar" (click)="detachToolbar()"><div></div></div>
             <ul class="toolbar-menu">
-              <li *ngFor="let item of this.motorControlService.toolList" (click)="selectTool(item.id)">
-                <img class="tool-icon" id="tool-motor-control-{{ item.id }}" src="{{ item.icon }}" title="{{ item.name }}">
+              <li *ngFor="let item of this.motorControlService.toolList" (click)="this.selectTool(item.id, item.disabled)">
+                <img class="tool-icon" [ngClass]="{ disabled: item.disabled }" id="tool-motor-control-{{ item.id }}" src="{{ item.icon }}" title="{{ item.name }}">
               </li>
             </ul>
           </div>
@@ -96,13 +96,13 @@ import { MotorControlService } from 'src/app/services/motor-control.service';
             height:auto;
         }
 
-        .toolbar-menu li.disabled img {
+        .toolbar-menu li img.disabled {
             /*background: transparent;*/
             opacity: 0.3;
         }
-        .toolbar-menu li.disabled {
+        /* .toolbar-menu li.disabled {
           display:none;
-        }
+        } */
         /*.toolbar-menu li.disabled:active,
         .toolbar-menu li.disabled:hover {
             background: transparent;
@@ -131,23 +131,30 @@ export class MotorControlToolbarInsetComponent implements OnInit {
 
     this.electronService.ipcRenderer.on('attachMotorControlToolbar', (event: Event) => {
       this.attachToolbar();
-    })
+    });
 
   }
 
-  selectTool(id: number) {
-    if (id === 0) {
-      this.motorControlService.addCollection();
-    } else if (id === 1) {
-      this.electronService.ipcRenderer.send('motorSettings');
-    } else if (id === 2) {
-      this.motorControlService.changeViewSettings();
-    } else if (id === 3) {
-      this.motorControlService.changeTranslationView();
+  selectTool(id: number, disabled: boolean) {
+    if (!disabled) {
+      if (id === 0) {
+        this.motorControlService.addCollection();
+      } else if (id === 1) {
+        this.electronService.ipcRenderer.send('motorSettings');
+      } else if (id === 2) {
+        this.motorControlService.changeViewSettings();
+      } else if (id === 3) {
+        this.motorControlService.uploadAllCollections.next();
+      } else if (id === 4) {
+        this.motorControlService.playAllCollections.next();
+      } else if (id === 5) {
+        this.motorControlService.playSequence.next();
+      }
     }
   }
 
   detachToolbar() {
+    this.document.body.style.cursor = 'wait';
     this.config.motorControlToolbarOffset = 0;
     this.electronService.ipcRenderer.send('showToolbarMotor');
     this.document.getElementById('toolbar-motor-control').classList.add('hide');

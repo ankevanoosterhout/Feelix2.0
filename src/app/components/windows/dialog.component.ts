@@ -1,4 +1,4 @@
-import { Component, OnInit, Inject } from '@angular/core';
+import { Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA } from '@angular/material';
 
 
@@ -55,7 +55,7 @@ import { MAT_DIALOG_DATA } from '@angular/material';
 
   `]
 })
-export class DialogComponent implements OnInit {
+export class DialogComponent {
 
   public message = '';
 
@@ -66,5 +66,4 @@ export class DialogComponent implements OnInit {
     this.buttons = data.buttons;
   }
 
-  ngOnInit(): void {}
 }

@@ -14,8 +14,8 @@ import { MotorControlService } from 'src/app/services/motor-control.service';
         <div class="toolbar-menu-section" id="toolbar-kinematics">
           <div class="attach-toolbar"><div class="attach-arrow" (click)="attachToolbar()"></div><div class="draggable"></div></div>
           <ul class="toolbar-menu">
-            <li *ngFor="let item of this.motorControlService.toolList" (click)="selectTool(item.id)">
-              <img class="tool-icon" id="tool-motor-control-{{ item.id }}" src="{{ item.icon }}" title="{{ item.name }}">
+            <li *ngFor="let item of this.motorControlService.toolList" (click)="this.selectTool(item.id, item.disabled)">
+              <img class="tool-icon" [ngClass]="{ disabled: item.disabled }" id="tool-motor-control-{{ item.id }}" src="{{ item.icon }}" title="{{ item.name }}">
             </li>
           </ul>
         </div>
@@ -109,13 +109,11 @@ import { MotorControlService } from 'src/app/services/motor-control.service';
             height:auto;
         }
 
-        .toolbar-menu li.disabled img {
+        .toolbar-menu li img.disabled  {
             /*background: transparent;*/
             opacity: 0.3;
         }
-        .toolbar-menu li.disabled {
-          display:none;
-        }
+
         /*.toolbar-menu li.disabled:active,
         .toolbar-menu li.disabled:hover {
             background: transparent;
@@ -143,19 +141,39 @@ export class MotorControlToolbarComponent implements OnInit {
 
     this.electronService.ipcRenderer.on('attachMotorControlToolbar', (event: Event) => {
       this.attachToolbar();
-      this.motorControlService.drawCollections();
-    })
+      // this.motorControlService.drawCollections();
+    });
+
+    this.electronService.ipcRenderer.on('disableButton', (event: Event, buttonDisabled: boolean) => {
+
+      this.motorControlService.toolList[4].disabled = buttonDisabled;
+      this.motorControlService.toolList[5].disabled = buttonDisabled;
+
+      if (!buttonDisabled) {
+        this.document.getElementById('tool-motor-control-4').classList.remove('disabled');
+        this.document.getElementById('tool-motor-control-5').classList.remove('disabled');
+      } else {
+        this.document.getElementById('tool-motor-control-4').classList.add('disabled');
+        this.document.getElementById('tool-motor-control-5').classList.add('disabled');
+      }
+    });
   }
 
-  selectTool(id: number) {
-    if (id === 0) {
-      this.motorControlService.addCollection();
-    } else if (id === 1) {
-      this.electronService.ipcRenderer.send('motorSettings');
-    } else if (id === 2) {
-      this.electronService.ipcRenderer.send('changeViewSettings');
-    } else if (id === 3) {
-      this.electronService.ipcRenderer.send('changeViewTranslation');
+  selectTool(id: number, disabled: boolean) {
+    if (!disabled) {
+      if (id === 0) {
+        this.electronService.ipcRenderer.send('addCollection');
+      } else if (id === 1) {
+        this.electronService.ipcRenderer.send('motorSettings');
+      } else if (id === 2) {
+        this.electronService.ipcRenderer.send('changeViewSettings');
+      } else if (id === 3) {
+        this.electronService.ipcRenderer.send('uploadAll');
+      } else if (id === 4) {
+        this.electronService.ipcRenderer.send('playAll');
+      } else if (id === 5) {
+        this.electronService.ipcRenderer.send('playAllSequenceWindow');
+      }
     }
   }
 

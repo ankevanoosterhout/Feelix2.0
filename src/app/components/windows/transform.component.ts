@@ -58,7 +58,7 @@ export class TransformComponent implements OnInit {
     if (!this.parameters.preview && (type === 'move' || type === 'copy')) {
       this.electronService.ipcRenderer.send('transform', this.parameters);
     } else {
-      this.electronService.ipcRenderer.send('closeTransformWindow');
+      this.electronService.ipcRenderer.send('closeTmpWindow');
     }
   }
 

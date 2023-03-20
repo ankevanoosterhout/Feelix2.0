@@ -238,12 +238,15 @@ export class DrawElementsService {
     const nodes = this.nodeService.getNodes(path, 'node');
     let endNode = -1;
 
+    if (nodes && nodes.length === 1 && this.nodeService.selectedNodes.filter(n => n === nodes[0].id).length === 0) {
+      //remove path
+      this.nodeService.deletePath(path);
+      return false;
+    }
+
     const dragNode = d3
       .drag()
       .on('start', (event: any, d: any) => {
-
-
-
         if ((this.config.cursor.slug === 'dsel') || (this.config.cursor.slug === 'anchor' && !event.sourceEvent.altKey)) {
 
           if (!event.sourceEvent.shiftKey) {
@@ -433,7 +436,7 @@ export class DrawElementsService {
       .on('mouseover', (event: any, d: { id: string, path: string }) => {
         d3.select('#id_nf_' + d.id + '_' + d.path).style('fill', this.file.configuration.colors.filter(c => c.type === EffectType.position)[0].hash[1]);
       })
-      .on('mousedown', (d: any) => {
+      .on('mousedown', (event: any, d: any) => {
         this.nodeService.addSelectedNode(d.id);
         this.nodeService.addSelectedPath(d.path);
         this.drawControlPoints(this.nodeService.getCP(d), 'angle');

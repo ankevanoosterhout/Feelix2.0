@@ -18,7 +18,7 @@ export class ToolService {
     new Cursor(2, 'Anchor Tool', 'anchor', false, './assets/icons/tools/anchor.svg', 'q',
               'url(./assets/icons/tools/cursor-cp-control.png), none', []),
     new Cursor(3, 'Selection Tool', 'sel', false, './assets/icons/tools/arrow.svg', 'v', 'url(./assets/icons/tools/cursor-arrow.png), none', []),
-    new Cursor(4, 'Direct Selection Tool', 'dsel', false, './assets/icons/tools/arrow-o.svg', 'a', 'default', []),
+    new Cursor(4, 'Direct Selection Tool', 'dsel', false, './assets/icons/tools/arrow-o.svg', 'a', 'url(./assets/icons/tools/cursor-arrow-o.png), none', []),
     new Cursor(5, 'Force Position Tool', 'thick', false, './assets/icons/tools/line-thickness-icon.svg', 'f',
               'url(./assets/icons/tools/cursor-line-thickness.png), none',
               [

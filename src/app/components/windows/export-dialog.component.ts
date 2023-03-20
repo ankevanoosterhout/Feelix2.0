@@ -1,4 +1,4 @@
-import { Component, OnInit, Inject } from '@angular/core';
+import { Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA } from '@angular/material';
 import { DOCUMENT } from '@angular/common';
 import { UploadService } from 'src/app/services/upload.service';
@@ -117,7 +117,7 @@ import { UploadService } from 'src/app/services/upload.service';
 
   `]
 })
-export class ExportDialogComponent implements OnInit {
+export class ExportDialogComponent {
 
   public data = '';
   public buttons = ['Cancel'];
@@ -146,5 +146,4 @@ export class ExportDialogComponent implements OnInit {
     }
   }
 
-  ngOnInit(): void {}
 }

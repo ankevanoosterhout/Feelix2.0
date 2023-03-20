@@ -390,7 +390,7 @@ export class DrawingService {
       .style('stroke', 'transparent')
       .style('stroke-width', 3)
       .attr('cursor', 'default')
-      .on('mousedown', (d: { direction: number }) => this.clickToMove(d.direction));
+      .on('mousedown', (event: any, d: { direction: number }) => this.clickToMove(d.direction));
 
     const scalePercentage = this.config.svg.append('text')
       .attr('class', 'scalePercentage')
@@ -524,7 +524,7 @@ export class DrawingService {
         if (this.config.svgDy < 250) { this.config.svgDy = 250; }
         this.redraw();
       }
-
+      this.updateConfigActiveFile(this.file.configuration);
 
     } else if (orientation === 'vertical') {
       this.document.getElementById('motor-control').style.width = (window.innerWidth * division / 100) + 'px';
@@ -539,6 +539,7 @@ export class DrawingService {
           this.document.getElementById('toggleLibraryWindow').classList.remove('hidden');
         }
       }
+      this.updateConfigActiveFile(this.file.configuration);
     }
   }
 
@@ -558,9 +559,13 @@ export class DrawingService {
     this.redraw();
   }
 
-  updateUnitsActiveEffect(value: any) {
-    const newUnits = this.config.xAxisOptions.filter(o => o.name === value)[0];
-    this.fileService.updateUnits(this.file.activeEffect.grid.xUnit, newUnits);
+  updateUnitsActiveEffect(value: string) {
+    if (this.file.activeEffect) {
+      const newUnits = this.file.activeEffect.type >= 2 ? this.config.xAxisOptions_velocity.filter(o => o.name === value)[0] : this.config.xAxisOptions.filter(o => o.name === value)[0];
+      if (newUnits) {
+        this.fileService.updateUnits(this.file.activeEffect.grid.xUnit, newUnits);
+      }
+    }
   }
 
   resetSelectedModule(xMin: number, xMax: number, yMin: number, yMax: number) {
@@ -612,7 +617,6 @@ export class DrawingService {
 
 
   saveFile(file: File) {
-    // console.log(file);
     this.fileService.update(file);
   }
 
@@ -621,14 +625,12 @@ export class DrawingService {
   }
 
   updateConfigActiveFile(config: Configuration) {
-    console.log(config);
     this.fileService.updateConfig(config);
   }
 
   getBoxSizeActivePaths() {
     this.getBBoxSize.next();
   }
-
 
   resetPathData() {
     this.nodeService.reset();
@@ -666,8 +668,8 @@ export class DrawingService {
         .attr('fill', '#222')
         .on('mouseover', () => this.setCursor('default'))
         .on('mouseleave', () => this.setCursor(this.config.cursor.cursor))
-      .append('title')
-        .text(() => 'position (' + this.file.activeEffect.grid.xUnit.name + ')');
+      .append('svg:title')
+        .text(() => 'units (' + this.file.activeEffect.grid.xUnit.name + ')');
 
     this.config.yAxisSVG = this.config.svg.append('g')
       .attr('class', 'clipPathYAxis')
@@ -683,8 +685,8 @@ export class DrawingService {
         .attr('fill', '#222')
         .on('mouseover', () => this.setCursor('default'))
         .on('mouseleave', () => this.setCursor(this.config.cursor.cursor))
-      .append('title')
-        .text(() => 'intensity (%)');
+      .append('svg:title')
+        .text(() => 'units (' + this.file.activeEffect.grid.yUnit.name + ')');
 
     const lineX = this.config.svg.append('rect')
         .attr('width',  this.config.svgDx - this.config.margin.left)

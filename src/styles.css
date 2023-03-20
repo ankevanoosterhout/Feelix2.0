@@ -46,6 +46,9 @@ html, body {
   background: #2c2c2c;
 }
 
+.mat-dialog-content {
+  margin:0;
+}
 
 .window-title-bar {
   position: relative;

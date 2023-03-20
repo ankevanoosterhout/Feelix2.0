@@ -1,7 +1,6 @@
 
 import { DOCUMENT } from '@angular/common';
 import { Component, Inject } from '@angular/core';
-import { ElectronService } from 'ngx-electron';
 import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service';
 
 
@@ -15,7 +14,7 @@ export class ModelComponent {
 
 
 
-  constructor(@Inject(DOCUMENT) private document: Document, public tensorFlowService: TensorFlowMainService, private electronService: ElectronService) { }
+  constructor(@Inject(DOCUMENT) private document: Document, public tensorFlowService: TensorFlowMainService) { }
 
 
 

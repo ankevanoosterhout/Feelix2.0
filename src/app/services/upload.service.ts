@@ -35,12 +35,12 @@ export class UploadService {
       if (collection.effectDataList.filter(c => c.effectID === collEffect.effectID).length === 0) {
         collection.effectDataList.push(this.translateEffectData(collEffect, effectData));
       }
+
       if (n >= updatedEffectList.length - 1) {
         this.convertDataList(collection, effectList);
       }
       n++;
     }
-    // console.log(collection);
   }
 
   createNewEffectListWithRepeatedEffects(collEffects: Array<Details>) {
@@ -234,14 +234,15 @@ export class UploadService {
   }
 
   translateEffectData(collEffect: Details, effectData: Effect) {
-    // console.log(effectData);
+    console.log(collEffect, effectData);
     let copyEffectList = this.cloneService.deepClone(effectData);
     let multiply = 1;
+
     if (effectData.grid.xUnit.name === 'rad') { multiply = (180 / Math.PI); }
-    if (effectData.grid.xUnit.name === 'ms') { multiply = 1; }
+    if (effectData.grid.xUnit.name === 'sec') { multiply = 1000; }
+
     let data = [];
     let data_complete = [];
-    let start_offset = 0;
     let start_pos = 0;
 
     for (const path of copyEffectList.paths) {
@@ -250,25 +251,34 @@ export class UploadService {
         start_pos = Math.ceil(nodes[0].pos.y * (Math.PI / 180));
       }
       if (path && path.nodes) {
-        data = effectData.type === EffectType.position ?
-          data.concat(this.translatePositionEffectData(path, multiply, start_offset, collEffect.quality)) :
-          data.concat(this.translateTorqueEffectData(path, multiply, effectData.range_y, start_offset, collEffect.quality, start_pos));
+
 
         data_complete = effectData.type === EffectType.position ?
-          data_complete.concat(this.translatePositionEffectData(path, multiply, 0, 1)) :
-          data_complete.concat(this.translateTorqueEffectData(path, multiply, effectData.range_y, 0, 1, start_pos));
-
-          if (data.length > 0) {
-            start_offset += data[data.length - 1].x + collEffect.quality;
-          }
+          data_complete.concat(this.translatePositionEffectData(path, multiply, 1)) :
+          data_complete.concat(this.translateTorqueEffectData(path, multiply, effectData.range_y, 1, start_pos));
       }
     }
+    data = this.reduceDataPoints(data_complete, collEffect.quality, multiply);
+    console.log(data);
+
     return { id: collEffect.effectID, type: effectData.type, size: effectData.size, rotation: effectData.rotation, infinite: collEffect.infinite, yUnit: effectData.grid.yUnit.name, data: data, data_complete: data_complete };
   }
 
 
+  reduceDataPoints(data: any, quality: number, multiply: number) {
+    let data_reduced = [];
 
-  translateTorqueEffectData(path: Path, multiply: number, effect_range: any, start_offset: number, quality = 1, start_from = 0) {
+    for (let i = 0; i < data.length; i+=quality) {
+      // data[i].x /= multiply;
+      // if (data[i].o) { data[i].o /= multiply; }
+      data_reduced.push(data[i]);
+    }
+
+    return data_reduced;
+  }
+
+
+  translateTorqueEffectData(path: Path, multiply: number, effect_range: any, quality = 1, start_from = 0) {
     let translatedData = [];
     let offset = 0;
     if (path.nodes[0].pos.x > path.nodes[path.nodes.length - 1].pos.x) {
@@ -282,7 +292,6 @@ export class UploadService {
     let end: number;
 
     for (const node of nodes) {
-
       if (i < nodes.length - 1) {
         const pathSegment = this.nodeService.getNodesOfPath(node.id + '&&' + nodes[i + 1].id, path);
         const range = this.bezierService.getCurveLength(pathSegment);
@@ -297,7 +306,7 @@ export class UploadService {
           if (yValue > effect_range.end) { yValue = effect_range.end; }
           if (yValue < effect_range.start) { yValue = effect_range.start; }
 
-          const inlistValue = translatedData.filter(d => d.x === (m - startPos) + start_offset)[0] ? translatedData.filter(d => d.x === (m - startPos) + start_offset)[0] : null;
+          const inlistValue = translatedData.filter(d => d.x === (m - startPos))[0] ? translatedData.filter(d => d.x === (m - startPos))[0] : null;
           if (inlistValue) {
             const index = translatedData.indexOf(inlistValue);
             if (index > -1) {
@@ -306,7 +315,7 @@ export class UploadService {
           }
 
           const coordinates = {
-            x: (m - startPos) + start_offset,
+            x: (m - startPos),
             y: inlistValue ? (inlistValue.y + (yValue / 100)) / 2 : (yValue / 100),
             y2: inlistValue ? (inlistValue.y + (yValue / 100)) / 2 - start_from: (yValue / 100) - start_from
           };
@@ -322,7 +331,7 @@ export class UploadService {
 
 
 
-  translatePositionEffectData(path: Path, multiply: number, start_offset: number, quality = 1) {
+  translatePositionEffectData(path: Path, multiply: number, quality = 1) {
     let translatedData = [];
 
     if (path.nodes[0].pos.x > path.nodes[path.nodes.length - 1].pos.x) {
@@ -365,7 +374,7 @@ export class UploadService {
           }
 
           const coordinates = {
-            x: m - startPos + start_offset,
+            x: m - startPos,
             o: (xOffset - startPos),
             d: (xOffset - m) * (Math.PI / 180),
             y: inlistValue ? (inlistValue.y + (yValue / 100)) / 2 : (yValue / 100)
@@ -434,7 +443,6 @@ export class UploadService {
 
 
   createUploadModel(collection: Collection, microcontroller: MicroController) {
-    console.log(collection, microcontroller);
     let model = new UploadModel(collection, microcontroller);
     console.log(model);
     return model;

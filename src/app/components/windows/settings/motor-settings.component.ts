@@ -64,6 +64,7 @@ export class MotorSettingsComponent implements OnInit {
   public motorType = [
     { name: 'BLDC Motor', disabled: false },
     { name: 'Stepper Motor', disabled: true },
+    { name: 'Pneumatic Actuator', disabled: false }
   ];
 
 
@@ -90,7 +91,7 @@ export class MotorSettingsComponent implements OnInit {
 
 
   public I2C_communicationType = [
-    { name: 'no_communication', value: 0 },
+    { name: 'no communication', value: 0 },
     { name: 'master', value: 1 },
     { name: 'slave', value: 2 }
   ];

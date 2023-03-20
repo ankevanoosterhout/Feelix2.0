@@ -14,7 +14,7 @@ import { DataService } from 'src/app/services/data.service';
     template: `
       <div class="open-tabs effects" id="effect-tabs">
         <ul class="tabs effects" id="effect-list">
-          <li *ngFor="let tab of file.configuration.openTabs" [ngClass]="{ active: tab.isActive }"  (click)="selectTab(tab)">
+          <li *ngFor="let tab of file.configuration.openTabs" [ngClass]="{ active: tab.isActive }" (click)="selectTab(tab)">
             <div class="filename-tab">{{ tab.name }}</div>
             <div class="close closeTab effects" (click)="closeTab(tab)"><div></div></div>
           </li>

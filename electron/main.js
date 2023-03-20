@@ -1,19 +1,17 @@
 const electron = require('electron');
-const { app, BrowserWindow, Menu, MenuItem, ipcMain } = require('electron')
-const url = require("url");
-const path = require("path");
+const { app, BrowserWindow, Menu, MenuItem, ipcMain, webContents, shell } = require('electron')
+const url = require('url');
+const path = require('path');
 const { dialog } = require('electron');
 const fs = require('fs');
 const jsonfile = require('jsonfile');
 const { localStorage } = require('electron-browser-storage');
-const { webContents } = require('electron');
-const { shell } = require('electron');
 
 const serialPort = require('./serial-communication.js');
 global['window'] = fs.wi;
 global['HTMLVideoElement'] = fs.HTMLVideoElement;
 
-let mainWindow, infoWindow = null, effectWindow = null, layerWindow = null, helpWindow = null, kinematicWindow = null;
+let mainWindow, infoWindow = null, helpWindow = null, kinematicWindow = null;
 let toolbars = [];
 let mainMenu, displays, kinematicsMenu;
 let gridSnap = false, gridVisible = false, guidesLock = false;
@@ -334,21 +332,20 @@ const mainMenuTemplate = [
         click() { shell.openExternal('https://simplefoc.com/'); }
       },
       {
+        label: 'Clear application data',
+        click() { mainWindow.webContents.send('clearApplicationData'); }
+      },
+      {
         label: 'Open development tools',
-        click() {  mainWindow.webContents.openDevTools(); }
+        click() { mainWindow.webContents.openDevTools(); }
       }
-      // ,
-      // {
-      //   label: 'Clear application data',
-      //   click() { clearCache(); }
-      // }
     ]
   }
 ];
 
 
 
-const ml5_control_menu_template = [
+const ml_control_menu_template = [
   {
     label: 'Model',
     submenu: [
@@ -729,7 +726,7 @@ function createTensorFlowWindow() {
     tensorflowWindow = new BrowserWindow({
       width: 1000,
       height: 550,
-      title: 'ml5.js',
+      title: 'tensorflow',
       titleBarStyle: 'hidden',
       backgroundColor: '#333',
       resizable: true,
@@ -742,9 +739,9 @@ function createTensorFlowWindow() {
       }
     })
 
-    const ml5jsMenu = Menu.buildFromTemplate(ml5_control_menu_template);
+    const tensorflowMenu = Menu.buildFromTemplate(ml_control_menu_template);
 
-    tensorflowWindow.setMenu(ml5jsMenu);
+    tensorflowWindow.setMenu(tensorflowMenu);
 
     tensorflowWindow.loadURL(
       url.format({
@@ -768,14 +765,7 @@ function createTensorFlowWindow() {
 }
 
 
-function clearCache() {
-  const win = BrowserWindow.getAllWindows()[0];
-  const ses = win.webContents.session;
 
-  ses.clearCache(() => {
-    // console.log("Cache cleared!");
-  });
-}
 
 
 function drawTemporaryWindow(width, height, title, resizable, hash, details = null, parent = mainWindow) {
@@ -912,6 +902,7 @@ function createToolbar(hash, width, type) {
 
     newToolbar.once('ready-to-show', () => {
       newToolbar.show();
+      mainWindow.webContents.send('resetCursor');
     })
 
     newToolbar.on('close', function () {
@@ -992,6 +983,7 @@ function adjustGridSettings() {
   drawTemporaryWindow(400, 480, 'Grid size', false, 'grid-settings');
 }
 
+
 // function createZiGZaG() {
 //   drawTemporaryWindow(400, 380, 'Zig Zag', false, 'zigzag');
 // }
@@ -1060,20 +1052,10 @@ ipcMain.on('showToolbar', function() {
 });
 
 ipcMain.on('showToolbarMotor', function() {
-  createToolbar('/motor-control-toolbar', 170, 'motor');
+  createToolbar('/motor-control-toolbar', 244, 'motor'); //170
 });
 
-ipcMain.on('closeLayerWindow', function () {
-  layerWindow.close();
-});
 
-ipcMain.on('closeAlignWindow', function () {
-  alignWindow.close();
-});
-
-ipcMain.on('closeEffectWindow', function () {
-  effectWindow.close();
-});
 
 ipcMain.on('closeTmpWindow', function () {
   tmpWindow.close();
@@ -1092,17 +1074,34 @@ ipcMain.on('updateButtonState', function(e, data) {
 });
 
 ipcMain.on('load-dataset', function() {
-  createLoadDataSetWindow("load-dataset");
+  createLoadDataSetWindow('load-dataset');
+});
+
+ipcMain.on('addCollection', function() {
+  mainWindow.webContents.send('addCollection');
+});
+
+ipcMain.on('uploadAll', function() {
+  mainWindow.webContents.send('uploadAll');
+});
+
+ipcMain.on('uploadAll', function() {
+  mainWindow.webContents.send('uploadAll');
 });
 
 ipcMain.on('transform', function (e, data) {
   mainWindow.webContents.send('transform', data);
-  if (!data.tmp) {
+  if (data.tmp === false) {
     tmpWindow.close();
   }
 });
 
-
+ipcMain.on('updateMotorControlToolbarButton', function(e, data) {
+  const motorToolbar = toolbars.filter(t => t.type === 'motor')[0];
+  if (motorToolbar) {
+    motorToolbar.toolbar.webContents.send('disableButton', data);
+  }
+});
 
 ipcMain.on('updateCursor', function (e, details) {
   mainWindow.webContents.send('updateCursor', details);
@@ -1176,7 +1175,16 @@ ipcMain.on('connectToSerialPort', function (e, data) {
 
 ipcMain.on('playEffect', function(e, data) {
   serialPort.playEffect(data.play, data.microcontroller);
-})
+});
+
+ipcMain.on('playAll', function(e, data) {
+  mainWindow.webContents.send('playAll');
+});
+
+
+ipcMain.on('playAllSequenceWindow', function(e, data) {
+  mainWindow.webContents.send('playAllSequenceWindow');
+});
 
 ipcMain.on('motorSettings', function (e, data) {
   createMotorSettingsWindow();
@@ -1216,7 +1224,13 @@ ipcMain.on('saveLogFile', function(e, data) {
 })
 
 
-
+ipcMain.on('clearAllData', function(e) {
+  localStorage.clear();
+  setTimeout(() => {
+    app.relaunch();
+    app.exit();
+  }, 10000);
+});
 
 ipcMain.on('updateMenu', function (e, item) {
 
@@ -1245,13 +1259,6 @@ ipcMain.on('ondragstartLib', (event, data) => {
 })
 
 
-ipcMain.on('updateEffects', (event, effectList) => {
-  if (effectWindow !== null) {
-    effectWindow.webContents.send('updateEffects', effectList);
-  }
-});
-
-
 ipcMain.on('updateLayerColors', (event, data) => {
   mainWindow.webContents.send('updateEffectColors', data);
 });
@@ -1263,13 +1270,6 @@ ipcMain.on('updateToolbar', (event, data) => {
     selectedToolbar.toolbar.webContents.send('updateToolbar', data);
   } else {
     mainWindow.webContents.send('updateToolbar', data);
-  }
-});
-
-
-ipcMain.on('showTabEffectWindow', (event, tab) => {
-  if (effectWindow !== null) {
-    effectWindow.webContents.send('showTab', tab);
   }
 });
 
@@ -1395,14 +1395,14 @@ ipcMain.on('listDevices', (event, data) => {
 });
 
 
-//ML5js communication
+//tensorflow communication
 
 // ipcMain.on('NN_createData', (event, data) => {
-//   ml5js.NN_createData(data.d, data.options, data.epochs, data.batchSize); //32, 12
+//   tensorflow.NN_createData(data.d, data.options, data.epochs, data.batchSize); //32, 12
 // });
 
 // ipcMain.on('NN_classify', (event, data) => {
-//   ml5js.NN_classify(data);
+//   tensorflow.NN_classify(data);
 // });
 
 

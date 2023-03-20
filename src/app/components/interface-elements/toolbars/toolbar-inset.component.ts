@@ -196,6 +196,7 @@ export class ToolbarInsetComponent implements OnInit {
   }
 
   detachToolbar() {
+    this.document.body.style.cursor = 'wait';
     this.electronService.ipcRenderer.send('showToolbar');
 
     this.config.toolbarOffset = 0;

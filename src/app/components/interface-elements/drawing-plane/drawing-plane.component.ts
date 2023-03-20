@@ -20,6 +20,7 @@ import { MotorControlService } from 'src/app/services/motor-control.service';
 import { HardwareService } from 'src/app/services/hardware.service';
 import { CloneService } from 'src/app/services/clone.service';
 import { GridService } from 'src/app/services/grid.service';
+import { PlaySequenceComponent } from '../../windows/play-sequence.component';
 
 @Component({
   selector: 'app-drawing-plane',
@@ -62,6 +63,10 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
       this.reloadFileData(res);
     });
 
+    this.motorControlService.playAllInSequence.subscribe(res => {
+      this.showPlayInSequenceWindow(res);
+    });
+
 
 
     this.electronService.ipcRenderer.on('rulers:toggle', (event: Event, visible: boolean) => {
@@ -88,7 +93,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
     });
 
     this.electronService.ipcRenderer.on('showMessage', (event: Event, data: any) => {
-      this.showMessage(data, 'msg', 'message');
+      this.showMessage(data, 'message', 'msg');
     });
 
 
@@ -182,6 +187,9 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
       }
     });
 
+    this.electronService.ipcRenderer.on('clearApplicationData', () => {
+      this.showMessage('By clicking yes all data will be removed. When the application restarts, all files and effects will be lost. Do you want to proceed?', 'verification', 'clearApplicationData');
+    });
 
   }
 
@@ -685,6 +693,8 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
               this.hardwareService.clearList();
             } else if (action === 'deleteEffect') {
               this.fileService.deleteEffect(d);
+            } else if (action === 'clearApplicationData') {
+              this.electronService.ipcRenderer.send('clearAllData');
             }
           } else if (type === 'message') {
             if (action === 'updateVersion' && d) {
@@ -713,6 +723,26 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
           if (data === 'Cancel') {
             return false;
           }
+        }
+    );
+  }
+
+
+  showPlayInSequenceWindow(collections: any) {
+    const dialogConfig = this.dialog.open(PlaySequenceComponent, {
+      width: '390px',
+      data: { d: collections },
+      disableClose: true,
+      autoFocus: true,
+      panelClass: 'custom-modalbox'
+    });
+
+    dialogConfig.afterClosed().subscribe(
+        data => {
+          if (data) {
+            this.motorControlService.playAll.next(data);
+          }
+          return false;
         }
     );
   }

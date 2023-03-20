@@ -57,7 +57,7 @@
               <li *ngFor="let motor of microcontroller.motors">
                 <label class="radio-container">Motor {{ motor.id }}
                   <input type="checkbox" class="type" id="motor-{{ motor.id }}" name="motor-{{ motor.id }}" [(ngModel)]="motor.record" [checked]="motor.record">
-                  <span class="checkmark radio ml5js"></span>
+                  <span class="checkmark radio tensorflow"></span>
                 </label>
               </li>
             </ul>

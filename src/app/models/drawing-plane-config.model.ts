@@ -111,7 +111,7 @@ export class DrawingPlaneConfig {
   newGuide = false;
   dataLoggingEnabled = false;
   xAxisOptions = [ new Unit('deg', 360), new Unit('rad', 2*Math.PI) ];
-  xAxisOptions_velocity = [ new Unit('ms', 1000) ];
+  xAxisOptions_velocity = [ new Unit('ms', 1000), new Unit('sec', 1) ];
   yAxisOptions = [ new Unit('%', 100) ];
   yAxisOptions_velocity = [ new Unit('%', 100), new Unit('deg', 360) ];
 }

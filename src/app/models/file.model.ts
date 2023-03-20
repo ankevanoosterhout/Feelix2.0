@@ -25,7 +25,7 @@ export class File {
   activeEffect: Effect = null;
   activeCollection: Collection = null;
   activeCollectionEffect: Details = null;
-  ml5js: {
+  tensorflow: {
     models: Array<Model>;
     data: Array<DataSet>;
   }

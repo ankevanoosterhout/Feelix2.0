@@ -48,13 +48,13 @@ import { EffectVisualizationService } from './services/effect-visualization.serv
 import { ExportDialogComponent } from './components/windows/export-dialog.component';
 import { CloneService } from './services/clone.service';
 import { GridService } from './services/grid.service';
-import { TensorFlowJSComponent } from './components/ml5js/tensorFlowJS.component';
+import { TensorFlowJSComponent } from './components/tensorflow/tensorFlowJS.component';
 import { TensorFlowMainService } from './services/tensorflow-main.service';
-import { DataComponent } from './components/ml5js/elements/data.component';
-import { ClassificationComponent } from './components/ml5js/elements/classification.component';
-import { ModelComponent } from './components/ml5js/elements/model.component';
+import { DataComponent } from './components/tensorflow/elements/data.component';
+import { ClassificationComponent } from './components/tensorflow/elements/classification.component';
+import { ModelComponent } from './components/tensorflow/elements/model.component';
 import { DataSetService } from './services/dataset.service';
-import { LoadDataSetsComponent } from './components/ml5js/datasets/load-datasets.component';
+import { LoadDataSetsComponent } from './components/tensorflow/datasets/load-datasets.component';
 import { TensorFlowModelService } from './services/tensorFlow-model.service';
 import { TensorFlowDrawService } from './services/tensorflow-draw.service';
 import { FilterService } from './services/filter.service';
@@ -66,6 +66,7 @@ import { KinematicsDrawingService } from './services/kinematics-drawing.service'
 import { KinematicsCursorComponent } from './components/kinematics/control/kinematics-cursor.component';
 import { DragControlsService } from './services/drag-controls.service';
 import { IKService } from './services/IK.service';
+import { PlaySequenceComponent } from './components/windows/play-sequence.component';
 
 @NgModule({
   declarations: [
@@ -92,6 +93,7 @@ import { IKService } from './services/IK.service';
     MotorControlComponent,
     MotorControlToolbarInsetComponent,
     MotorControlToolbarComponent,
+    PlaySequenceComponent,
     TensorFlowJSComponent,
     DataComponent,
     ClassificationComponent,

@@ -101,7 +101,7 @@
               <input type="number" class="small motor-settings" id="phaseResistance-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" name="phaseResistance-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" [(ngModel)]="motor.config.phaseResistance" (change)="updateMicrocontroller(this.selectedMicrocontroller)">
             </div>
 
-            <div class="form-group">
+            <div class="form-group" *ngIf="motor.type === 'BLDC Motor'">
               <label class="labelRow motorsettings inset"><div class="question-mark" title="Offset between encoder and motor poles. Update to (re)calibrate.">?</div>Zero electric angle</label>
               <input type="text" class="motor-settings small" id="calibrationValue-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" name="calibrationValue-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}"
               [(ngModel)]="motor.config.calibration.value" (change)="updateMicrocontroller(this.selectedMicrocontroller)">
@@ -120,12 +120,12 @@
               </div>
             </div>
 
-            <div class="form-group">
+            <div class="form-group" *ngIf="motor.type !== 'Pneumatic Actuator'">
               <label class="labelRow motorsettings inset"><div class="question-mark" title="Voltage limitting variable. Optional, overflowing values will be cut off.">?</div>Voltage limit</label>
               <input type="number" class="motor-settings" id="voltage-limit-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" name="voltage-limit-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" [(ngModel)]="motor.config.voltageLimit" (change)="updateMicrocontroller(selectedMicrocontroller)"><span class="units motor-settings">V</span>
             </div>
 
-            <div class="form-group">
+            <div class="form-group" *ngIf="motor.type !== 'Pneumatic Actuator'">
               <label class="labelRow motorsettings inset"><div class="question-mark" title="Velocity limitting variable. Optional">?</div>Velocity limit</label>
               <input type="number" class="motor-settings" id="velocity-limit-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" name="velocity-limit-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" [(ngModel)]="motor.config.velocityLimit" (change)="updateMicrocontroller(selectedMicrocontroller)"><span class="units motor-settings">rad/s</span>
             </div>
@@ -134,28 +134,29 @@
             <div class="horizontalSeparator"></div>
 
 
-            <div class="form-group">
+            <div class="form-group" *ngIf="motor.type !== 'Pneumatic Actuator'">
               <label class="labelRow motorsettings inset"><div class="question-mark" title="Direction of sensor opposed to motor poles. Values is derived from calibration.">?</div>Sensor direction</label>
               <input type="text" class="small motor-settings text-align-right" id="calibrationDirection-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" name="calibrationDirection-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" [(ngModel)]="motor.config.calibration.direction" disabled>
             </div>
 
-            <div class="form-group">
+            <div class="form-group" *ngIf="motor.type !== 'Pneumatic Actuator'">
               <div class="row">
                 <label class="radio-container motorsettings">Reverse direction <div class="question-mark" title="Reverse sensor direction">?</div>
-                  <input type="checkbox" class="type" id="direction-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" name="direction-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" [(ngModel)]="motor.config.encoder.direction" [checked]="motor.config.encoder.direction" (change)="updateMicrocontroller(selectedMicrocontroller)">
+                  <input type="checkbox" class="type" id="direction-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" name="direction-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}"
+                    [(ngModel)]="motor.config.encoder.direction" [checked]="motor.config.encoder.direction" (change)="updateMicrocontroller(selectedMicrocontroller)">
                   <span class="checkmark radio playwindow"></span>
                 </label>
               </div>
             </div>
 
-            <div class="form-group">
+            <div class="form-group" *ngIf="motor.type !== 'Pneumatic Actuator'">
               <label class="labelRow motorsettings inset"><div class="question-mark" title="Offset sensor: adjust to modify 0 position">?</div>Sensor offset</label>
               <input type="text" class="small motor-settings" id="sensorOffset-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" name="sensorOffset-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}"
               [(ngModel)]="motor.config.sensorOffset" (change)="updateStartPosition(this.selectedMicrocontroller, motor.id)">
               <div class="units motor-setting">&deg;</div>
             </div>
 
-            <div class="form-group">
+            <div class="form-group" *ngIf="motor.type !== 'Pneumatic Actuator'">
               <label class="labelRow motorsettings inset"><div class="question-mark" title="Optional: Set start position">?</div>Start position</label>
               <input type="text" class="small motor-settings" id="startPosition-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" name="startPosition-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}"
               [(ngModel)]="motor.state.position.start" disabled>
@@ -175,7 +176,7 @@
               </select>
             </div> -->
 
-            <div class="form-group">
+            <div class="form-group" *ngIf="motor.type !== 'Pneumatic Actuator'">
               <label class="labelRow motorsettings inset"><div class="question-mark" title="Optional: set end position">?</div>End position</label>
               <input type="text" class="small motor-settings" id="endPosition-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" name="endPosition-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}"
               [(ngModel)]="motor.state.position.end" disabled>
@@ -189,7 +190,7 @@
               </span>
             </div>
 
-            <div class="form-group" id="find-range" class="hidden">
+            <div class="form-group" id="find-range" class="hidden" *ngIf="motor.type !== 'Pneumatic Actuator'">
               <div class="message" id="instruction-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}">rotate motor to start position and press 'OK'</div>
               <div class="row">
                 <button class="inline" (click)="confirmPosition(this.selectedMicrocontroller, motor.id)">Ok</button>
@@ -262,7 +263,7 @@
 
 
 
-            <div class="form-group">
+            <div class="form-group" *ngIf="motor.type !== 'Pneumatic Actuator'">
               <div class="row">
                 <label class="labelRow motorsettings inset"><div class="question-mark" title="Optional: set transmission ratio/gain when using gears or force translations">?</div>Transmission factor</label>
                 <input type="number" class="motor-settings" id="transmissionValue-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" name="transmissionValue-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}"
@@ -271,7 +272,7 @@
             </div>
 
 
-            <div class="horizontalSeparator" *ngIf="selectedMicrocontroller && selectedMicrocontroller.vendor !== 'ESP8266'"></div>
+            <div class="horizontalSeparator" *ngIf="selectedMicrocontroller && selectedMicrocontroller.vendor !== 'ESP8266' && motor.type === 'BLDC Motor'"></div>
 
             <div class="form-group" *ngIf="selectedMicrocontroller && selectedMicrocontroller.vendor !== 'ESP8266'">
               <div class="row">

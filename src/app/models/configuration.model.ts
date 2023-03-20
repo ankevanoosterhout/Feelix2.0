@@ -46,8 +46,8 @@ export class EffectTypeColor {
 };
 
 export class Configuration {
-  horizontalScreenDivision = 35;
-  verticalScreenDivision = 70;
+  horizontalScreenDivision = 35; //35
+  verticalScreenDivision = 70; //70
   collectionDisplay = 'large';
   collectionDisplayTranslation = 'linear';
   openTabs: Array<OpenTab> = [];

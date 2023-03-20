@@ -101,7 +101,7 @@ export class EffectModel {
       this.vis_type = new Model('T', 0);
     } else if (effect.type === EffectType.position) {
       this.vis_type = new Model('T', 1);
-    } else if (effect.type === EffectType.velocity) {
+    } else if (effect.type === EffectType.velocity || effect.type === EffectType.pneumatic) {
       if (effect.yUnit === 'deg') {
         this.vis_type = new Model('T', 3);
       } else {
@@ -148,7 +148,6 @@ export class UploadModel {
   config: ConfigModel = null;
   vendor: string = null;
   data: DataModel = null;
-
 
   constructor(collection: Collection, microcontroller: MicroController) {
     if (collection) {

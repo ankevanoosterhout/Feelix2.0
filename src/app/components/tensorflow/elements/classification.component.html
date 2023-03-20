@@ -37,7 +37,7 @@
     <div class="row">
       <label class="radio-container"><div class="question-mark" title="classify multiple inputs simultaneously">?</div>classify batch
         <input type="checkbox" class="type" id="multiple" name="interpolate" [(ngModel)]="this.tensorFlowService.selectedModel.multiple" [checked]="this.tensorFlowService.selectedModel.multiple">
-        <span class="checkmark radio ml5js"></span>
+        <span class="checkmark radio tensorflow"></span>
       </label>
     </div>
   </div>
@@ -90,7 +90,7 @@
             <div class="row" *ngIf="this.tensorFlowService.selectedModel && this.tensorFlowService.selectedModel.type === 'NeuralNetwork' && this.tensorFlowService.selectedModel.options.task === 'classification'">
               <!-- <label class="radio-container"><div class="question-mark" title="select to interpolate values between classifiers based on confidence level, default: discrete changes based on highest confidence level">?</div>Interpolate
                 <input type="checkbox" class="type" id="interpolate" name="interpolate" [(ngModel)]="filter.type.interpolate" [checked]="filter.type.interpolate">
-                <span class="checkmark radio ml5js"></span>
+                <span class="checkmark radio tensorflow"></span>
               </label> -->
               <label class="label"><div class="question-mark" title="instant (low) to gradual change (high)">?</div>Smoothness</label>
               <input type="number" class="number small" id="interpolate-value-{{ filter.id }}" [(ngModel)]="filter.type.interpolate" name="interpolate-value-{{ filter.id }}" disabled>

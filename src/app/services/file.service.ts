@@ -125,20 +125,12 @@ export class FileService {
   updateCollection(collection: Collection) {
     const activeFile = this.files.filter(f => f.isActive)[0];
     if (activeFile) {
-      activeFile.activeCollection = this.cloneService.deepClone(collection);
       activeFile.collections.filter(c => c.id === collection.id)[0] = this.cloneService.deepClone(collection);
+      activeFile.activeCollection = activeFile.collections.filter(c => c.id === collection.id)[0];
       this.store();
     }
   }
 
-  updateCollectionConfig(collection: Collection, graphD3: any) {
-    const activeFile = this.files.filter(f => f.isActive)[0];
-    if (activeFile) {
-      activeFile.activeCollection = this.cloneService.deepClone(collection);
-      activeFile.collections.filter(c => c.id === collection.id)[0] = this.cloneService.deepClone(collection);
-      this.store();
-    }
-  }
 
   updateCollectionEffect(collection: Collection, collEffect: Details) {
     const activeFile = this.files.filter(f => f.isActive)[0];
@@ -638,7 +630,6 @@ export class FileService {
 
 
   updateUnits(oldUnits: any, newUnits: any) {
-    console.log(oldUnits, newUnits);
     const activeFile = this.files.filter(f => f.isActive)[0];
     if (activeFile && activeFile.activeEffect) {
       activeFile.activeEffect.paths = this.nodeService.updateUnits(oldUnits.PR, newUnits.PR);

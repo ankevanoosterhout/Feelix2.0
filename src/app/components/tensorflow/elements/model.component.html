@@ -47,7 +47,7 @@
     <!-- <div class="form-group">
       <label class="radio-container">Debug
         <input type="checkbox" class="type" id="debug" name="debug" [(ngModel)]="this.tensorFlowService.selectedModel.options.debug" [checked]="this.tensorFlowService.selectedModel.options.debug">
-        <span class="checkmark radio ml5js"></span>
+        <span class="checkmark radio tensorflow"></span>
       </label>
     </div> -->
 
@@ -62,7 +62,7 @@
       <li *ngFor="let input of this.tensorFlowService.selectedModel.inputs">
         <label class="radio-container"><span id="label-{{ input.id }}">{{ input.name }}</span>
           <input type="checkbox" class="type" id="{{ input.id }}" name="{{ input.id }}" [(ngModel)]="input.active" [checked]="input.active">
-          <span class="checkmark radio ml5js"></span>
+          <span class="checkmark radio tensorflow"></span>
         </label>
       </li>
     </ul>
@@ -78,7 +78,7 @@
       <li *ngFor="let output of this.tensorFlowService.selectedModel.outputs">
         <label class="radio-container"><span id="label-{{ output.id }}">{{ output.name }}</span>
           <input type="checkbox" class="type" id="{{ output.id }}" name="{{ output.id }}" [(ngModel)]="output.active" [checked]="output.active">
-          <span class="checkmark radio ml5js"></span>
+          <span class="checkmark radio tensorflow"></span>
         </label>
       </li>
     </ul>

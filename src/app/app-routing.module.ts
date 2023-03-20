@@ -16,12 +16,13 @@ import { MotorControlToolbarInsetComponent } from './components/interface-elemen
 import { MotorControlToolbarComponent } from './components/interface-elements/toolbars/motor-control-toolbar.component';
 import { MotorSettingsComponent } from './components/windows/settings/motor-settings.component';
 import { EffectListComponent } from './components/file/effect-list.component';
-import { TensorFlowJSComponent } from './components/ml5js/tensorFlowJS.component';
-import { LoadDataSetsComponent } from './components/ml5js/datasets/load-datasets.component';
+import { TensorFlowJSComponent } from './components/tensorflow/tensorFlowJS.component';
+import { LoadDataSetsComponent } from './components/tensorflow/datasets/load-datasets.component';
 import { KinematicsComponent } from './components/kinematics/kinematics.component';
 import { KinematicsToolbarComponent } from './components/interface-elements/toolbars/kinematics-toolbar.component';
 import { KinematicsControlComponent } from './components/kinematics/control/kinematics-controls.component';
 import { KinematicsCursorComponent } from './components/kinematics/control/kinematics-cursor.component';
+import { PlaySequenceComponent } from './components/windows/play-sequence.component';
 
 
 const routes: Routes = [
@@ -46,6 +47,7 @@ const routes: Routes = [
     { path: 'motor-settings', component: MotorSettingsComponent },
     { path: 'load-dataset', component: LoadDataSetsComponent },
     { path: 'load-model', component: LoadDataSetsComponent },
+    { path: 'play-all', component: PlaySequenceComponent },
     { path: 'kinematics', component: KinematicsComponent },
     { path: 'kinematics-control', component: KinematicsControlComponent},
     { path: 'kinematics-toolbar', component: KinematicsToolbarComponent },

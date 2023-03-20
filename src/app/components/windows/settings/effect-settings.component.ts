@@ -88,7 +88,8 @@ export class EffectSettingsComponent implements OnInit {
   unitOptions = [
     // { name: 'deg', PR: 360 },
     // { name: 'rad', PR: (2 * Math.PI) },
-    { name: 'ms', PR: 1000 }
+    { name: 'ms', PR: 1000 },
+    { name: 'sec', PR: 1 }
   ];
 
   controlTypes = Object.values(EffectType).filter(value => typeof value === 'number');;
