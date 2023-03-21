@@ -39,11 +39,25 @@
 #svg_graph {
   display:inline-flex;
   position:relative;
-  height:calc(55vh - 21px);
+  height:90%;
   margin-top: 0;
-  width:75vw;
+  width:80%;
   vertical-align: top;
-  min-height: 200px;
+}
+
+.datalist_dropdown {
+  position: absolute;
+  display: inline-block;
+  margin: 10px;
+  right: 30%;
+  z-index: 10;
+}
+
+.graph_controls {
+  margin-top: 0;
+  display:inline-flex;
+  position: relative;
+  width:20%;
 }
 
 .form-group {
@@ -304,13 +318,21 @@ select#microcontroller {
 
 .labelRow {
   margin-top: 2px;
-  width: 86px;
+  width: 121px;
   font-weight: 600;
   margin-bottom: 5px;
 }
 
 .labelRow.tableHeader {
   margin: -5px 0 4px;
+}
+
+.label {
+  width:130px;
+}
+
+label {
+  color: #999;
 }
 
 .list-item {
@@ -415,10 +437,10 @@ select#microcontroller {
 }
 .data_content {
   display: flex;
-  flex-direction: column;
+  /* flex-direction: column; */
   overflow: hidden;
   height: calc(60vh - 85px);
-  width: calc(100vw - 320px);
+  width: calc(100vw - 240px);
 }
 
 .dataSet_data {
@@ -680,4 +702,11 @@ input.html-slider {
 
 .align-left {
   margin-left: -14px;
+}
+
+
+.input_list, .motor_list {
+  list-style-type: none;
+  margin:0;
+  padding:0;
 }

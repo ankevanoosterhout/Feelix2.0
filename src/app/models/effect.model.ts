@@ -121,11 +121,13 @@ export class Details {
   repeat = new Repeat();
   infinite = false;
   quality = 1;
+  xUnit: string;
 
-  constructor(id: string, effectID: string, name: string) {
+  constructor(id: string, effectID: string, name: string, xUnit: string) {
     this.id = id;
     this.effectID = effectID;
     this.name = name;
+    this.xUnit = xUnit;
   }
 }
 

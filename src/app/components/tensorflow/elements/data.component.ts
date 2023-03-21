@@ -30,7 +30,7 @@ export class DataComponent implements AfterViewInit {
 
 
   ngAfterViewInit(): void {
-    // this.tensorflowDrawService.drawGraph(window.innerWidth, window.innerHeight);
+    this.tensorflowDrawService.drawGraph();
   }
 
 
@@ -91,8 +91,7 @@ export class DataComponent implements AfterViewInit {
   }
 
 
-
-
-
-
+  compareID(el1: any, el2: any) {
+    return el1 && el2 ? el1.id === el2.id : el1 === el2;
+  }
 }

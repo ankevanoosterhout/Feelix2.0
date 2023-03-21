@@ -337,10 +337,12 @@ export class MotorSettingsComponent implements OnInit {
     const nr = (this.document.getElementById('numberOfMotors-' + this.selectedMicrocontroller.id) as HTMLInputElement).value;
     if (parseInt(nr) > 0) {
       const numberOfMotors = this.selectedMicrocontroller.motors.length;
+
       const diff = parseInt(nr) - numberOfMotors;
       if (diff > 0) {
         for (let n = 0; n < diff; n++) {
           const newMotor = new Motor((numberOfMotors + n), (this.selectedMicrocontroller.motors[0].I2C_communication === 1 ? 2 : 0));
+          if (numberOfMotors > 0) { newMotor.type = this.selectedMicrocontroller.motors[0].type; }
           this.selectedMicrocontroller.motors.push(newMotor);
         }
       } else if (diff < 0) {

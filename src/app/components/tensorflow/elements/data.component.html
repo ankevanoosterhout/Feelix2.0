@@ -25,7 +25,6 @@
   <div class="column-30">
     <div class="row">
       <label class="labelRow tableHeader">Microcontrollers</label>
-
     </div>
 
     <div class="form-group microcontroller">
@@ -48,14 +47,14 @@
         <div class="row" id="section_microcontroller">
           <div class="row">
             <label class="label">
-              <div class="question-mark" title="update frequency, depends on the processing power of your microcontroller.">?</div>
+              <div class="question-mark" title="Frequency for data collection (ms): slow down by increasing the value. A higher value is recommended for microcontrollers with high processing power to reduce the amount of data captured">?</div>
               frequency</label>
             <input type="number" class="number small blue" id="updateFrequency" [(ngModel)]="microcontroller.updateSpeed" name="updateFrequency" (change)="updateCommunicationSpeed(microcontroller.id)">
           </div>
           <div class="row">
             <ul class="motor-list">
               <li *ngFor="let motor of microcontroller.motors">
-                <label class="radio-container">Motor {{ motor.id }}
+                <label class="radio-container">{{ motor.id }}
                   <input type="checkbox" class="type" id="motor-{{ motor.id }}" name="motor-{{ motor.id }}" [(ngModel)]="motor.record" [checked]="motor.record">
                   <span class="checkmark radio tensorflow"></span>
                 </label>
@@ -65,23 +64,22 @@
         </div>
       </li>
     </ul>
-
-
   </div>
 
 
   <div class="column-50 flexbox">
 
-    <div class="dataset_column">
+    <!-- <div class="dataset_column">
       <ul>
         <li *ngFor="let set of this.tensorFlowService.dataSets">
           <div class="row inset dataset" (click)="this.tensorFlowService.selectDataSet(set.id)" id="dataSetItem-{{ set.id }}">
             <div class="opencloseArrow" [ngClass]="{ open: set.open }"><div></div></div>
-            <input type="text" class="nextToArrow dataSet" [ngClass]="{ active: set.open }" id="dataSet-{{ set.id }}" value="{{ set.name }}" name="dataSet-{{ set.id }}" (change)="this.tensorFlowService.updateDataSetName(set.id)">
+            <input type="text" class="nextToArrow dataSet" [ngClass]="{ active: set.open }" id="dataSet-{{ set.id }}" value="{{ set.name }}" name="dataSet-{{ set.id }}"
+              	(change)="this.tensorFlowService.updateDataSetName(set.id)">
           </div>
         </li>
       </ul>
-    </div>
+    </div> -->
     <!-- <div class="data_content">
 
       <ul id="data_input_list" class="data-list-header">
@@ -147,7 +145,43 @@
     </div> -->
 
     <div class="data_content">
+      <div class="datalist_dropdown">
+        <select class="form-control" id="select_dataset" [(ngModel)]="this.tensorFlowService.selectedDataset" (change)="this.tensorFlowService.selectDataSet()" name="select_dataset" [compareWith]="compareID">
+          <!-- <option [ngValue]="this.undefinedVar" disabled selected="selected">-- select --</option> -->
+          <option *ngFor="let set of this.tensorFlowService.dataSets" [ngValue]="set.id">{{ set.name }}</option>
+        </select>
+      </div>
       <div id="svg_graph"></div>
+      <div class="graph_controls">
+
+        <div class="motor_list">
+          <ul>
+            <li *ngFor="let microcontroller of this.tensorFlowService.selectedMicrocontrollers">
+              <ul>
+                <li *ngFor="let motor of microcontroller.motors">
+                  {{ motor.id }}
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <div class="input_list">
+          <li *ngFor="let input of this.tensorFlowService.selectedModel.inputs">
+            <div *ngIf="input.active">{{ input.name }}</div>
+          </li>
+        </div>
+
+        <div class="form-group">
+          <select class="form-control" id="select_dataset" [(ngModel)]="this.tensorFlowService.selectedDataset" (change)="this.tensorFlowService.selectDataSet()" name="select_dataset" [compareWith]="compareID">
+            <!-- <option [ngValue]="this.undefinedVar" disabled selected="selected">-- select --</option> -->
+            <option *ngFor="let set of this.tensorFlowService.dataSets" [ngValue]="set.id">
+              {{ set.name }}
+            </option>
+          </select>
+        </div>
+
+      </div>
     </div>
 
   </div>

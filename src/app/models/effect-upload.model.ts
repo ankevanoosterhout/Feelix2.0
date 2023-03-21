@@ -52,7 +52,7 @@ export class ConfigModel {
       this.range = collection.rotation.end - collection.rotation.start;
       this.loop = collection.rotation.loop ? 1 : 0;
       if (collection.rotation.units.name === 'rad') {
-        this.range *= (Math.PI / 180);
+        this.range *= (180 / Math.PI);
       }
       this.constrain_range = collection.rotation.constrain ? 1 : 0;
       this.motorID = collection.motorID.name;
@@ -78,12 +78,22 @@ export class EffectModel {
   pointer: number = null;
   quality: Model = null;
 
-  constructor(collEffect: Details, effect: any) {
+  constructor(collEffect: Details, effect: any, units: string) {
     this.id = effect.id;
-    this.position = new Model('P', [ Math.round(collEffect.position.x) !== collEffect.position.x ? collEffect.position.x.toFixed(5) : collEffect.position.x,
+    this.position = new Model('P',
+    [ Math.round(collEffect.position.x) !== collEffect.position.x ? collEffect.position.x.toFixed(5) : collEffect.position.x,
       Math.round(collEffect.position.y) !== collEffect.position.y ? (collEffect.position.y / 100).toFixed(5) : (collEffect.position.y / 100) ]);
 
-    this.angle = new Model('A', collEffect.position.width.toFixed(7));
+    this.angle = new Model('A', collEffect.position.width.toFixed(7))
+
+    if (units === 'rad') {
+      this.angle.value *= (180 / Math.PI);
+      this.position.value[0] *= (180 / Math.PI);
+    }
+    if (units === 'sec') {
+      this.angle.value *= 1000;
+      this.position.value[0] *= 1000;
+    }
 
     this.scale = new Model('S', [ Math.round(collEffect.scale.x) !== collEffect.scale.x ? (collEffect.scale.x / 100).toFixed(5) : (collEffect.scale.x / 100),
       Math.round(collEffect.scale.y) !== collEffect.scale.y ? (collEffect.scale.y / 100).toFixed(5) : (collEffect.scale.y / 100) ]);
@@ -154,7 +164,7 @@ export class UploadModel {
       for (const collEffect of collection.effects) {
         const effectData = collection.effectDataList.filter(e => e.id === collEffect.effectID)[0];
         if (effectData && effectData.data.length > 0) {
-          const effectModel = new EffectModel(collEffect, effectData);
+          const effectModel = new EffectModel(collEffect, effectData, collection.rotation.units.name);
           this.effects.push(effectModel);
         }
       }

@@ -41,6 +41,7 @@ export class TensorFlowMainService {
     public motorList = [];
 
     public dataSets: Array<DataSet> = [];
+    public selectedDataset = null;
 
     public processing = false;
 

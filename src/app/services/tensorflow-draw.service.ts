@@ -9,18 +9,25 @@ export class TensorFlowDrawService {
   scaleY: any;
   scaleX: any;
 
+  width = (window.innerWidth - 285) * 0.7;
+  height = window.innerHeight * 0.45 * 0.9;
+
+  xAxis: any;
+  xAxisSmall: any;
+  xAxisSmallThicks: any;
+  xAxisThicks: any;
 
   constructor(@Inject(DOCUMENT) private document: Document) {}
 
 
-  drawGraph(width: number, height: number) {
+  drawGraph() {
     d3.selectAll('#datagraph').remove();
 
     this.dataSVG = d3.select('#svg_graph')
         .append('svg')
           .attr('id', 'datagraph')
-          .attr('width', width * 0.65)
-          .attr('height', height * 0.4);
+          .attr('width', this.width)
+          .attr('height', this.height);
 
 
     const allGroup = ['angle', 'velocity', 'direction'];
@@ -31,20 +38,59 @@ export class TensorFlowDrawService {
 
     this.scaleX = d3.scaleLinear()
       .domain([0, 10000])
-      .range([ 0, width * 0.65 ]);
+      .range([ 0, this.width ]);
     this.dataSVG.append('g')
-      .attr('transform', 'translate(' + 20 + ',' + height * 0.35 + ')')
+      .attr('transform', 'translate(' + 20 + ',' + this.height + ')')
       .call(d3.axisBottom(this.scaleX));
 
     this.scaleY = d3.scaleLinear()
       .domain( [-4, 4])
-      .range([ height * 0.35, 0]);
+      .range([ this.height, 0]);
     this.dataSVG.append('g')
       .attr('transform', 'translate(' + 20 + ',0)')
       .call(d3.axisLeft(this.scaleY));
 
   }
 
+
+  drawRuler(dataset: any) {
+    const line = this.dataSVG.append('line')
+      .attr('x1', 0)
+      .attr('x2', this.width)
+      .attr('y1', 1)
+      .attr('y2', 1)
+      .attr('stroke', '#ccc')
+      .attr('stroke-width', 0.5)
+      .attr('fill', 'none')
+      .attr('shape-rendering', 'crispEdges');
+
+    const axisSVG = this.dataSVG.append('g')
+      .attr('class', 'xAxisMotorControl')
+      .attr('transform', 'translate(0, 18)');
+
+    this.xAxis = d3
+      .axisTop(this.scaleX)
+      .ticks(10)
+      .tickSize(5)
+      .tickFormat((e: any) => {
+        if (Math.floor(e) !== e) { return; }
+        return e;
+      });
+
+    this.xAxisSmall = d3
+      .axisTop(this.scaleX)
+      .ticks(100)
+      .tickSize(3)
+      .tickFormat((e: any) => e);
+
+    this.xAxisSmallThicks = axisSVG.append('g')
+      .attr('class', 'axisMotorSmall')
+      .call(this.xAxisSmall);
+
+    this.xAxisThicks = axisSVG.append('g')
+      .attr('class', 'axisMotor')
+      .call(this.xAxis);
+  }
 
 
 

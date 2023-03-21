@@ -39,7 +39,7 @@
     </div>
 
     <div class="form-group">
-      <label class="labelRow motorsettings inset"><div class="question-mark" title="Number of motors that are controlled by the microcontroller.">?</div>Number of motors</label>
+      <label class="labelRow motorsettings inset"><div class="question-mark" title="Number of actuators that are controlled by the microcontroller.">?</div>Number of actuators</label>
       <input type="number" class="small motor-settings" id="numberOfMotors-{{ selectedMicrocontroller.id }}" name="numberOfMotors" value="{{ selectedMicrocontroller.motors.length }}" (change)="updateNrOfMotors()">
 
     </div>
@@ -59,7 +59,7 @@
       <li *ngFor="let motor of selectedMicrocontroller.motors">
         <div class="inputfield">
           <div class="inputfield-inset">
-            <div class="inputfield-inset-title">Motor {{ motor.id }}</div>
+            <div class="inputfield-inset-title">Actuator {{ motor.id }}</div>
 
             <div class="form-group">
               <label class="labelRow select motorsettings inset">Communication</label>
@@ -197,7 +197,7 @@
                 <button class="inline" (click)="searchRange = 0">Cancel</button>
               </div>
             </div>
-            <div class="form-group" id="find-range-2">
+            <div class="form-group" id="find-range-2" *ngIf="motor.type !== 'Pneumatic Actuator'">
               <button class="inline" (click)="findRange(this.selectedMicrocontroller, motor.id)">Find moveable range</button>
             </div>
 
@@ -274,7 +274,7 @@
 
             <div class="horizontalSeparator" *ngIf="selectedMicrocontroller && selectedMicrocontroller.vendor !== 'ESP8266' && motor.type === 'BLDC Motor'"></div>
 
-            <div class="form-group" *ngIf="selectedMicrocontroller && selectedMicrocontroller.vendor !== 'ESP8266'">
+            <div class="form-group" *ngIf="selectedMicrocontroller && selectedMicrocontroller.vendor !== 'ESP8266' && motor.type === 'BLDC Motor'">
               <div class="row">
                 <label class="radio-container motorsettings">Inline current sensing <div class="question-mark" title="Optional: enables Field Oriented Control (FOC) and overheat protection. Can only be used when current sensors are included on the board">?</div>
                   <input type="checkbox" class="type" id="inline-current-sensing" name="inline-current-sensing" [(ngModel)]="motor.config.inlineCurrentSensing" [checked]="motor.config.inlineCurrentSensing" (change)="updateMicrocontroller(selectedMicrocontroller)">

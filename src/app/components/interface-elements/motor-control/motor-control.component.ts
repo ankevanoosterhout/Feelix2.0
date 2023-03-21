@@ -608,7 +608,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
 
         if (collection && tmpEffect) {
           const multiply = collection.rotation.units.PR / dropEffect.grid.xUnit.PR;
-          const effectDetails = new Details(uuid(), dropEffect.id, dropEffect.name + '-' + collection.name);
+          const effectDetails = new Details(uuid(), dropEffect.id, dropEffect.name + '-' + collection.name, dropEffect.grid.xUnit.name);
           effectDetails.position.width = dropEffect.size.width * multiply;
           effectDetails.position.x = collection.config.newXscale.invert(e.offsetX) - (effectDetails.position.width / 2);
           effectDetails.position.height = dropEffect.size.height;
@@ -658,7 +658,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
                 this.motorControlService.file.effects.push(copyTmpEffect);
               }
 
-              const effectDetails = new Details(uuid(), copyTmpEffect.id, copyTmpEffect.name + '-' + collection.name);
+              const effectDetails = new Details(uuid(), copyTmpEffect.id, copyTmpEffect.name + '-' + collection.name, copyTmpEffect.grid.xUnit.name);
               effectDetails.position.width = tmpEffect.size.width * multiply;
               effectDetails.position.x = collection.config.newXscale.invert(e.offsetX) - (effectDetails.position.width / 2);
               effectDetails.position.height = tmpEffect.size.height;
@@ -666,7 +666,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
               effectDetails.position.top = tmpEffect.size.top;
               effectDetails.position.bottom = tmpEffect.size.bottom;
               if (tmpEffect.grid.xUnit.name === 'ms') { effectDetails.quality = Math.ceil(effectDetails.position.width / 50); }
-              else if (tmpEffect.grid.xUnit.name === 'sec') { effectDetails.quality = Math.ceil(effectDetails.position.width / 50) / 1000; }
+              else if (tmpEffect.grid.xUnit.name === 'sec') { effectDetails.quality = Math.ceil(effectDetails.position.width / 50); }
               else { effectDetails.quality = Math.ceil(effectDetails.position.width / 50); }
 
               collection.effects.push(effectDetails);

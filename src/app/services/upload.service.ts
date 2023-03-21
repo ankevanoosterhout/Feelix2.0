@@ -467,7 +467,7 @@ export class UploadService {
       if (effect.type === EffectType.velocity && effect.grid.yUnit.name !== 'deg') { control_type = 'Control_type::VELOCITY'; }
 
       if (multiply) {
-        const newDetails = new Details(uuid(), effect.id, effect.name);
+        const newDetails = new Details(uuid(), effect.id, effect.name, effect.grid.xUnit.name);
         newDetails.quality = quality;
         translatedData = this.translateEffectData(newDetails, effect);
         const angle = effect.size.width;

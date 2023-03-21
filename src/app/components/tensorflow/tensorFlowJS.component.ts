@@ -6,6 +6,7 @@ import { HardwareService } from 'src/app/services/hardware.service';
 import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service';
 import { MotorControlService } from 'src/app/services/motor-control.service';
 import { v4 as uuid } from 'uuid';
+import { TensorFlowDrawService } from 'src/app/services/tensorflow-draw.service';
 
 @Component({
   selector: 'app-tensorflow-js',
@@ -28,7 +29,7 @@ export class TensorFlowJSComponent implements OnInit {
   inputArray = [];
 
   constructor(@Inject(DOCUMENT) private document: Document, public motorControlService: MotorControlService, public hardwareService: HardwareService,
-    private electronService: ElectronService, public tensorflowService: TensorFlowMainService) {
+    private electronService: ElectronService, public tensorflowService: TensorFlowMainService, private tensorflowDrawService: TensorFlowDrawService) {
 
 
       this.electronService.ipcRenderer.on('motorData', (event: Event, data: any) => {
@@ -245,8 +246,10 @@ export class TensorFlowJSComponent implements OnInit {
 
   @HostListener('window:resize', ['$event'])
   onResize(event: Event) {
-    // this.tensorflowDrawService.drawGraph(window.innerWidth, window.innerHeight);
-    // this.tensorflowDrawService.drawGraphData(this.tensorflowService.dataSets.filter(d => d.open)[0]);
+    this.tensorflowDrawService.width = (window.innerWidth - 285) * 0.7;
+    this.tensorflowDrawService.height = window.innerHeight * 0.45 * 0.9;
+    this.tensorflowDrawService.drawGraph();
+    this.tensorflowDrawService.drawGraphData(this.tensorflowService.dataSets.filter(d => d.open)[0]);
   }
 
 
