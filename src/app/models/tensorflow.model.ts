@@ -11,6 +11,40 @@ export class Input {
   }
 }
 
+export class ModelVariable {
+  name: string;
+  active: boolean;
+  color: string;
+
+  constructor(name: string, active: boolean, color: string) {
+    this.name = name;
+    this.active = active;
+    this.color = color;
+  }
+}
+
+export class Label {
+  name: string;
+  confidence: number;
+  prediction: number;
+
+  constructor(name: string) {
+    this.name = name;
+  }
+}
+
+
+export class Classifier  {
+  name: String;
+  labels: Array<Label> = [];
+  open = false;
+  active = false;
+
+  constructor(name: String) {
+    this.name = name;
+  }
+}
+
 export class NN_options {
   // layers: Array<any> = []; // custom layers
   task: string; // 'classification', 'regression', 'imageClassificaiton'
@@ -29,13 +63,14 @@ export class NN_options {
 }
 
 
+
 export class Model {
   id: string;
   name: string;
   date: any;
   type: string;
-  inputs: Array<any> = [];
-  outputs: Array<any> = [];
+  inputs: Array<ModelVariable> = [];
+  outputs: Array<Classifier> = [];
   options: any;
   trainingOptions: any;
   model: any;
@@ -51,37 +86,18 @@ export class Model {
     this.type = type;
     this.options = options;
     this.inputs = [
-      { name: 'angle', active: true },
-      { name: 'velocity', active: true },
-      { name: 'direction', active: true },
-      { name: 'target', active: false },
-      { name: 'time', active: false }
+      new ModelVariable('angle', true, '#BA77E0'),
+      new ModelVariable('velocity', true, '#43E6D5'),
+      new ModelVariable('direction', true, '#E18257'),
+      new ModelVariable('target', false, '#7778E0'),
+      new ModelVariable('time', false, '#4390E6')
     ]
   }
 }
 
 
 
-export class Label {
-  name: string;
-  confidence: number;
-  prediction: number;
 
-  constructor(name: string) {
-    this.name = name;
-  }
-}
-
-
-export class Classifier  {
-  name: String;
-  labels: Array<Label> = [];
-  open = false;
-
-  constructor(name: String) {
-    this.name = name;
-  }
-}
 
 
 

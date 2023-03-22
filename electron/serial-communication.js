@@ -143,7 +143,7 @@ class newSerialPort {
     });
   }
 
-
+   
   get getCOMPort() {
       return this.COM;
   }

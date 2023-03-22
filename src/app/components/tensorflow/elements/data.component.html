@@ -155,10 +155,10 @@
       <div class="graph_controls">
 
         <div class="motor_list">
-          <ul>
+          <ul class="motor_list_ul">
             <li *ngFor="let microcontroller of this.tensorFlowService.selectedMicrocontrollers">
               <ul>
-                <li *ngFor="let motor of microcontroller.motors">
+                <li class="motor_list_item" *ngFor="let motor of microcontroller.motors">
                   {{ motor.id }}
                 </li>
               </ul>
@@ -167,23 +167,24 @@
         </div>
 
         <div class="input_list">
-          <li *ngFor="let input of this.tensorFlowService.selectedModel.inputs">
-            <div *ngIf="input.active">{{ input.name }}</div>
-          </li>
+          <ul class="input_list_item">
+            <li *ngFor="let input of this.tensorFlowService.selectedModel.inputs">
+              <div *ngIf="input.active">{{ input.name }}</div>
+            </li>
+          </ul>
         </div>
 
-        <div class="form-group">
-          <select class="form-control" id="select_dataset" [(ngModel)]="this.tensorFlowService.selectedDataset" (change)="this.tensorFlowService.selectDataSet()" name="select_dataset" [compareWith]="compareID">
-            <!-- <option [ngValue]="this.undefinedVar" disabled selected="selected">-- select --</option> -->
-            <option *ngFor="let set of this.tensorFlowService.dataSets" [ngValue]="set.id">
-              {{ set.name }}
-            </option>
-          </select>
+        <div class="form-group" *ngIf="this.tensorFlowService.selectedDataset && this.tensorFlowService.selectedModel">
+          <div class="row variable_name" class="data_element selectbox" *ngFor="let output of this.tensorFlowService.selectedModel.outputs; let o=index;" [ngClass]="{ invisible: !output.active }">
+            <select class="form-control" id="{{ this.tensorFlowService.selectedDataset.id }}-output-{{ o }}" name="{{ this.tensorFlowService.selectedDataset.id }}-output-{{ o }}"
+              [(ngModel)]="this.tensorFlowService.selectedDataset.d.outputs[o]" (change)="this.tensorFlowService.updateOutputDataSet(set.id, o)" required>
+              <option value="" disabled selected hidden>select label</option>
+              <option *ngFor="let label of output.labels" [ngValue]="label.name">{{ label.name }}</option>
+            </select>
+          </div>
         </div>
 
-      </div>
     </div>
-
   </div>
 
 </div>

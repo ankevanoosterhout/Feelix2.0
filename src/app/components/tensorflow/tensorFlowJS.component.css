@@ -56,6 +56,7 @@
 .graph_controls {
   margin-top: 0;
   display:inline-flex;
+  flex-direction: row;
   position: relative;
   width:20%;
 }
