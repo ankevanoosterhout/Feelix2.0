@@ -35,12 +35,12 @@ export class Label {
 
 
 export class Classifier  {
-  name: String;
+  name: string;
   labels: Array<Label> = [];
   open = false;
   active = false;
 
-  constructor(name: String) {
+  constructor(name: string) {
     this.name = name;
   }
 }
@@ -104,8 +104,6 @@ export class Model {
 export class Data  {
   inputs: Array<any> = [];
   outputs: Array<any> = [];
-
-  constructor() {}
 }
 
 

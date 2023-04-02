@@ -7,6 +7,7 @@ import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service'
 import { MotorControlService } from 'src/app/services/motor-control.service';
 import { v4 as uuid } from 'uuid';
 import { TensorFlowDrawService } from 'src/app/services/tensorflow-draw.service';
+import { TensorFlowConfig } from 'src/app/models/tensorflow-config.model';
 
 @Component({
   selector: 'app-tensorflow-js',
@@ -15,12 +16,7 @@ import { TensorFlowDrawService } from 'src/app/services/tensorflow-draw.service'
 })
 export class TensorFlowJSComponent implements OnInit {
 
-  updateHorizontalScreenDivision = false;
-  updateVerticalScreenDivision = false;
-  resultWindowVisible = true;
-
-  horizontalScreenDivision = 65;
-  verticalScreenDivision = 45;
+  public config: TensorFlowConfig;
 
   public page = 'tensorflow';
   public status = 'Ready';
@@ -30,6 +26,8 @@ export class TensorFlowJSComponent implements OnInit {
 
   constructor(@Inject(DOCUMENT) private document: Document, public motorControlService: MotorControlService, public hardwareService: HardwareService,
     private electronService: ElectronService, public tensorflowService: TensorFlowMainService, private tensorflowDrawService: TensorFlowDrawService) {
+
+      this.config = this.tensorflowDrawService.config;
 
 
       this.electronService.ipcRenderer.on('motorData', (event: Event, data: any) => {
@@ -207,8 +205,8 @@ export class TensorFlowJSComponent implements OnInit {
   }
 
   toggleResultWindow() {
-    this.resultWindowVisible = !this.resultWindowVisible;
-    this.updateScreenDivisionX(!this.resultWindowVisible ? window.innerWidth - 18 : window.innerWidth * 0.65);
+    this.config.resultWindowVisible = !this.config.resultWindowVisible;
+    this.updateScreenDivisionX(!this.config.resultWindowVisible ? window.innerWidth - 18 : window.innerWidth * 0.65);
   }
 
 
@@ -227,18 +225,18 @@ export class TensorFlowJSComponent implements OnInit {
   @HostListener('document:mousemove', ['$event'])
   onMouseMove(e: MouseEvent) {
 
-    if (this.updateHorizontalScreenDivision) {
+    if (this.config.updateHorizontalScreenDivision) {
       this.updateScreenDivisionY(e.clientY);
-    } else if (this.updateVerticalScreenDivision) {
+    } else if (this.config.updateVerticalScreenDivision) {
       this.updateScreenDivisionX(e.clientX);
     }
   }
 
   @HostListener('document:mouseup', ['$event'])
   onMouseUp(e: MouseEvent) {
-    if (this.updateHorizontalScreenDivision || this.updateVerticalScreenDivision) {
-      this.updateHorizontalScreenDivision = false;
-      this.updateVerticalScreenDivision = false;
+    if (this.config.updateHorizontalScreenDivision || this.config.updateVerticalScreenDivision) {
+      this.config.updateHorizontalScreenDivision = false;
+      this.config.updateVerticalScreenDivision = false;
     }
   }
 
@@ -246,8 +244,9 @@ export class TensorFlowJSComponent implements OnInit {
 
   @HostListener('window:resize', ['$event'])
   onResize(event: Event) {
-    this.tensorflowDrawService.width = (window.innerWidth - 285) * 0.7;
-    this.tensorflowDrawService.height = window.innerHeight * 0.45 * 0.9;
+    this.config.width = (window.innerWidth - 470);
+    const updatedHeight = ((window.innerHeight * this.config.horizontalScreenDivision / 100) - 5);
+    this.config.height = updatedHeight < 220 ? window.innerHeight * (((100-this.config.horizontalScreenDivision) / 100) - 60) * 0.9 : window.innerHeight - 340;
     this.tensorflowDrawService.drawGraph();
     this.tensorflowDrawService.drawGraphData(this.tensorflowService.dataSets.filter(d => d.open)[0]);
   }
@@ -274,8 +273,8 @@ export class TensorFlowJSComponent implements OnInit {
       this.document.getElementById('classifiers').style.height = ((window.innerHeight * division / 100) - 5) + 'px';
       this.document.getElementById('model').style.height = ((window.innerHeight * division / 100) - 5) + 'px';
       this.document.getElementById('data').style.height = ((window.innerHeight * (100-division) / 100) - 60) + 'px';
-      this.horizontalScreenDivision = division;
-      if (this.horizontalScreenDivision >= (100 / window.innerHeight) * (window.innerHeight - 80)) {
+      this.config.horizontalScreenDivision = division;
+      if (this.config.horizontalScreenDivision >= (100 / window.innerHeight) * (window.innerHeight - 80)) {
         this.document.getElementById('toggleDataSection').classList.add('hidden');
       } else {
         if (this.document.getElementById('toggleDataSection').classList.contains('hidden')) {
@@ -288,8 +287,8 @@ export class TensorFlowJSComponent implements OnInit {
 
       this.document.getElementById('model').style.width = (window.innerWidth * division / 100) + 'px';
       this.document.getElementById('classifiers').style.width = (window.innerWidth * (100-division) / 100) + 'px';
-      this.verticalScreenDivision = division;
-      if (this.verticalScreenDivision >= (100 / window.innerWidth) * (window.innerWidth - 18)) {
+      this.config.verticalScreenDivision = division;
+      if (this.config.verticalScreenDivision >= (100 / window.innerWidth) * (window.innerWidth - 18)) {
         if (!this.document.getElementById('toggleResultWindow').classList.contains('hidden')) {
           this.document.getElementById('toggleResultWindow').classList.add('hidden');
         }

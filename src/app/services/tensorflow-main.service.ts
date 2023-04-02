@@ -57,7 +57,7 @@ export class TensorFlowMainService {
     updateResizeElements: Subject<any> = new Subject();
 
     constructor(@Inject(DOCUMENT) private document: Document, public hardwareService: HardwareService, private dataSetService: DataSetService,
-                private tensorflowService: TensorFlowModelService, private tensorflowDrawService: TensorFlowDrawService, private electronService: ElectronService, private _FileSaverService: FileSaverService) {}
+                private tensorflowService: TensorFlowModelService, private electronService: ElectronService, private _FileSaverService: FileSaverService) {}
 
 
 

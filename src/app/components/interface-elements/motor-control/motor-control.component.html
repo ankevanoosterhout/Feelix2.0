@@ -66,7 +66,7 @@
 
           </div>
 
-          <div id="buttonsMotorControl" *ngIf="this.motorControlService.width > 350">
+          <div id="buttonsMotorControl" *ngIf="this.motorControlService.width > 350 && collection.microcontroller">
             <ul class="dropdown-buttons">
               <li *ngIf="collection.visualizationType <= 2" id="return" (click)="returnToStart(collection)" title="move to start position"><img class="no-pointer-events" src="./assets/icons/buttons/return.svg"></li>
               <li *ngIf="!collection.rotation.loop && !(collection.visualizationType >= 2 && collection.rotation.units_y.name === '%')" id="constrain_range"
@@ -116,16 +116,22 @@
               (change)="saveMotorData(collection, 'Q', [collection.microcontroller.motors[collection.motorID.index].velocity_pid.p, collection.microcontroller.motors[collection.motorID.index].velocity_pid.i, collection.microcontroller.motors[collection.motorID.index].velocity_pid.d] )">
           </div>
 
-          <div class="form-row left collection_pid" id="max" *ngIf="(collection.visualizationType === 2 && collection.rotation.units_y.name !== 'deg') && collection.microcontroller && this.motorControlService.width > 550 && collection.effectDataList.length > 0" title="Maximum velocity (rad/s)">
+          <div class="form-row left collection_pid" id="max" *ngIf="(collection.visualizationType === 2 && collection.rotation.units_y.name !== 'deg') && collection.microcontroller && collection.motorID && collection.microcontroller.motors[collection.motorID.index] && this.motorControlService.width > 550" title="Maximum velocity (rad/s)">
             <label>max vel.</label>
             <input type="number" id="collection-PID" name="collection-max-vel-{{ collection.id }}" (focus)="this.motorControlService.deselectElements()" [(ngModel)]="collection.microcontroller.motors[collection.motorID.index].config.velocityLimit" title="Maximum velocity (rad/s)"
               (change)="saveMotorData(collection, 'V', [collection.microcontroller.motors[collection.motorID.index].config.velocityLimit] )">
           </div>
 
-          <div class="form-row left collection_pid" id="max" *ngIf="collection.visualizationType === 0 && collection.microcontroller && this.motorControlService.width > 400 && collection.effectDataList.length > 0" title="Maximum voltage (V)">
+          <div class="form-row left collection_pid" id="max" *ngIf="collection.visualizationType < 2 && collection.microcontroller && collection.motorID && collection.microcontroller.motors[collection.motorID.index] && this.motorControlService.width > 400" title="Maximum voltage (V)">
             <label>max volt.</label>
             <input type="number" id="collection-PID" name="collection-max-vol-{{ collection.id }}" (focus)="this.motorControlService.deselectElements()" [(ngModel)]="collection.microcontroller.motors[collection.motorID.index].config.voltageLimit"
               (change)="saveMotorData(collection, 'L', [collection.microcontroller.motors[collection.motorID.index].config.voltageLimit] )">
+          </div>
+
+          <div class="form-row left collection_pid" id="max" *ngIf="collection.visualizationType === 3 && collection.microcontroller && collection.motorID && collection.microcontroller.motors[collection.motorID.index] && this.motorControlService.width > 400" title="Maximum pressure (bar)">
+            <label>max pressure</label>
+            <input type="number" id="collection-PID" name="collection-max-pressure-{{ collection.id }}" (focus)="this.motorControlService.deselectElements()" [(ngModel)]="collection.microcontroller.motors[collection.motorID.index].config.pressureLimit"
+              (change)="saveMotorData(collection, 'L', [collection.microcontroller.motors[collection.motorID.index].config.pressureLimit] )">
           </div>
 
           <div id="visualizationType" class="form-row left" *ngIf="collection.effectDataList.length === 0 && this.motorControlService.width > 700">
@@ -170,7 +176,18 @@
             <div class="motor-info posUnits current_sense" id="current_sense_a-{{ collection.id }}"></div>
 
           </div>
+
+          <div class="form-row" *ngIf="collection.playing && collection.visualizationType === 3">
+            <div class="motor-info posUnits" id="pressureUnits-{{ collection.id }}">bar</div>
+            <div class="motor-info" id="pressure-{{ collection.id }}">0 </div>
+
+            <div class="motor-info posUnits" id="posUnits-{{ collection.id }}">ms</div>
+            <div class="motor-info" id="time-{{ collection.id }}">0 </div>
+          </div>
+
         </div>
+
+
 
         <div class="row" id="row2{{ collection.id }}">
           <div class="collection-order-buttons {{ this.motorControlService.file.configuration.collectionDisplay }}" *ngIf="this.motorControlService.file.collections.length > 1">

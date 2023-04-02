@@ -1436,6 +1436,10 @@ function visualizaMotorData(data) {
   }
 }
 
+function visualizaPressureMotorData(data) {
+  mainWindow.webContents.send('playDataPressure', data);
+}
+
 
 function updateZeroElectricAngle(data) {
   mainWindow.webContents.send('zero_electric_angle', data);
@@ -1475,6 +1479,7 @@ exports.updateSerialStatus = updateSerialStatus;
 exports.displayStatus = displayStatus;
 exports.updateAvailablePortList = updateAvailablePortList;
 exports.visualizaMotorData = visualizaMotorData;
+exports.visualizaPressureMotorData = visualizaPressureMotorData;
 exports.updateSerialProgress = updateSerialProgress;
 exports.updateZeroElectricAngle = updateZeroElectricAngle;
 exports.uploadSuccesful = uploadSuccesful;

@@ -662,6 +662,55 @@ button.disabled:focus {
   opacity: 0.5;
 }
 
+.smallAxisX text, .smallAxisY text {
+  display: none;
+}
+
+.axis path, .axisBottom path, .smallAxisX path, .smallAxisY path, .datagraphTicks path {
+  display: none;
+  pointer-events: none;
+  user-select: none;
+  shape-rendering: crisp-edges;
+}
+
+.axis text, .axisBottom text {
+  fill: #999;
+  font-size: 8px;
+  pointer-events: none;
+  user-select: none;
+}
+
+.axis line, .axisBottom line, .smallAxisX line, .smallAxisY line {
+  fill: none;
+  stroke: #888;
+  stroke-width: 1;
+  pointer-events: none;
+  user-select: none;
+  shape-rendering: crisp-edges;
+}
+
+.axis line, .axisBottom line {
+  stroke-width: 1.5;
+  shape-rendering: crisp-edges;
+}
+
+.axis .tick:first-child {
+  display: none;
+}
+
+.datagraphTicks line {
+  stroke-width: 0.5;
+  stroke: #999;
+  shape-rendering: crisp-edges;
+}
+
+.datagraphTicks text {
+  fill: #ccc;
+  font-size: 9px;
+  pointer-events: none;
+  user-select: none;
+}
+
 .axisMotor text {
   fill: #000;
   font-size: 8px;

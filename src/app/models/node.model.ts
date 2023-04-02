@@ -50,8 +50,6 @@ export class Steps {
 export class Scale {
   scaleX: any = null;
   scaleY: any = null;
-
-  constructor() {}
 }
 
 export class EditBounds {

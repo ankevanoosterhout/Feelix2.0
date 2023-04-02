@@ -1,5 +1,17 @@
-
 import { Encoder, MagneticSensor } from './position-sensors.model';
+
+
+export enum ActuatorType {
+  bldc = 0,
+  stepper = 1,
+  pneumatic = 2
+};
+
+export const ActuatorLabelMapping: Record<ActuatorType, string> = {
+  [ActuatorType.bldc]: 'BLDC Motor',
+  [ActuatorType.stepper]: 'Stepper Motor',
+  [ActuatorType.pneumatic]: 'Pneumatic Actuator'
+};
 
 export class Unit {
   name = '4096PPR';
@@ -72,10 +84,12 @@ export class CurrentSense {
 
 
 export class Config {
+  supplyVoltage: number = 12;
+}
+
+export class BLDCConfig extends Config {
   polepairs: number = 7;
   phaseResistance: number = 15.2;
-  motionControl: string = 'position';
-  supplyVoltage: number = 12;
   voltageLimit: number = 12;
   velocityLimit: number = 20;
   inlineCurrentSensing = false;
@@ -91,7 +105,24 @@ export class Config {
   overheatProtection = false;
 }
 
+export class PneuConfig extends Config {
+  pressureLimit: number = 3;
+  sensorAddress: string = '0x28';
+  pin: number = 2;
+  closedLoop = true;
+}
 
+export class StepperConfig extends Config { //update config details for stepper motors
+  voltageLimit: number = 12;
+  velocityLimit: number = 20;
+  encoderType: string = 'Magnetic sensor';
+  encoder: any = new MagneticSensor();
+  sensorOffset = 0.0;
+  calibration = new Calibration();
+  rotation = new Rotation();
+  transmission = 1;
+  frequency = 50000;
+}
 
 export class State {
   speed = 0;
@@ -99,24 +130,36 @@ export class State {
   position = new Position();
   sleep = false;
   target = 0;
+  pressure = 0;
 }
 
 export class Motor {
   id: string = null;
-  type: string = 'BLDC Motor';
-  config = new Config();
+  type: ActuatorType;
+  config: any;
   state = new State();
   position_pid = new PID(20.0, 0.0, 0.0);
   velocity_pid = new PID(0.5, 10, .001);
   record = false;
+  visible = true;
   I2C_address: any;
   I2C_communication = 0;
 
 
-  constructor(id: number, i2cComm = 0) {
+  constructor(id: number, type: ActuatorType, i2cComm = 0) {
     this.id = (id + 10).toString(16).toUpperCase();
     this.I2C_address = '0x' + this.id;
     this.I2C_communication = i2cComm;
+    this.type = type;
+
+    if (this.type === ActuatorType.bldc) {
+      this.config = new BLDCConfig();
+    } else if (this.type === ActuatorType.stepper) {
+      this.config = new StepperConfig();
+    } else if (this.type === ActuatorType.pneumatic) {
+      this.config = new PneuConfig();
+      this.config.pin = id + 2;
+    }
   }
 }
 
@@ -140,7 +183,7 @@ export class MicroController {
   serialPort: any = null;
   name: string = null;
   vendor: string = null;
-  motors = [ new Motor(0, 1) ];
+  motors = [ new Motor(0, ActuatorType.bldc, 1) ];
   storageSpace: number = null;
   connected = false;
   playing = false;

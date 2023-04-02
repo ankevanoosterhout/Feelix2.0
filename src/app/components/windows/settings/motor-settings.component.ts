@@ -5,7 +5,7 @@ import { FileService } from 'src/app/services/file.service';
 import { UploadService } from 'src/app/services/upload.service';
 import { Router } from '@angular/router';
 import { DOCUMENT } from '@angular/common';
-import { MicroController, Motor, Unit } from 'src/app/models/hardware.model';
+import { ActuatorLabelMapping, ActuatorType, BLDCConfig, MicroController, Motor, PneuConfig, StepperConfig, Unit } from 'src/app/models/hardware.model';
 import { MagneticSensor, Encoder } from 'src/app/models/position-sensors.model';
 
 
@@ -15,6 +15,10 @@ import { MagneticSensor, Encoder } from 'src/app/models/position-sensors.model';
   styleUrls: ['../../windows/effects/effects.component.css'],
 })
 export class MotorSettingsComponent implements OnInit {
+
+  public ActuatorLabelMapping = ActuatorLabelMapping;
+
+  public motorTypes = Object.values(ActuatorType).filter(value => typeof value === 'number');
 
   comports = [];
   microcontrollers: MicroController[] = [];
@@ -50,7 +54,10 @@ export class MotorSettingsComponent implements OnInit {
     { name: 'Teensy' },
     { name: 'ESP32' },
     { name: 'ESP8266' },
-    { name: 'Arduino DUE' }
+    { name: 'Arduino MEGA' },
+    { name: 'Arduino DUE' },
+    { name: 'Arduino Nano' },
+    { name: 'Raspberry PICO' }
   ];
 
   public qualityOptions = [
@@ -58,13 +65,6 @@ export class MotorSettingsComponent implements OnInit {
     { level: 1, name: 'normal', division: 4 },
     { level: 2, name: 'high', division: 2 },
     { level: 3, name: 'maximum', division: 1 }
-  ];
-
-
-  public motorType = [
-    { name: 'BLDC Motor', disabled: false },
-    { name: 'Stepper Motor', disabled: true },
-    { name: 'Pneumatic Actuator', disabled: false }
   ];
 
 
@@ -230,6 +230,19 @@ export class MotorSettingsComponent implements OnInit {
     }
   }
 
+  updateActuatorType(microcontroller: MicroController, motor_id: string) {
+    const motor = microcontroller.motors.filter(m => m.id === motor_id)[0];
+    if (motor) {
+      if (motor.type === ActuatorType.bldc && (motor.config instanceof PneuConfig || motor.config instanceof StepperConfig)) {
+        motor.config = new BLDCConfig();
+      } else if (motor.type === ActuatorType.pneumatic && (motor.config instanceof BLDCConfig || motor.config instanceof StepperConfig)) {
+        motor.config = new PneuConfig();
+      } else if (motor.type === ActuatorType.stepper && (motor.config instanceof BLDCConfig || motor.config instanceof PneuConfig)) {
+        motor.config = new StepperConfig();
+      }
+    }
+  }
+
 
   updateRange(position: string, motor_id: string, microcontroller: MicroController) {
     const value = (this.document.getElementById(position + 'Position-offset-' + microcontroller.serialPort.path + '-' + motor_id) as HTMLInputElement).value;
@@ -341,8 +354,9 @@ export class MotorSettingsComponent implements OnInit {
       const diff = parseInt(nr) - numberOfMotors;
       if (diff > 0) {
         for (let n = 0; n < diff; n++) {
-          const newMotor = new Motor((numberOfMotors + n), (this.selectedMicrocontroller.motors[0].I2C_communication === 1 ? 2 : 0));
-          if (numberOfMotors > 0) { newMotor.type = this.selectedMicrocontroller.motors[0].type; }
+          const newMotor = new Motor((numberOfMotors + n), (numberOfMotors > 0 ? this.selectedMicrocontroller.motors[0].type : ActuatorType.bldc),
+          (this.selectedMicrocontroller.motors[0].I2C_communication === 1 ? 2 : 0));
+
           this.selectedMicrocontroller.motors.push(newMotor);
         }
       } else if (diff < 0) {

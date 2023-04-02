@@ -6,18 +6,18 @@
     </div>
 
     <div id="classifiers" class="padding-15">
-      <div class="resize-vertical" (mousedown)="updateVerticalScreenDivision = true"></div>
+      <div class="resize-vertical" (mousedown)="this.config.updateVerticalScreenDivision = true"></div>
 
       <div class="sidebar">
-        <div class="hide-sidebar" id="toggleResultWindow" (click)="this.toggleResultWindow()"><div></div></div>
+        <div class="hide-sidebar" id="toggleResultWindow" (click)="this.config.toggleResultWindow()"><div></div></div>
       </div>
-      <app-classification *ngIf="resultWindowVisible"></app-classification>
+      <app-classification *ngIf="this.config.resultWindowVisible"></app-classification>
     </div>
   </div>
 
-  <div class="resize-horizontal" (mousedown)="updateHorizontalScreenDivision = true"></div>
+  <div class="resize-horizontal" (mousedown)="this.config.updateHorizontalScreenDivision = true"></div>
 
-  <div id="data" class="padding-15">
+  <div id="data">
     <app-data></app-data>
   </div>
   <app-statusbar [page]="this.page" [status]="this.status" [progress]="this.progress"></app-statusbar>

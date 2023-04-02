@@ -18,7 +18,7 @@
     "electron:serve-tsc": "tsc -p tsconfig-serve.json",
     "electron:serve": "wait-on http-get://localhost:4200/ && electron . --serve",
     "package-mac": "electron-packager . --overwrite --platform=darwin --asar --arch=x64 --icon=src/assets/icons/mac/icon.icns --prune --out=release-builds",
-    "package-win": "electron-packager . feelix --overwrite --asar --platform=win32 --arch=x64 --icon=src/assets/icons/win/icon.ico --prune --out=release-builds",
+    "package-win": "electron-packager . feelix --overwrite --asar --platform=win32 --arch=x64 --icon=src/assets/icons/win/icon.ico --prune --out=release-builds --version-string.CompanyName=CE --version-string.FileDescription=CE --version-string.ProductName=\"Feelix\"",
     "package-linux": "electron-packager . feelix --overwrite --asar --platform=linux --arch=x64 --icon=src/assets/icons/png/512x512.png --prune --out=release-builds"
   },
   "private": true,

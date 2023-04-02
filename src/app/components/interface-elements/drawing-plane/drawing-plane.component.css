@@ -112,38 +112,4 @@
       fill: #00eff3;
     }
 
-    .smallAxisX text, .smallAxisY text {
-      display: none;
-    }
-
-    .axis path, .axisBottom path, .smallAxisX path, .smallAxisY path {
-      display: none;
-      pointer-events: none;
-      user-select: none;
-      shape-rendering: crisp-edges;
-    }
-
-    .axis text, .axisBottom text {
-      fill: #999;
-      font-size: 8px;
-      pointer-events: none;
-      user-select: none;
-    }
-
-    .axis line, .axisBottom line, .smallAxisX line, .smallAxisY line {
-      fill: none;
-      stroke: #888;
-      stroke-width: 1;
-      pointer-events: none;
-      user-select: none;
-      shape-rendering: crisp-edges;
-    }
-
-    .axis line, .axisBottom line {
-      stroke-width: 1.5;
-      shape-rendering: crisp-edges;
-    }
-
-    .axis .tick:first-child {
-      display: none;
-    }
+  

@@ -92,7 +92,7 @@ export class EffectSettingsComponent implements OnInit {
     { name: 'sec', PR: 1 }
   ];
 
-  controlTypes = Object.values(EffectType).filter(value => typeof value === 'number');;
+  controlTypes = Object.values(EffectType).filter(value => typeof value === 'number');
 
   prevUnits = { name: 'deg', PR: 360 };
   initialUnits = { name: 'deg', PR: 360 };

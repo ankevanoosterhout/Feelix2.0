@@ -18,11 +18,16 @@ function listSerialPorts(callback) {
   SerialPort.list().then(ports => {
     ports.forEach((item)=>{
       let vendor = 'unknown';
+
       if (item.vendorId !== undefined && item.productId !== undefined) {
         if (item.vendorId === '16C0' && item.productId === '0483') {
           vendor = 'Teensy';
-        } else if ((item.vendorId === '2341' || item.vendorId === '2A03') && item.productId === '003D') {
-          vendor = 'Arduino DUE';
+        } else if (item.vendorId === '2341' || item.vendorId === '2A03') {
+          if (item.productId === '003D') {
+            vendor = 'Arduino DUE';
+          } else if (item.productId === '0042') {
+            vendor = 'Arduino MEGA';
+          }
         } else if (item.vendorId === '0483' && (item.productId === '5740' || item.productId === '0003')) {
           vendor = 'STM32';
         }
@@ -48,6 +53,7 @@ function writeDataString(data, COM) {
       if (err) {
           // reconnect(data, COM);
           main.updateSerialProgress({ progress: 0, str: err.message });
+          dataSendWaitList = [];
           // return console.log('Error: ', err.message);
           return;
       } else {
@@ -143,7 +149,7 @@ class newSerialPort {
     });
   }
 
-   
+
   get getCOMPort() {
       return this.COM;
   }
@@ -195,19 +201,18 @@ class newSerialPort {
       });
 
       parser.on('data', (d) => {
-        // console.log(d);
-        if (d.charAt(0) === '#') {
-          console.log('received data ', d);
-        }
+
+        // console.log('received data ', d);
+        // if (d.charAt(0) === '#') {
+        //   console.log('received data ', d);
+        // }
 
         if (d.charAt(0) === '*') {
           // console.log('received data ', d);
           if (dataSendWaitList.filter(d => d.port === this.COM)) {
             uploadFromWaitList(ports.filter(p => p.COM === this.COM)[0]);
           }
-        }
-
-        else if (d.charAt(0) === 'A') {
+        } else if (d.charAt(0) === 'A') {
           const dataArray = d.substr(1).split(':');
           let incomingData;
           if (dataArray.length <= 5) {
@@ -232,6 +237,19 @@ class newSerialPort {
             };
           }
           main.visualizaMotorData(incomingData);
+
+        } else if (d.charAt(0) === 'J') {
+          const dataArray = d.substr(1).split(':');
+          let incomingData = {
+            serialPath: this.COM,
+            list: []
+          };
+          for (const el of dataArray) {
+            const subArray = el.split('&');
+            incomingData.dataList.push({ motorID: subArray[0], pressure: parseFloat(subArray[1]), time: parseInt(subArray[2]) });
+          }
+
+          main.visualizaPressureMotorData(incomingData);
 
         } else if (d.charAt(0) === 'Z') { // receive custom variable
 
@@ -306,10 +324,12 @@ class newSerialPort {
 
 
     this.sp.on('error', (error) => {
-        updateProgress(0, (this.portData.path + ' - ' + this.portData.type + ': ' + error));
+        updateProgress(0, (this.portData.port.path + ' - ' + this.portData.type + ': ' + error));
         if (!this.connected) {
           main.updateSerialStatus({ microcontroller: this.portData, connected: this.connected });
         }
+        return;
+        // dataSendWaitList = [];
     });
   }
 }
@@ -321,11 +341,11 @@ function updateProgress(_progress, _str) {
 
 
 
-function prepareMotorData(uploadContent, motor, datalist) {
+function prepareMotorData(uploadContent, motor, datalist, index) {
 
   // datalist.unshift('FM' + motor.id + 'F');
 
-  datalist.unshift('FM' + motor.id + 'I' + motor.id);
+  datalist.unshift('FM' + motor.id + 'I' + index);
   // datalist.unshift('FM' + motor.id + '' + (motor.I2C_communication));
   if (motor.config.supplyVoltage) {
     datalist.unshift('FM' + motor.id + 'S' + motor.config.supplyVoltage);
@@ -376,6 +396,36 @@ function prepareMotorData(uploadContent, motor, datalist) {
 }
 
 
+
+function preparePneumaticData(uploadContent, motor, datalist, index) {
+
+  // datalist.unshift('FM' + motor.id + 'F');
+
+  datalist.unshift('FM' + index + 'I' + motor.id);
+  if (motor.config.supplyVoltage) {
+    datalist.unshift('FM' + index + 'S' + motor.config.supplyVoltage);
+  }
+  if (motor.config.pressureLimit) {
+    datalist.unshift('FM' + index + 'P' + motor.config.pressureLimit);
+  }
+
+  datalist.unshift('FM' + index + 'C' + motor.config.closedLoop);
+  if (motor.config.closedLoop) {
+    datalist.unshift('FM' + index + 'A' + motor.config.sensorAddress);
+  }
+
+  datalist.unshift('FM' + index + 'N' + motor.config.pin);
+
+  if (uploadContent.config) {
+    datalist.unshift('FM' + index + 'T' + uploadContent.config.updateSpeed);
+    datalist.unshift('FM' + index + 'J' + uploadContent.config.range);
+    datalist.unshift('FM' + index + 'H' + uploadContent.config.loop);
+    datalist.unshift('FM' + index + 'L' + uploadContent.config.constrain_range);
+  }
+
+  // datalist.unshift('FM' + motor.id + 'B' + uploadContent.baudRate);
+  return datalist;
+}
 
 
 function prepareEffectData(uploadContent, motor, datalist) {
@@ -519,18 +569,21 @@ function upload_to_receivedPort(port, uploadContent) {
   //   }
   // }
 
+  let index = 0;
+  datalist.unshift('FM0r'); //reset library and pneumatic actuator data (FeelixAir)
+  
   for (const motor of uploadContent.config.motors) {
     datalist.unshift('FM' + motor.id + 'F');
-    datalist = prepareMotorData(uploadContent, motor, datalist);
+    datalist = motor.type === 2 ? preparePneumaticData(uploadContent, motor, datalist, index) : prepareMotorData(uploadContent, motor, datalist, index);
     if (uploadContent.data) {
       datalist = prepareEffectData(uploadContent, motor, datalist);
     }
+    index++;
   }
 
   dataSendWaitList.push({ port: uploadContent.config.serialPort.path, data: datalist, totalItems: datalist.length, collection: uploadContent.config.collection });
   dataSendWaitList.filter(d => d.port === uploadContent.config.serialPort.path)[0].data.unshift('FC' + (uploadContent.config.motorID ? uploadContent.config.motorID : 'A'));
   // console.log('FC' + (uploadContent.config.motorID ? uploadContent.config.motorID : 'A'));
-
   uploadFromWaitList(receivingPort);
 }
 

@@ -84,11 +84,30 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
 
     this.motorControlService.playAll.subscribe(res => {
       this.playAll(res);
-    })
+    });
+
+    this.electronService.ipcRenderer.on('playDataPressure', (event: Event, data: any) => {
+      console.log(data);
+      for (const el of data.list) {
+        const selectedCollection = this.motorControlService.file.collections.filter(c => c.microcontroller && c.microcontroller.serialPort.path === data.serialPath && c.playing && c.motorID && c.motorID.name === el.motorID)[0];
+        console.log(selectedCollection.id);
+
+        selectedCollection.microcontroller.motors.filter(m => m.id === selectedCollection.motorID.name)[0].state.pressure = el.pressure;
+        selectedCollection.time = data.time;
+
+        if (this.document.getElementById('pressure-' + selectedCollection.id) !== null) {
+          (this.document.getElementById('pressure-' + selectedCollection.id) as HTMLElement).innerHTML = (Math.round(el.pressure * 100) / 100) + ' ';
+        }
+        if (this.document.getElementById('time-' + selectedCollection.id) !== null) {
+          (this.document.getElementById('time-' + selectedCollection.id) as HTMLElement).innerHTML = selectedCollection.time + ' ';
+        }
+        this.motorControlService.drawCursor(selectedCollection);
+      }
+    });
 
 
     this.electronService.ipcRenderer.on('playData', (event: Event, data: any) => {
-      const selectedCollection = this.motorControlService.file.collections.filter(c => c.microcontroller && c.microcontroller.serialPort.path === data.serialPath && c.playing)[0];
+      const selectedCollection = this.motorControlService.file.collections.filter(c => c.microcontroller && c.microcontroller.serialPort.path === data.serialPath && c.playing && c.motorID && c.motorID.name === data.motorID)[0];
       if (selectedCollection) {
         let angle = selectedCollection.rotation.units.name === 'deg' ? data.angle * (180/Math.PI) : data.angle;
         if (selectedCollection.rotation.loop) {
@@ -286,6 +305,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
         activeCollection.playing = false;
         this.motorControlService.updateCollection(activeCollection);
       }
+      console.log(uploadModel);
       this.electronService.ipcRenderer.send('upload', uploadModel);
 
     } else {
@@ -571,6 +591,8 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
       }
       if (collection.visualizationType === EffectType.torque) {
         coll_microcontroller.motors.filter(m => m.id === collection.motorID.name)[0].config.voltageLimit = collection.microcontroller.motors[collection.motorID.index].config.voltageLimit;
+      } else if (collection.visualizationType === EffectType.pneumatic) {
+        coll_microcontroller.motors.filter(m => m.id === collection.motorID.name)[0].config.pressureLimit = collection.microcontroller.motors[collection.motorID.index].config.pressureLimit;
       }
 
       this.hardwareService.updateMicroController(coll_microcontroller);
