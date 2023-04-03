@@ -3,6 +3,28 @@
 
   <div class="row" id="toolbar-content">
 
+    <div class="column offset-left">
+      <div class="datalist_dropdown">
+        <label class="labelRow small">Data set</label>
+        <select class="form-control" id="select_dataset" [(ngModel)]="this.tensorFlowService.selectedDataset" (change)="this.tensorFlowService.selectDataSet()" name="select_dataset" [compareWith]="compareID">
+          <option [ngValue]="undefined" selected="selected">-- select dataset --</option>
+          <option *ngFor="let set of this.tensorFlowService.dataSets" [ngValue]="set">{{ set.name }}</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="column tableheader" *ngIf="this.tensorFlowService.selectedDataset && this.tensorFlowService.selectedDataset.d && this.tensorFlowService.selectedModel">
+      <div class="row variable_name" class="data_element selectbox" *ngFor="let output of this.tensorFlowService.selectedModel.outputs; let o=index;" [ngClass]="{ invisible: !output.active }">
+
+        <label class="labelRow small">{{ output.name }}</label>
+        <select class="form-control" id="{{ this.tensorFlowService.selectedDataset.id }}-output-{{ o }}" name="{{ this.tensorFlowService.selectedDataset.id }}-output-{{ o }}"
+          [(ngModel)]="this.tensorFlowService.selectedDataset.d.outputs[o]" (change)="this.tensorFlowService.updateOutputDataSet(this.tensorFlowService.selectedDataset.id, o)" required>
+          <option value="undefined" selected="selected">-- select label --</option>
+          <option *ngFor="let label of output.labels" [ngValue]="label.name">{{ label.name }}</option>
+        </select>
+      </div>
+    </div>
+
     <ul class="buttons-list">
       <li id="new" (click)="this.tensorFlowService.addDataSet()"><img src="./assets/icons/tools/collections.svg" title="New data set"></li>
       <li id="load" (click)="this.tensorFlowService.loadDataSet()"><img src="./assets/icons/buttons/open.svg" title="Load data set"></li>
@@ -38,13 +60,14 @@
     <ul>
       <li *ngFor="let microcontroller of this.tensorFlowService.selectedMicrocontrollers">
         <div class="row">
-          <div class="opencloseArrow open" id="open_microcontroller" (click)="openCloseItem('microcontroller')"><div></div></div>
+          <div class="opencloseArrow open microcontroller" id="open_{{ microcontroller.id }}" (click)="openCloseItem(microcontroller.id)"><div></div></div>
           <label class="labelRow nextToArrow">{{ microcontroller.name }}</label>
           <div class="buttonPlayWindow dataSetList delete" (click)="this.tensorFlowService.deleteMicrocontroller(microcontroller.id)" title="delete">
             <img src="./assets/icons/buttons/bin.svg">
           </div>
         </div>
-        <div class="row" id="section_microcontroller">
+
+        <div class="row" id="section_{{ microcontroller.id }}">
           <div class="row">
             <label class="label">
               <div class="question-mark"
@@ -71,49 +94,45 @@
   <div class="column-50 flexbox">
 
     <div class="data_content">
-      <div class="datalist_dropdown">
-        <select class="form-control" id="select_dataset" [(ngModel)]="this.tensorFlowService.selectedDataset" (change)="this.tensorFlowService.selectDataSet()" name="select_dataset" [compareWith]="compareID">
-          <option [ngValue]="undefined" selected="selected">-- select dataset --</option>
-          <option *ngFor="let set of this.tensorFlowService.dataSets" [ngValue]="set">{{ set.name }}</option>
-        </select>
-      </div>
-      <div id="svg_graph"></div>
-      <div class="graph_controls">
 
+      <div class="form-group absolute" *ngIf="this.tensorFlowService.selectedDataset">
+        <!-- <label class="label">Dataset</label> -->
+        <input type="text" id="dataSetName" [(ngModel)]="this.tensorFlowService.selectedDataset.name" name="dataSetName">
+      </div>
+
+      <div id="svg_graph"></div>
+
+
+      <div class="graph_controls">
         <div class="row" *ngIf="this.tensorFlowService.selectedMicrocontrollers.length > 0">
-          <label class="labelRow">Motors</label>
-          <ul class="motor-list-buttons">
-            <li *ngFor="let microcontroller of this.tensorFlowService.selectedMicrocontrollers">
-              <ul>
-                <li class="motor-list-button-item" *ngFor="let motor of microcontroller.motors">
-                  <div [ngClass]="{'active': motor.visible }" *ngIf="motor.record">{{ microcontroller.name }} - {{ motor.id }}</div>
-                </li>
-              </ul>
-            </li>
-          </ul>
+          <div class="opencloseArrow open controls" id="open_motors" (click)="openCloseItem('motors')"><div></div></div>
+          <label class="labelRow nextToArrow">Motors</label>
+          <div class="row" id="section_motors">
+            <ul class="motor-list-buttons">
+              <li *ngFor="let microcontroller of this.tensorFlowService.selectedMicrocontrollers">
+                <ul>
+                  <li class="motor-list-button-item" *ngFor="let motor of microcontroller.motors">
+                    <div [ngClass]="{'active': motor.visible }" *ngIf="motor.record" (click)="toggleVisibilityMotor(microcontroller, motor.id)">{{ microcontroller.name }} - {{ motor.id }}</div>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </div>
         </div>
 
         <div class="row">
-          <label class="labelRow">Inputs</label>
-          <ul class="input-list-buttons">
-            <li class="input-list-button-item" *ngFor="let input of this.tensorFlowService.selectedModel.inputs">
-              <div [ngStyle]="{'background': input.color }" *ngIf="input.visible && input.active">{{ input.name }}</div>
-              <div *ngIf="input.active">{{ input.name }}</div>
-            </li>
-          </ul>
-        </div>
-
-        <div class="form-group" *ngIf="this.tensorFlowService.selectedDataset && this.tensorFlowService.selectedDataset.d && this.tensorFlowService.selectedModel">
-          <div class="row variable_name" class="data_element selectbox" *ngFor="let output of this.tensorFlowService.selectedModel.outputs; let o=index;" [ngClass]="{ invisible: !output.active }">
-
-            <label class="labelRow">{{ output.name }}</label>
-            <select class="form-control" id="{{ this.tensorFlowService.selectedDataset.id }}-output-{{ o }}" name="{{ this.tensorFlowService.selectedDataset.id }}-output-{{ o }}"
-              [(ngModel)]="this.tensorFlowService.selectedDataset.d.outputs[o]" (change)="this.tensorFlowService.updateOutputDataSet(set.id, o)" required>
-              <option value="undefined" selected="selected">-- select label --</option>
-              <option *ngFor="let label of output.labels" [ngValue]="label.name">{{ label.name }}</option>
-            </select>
+          <div class="opencloseArrow open controls" id="open_inputs" (click)="openCloseItem('inputs')"><div></div></div>
+          <label class="labelRow nextToArrow">Inputs</label>
+          <div class="row" id="section_inputs">
+            <ul class="input-list-buttons">
+              <li class="input-list-button-item" *ngFor="let input of this.tensorFlowService.selectedModel.inputs">
+                <div [ngStyle]="{'background': input.color }" [ngClass]="{'active': input.visible }" *ngIf="input.visible && input.active" (click)="toggleVisibilityInput(input.name)">{{ input.name }}</div>
+                <div *ngIf="!input.visible && input.active" (click)="toggleVisibilityInput(input.name)">{{ input.name }}</div>
+              </li>
+            </ul>
           </div>
         </div>
+
 
     </div>
   </div>

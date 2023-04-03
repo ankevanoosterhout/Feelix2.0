@@ -55,6 +55,11 @@ export class ModelComponent {
 
 
 
+  selectClassifier(name: string) {
+    for (const output of this.tensorFlowService.selectedModel.outputs) {
+      output.active = output.name === name ? true : false;
+    }
+  }
 
 
   classifyAtRunTime() {

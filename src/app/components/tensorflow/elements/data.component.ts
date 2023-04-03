@@ -7,6 +7,7 @@ import { ConnectModel } from 'src/app/models/effect-upload.model';
 import { UploadService } from 'src/app/services/upload.service';
 import { DOCUMENT } from '@angular/common';
 import { TensorFlowDrawService } from 'src/app/services/tensorflow-draw.service';
+import { MicroController } from 'src/app/models/hardware.model';
 
 
 
@@ -61,6 +62,16 @@ export class DataComponent implements AfterViewInit {
   toggleDataSection() {
     this.dataVisible = !this.dataVisible;
     this.tensorFlowService.updateResize((!this.dataVisible ? window.innerHeight - 60 : window.innerHeight * 0.45));
+  }
+
+  toggleVisibilityInput(name: string) {
+    const input = this.tensorFlowService.selectedModel.inputs.filter(n => n.name == name)[0];
+    input.visible = !input.visible;
+  }
+
+  toggleVisibilityMotor(mcu: MicroController, motor_id: string) {
+    const motor = mcu.motors.filter(m => m.id === motor_id)[0];
+    motor.visible = !motor.visible;
   }
 
   updateCommunicationSpeed(id: string) {

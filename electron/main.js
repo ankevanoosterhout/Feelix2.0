@@ -1417,6 +1417,9 @@ function updateSerialStatus(status) {
 
 function updateSerialProgress(progress) {
   mainWindow.webContents.send('updateProgress', progress);
+  if (tensorflowWindow !== null) {
+    tensorflowWindow.webContents.send('updateProgress', progress);
+  }
 }
 
 function updateAvailablePortList(list) {

@@ -15,6 +15,7 @@ export class ModelVariable {
   name: string;
   active: boolean;
   color: string;
+  visible = false;
 
   constructor(name: string, active: boolean, color: string) {
     this.name = name;

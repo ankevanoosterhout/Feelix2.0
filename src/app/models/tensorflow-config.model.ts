@@ -12,9 +12,9 @@ export class TensorFlowConfig {
   yMax = 4;
 
   width = (window.innerWidth - 470);
-  height = (window.innerHeight * 0.65) - 120;
+  height = (window.innerHeight * 0.55) - 120;
 
-  margin = 40;
+  margin = 30;
 
   xAxis: any;
   yAxis: any;
@@ -23,7 +23,7 @@ export class TensorFlowConfig {
   updateVerticalScreenDivision = false;
   resultWindowVisible = true;
 
-  horizontalScreenDivision = 65;
+  horizontalScreenDivision = 220;
   verticalScreenDivision = 45;
 
   rulerWidth = 13;

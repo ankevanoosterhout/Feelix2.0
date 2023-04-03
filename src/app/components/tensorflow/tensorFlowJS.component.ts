@@ -31,7 +31,7 @@ export class TensorFlowJSComponent implements OnInit {
 
 
       this.electronService.ipcRenderer.on('motorData', (event: Event, data: any) => {
-        // console.log(data);
+        console.log(data);
         if (data.velocity > 0.08 || data.velocity < -0.08) {
 
           //when classifying input data
@@ -117,7 +117,7 @@ export class TensorFlowJSComponent implements OnInit {
                 }
                 microcontrollerObject.inputdata = { name: "time", value: new Date().getTime() - this.tensorflowService.recording.starttime };
                 // console.log(dataset);
-                if (dataset.d) {
+                if (dataset && dataset.d) {
                   dataset.d.inputs.push(microcontrollerObject);
                   // this.tensorflowDrawService.drawGraphData(dataset);
                 }
@@ -245,8 +245,7 @@ export class TensorFlowJSComponent implements OnInit {
   @HostListener('window:resize', ['$event'])
   onResize(event: Event) {
     this.config.width = (window.innerWidth - 470);
-    const updatedHeight = ((window.innerHeight * this.config.horizontalScreenDivision / 100) - 5);
-    this.config.height = updatedHeight < 220 ? window.innerHeight * (((100-this.config.horizontalScreenDivision) / 100) - 60) * 0.9 : window.innerHeight - 340;
+    this.config.height = window.innerHeight - this.config.horizontalScreenDivision - 120;
     this.tensorflowDrawService.drawGraph();
     this.tensorflowDrawService.drawGraphData(this.tensorflowService.dataSets.filter(d => d.open)[0]);
   }
@@ -254,9 +253,7 @@ export class TensorFlowJSComponent implements OnInit {
 
   updateScreenDivisionY(coord: number) {
     if (coord > 60 && coord <= window.innerHeight - 60) {
-      let fullHeight = window.innerHeight - 60;
-      let division = 100 / (fullHeight / (coord - 22));
-      this.updateResize(division, 'horizontal');
+      this.updateResize(coord, 'horizontal');
     }
   }
 
@@ -270,21 +267,23 @@ export class TensorFlowJSComponent implements OnInit {
 
   updateResize(division: number, orientation: string) {
     if (orientation === 'horizontal') {
-      this.document.getElementById('classifiers').style.height = ((window.innerHeight * division / 100) - 5) + 'px';
-      this.document.getElementById('model').style.height = ((window.innerHeight * division / 100) - 5) + 'px';
-      this.document.getElementById('data').style.height = ((window.innerHeight * (100-division) / 100) - 60) + 'px';
+      this.document.getElementById('classifiers').style.height = division + 'px';
+      this.document.getElementById('model').style.height = division + 'px';
+      this.document.getElementById('data').style.height = window.innerHeight * division + 'px';
+      this.config.height = window.innerHeight - division - 120;
       this.config.horizontalScreenDivision = division;
-      if (this.config.horizontalScreenDivision >= (100 / window.innerHeight) * (window.innerHeight - 80)) {
+      if (this.config.horizontalScreenDivision >= window.innerHeight - 80) {
         this.document.getElementById('toggleDataSection').classList.add('hidden');
       } else {
         if (this.document.getElementById('toggleDataSection').classList.contains('hidden')) {
           this.document.getElementById('toggleDataSection').classList.remove('hidden');
         }
+        this.tensorflowDrawService.drawGraph();
+        this.tensorflowDrawService.drawGraphData(this.tensorflowService.dataSets.filter(d => d.open)[0]);
       }
 
 
     } else if (orientation === 'vertical') {
-
       this.document.getElementById('model').style.width = (window.innerWidth * division / 100) + 'px';
       this.document.getElementById('classifiers').style.width = (window.innerWidth * (100-division) / 100) + 'px';
       this.config.verticalScreenDivision = division;

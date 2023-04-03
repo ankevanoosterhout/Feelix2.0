@@ -76,8 +76,8 @@
     <label class="labelRow">Outputs</label>
     <ul>
       <li *ngFor="let output of this.tensorFlowService.selectedModel.outputs">
-        <label class="radio-container"><span id="label-{{ output.id }}">{{ output.name }}</span>
-          <input type="checkbox" class="type" id="{{ output.id }}" name="{{ output.id }}" [(ngModel)]="output.active" [checked]="output.active">
+        <label class="radio-container"><span id="label-{{ output.name }}">{{ output.name }}</span>
+          <input type="checkbox" class="type" id="{{ output.name }}" name="{{ output.name }}" [(ngModel)]="output.active" [checked]="output.active" (change)="selectClassifier(output.name)">
           <span class="checkmark radio tensorflow"></span>
         </label>
       </li>

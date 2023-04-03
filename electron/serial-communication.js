@@ -528,6 +528,8 @@ function prepareEffectData(uploadContent, motor, datalist) {
 
 function tryToEstablishConnection(receivingPort, uploadContent, callback) {
 
+  if (receivingPort) { console.log(receivingPort, receivingPort.sp.IsOpen); }
+  
   if (!receivingPort && uploadContent && uploadContent.config) {
     createConnection({ port: uploadContent.config.serialPort, type: uploadContent.config.vendor, baudrate: uploadContent.config.baudrate });
     receivingPort = ports.filter(p => p.COM === uploadContent.config.serialPort.path)[0];
@@ -571,7 +573,7 @@ function upload_to_receivedPort(port, uploadContent) {
 
   let index = 0;
   datalist.unshift('FM0r'); //reset library and pneumatic actuator data (FeelixAir)
-  
+
   for (const motor of uploadContent.config.motors) {
     datalist.unshift('FM' + motor.id + 'F');
     datalist = motor.type === 2 ? preparePneumaticData(uploadContent, motor, datalist, index) : prepareMotorData(uploadContent, motor, datalist, index);
@@ -589,12 +591,15 @@ function upload_to_receivedPort(port, uploadContent) {
 
 
 function requestData(data)  {
-  // console.log(data);
+  console.log(data);
   receivingPort = ports.filter(p => p.COM === data.config.serialPort.path)[0];
 
-  tryToEstablishConnection(receivingPort, data, receivedPort);
+  console.log("port: " + receivingPort);
+  if (receivedPort === undefined || (receivedPort.sp && !receivedPort.sp.IsOpen)) {
+    tryToEstablishConnection(receivingPort, data, receivedPort);
+  }
 
-  sendDataStr([ 'FI' ],  data.config.serialPort.path); //'FMQ'
+  sendDataStr([ 'FMK' ],  data.config.serialPort.path); //'FMQ'
 }
 
 
