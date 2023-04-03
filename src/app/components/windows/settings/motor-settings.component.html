@@ -117,7 +117,7 @@
 
             <div class="form-group" *ngIf="motor.type === 2">
               <div class="row">
-                <label class="radio-container motorsettings">Sense pressure<div class="question-mark" title="Closed loop control: activate when the pressure is measured with a sensor">?</div>
+                <label class="radio-container motorsettings">Sense pressure <div class="question-mark" title="Closed loop control: activate when the pressure is measured with a sensor">?</div>
                   <input type="checkbox" class="type" id="closedLoop-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" name="closedLoop-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}"
                     [(ngModel)]="motor.config.closedLoop" [checked]="motor.config.closedLoop" (change)="updateMicrocontroller(selectedMicrocontroller)">
                   <span class="checkmark radio playwindow"></span>
@@ -129,10 +129,14 @@
             <div class="form-group" *ngIf="motor.type === 2 && motor.config.closedLoop">
               <label class="labelRow motorsettings inset"><div class="question-mark" title="I2C address sensor">?</div>Sensor address</label>
               <input type="text" class="motor-settings small" id="sensorAddress-{{ selectedMicrocontroller.id }}-{{ motor.id }}" name="sensorAddress-{{ selectedMicrocontroller.id }}-{{ motor.id }}"
-                [(ngModel)]="motor.config.sensorAddress" (change)="updateMicrocontroller(selectedMicrocontroller)">
+                [(ngModel)]="motor.config.sensorAddress" (change)="updateSensorAddress(selectedMicrocontroller, motor.id)">
             </div>
 
-
+            <div class="form-group" *ngIf="motor.type === 2">
+              <label class="labelRow motorsettings inset"><div class="question-mark" title="Maximum pressure (default 3 bar)">?</div>Pressure limit</label>
+              <input type="number" class="motor-settings" id="pressure-limit-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" name="pressure-limit-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}"
+                [(ngModel)]="motor.config.pressureLimit" (change)="updateMicrocontroller(selectedMicrocontroller)"><span class="units motor-settings">bar</span>
+            </div>
 
             <div class="form-group">
               <div class="row">
@@ -152,11 +156,7 @@
                 [(ngModel)]="motor.config.voltageLimit" (change)="updateMicrocontroller(selectedMicrocontroller)"><span class="units motor-settings">V</span>
             </div>
 
-            <div class="form-group" *ngIf="motor.type === 2">
-              <label class="labelRow motorsettings inset"><div class="question-mark" title="Maximum pressure (default 3 bar)">?</div>Pressure limit</label>
-              <input type="number" class="motor-settings" id="pressure-limit-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" name="pressure-limit-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}"
-                [(ngModel)]="motor.config.pressureLimit" (change)="updateMicrocontroller(selectedMicrocontroller)"><span class="units motor-settings">bar</span>
-            </div>
+
 
             <div class="form-group" *ngIf="motor.type !== 2">
               <label class="labelRow motorsettings inset"><div class="question-mark" title="Velocity limitting variable. Optional">?</div>Velocity limit</label>

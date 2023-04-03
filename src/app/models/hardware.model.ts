@@ -107,7 +107,7 @@ export class BLDCConfig extends Config {
 
 export class PneuConfig extends Config {
   pressureLimit: number = 3;
-  sensorAddress: string = '0x28';
+  sensorAddress: number = 0x28;
   pin: number = 2;
   closedLoop = true;
 }

@@ -389,6 +389,15 @@ export class MotorSettingsComponent implements OnInit {
     this.updateMicrocontroller(microcontroller);
   }
 
+  updateSensorAddress(mcu: MicroController, motor_id: string) {
+    const motor = mcu.motors.filter(m => m.id === motor_id)[0];
+    const regExp = new RegExp(/^0x[0-9A-F]{1,4}$/i);
+    if (!regExp.test(motor.config.sensorAddress)) {
+      motor.config.sensorAddress = undefined;
+    }
+    this.updateMicrocontroller(mcu);
+  }
+
 
   ngOnInit(): void {
     this.microcontrollers = this.hardwareService.getAllMicroControllers();

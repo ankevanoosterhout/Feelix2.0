@@ -57,7 +57,7 @@ function writeDataString(data, COM) {
           // return console.log('Error: ', err.message);
           return;
       } else {
-        console.log('write data ', data);
+        // console.log('write data ', data);
       }
   });
 }
@@ -205,8 +205,7 @@ class newSerialPort {
         // console.log('received data ', d);
         // if (d.charAt(0) === '#') {
         //   console.log('received data ', d);
-        // }
-
+        // } else
         if (d.charAt(0) === '*') {
           // console.log('received data ', d);
           if (dataSendWaitList.filter(d => d.port === this.COM)) {
@@ -409,9 +408,9 @@ function preparePneumaticData(uploadContent, motor, datalist, index) {
     datalist.unshift('FM' + index + 'P' + motor.config.pressureLimit);
   }
 
-  datalist.unshift('FM' + index + 'C' + motor.config.closedLoop);
+  datalist.unshift('FM' + index + 'C' + (motor.config.closedLoop ? 1 : 0));
   if (motor.config.closedLoop) {
-    datalist.unshift('FM' + index + 'A' + motor.config.sensorAddress);
+    datalist.unshift('FM' + index + 'A' + parseInt(motor.config.sensorAddress, 16));
   }
 
   datalist.unshift('FM' + index + 'N' + motor.config.pin);
@@ -528,12 +527,10 @@ function prepareEffectData(uploadContent, motor, datalist) {
 
 function tryToEstablishConnection(receivingPort, uploadContent, callback) {
 
-  if (receivingPort) { console.log(receivingPort, receivingPort.sp.IsOpen); }
-  
   if (!receivingPort && uploadContent && uploadContent.config) {
     createConnection({ port: uploadContent.config.serialPort, type: uploadContent.config.vendor, baudrate: uploadContent.config.baudrate });
     receivingPort = ports.filter(p => p.COM === uploadContent.config.serialPort.path)[0];
-  } else if (receivingPort && !receivingPort.sp.IsOpen) {
+  } else if (receivingPort && !receivingPort.sp.opening) { //sp.IsOpen
     receivingPort.sp.open();
     if (!activePorts.includes(receivingPort.COM)) {
       activePorts.push(receivingPort.COM);
@@ -572,10 +569,10 @@ function upload_to_receivedPort(port, uploadContent) {
   // }
 
   let index = 0;
-  datalist.unshift('FM0r'); //reset library and pneumatic actuator data (FeelixAir)
+  datalist.unshift('FM0#'); //reset library and pneumatic actuator data (FeelixAir)
 
   for (const motor of uploadContent.config.motors) {
-    datalist.unshift('FM' + motor.id + 'F');
+    if (motor.type !== 2) { datalist.unshift('FM' + motor.id + 'F'); }
     datalist = motor.type === 2 ? preparePneumaticData(uploadContent, motor, datalist, index) : prepareMotorData(uploadContent, motor, datalist, index);
     if (uploadContent.data) {
       datalist = prepareEffectData(uploadContent, motor, datalist);
@@ -586,15 +583,16 @@ function upload_to_receivedPort(port, uploadContent) {
   dataSendWaitList.push({ port: uploadContent.config.serialPort.path, data: datalist, totalItems: datalist.length, collection: uploadContent.config.collection });
   dataSendWaitList.filter(d => d.port === uploadContent.config.serialPort.path)[0].data.unshift('FC' + (uploadContent.config.motorID ? uploadContent.config.motorID : 'A'));
   // console.log('FC' + (uploadContent.config.motorID ? uploadContent.config.motorID : 'A'));
+  // console.log(JSON.stringify(dataSendWaitList));
   uploadFromWaitList(receivingPort);
 }
 
 
 function requestData(data)  {
-  console.log(data);
+  // console.log(data);
   receivingPort = ports.filter(p => p.COM === data.config.serialPort.path)[0];
 
-  console.log("port: " + receivingPort);
+  // console.log("port: " + receivingPort);
   if (receivedPort === undefined || (receivedPort.sp && !receivedPort.sp.IsOpen)) {
     tryToEstablishConnection(receivingPort, data, receivedPort);
   }
