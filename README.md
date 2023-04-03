@@ -1,27 +1,30 @@
-# HapticEditor
+# Feelix
 
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 8.1.1.
-
-## Development server
-
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
-
-## Code scaffolding
-
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
 
 ## Build
 
 Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory. Use the `--prod` flag for a production build.
 
-## Running unit tests
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+## Download MSI or DMG Installer to install software 
 
-## Running end-to-end tests
+## To install developer mode:
 
-Run `ng e2e` to execute the end-to-end tests via [Protractor](http://www.protractortest.org/).
+Run `npm install`
 
-## Further help
+Remove from `node-modules` folder the `serialport` and `@serialport` folders
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI README](https://github.com/angular/angular-cli/blob/master/README.md).
+Remove the file `package-lock.json`
+
+Run `npm i` to install non-installed modules
+
+Run `./node_modules/.bin/electron-rebuild` (directly after `npm i`)
+
+## Run locally 
+
+Run `npm run electron` to test the locally
+
+## Node version 14.19.1
+
+
