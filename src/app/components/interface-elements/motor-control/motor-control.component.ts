@@ -87,21 +87,32 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
     });
 
     this.electronService.ipcRenderer.on('playDataPressure', (event: Event, data: any) => {
-      console.log(data);
       for (const el of data.list) {
-        const selectedCollection = this.motorControlService.file.collections.filter(c => c.microcontroller && c.microcontroller.serialPort.path === data.serialPath && c.playing && c.motorID && c.motorID.name === el.motorID)[0];
-        console.log(selectedCollection.id);
+        const selectedCollection = this.motorControlService.file.collections.filter(c => c.microcontroller && c.microcontroller.serialPort.path === data.serialPath && c.motorID && c.motorID.name === el.motorID)[0];
 
-        selectedCollection.microcontroller.motors.filter(m => m.id === selectedCollection.motorID.name)[0].state.pressure = el.pressure;
-        selectedCollection.time = data.time;
+        if (selectedCollection) {
 
-        if (this.document.getElementById('pressure-' + selectedCollection.id) !== null) {
-          (this.document.getElementById('pressure-' + selectedCollection.id) as HTMLElement).innerHTML = (Math.round(el.pressure * 100) / 100) + ' ';
+          const motor = selectedCollection.microcontroller.motors.filter(m => m.id === selectedCollection.motorID.name)[0];
+          if (motor) {
+            motor.state.pressure = el.pressure;
+          }
+          selectedCollection.time = el.time;
+
+          if (this.document.getElementById('pressure-' + selectedCollection.id) !== null) {
+            (this.document.getElementById('pressure-' + selectedCollection.id) as HTMLElement).innerHTML = (Math.round(el.pressure * 100) / 100) + ' ';
+          }
+          if (this.document.getElementById('time-' + selectedCollection.id) !== null) {
+            (this.document.getElementById('time-' + selectedCollection.id) as HTMLElement).innerHTML = selectedCollection.time + ' ';
+          }
+          this.motorControlService.drawCursor(selectedCollection);
+
+          if (selectedCollection.rotation.loop && selectedCollection.feedbackData.length > 0 && selectedCollection.feedbackData[selectedCollection.feedbackData.length - 1].time > el.time) {
+            selectedCollection.feedbackData = [];
+          }
+          selectedCollection.feedbackData.push({ value: (el.pressure / motor.config.pressureLimit) * 100, time: el.time });
+
+          this.motorControlService.drawCollectionFeedbackData(selectedCollection);
         }
-        if (this.document.getElementById('time-' + selectedCollection.id) !== null) {
-          (this.document.getElementById('time-' + selectedCollection.id) as HTMLElement).innerHTML = selectedCollection.time + ' ';
-        }
-        this.motorControlService.drawCursor(selectedCollection);
       }
     });
 

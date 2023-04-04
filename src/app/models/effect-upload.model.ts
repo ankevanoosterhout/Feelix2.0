@@ -53,6 +53,8 @@ export class ConfigModel {
       this.loop = collection.rotation.loop ? 1 : 0;
       if (collection.rotation.units.name === 'rad') {
         this.range *= (180 / Math.PI);
+      } else if (collection.rotation.units.name === 'sec') {
+        this.range *= 1000;
       }
       this.constrain_range = collection.rotation.constrain ? 1 : 0;
       this.motorID = collection.motorID.name;

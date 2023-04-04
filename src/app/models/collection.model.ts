@@ -74,6 +74,7 @@ export class Collection {
   playing = false;
   changedAfterRender = false;
   time = 0;
+  feedbackData: Array<any> = [];
 
   constructor(id: string, name: string) {
     this.id = id;

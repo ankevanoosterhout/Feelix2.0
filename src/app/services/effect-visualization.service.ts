@@ -259,6 +259,37 @@ export class EffectVisualizationService {
   }
 
 
+  drawCollectionFeedback(collection: Collection, width: number, height: number) {
+
+    d3.select('#svgFeedback-' + collection.id).remove();
+
+    const feedbackData = collection.config.svg.append('g')
+      .attr('id', 'svgFeedback-' + collection.id)
+      .attr('width', width)
+      .attr('height', height);
+
+    feedbackData.selectAll('circle.feedback_' + collection.id)
+      .data(collection.feedbackData)
+      .enter()
+      .append('circle')
+      .attr('class', 'feedback_' + collection.id)
+      .attr('r', 1)
+      .attr('cx', (d: { time: number }) => { return collection.config.newXscale(collection.rotation.units.name === 'sec' ? d.time / 1000 : d.time) })
+      .attr('cy', (d: { value: number }) => { return collection.config.newYscale(d.value) })
+      .style('fill', '#E18257');
+
+    feedbackData.append('path')
+      .datum(collection.feedbackData)
+      .attr('fill', 'none')
+      .attr('stroke', '#E18257')
+      .attr('stroke-width', 1.5)
+      .attr('d', d3.line()
+        .x((d: { time: number }) => { return collection.config.newXscale(collection.rotation.units.name === 'sec' ? d.time / 1000 : d.time) })
+        .y((d: { value: number }) => { return collection.config.newYscale(d.value) }));
+
+  }
+
+
   checkIfXisWithinOverlap(x: number, overlappingEffects: Array<any>) {
 
     for (const el of overlappingEffects) {

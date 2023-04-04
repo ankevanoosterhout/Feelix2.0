@@ -127,9 +127,24 @@
 
 
             <div class="form-group" *ngIf="motor.type === 2 && motor.config.closedLoop">
+              <label class="labelRow select motorsettings inset">Communication</label>
+              <select class="form-control playWindow" id="select-motor-communication-type-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" [(ngModel)]="motor.config.sensorCommunication"
+                      name="select-motor-communication-type-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" (change)="updateMicrocontroller(this.selectedMicrocontroller)">
+                <option *ngFor="let type of sensorCommunicationTypes" [ngValue]="type">{{ SensorCommunicationMapping[type] }}</option>
+              </select>
+            </div>
+
+
+            <div class="form-group" *ngIf="motor.type === 2 && motor.config.closedLoop && motor.config.sensorCommunication === 1">
               <label class="labelRow motorsettings inset"><div class="question-mark" title="I2C address sensor">?</div>Sensor address</label>
               <input type="text" class="motor-settings small" id="sensorAddress-{{ selectedMicrocontroller.id }}-{{ motor.id }}" name="sensorAddress-{{ selectedMicrocontroller.id }}-{{ motor.id }}"
                 [(ngModel)]="motor.config.sensorAddress" (change)="updateSensorAddress(selectedMicrocontroller, motor.id)">
+            </div>
+
+            <div class="form-group" *ngIf="motor.type === 2 && motor.config.closedLoop && motor.config.sensorCommunication === 0">
+              <label class="labelRow motorsettings inset"><div class="question-mark" title="I2C address sensor">?</div>Sensor CSS</label>
+              <input type="text" class="motor-settings small" id="sensorCSS-{{ selectedMicrocontroller.id }}-{{ motor.id }}" name="sensorCSS-{{ selectedMicrocontroller.id }}-{{ motor.id }}"
+                [(ngModel)]="motor.config.sensorCSS" (change)="updateMicrocontroller(this.selectedMicrocontroller)">
             </div>
 
             <div class="form-group" *ngIf="motor.type === 2">

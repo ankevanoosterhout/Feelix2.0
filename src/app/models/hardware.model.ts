@@ -1,5 +1,14 @@
 import { Encoder, MagneticSensor } from './position-sensors.model';
 
+export enum SensorCommunication {
+  SPI = 0,
+  I2C = 1
+}
+
+export const SensorCommunicationMapping: Record<SensorCommunication, string> = {
+  [SensorCommunication.SPI]: 'SPI',
+  [SensorCommunication.I2C]: 'I2C',
+};
 
 export enum ActuatorType {
   bldc = 0,
@@ -108,6 +117,8 @@ export class BLDCConfig extends Config {
 export class PneuConfig extends Config {
   pressureLimit: number = 3;
   sensorAddress: number = 0x28;
+  sensorCSS: number = 10;
+  sensorCommunication: SensorCommunication = SensorCommunication.I2C;
   pin: number = 2;
   closedLoop = true;
 }

@@ -1,7 +1,9 @@
 import { DOCUMENT } from '@angular/common';
 import { Injectable, Inject } from '@angular/core';
 import * as d3 from 'd3';
+import { MicroController } from '../models/hardware.model';
 import { TensorFlowConfig } from '../models/tensorflow-config.model';
+import { Model, DataSet } from '../models/tensorflow.model';
 
 @Injectable()
 export class TensorFlowDrawService {
@@ -31,7 +33,7 @@ export class TensorFlowDrawService {
       .range(d3.schemeSet2);
 
     this.setScale();
-    this.drawRulers();
+    this.drawTicks();
   }
 
 
@@ -50,33 +52,8 @@ export class TensorFlowDrawService {
 
 
 
-  drawRulers() {
-    // this.config.dataSVG.selectAll('.ruler, .axis, .axisBottom, .smallAxisX, .smallAxisY').remove();
-
-    // const clipPathYaxis = this.config.dataSVG.append('clipPath')
-    //   .attr('id', 'clipYaxis')
-    //   .append('svg:rect')
-    //   .attr('width', this.config.rulerWidth)
-    //   .attr('height', this.config.height);
-
-    // const clipPathXaxis = this.config.dataSVG.append('clipPath')
-    //   .attr('id', 'clipXaxis')
-    //   .append('svg:rect')
-    //   .attr('width', this.config.width - this.config.margin - this.config.rulerWidth)
-    //   .attr('height', this.config.rulerWidth);
-
-    // const containerAxisTop = this.config.dataSVG.append('rect')
-    //     .attr('width', this.config.width - this.config.margin)
-    //     .attr('height', this.config.rulerWidth)
-    //     .attr('y', 0)
-    //     .attr('x', 0)
-    //     .attr('class', 'axis')
-    //     .attr('fill', '#222');
-
+  drawTicks() {
     this.config.yAxis = this.config.dataSVG.append('g');
-      // .attr('class', 'clipPathYAxis')
-      // .attr('transform', 'translate(0, 0)');
-
 
     const yAxis = d3
         .axisLeft(this.config.scaleY)
@@ -94,7 +71,6 @@ export class TensorFlowDrawService {
           .selectAll('text')
           .attr('y', 0)
           .attr('x', -(this.config.width - (2 * this.config.margin)) - 10);
-          // .style('text-anchor', 'start');
 
     const xAxis = d3
         .axisBottom(this.config.scaleX)
@@ -106,8 +82,6 @@ export class TensorFlowDrawService {
         });
 
     this.config.xAxis = this.config.dataSVG.append('g');
-        // .attr('class', 'clipPathXAxis')
-        // .attr('transform', 'translate(0, 0)');
 
 
     const xAxisTicks = this.config.xAxis.append('g')
@@ -117,19 +91,11 @@ export class TensorFlowDrawService {
           .selectAll('text')
           .attr('y', this.config.height - (2 * this.config.margin) + 10)
           .attr('x', 0);
-
-    // this.config.dataSVG.selectAll('.axisBottom text')
-    //     .attr('y', 2)
-    //     .attr('x', 4)
-    //     .style('text-anchor', 'start');
-
-    // this.config.dataSVG.selectAll('.axis .tick:first-child').remove();
   }
 
 
-
-  drawGraphData(data: any) {
-    // console.log(data);
+  drawTensorFlowGraphData(data: DataSet, tensorflowModel: Model, mcus: Array<MicroController>) {
+    console.log(data);
 
     if (data && data.d && data.d.inputs[0]) {
       d3.selectAll('#dataGroup').remove();
@@ -138,54 +104,116 @@ export class TensorFlowDrawService {
         .attr('id', 'dataGroup')
         .attr('transform', 'translate(20,0)');
 
+      let i = 0;
+      let m = 0;
 
-      for (let i = 0; i < data.d.inputs[0].motors.length; i ++) {
+      for (const input of tensorflowModel.inputs) {
+        if (input.active && input.visible) {
 
+          for (const mcu of mcus) {
+            for (const motor of mcu.motors) {
+              if (motor.visible) {
 
-      //     svg.append("path")
-      // .datum(data)
-      // .attr("fill", "none")
-      // .attr("stroke", "#69b3a2")
-      // .attr("stroke-width", 1.5)
-      // .attr("d", d3.line()
-      //   .x(function(d) { return x(d.date) })
-      //   .y(function(d) { return y(d.value) })
-      //   )
+                dataGroup.selectAll('circle.data-' + i + '_' + m)
+                  .data(data.d.inputs)
+                  .enter()
+                  .append('circle')
+                  .attr('class', 'angle-' + i)
+                  .attr('r', 1)
+                  .attr('cx', (d: { inputdata: { value: any; }; }) => { return this.config.scaleX(d.inputdata.value) })
+                  .attr('cy', (d: { motors: { data: { value: any; }; }[][]; }) => { return this.config.scaleY(d.motors[m][i].data.value) })
+                  .style('fill', '#BA77E0');
 
+                dataGroup.selectAll('path.data-' + i + '_' + m)
+                  .append('path')
+                  .datum(data.d.inputs)
+                  .attr('fill', 'none')
+                  .attr('stroke', '#E18257')
+                  .attr('stroke-width', 1.5)
+                  .attr('d', d3.line()
+                    .x((d: { inputdata: { value: any; }; }) => { return this.config.scaleX(d.inputdata.value) })
+                    .y((d: { motors: { data: { value: any; }; }[][]; }) => { return this.config.scaleY(d.motors[m][i].data.value) }));
 
-        dataGroup.selectAll('circle.angle-' + i)
-          .data(data.d.inputs)
-          .enter()
-          .append('circle')
-          .attr('class', 'angle-' + i)
-          .attr('r', 1)
-          .attr('cx', (d: { inputdata: { value: any; }; }) => { return this.config.scaleX(d.inputdata.value) })
-          .attr('cy', (d: { motors: { data: { value: any; }; }[][]; }) => { return this.config.scaleY(d.motors[i][0].data.value) })
-          .style('fill', '#BA77E0');
-
-        dataGroup.selectAll('circle.velocity-' + i)
-          .data(data.d.inputs)
-          .enter()
-          .append('circle')
-          .attr('class', 'velocity-' + i)
-          .attr('r', 1)
-          .attr('cx', (d: { inputdata: { value: any; }; }) => { return this.config.scaleX(d.inputdata.value) })
-          .attr('cy', (d: { motors: { data: { value: any; }; }[][]; }) => { return this.config.scaleY(d.motors[i][1].data.value) })
-          .style('fill', '#43E6D5');
-
-        dataGroup.selectAll('circle.direction-' + i)
-          .data(data.d.inputs)
-          .enter()
-          .append('circle')
-          .attr('class', 'direction-' + i)
-          .attr('r', 1)
-          .attr('cx', (d: { inputdata: { value: any; }; }) => { return this.config.scaleX(d.inputdata.value) })
-          .attr('cy', (d: { motors: { data: { value: any; }; }[][]; }) => { return this.config.scaleY(d.motors[i][2].data.value) })
-          .style('fill', '#E18257');
-
+              }
+              m++;
+            }
+          }
+        }
+        i++;
       }
-
     }
   }
+
+
+
+  // drawGraphData(data: any) {
+  //   // console.log(data);
+
+  //   if (data && data.d && data.d.inputs[0]) {
+  //     d3.selectAll('#dataGroup').remove();
+
+  //     const dataGroup = this.config.dataSVG.append('g')
+  //       .attr('id', 'dataGroup')
+  //       .attr('transform', 'translate(20,0)');
+
+
+  //     for (let i = 0; i < data.d.inputs[0].motors.length; i ++) {
+
+
+  //     //     svg.append("path")
+  //     // .datum(data)
+  //     // .attr("fill", "none")
+  //     // .attr("stroke", "#69b3a2")
+  //     // .attr("stroke-width", 1.5)
+  //     // .attr("d", d3.line()
+  //     //   .x(function(d) { return x(d.date) })
+  //     //   .y(function(d) { return y(d.value) })
+  //     //   )
+
+
+  //       dataGroup.selectAll('circle.angle-' + i)
+  //         .data(data.d.inputs)
+  //         .enter()
+  //         .append('circle')
+  //         .attr('class', 'angle-' + i)
+  //         .attr('r', 1)
+  //         .attr('cx', (d: { inputdata: { value: any; }; }) => { return this.config.scaleX(d.inputdata.value) })
+  //         .attr('cy', (d: { motors: { data: { value: any; }; }[][]; }) => { return this.config.scaleY(d.motors[0][0].data.value) })
+  //         .style('fill', '#BA77E0');
+
+  //       dataGroup.selectAll('circle.velocity-' + i)
+  //         .data(data.d.inputs)
+  //         .enter()
+  //         .append('circle')
+  //         .attr('class', 'velocity-' + i)
+  //         .attr('r', 1)
+  //         .attr('cx', (d: { inputdata: { value: any; }; }) => { return this.config.scaleX(d.inputdata.value) })
+  //         .attr('cy', (d: { motors: { data: { value: any; }; }[][]; }) => { return this.config.scaleY(d.motors[0][1].data.value) })
+  //         .style('fill', '#43E6D5');
+
+  //       dataGroup.selectAll('circle.direction-' + i)
+  //         .data(data.d.inputs)
+  //         .enter()
+  //         .append('circle')
+  //         .attr('class', 'direction-' + i)
+  //         .attr('r', 1)
+  //         .attr('cx', (d: { inputdata: { value: any; }; }) => { return this.config.scaleX(d.inputdata.value) })
+  //         .attr('cy', (d: { motors: { data: { value: any; }; }[][]; }) => { return this.config.scaleY(d.motors[0][2].data.value) })
+  //         .style('fill', '#E18257');
+
+
+  //       dataGroup.selectAll('path.direction-' + i)
+  //         .append('path')
+  //         .datum(data.d.inputs)
+  //         .attr('fill', 'none')
+  //         .attr('stroke', '#E18257')
+  //         .attr('stroke-width', 1.5)
+  //         .attr('d', d3.line()
+  //           .x((d: { inputdata: { value: any; }; }) => { return this.config.scaleX(d.inputdata.value) })
+  //           .y((d: { motors: { data: { value: any; }; }[][]; }) => { return this.config.scaleY(d.motors[0][2].data.value) }));
+
+  //     }
+  //   }
+  // }
 
 }

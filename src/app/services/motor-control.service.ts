@@ -287,6 +287,8 @@ export class MotorControlService {
 
     this.drawCollectionEffects(collection);
 
+
+
     if (collection.microcontroller) {
       if (collection.microcontroller.connected) {
         this.drawCursor(collection);
@@ -297,6 +299,10 @@ export class MotorControlService {
     }
   }
 
+
+  drawCollectionFeedbackData(collection: Collection) {
+    this.effectVisualizationService.drawCollectionFeedback(collection, this.width, this.height);
+  }
 
 
   drawCollectionCircular(collection: Collection) {
@@ -514,6 +520,8 @@ export class MotorControlService {
   }
 
 
+
+
   removeCollectionsEffect(collection: Collection, collectionEffect: Details) {
     const index = collection.effects.indexOf(collectionEffect);
     if (index > -1) {
@@ -613,6 +621,8 @@ export class MotorControlService {
 
       if (collection.rotation.units.name === 'ms') {
         position = collection.config.newXscale(collection.time);
+      } else if (collection.rotation.units.name === 'sec') {
+        position = collection.config.newXscale(collection.time / 1000);
       } else {
         position = collection.microcontroller.motors.filter(m => m.id === collection.motorID.name)[0].state.position.current ?
         collection.config.newXscale(collection.microcontroller.motors.filter(m => m.id === collection.motorID.name)[0].state.position.current) : 0;

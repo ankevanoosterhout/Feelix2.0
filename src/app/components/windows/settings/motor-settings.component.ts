@@ -5,7 +5,7 @@ import { FileService } from 'src/app/services/file.service';
 import { UploadService } from 'src/app/services/upload.service';
 import { Router } from '@angular/router';
 import { DOCUMENT } from '@angular/common';
-import { ActuatorLabelMapping, ActuatorType, BLDCConfig, MicroController, Motor, PneuConfig, StepperConfig, Unit } from 'src/app/models/hardware.model';
+import { ActuatorLabelMapping, ActuatorType, BLDCConfig, MicroController, Motor, PneuConfig, SensorCommunication, SensorCommunicationMapping, StepperConfig, Unit } from 'src/app/models/hardware.model';
 import { MagneticSensor, Encoder } from 'src/app/models/position-sensors.model';
 
 
@@ -17,8 +17,10 @@ import { MagneticSensor, Encoder } from 'src/app/models/position-sensors.model';
 export class MotorSettingsComponent implements OnInit {
 
   public ActuatorLabelMapping = ActuatorLabelMapping;
+  public SensorCommunicationMapping = SensorCommunicationMapping;
 
   public motorTypes = Object.values(ActuatorType).filter(value => typeof value === 'number');
+  public sensorCommunicationTypes = Object.values(SensorCommunication).filter(value => typeof value === 'number');
 
   comports = [];
   microcontrollers: MicroController[] = [];
@@ -411,6 +413,8 @@ export class MotorSettingsComponent implements OnInit {
         this.selectedMicrocontroller = this.microcontrollers.filter(m => m.id === this.selectedMicrocontroller.id)[0];
       }
     });
+
+    this.getComports();
   }
 
 

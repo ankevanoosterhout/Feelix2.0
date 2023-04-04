@@ -92,14 +92,16 @@ function ifSerialAvailable(serialData, portlist, connect) {
     if (portAvailable.length > 0) {
       if (connect) {
         if (selectedPort) {
-          if (selectedPort.sp && !selectedPort.sp.IsOpen) { selectedPort.sp.open(); }
+          console.log("OPEN IF NOT OPEN " + selectedPort.sp.IsOpen + " or " + selectedPort.sp.opening);
+          if (selectedPort.sp && !selectedPort.sp.opening) { selectedPort.sp.open(); }
         } else {
           updateProgress(100, (serialData.port.path + ' is connected'));
           createConnection(serialData);
         }
       } else {
         if (selectedPort) {
-          if (selectedPort.sp && selectedPort.sp.IsOpen) { selectedPort.sp.close(); }
+          console.log("CLOSE IF OPEN " + selectedPort.sp.IsOpen + " or " + selectedPort.sp.opening);
+          if (selectedPort.sp && selectedPort.sp.opening) { selectedPort.sp.close(); }
         } else {
           const sp = new newSerialPort(serialData, port);
           ports.push(sp);
@@ -144,7 +146,7 @@ class newSerialPort {
           main.updateSerialProgress({ progress: 0, str: err.message });
           return;
         } else {
-          //  console.log('written ', data);
+           console.log('written ', data);
         }
     });
   }
@@ -178,6 +180,7 @@ class newSerialPort {
             main.updateSerialProgress({ progress: 0, str: 'Error: ' + err.message });
             return;
           }
+          sendDataStr([ 'FS' ],  this.COM);
       });
 
       let Readline = SerialPort.parsers.Readline; // make instance of Readline parser
@@ -245,7 +248,7 @@ class newSerialPort {
           };
           for (const el of dataArray) {
             const subArray = el.split('&');
-            incomingData.dataList.push({ motorID: subArray[0], pressure: parseFloat(subArray[1]), time: parseInt(subArray[2]) });
+            incomingData.list.push({ motorID: subArray[0], pressure: parseFloat(subArray[1]), time: parseInt(subArray[2]) });
           }
 
           main.visualizaPressureMotorData(incomingData);
@@ -409,8 +412,15 @@ function preparePneumaticData(uploadContent, motor, datalist, index) {
   }
 
   datalist.unshift('FM' + index + 'C' + (motor.config.closedLoop ? 1 : 0));
-  if (motor.config.closedLoop) {
+
+  if (motor.config.closedLoop && motor.config.sensorCommunication === 1) {
     datalist.unshift('FM' + index + 'A' + parseInt(motor.config.sensorAddress, 16));
+  } else if (motor.config.closedLoop && motor.config.sensorCommunication === 0) {
+    datalist.unshift('FM' + index + 'B' + motor.config.sensorCSS);
+  }
+
+  if (motor.config.closedLoop) {
+    datalist.unshift('FM' + index + 'D' + motor.config.sensorCommunication);
   }
 
   datalist.unshift('FM' + index + 'N' + motor.config.pin);
@@ -419,7 +429,7 @@ function preparePneumaticData(uploadContent, motor, datalist, index) {
     datalist.unshift('FM' + index + 'T' + uploadContent.config.updateSpeed);
     datalist.unshift('FM' + index + 'J' + uploadContent.config.range);
     datalist.unshift('FM' + index + 'H' + uploadContent.config.loop);
-    datalist.unshift('FM' + index + 'L' + uploadContent.config.constrain_range);
+    // datalist.unshift('FM' + index + 'L' + uploadContent.config.constrain_range);
   }
 
   // datalist.unshift('FM' + motor.id + 'B' + uploadContent.baudRate);
@@ -593,9 +603,9 @@ function requestData(data)  {
   receivingPort = ports.filter(p => p.COM === data.config.serialPort.path)[0];
 
   // console.log("port: " + receivingPort);
-  if (receivedPort === undefined || (receivedPort.sp && !receivedPort.sp.IsOpen)) {
-    tryToEstablishConnection(receivingPort, data, receivedPort);
-  }
+  // if (receivedPort === undefined || (receivedPort.sp && !receivedPort.sp.opening)) {
+  tryToEstablishConnection(receivingPort, data, receivedPort);
+  // }
 
   sendDataStr([ 'FMK' ],  data.config.serialPort.path); //'FMQ'
 }

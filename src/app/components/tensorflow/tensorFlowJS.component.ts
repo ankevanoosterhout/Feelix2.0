@@ -77,7 +77,7 @@ export class TensorFlowJSComponent implements OnInit {
           } else if (this.tensorflowService.dataSets.length > 0) {
 
             if (this.tensorflowService.recording.active) {
-              let dataset = this.tensorflowService.dataSets.filter(d => d.open)[0];
+              let dataset = this.tensorflowService.dataSets.filter(d => d.open)[0]; //update dataset.open when select in dropdown
               // let dataset = this.tensorflowService.dataSets[0];
               const microcontroller = this.tensorflowService.selectedMicrocontrollers.filter(m => m.serialPort.path === data.serialPath)[0];
 
@@ -119,7 +119,7 @@ export class TensorFlowJSComponent implements OnInit {
                 // console.log(dataset);
                 if (dataset && dataset.d) {
                   dataset.d.inputs.push(microcontrollerObject);
-                  // this.tensorflowDrawService.drawGraphData(dataset);
+                  // this.tensorflowDrawService.drawTensorFlowGraphData(dataset);
                 }
               }
               const item = this.document.getElementById('dataSetItem-' + dataset.id);
@@ -247,7 +247,7 @@ export class TensorFlowJSComponent implements OnInit {
     this.config.width = (window.innerWidth - 470);
     this.config.height = window.innerHeight - this.config.horizontalScreenDivision - 120;
     this.tensorflowDrawService.drawGraph();
-    this.tensorflowDrawService.drawGraphData(this.tensorflowService.dataSets.filter(d => d.open)[0]);
+    this.tensorflowDrawService.drawTensorFlowGraphData(this.tensorflowService.dataSets.filter(d => d.open)[0], this.tensorflowService.selectedModel, this.tensorflowService.selectedMicrocontrollers);
   }
 
 
@@ -279,7 +279,7 @@ export class TensorFlowJSComponent implements OnInit {
           this.document.getElementById('toggleDataSection').classList.remove('hidden');
         }
         this.tensorflowDrawService.drawGraph();
-        this.tensorflowDrawService.drawGraphData(this.tensorflowService.dataSets.filter(d => d.open)[0]);
+        this.tensorflowDrawService.drawTensorFlowGraphData(this.tensorflowService.dataSets.filter(d => d.open)[0], this.tensorflowService.selectedModel, this.tensorflowService.selectedMicrocontrollers);
       }
 
 
