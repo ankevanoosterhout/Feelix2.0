@@ -146,7 +146,7 @@ class newSerialPort {
           main.updateSerialProgress({ progress: 0, str: err.message });
           return;
         } else {
-           console.log('written ', data);
+          //  console.log('written ', data);
         }
     });
   }

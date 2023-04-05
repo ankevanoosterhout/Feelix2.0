@@ -77,11 +77,11 @@ export class TensorFlowJSComponent implements OnInit {
           } else if (this.tensorflowService.dataSets.length > 0) {
 
             if (this.tensorflowService.recording.active) {
-              let dataset = this.tensorflowService.dataSets.filter(d => d.open)[0]; //update dataset.open when select in dropdown
-              // let dataset = this.tensorflowService.dataSets[0];
+              // let dataset = this.tensorflowService.dataSets.filter(d => d.open)[0]; //update dataset.open when select in dropdown
+              // let dataset = this.tensorflowService.selectedDataset;
               const microcontroller = this.tensorflowService.selectedMicrocontrollers.filter(m => m.serialPort.path === data.serialPath)[0];
 
-              if (microcontroller) {
+              if (microcontroller && this.tensorflowService.selectedDataset) {
 
                 let microcontrollerObject = { port: microcontroller.serialPort.path, motors: [], inputdata: { name: null, value: null } };
                 let m = 0;
@@ -106,6 +106,15 @@ export class TensorFlowJSComponent implements OnInit {
                           }
                           dataList.push(dataObject);
 
+                          if (dataObject.data.value > this.tensorflowService.selectedDataset.bounds.yMax) {
+                            this.tensorflowService.selectedDataset.bounds.yMax = Math.ceil(dataObject.data.value);
+                            this.tensorflowDrawService.updateBounds(this.tensorflowService.selectedDataset.bounds);
+
+                          } else if (dataObject.data.value < this.tensorflowService.selectedDataset.bounds.yMin) {
+                            this.tensorflowService.selectedDataset.bounds.yMin = Math.floor(dataObject.data.value);
+                            this.tensorflowDrawService.updateBounds(this.tensorflowService.selectedDataset.bounds);
+                          }
+
                           if (i == 2) {
                             microcontrollerObject.motors[m] = dataList;
                           }
@@ -115,24 +124,33 @@ export class TensorFlowJSComponent implements OnInit {
                   }
                   m++;
                 }
-                microcontrollerObject.inputdata = { name: "time", value: new Date().getTime() - this.tensorflowService.recording.starttime };
+
+                const time = new Date().getTime() - this.tensorflowService.recording.starttime;
+                microcontrollerObject.inputdata = { name: "time", value: time };
+
+                if (time > this.tensorflowService.selectedDataset.bounds.xMax) {
+                  this.tensorflowService.selectedDataset.bounds.xMax = time + 2000;
+                  this.tensorflowDrawService.updateBounds(this.tensorflowService.selectedDataset.bounds);
+                }
                 // console.log(dataset);
-                if (dataset && dataset.d) {
-                  dataset.d.inputs.push(microcontrollerObject);
-                  // this.tensorflowDrawService.drawTensorFlowGraphData(dataset);
+                if (this.tensorflowService.selectedDataset.d) {
+                  this.tensorflowService.selectedDataset.d.inputs.push(microcontrollerObject);
+                  this.tensorflowDrawService.drawTensorFlowGraphData(this.tensorflowService.selectedDataset, this.tensorflowService.selectedModel, this.tensorflowService.selectedMicrocontrollers);
                 }
               }
-              const item = this.document.getElementById('dataSetItem-' + dataset.id);
-              if (item) { item.click(); }
+              // const item = this.document.getElementById('dataSetItem-' + this.tensorflowService.selectedDataset.id);
+              // if (item) { item.click(); }
             }
           }
 
         }
       });
 
+
       this.electronService.ipcRenderer.on('export-dataset-model', (event: Event, data: any) => {
         this.tensorflowService.saveDataNN();
       });
+
 
       this.electronService.ipcRenderer.on('load-datasets', (event: Event, data: any) => {
         if (data) {
@@ -167,6 +185,10 @@ export class TensorFlowJSComponent implements OnInit {
         this.updateScreenDivisionY(data.coord);
       });
 
+      this.tensorflowService.updateGraphBounds.subscribe(data => {
+        this.tensorflowDrawService.updateBounds(data);
+      });
+
 
       this.electronService.ipcRenderer.on('save-model', (event: Event) => {
         this.tensorflowService.saveModel();
@@ -194,15 +216,15 @@ export class TensorFlowJSComponent implements OnInit {
   ngOnInit(): void {
     this.tensorflowService.dataSets.push(new DataSet(uuid(), 'Data set ' + (this.tensorflowService.dataSets.length + 1)));
     this.tensorflowService.selectedModel.outputs.push(new Classifier('Classifier-' + (this.tensorflowService.selectedModel.outputs.length + 1)));
-
   }
-
-
 
 
   updateClassifier(item: String, index: number) {
 
   }
+
+
+
 
   toggleResultWindow() {
     this.config.resultWindowVisible = !this.config.resultWindowVisible;
@@ -247,7 +269,7 @@ export class TensorFlowJSComponent implements OnInit {
     this.config.width = (window.innerWidth - 470);
     this.config.height = window.innerHeight - this.config.horizontalScreenDivision - 120;
     this.tensorflowDrawService.drawGraph();
-    this.tensorflowDrawService.drawTensorFlowGraphData(this.tensorflowService.dataSets.filter(d => d.open)[0], this.tensorflowService.selectedModel, this.tensorflowService.selectedMicrocontrollers);
+    this.tensorflowDrawService.drawTensorFlowGraphData(this.tensorflowService.selectedDataset, this.tensorflowService.selectedModel, this.tensorflowService.selectedMicrocontrollers);
   }
 
 
@@ -279,7 +301,7 @@ export class TensorFlowJSComponent implements OnInit {
           this.document.getElementById('toggleDataSection').classList.remove('hidden');
         }
         this.tensorflowDrawService.drawGraph();
-        this.tensorflowDrawService.drawTensorFlowGraphData(this.tensorflowService.dataSets.filter(d => d.open)[0], this.tensorflowService.selectedModel, this.tensorflowService.selectedMicrocontrollers);
+        this.tensorflowDrawService.drawTensorFlowGraphData(this.tensorflowService.selectedDataset, this.tensorflowService.selectedModel, this.tensorflowService.selectedMicrocontrollers);
       }
 
 

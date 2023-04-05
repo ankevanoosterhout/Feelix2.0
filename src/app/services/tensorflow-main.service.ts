@@ -11,8 +11,7 @@ import { FilterModel, UploadStringModel } from '../models/effect-upload.model';
 import { ElectronService } from 'ngx-electron';
 import { FileSaverService } from 'ngx-filesaver';
 import * as tf from '@tensorflow/tfjs';
-import { Tensor2D } from '@tensorflow/tfjs';
-import { TensorFlowDrawService } from './tensorflow-draw.service';
+// import { Tensor2D } from '@tensorflow/tfjs';
 
 @Injectable()
 export class TensorFlowMainService {
@@ -55,6 +54,7 @@ export class TensorFlowMainService {
     updateTensorflowProgress: Subject<any> = new Subject();
     reloadPage: Subject<any> = new Subject();
     updateResizeElements: Subject<any> = new Subject();
+    updateGraphBounds: Subject<any> = new Subject();
 
     constructor(@Inject(DOCUMENT) private document: Document, public hardwareService: HardwareService, private dataSetService: DataSetService,
                 private tensorflowService: TensorFlowModelService, private electronService: ElectronService, private _FileSaverService: FileSaverService) {}
@@ -193,9 +193,12 @@ export class TensorFlowMainService {
 
     selectDataSet(id: String) {
       for (const set of this.dataSets) {
-        if (set.id !== id) { set.open = false; }
-        else if (set.id === id) { set.open = true; }
+        set.open = set.id === id ? true : false;
+        if (set.open) {
+          this.updateGraphBounds.next(set.bounds);
+        }
       }
+      console.log(this.dataSets);
     }
 
     updateOutputDataSet(id: String, output_list_index: number) {

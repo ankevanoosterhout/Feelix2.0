@@ -1,3 +1,4 @@
+import { Bounds } from "./tensorflow.model";
 
 
 export class TensorFlowConfig {
@@ -6,10 +7,7 @@ export class TensorFlowConfig {
   scaleY: any;
   scaleX: any;
 
-  xMin = 0;
-  xMax = 10000;
-  yMin = -4;
-  yMax = 4;
+  bounds = new Bounds();
 
   width = (window.innerWidth - 470);
   height = (window.innerHeight * 0.55) - 120;
@@ -25,6 +23,4 @@ export class TensorFlowConfig {
 
   horizontalScreenDivision = 220;
   verticalScreenDivision = 45;
-
-  rulerWidth = 13;
 }

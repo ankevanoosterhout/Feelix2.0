@@ -98,7 +98,12 @@ export class Model {
 
 
 
-
+export class Bounds {
+  xMin = 0;
+  xMax = 1000;
+  yMin = -2;
+  yMax = 2;
+}
 
 
 
@@ -115,6 +120,8 @@ export class DataSet {
   d = new Data();
   open = true;
   selected = false;
+  bounds = new Bounds();
+  offsetTime = 0;
 
   constructor(id: String, name: String) {
     this.id = id;
