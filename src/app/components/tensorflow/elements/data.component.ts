@@ -1,4 +1,3 @@
-
 import { Component, Inject, AfterViewInit } from '@angular/core';
 import { HardwareService } from 'src/app/services/hardware.service';
 import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service';
@@ -23,11 +22,8 @@ export class DataComponent implements AfterViewInit {
 
 
 
-  constructor(@Inject(DOCUMENT) private document: Document,public tensorFlowService: TensorFlowMainService, public hardwareService: HardwareService,
-              private electronService: ElectronService, private uploadService: UploadService, private tensorflowDrawService: TensorFlowDrawService) {
-
-
-  }
+  constructor(@Inject(DOCUMENT) private document: Document,public tensorflowService: TensorFlowMainService, public hardwareService: HardwareService,
+              private electronService: ElectronService, private uploadService: UploadService, private tensorflowDrawService: TensorFlowDrawService) {}
 
 
   ngAfterViewInit(): void {
@@ -37,23 +33,25 @@ export class DataComponent implements AfterViewInit {
 
 
   record() {
-    this.tensorFlowService.recording.active = !this.tensorFlowService.recording.active;
-    if (this.tensorFlowService.recording.active) {
-      this.tensorFlowService.recording.starttime = new Date().getTime();
+    this.tensorflowService.recording.active = !this.tensorflowService.recording.active;
+
+    if (!this.tensorflowService.recording.active) {
+      this.tensorflowService.recording.starttime = null;
     }
-    for (const microcontroller of this.tensorFlowService.selectedMicrocontrollers) {
-      microcontroller.record = this.tensorFlowService.recording.active;
+
+    for (const microcontroller of this.tensorflowService.selectedMicrocontrollers) {
+      microcontroller.record = this.tensorflowService.recording.active;
 
       if (microcontroller.record) {
         // for (const motor of microcontroller.motors) {
           // if (motor.record) {
-          this.tensorFlowService.updateProgess('connecting to motor ' + microcontroller.serialPort.path, 0);
+          this.tensorflowService.updateProgess('connecting to motor ' + microcontroller.serialPort.path, 0);
           const model = new ConnectModel(microcontroller);
           this.electronService.ipcRenderer.send('requestData', model);
           // }
         // }
       } else {
-        this.tensorFlowService.classify = false;
+        this.tensorflowService.classify = false;
       }
     }
   }
@@ -61,21 +59,27 @@ export class DataComponent implements AfterViewInit {
 
   toggleDataSection() {
     this.dataVisible = !this.dataVisible;
-    this.tensorFlowService.updateResize((!this.dataVisible ? window.innerHeight - 60 : window.innerHeight * 0.45));
+    this.tensorflowService.updateResize((!this.dataVisible ? window.innerHeight - 60 : window.innerHeight * 0.45));
   }
 
   toggleVisibilityInput(name: string) {
-    const input = this.tensorFlowService.selectedModel.inputs.filter(n => n.name == name)[0];
+    const input = this.tensorflowService.selectedModel.inputs.filter(n => n.name == name)[0];
     input.visible = !input.visible;
+    if (this.tensorflowService.selectedDataset) {
+      this.tensorflowDrawService.drawTensorFlowGraphData(this.tensorflowService.selectedDataset, this.tensorflowService.selectedModel, this.tensorflowService.selectedMicrocontrollers);
+    }
   }
 
   toggleVisibilityMotor(mcu: MicroController, motor_id: string) {
     const motor = mcu.motors.filter(m => m.id === motor_id)[0];
     motor.visible = !motor.visible;
+    if (this.tensorflowService.selectedDataset) {
+      this.tensorflowDrawService.drawTensorFlowGraphData(this.tensorflowService.selectedDataset, this.tensorflowService.selectedModel, this.tensorflowService.selectedMicrocontrollers);
+    }
   }
 
   updateCommunicationSpeed(id: string) {
-    const microcontroller = this.tensorFlowService.selectedMicrocontrollers.filter(m => m.id === id)[0];
+    const microcontroller = this.tensorflowService.selectedMicrocontrollers.filter(m => m.id === id)[0];
     if (microcontroller) {
       this.hardwareService.updateMicroController(microcontroller);
       const uploadModel = this.uploadService.createUploadModel(null, microcontroller);

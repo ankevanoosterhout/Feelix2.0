@@ -10,7 +10,7 @@
     <ul id="data_output_list" class="classifiers">
       <li *ngFor="let classifier of this.tensorFlowService.selectedModel.outputs; let i=index;" class="dataSet">
         <div class="row inset">
-          <div class="opencloseArrow" [ngClass]="{ open: classifier.open }" (click)="classifier.open = !classifier.open"><div></div></div>
+          <div class="opencloseArrow classifier" [ngClass]="{ open: classifier.open }" (click)="classifier.open = !classifier.open"><div></div></div>
           <input type="text" class="nextToArrow classifier_input" id="classifier-{{ i }}" value="{{ classifier.name }}" name="classifier-{{ i }}" (change)="this.tensorFlowService.updateClassifier(i)">
 
           <div class="buttonPlayWindow dataSetList" (click)="this.tensorFlowService.deleteClassifier(i)" title="delete">
@@ -35,7 +35,7 @@
     </ul>
 
     <div class="row">
-      <label class="radio-container"><div class="question-mark" title="classify multiple inputs simultaneously">?</div>classify batch
+      <label class="radio-container">classify batch <div class="question-mark" title="classify multiple inputs simultaneously">?</div>
         <input type="checkbox" class="type" id="multiple" name="interpolate" [(ngModel)]="this.tensorFlowService.selectedModel.multiple" [checked]="this.tensorFlowService.selectedModel.multiple">
         <span class="checkmark radio tensorflow"></span>
       </label>

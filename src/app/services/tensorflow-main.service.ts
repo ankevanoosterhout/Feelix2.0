@@ -22,8 +22,8 @@ export class TensorFlowMainService {
       new Model(uuid(), 'model', 'kMeans', { k_clusters: 3, max_iterations: 4, threshold: 0.5 }, {}),
     ];
 
-    public NN_task_options = [ 'classification' ];
-    // public NN_task_options = [ 'classification', 'regression' ];
+    // public NN_task_options = [ 'classification' ];
+    public NN_task_options = [{ option: 'classification', enabled: true }, { option: 'regression', enabled: false }];
     public modelOptions = [ 'NeuralNetwork' ];
     // public modelOptions = [ 'NeuralNetwork', 'KNNClassifier', 'kMeans' ];
     public selectedModel: Model = this.modelSet[0];
@@ -55,6 +55,7 @@ export class TensorFlowMainService {
     reloadPage: Subject<any> = new Subject();
     updateResizeElements: Subject<any> = new Subject();
     updateGraphBounds: Subject<any> = new Subject();
+    updateGraph: Subject<any> = new Subject();
 
     constructor(@Inject(DOCUMENT) private document: Document, public hardwareService: HardwareService, private dataSetService: DataSetService,
                 private tensorflowService: TensorFlowModelService, private electronService: ElectronService, private _FileSaverService: FileSaverService) {}
@@ -191,14 +192,15 @@ export class TensorFlowMainService {
       return data;
     }
 
-    selectDataSet(id: String) {
+    selectDataSet(id: String = this.selectedDataset.id) {
       for (const set of this.dataSets) {
         set.open = set.id === id ? true : false;
         if (set.open) {
           this.updateGraphBounds.next(set.bounds);
+          this.selectedDataset = set;
+          this.updateGraph.next({ set: set, model: this.selectedModel, mcus: this.selectedMicrocontrollers });
         }
       }
-      console.log(this.dataSets);
     }
 
     updateOutputDataSet(id: String, output_list_index: number) {
@@ -290,7 +292,6 @@ export class TensorFlowMainService {
       this.selectedModel.model.name = modelObj.name;
 
       this.updateProgess('model created', 40);
-      // console.log(data, modelObj);
 
       if (data.length > 0) {
         const outputs = [];
@@ -303,19 +304,24 @@ export class TensorFlowMainService {
           outputs.push(item.ys);
           // input.print();
         });
-
-        const iTensor = tf.tensor(inputs, [ inputs.length, inputs[0].length ]);
+        console.log(inputs);
+        console.log(inputs.length, inputs[0].length);
+        console.log(outputs);
+        console.log(outputs.length, outputs[0].length);
+        const iTensor = tf.tensor(inputs, [ inputs.length,  inputs[0].length ]);
         const oTensor = tf.tensor(outputs, [ outputs.length, outputs[0].length ]);
-        // console.log(iTensor, oTensor);
+        // const iTensor = tf.tensor(inputs, [ null,  inputs[0].length ]);
+        // const oTensor = tf.tensor(outputs, [ null, outputs[0].length ]);
+        console.log(iTensor, oTensor);
 
         for (let layer = 0; layer < modelObj.options.hiddenUnits; layer++) {
           const hiddenLayer = tf.layers.dense({
             units: inputs[0].length,
-            inputShape: [ inputs[0].length ],
-            activation: 'sigmoid'
+            inputShape: [ inputs[0].length ], // [ number of inputs, batch size ]
+            activation: 'sigmoid' // make activation function adjustable in model settings
           });
 
-          // console.log(hiddenLayer);
+          console.log(hiddenLayer);
 
           this.selectedModel.model.add(hiddenLayer);
         }
@@ -329,12 +335,12 @@ export class TensorFlowMainService {
 
         const sgdOpt = tf.train.sgd(modelObj.options.learningRate);
 
-        this.selectedModel.model.compile( {
+        this.selectedModel.model.compile({
           optimizer: sgdOpt,
-          loss: tf.losses.meanSquaredError
+          loss: tf.losses.meanSquaredError //make adjustable
         });
 
-        // console.log(this.selectedModel.model);
+        console.log(this.selectedModel.model);
       //   this.selectedModel.model.normalizeData();
 
         this.updateProgess('training model', 60);
@@ -363,15 +369,15 @@ export class TensorFlowMainService {
       iTensor.dispose();
       oTensor.dispose();
 
-      // console.log(tf.memory().numTensors);
-      // console.log(response.history.loss[0]);
+      console.log(tf.memory().numTensors);
+      console.log(response.history.loss[0]);
       this.updateProgess('training is complete, loss = ' + response.history.loss[response.history.loss.length - 1], 100);
-      // console.log(response);
+      console.log(response);
     }
 
 
     whileTraining = ((epoch: any, loss: any) => {
-      // console.log(epoch, loss);
+      console.log(epoch, loss);
       this.loss = loss;
       this.updateProgess('epoch: ' + epoch + ' loss: ' + loss.loss, 80);
     }).bind(this);
@@ -387,12 +393,16 @@ export class TensorFlowMainService {
     NN_Deploy(input: any, selectedModel: any, path: string) {
 
       this.serialPath = path;
+      console.log(input);
+      // console.log(selectedModel.multiple);
 
       if (selectedModel.options.task === 'classification') {
-        const iTensor = tf.tensor2d(input);
-        const outputs = this.selectedModel.model.predict(iTensor).dataSync();
-        // console.log(outputs);
-        this.updatePredictionClassifiers(outputs);
+        const iTensor = tf.tensor2d([ input ]);
+        const outputs = this.selectedModel.model.predict(iTensor) as any;
+        const prediction = Array.from(outputs.dataSync());
+        console.log(outputs);
+        console.log(prediction);
+        this.updatePredictionClassifiers(prediction);
 
         iTensor.dispose();
       }

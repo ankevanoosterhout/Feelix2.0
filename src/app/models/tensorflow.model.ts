@@ -17,9 +17,10 @@ export class ModelVariable {
   color: string;
   visible = false;
 
-  constructor(name: string, active: boolean, color: string) {
+  constructor(name: string, active: boolean, visible: boolean, color: string) {
     this.name = name;
     this.active = active;
+    this.visible = visible;
     this.color = color;
   }
 }
@@ -87,11 +88,11 @@ export class Model {
     this.type = type;
     this.options = options;
     this.inputs = [
-      new ModelVariable('angle', true, '#BA77E0'),
-      new ModelVariable('velocity', true, '#43E6D5'),
-      new ModelVariable('direction', true, '#E18257'),
-      new ModelVariable('target', false, '#7778E0'),
-      new ModelVariable('time', false, '#4390E6')
+      new ModelVariable('angle', true, true, '#43E6D5'),
+      new ModelVariable('velocity', true, true, '#00AEEF'),
+      new ModelVariable('direction', true, false, '#E18257'),
+      new ModelVariable('target', false, false, '#7778E0'),
+      new ModelVariable('time', false, false, '#4390E6')
     ]
   }
 }

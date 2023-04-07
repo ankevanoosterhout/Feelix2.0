@@ -31,30 +31,12 @@ export class TensorFlowJSComponent implements OnInit {
 
 
       this.electronService.ipcRenderer.on('motorData', (event: Event, data: any) => {
-        console.log(data);
-        if (data.velocity > 0.08 || data.velocity < -0.08) {
 
+        if (data.velocity > 0.03 || data.velocity < -0.03) {
           //when classifying input data
           if (this.tensorflowService.classify && this.tensorflowService.selectedModel.model) {
-            let inputs = [];
-            for (const input of this.tensorflowService.selectedModel.inputs) {
-              if (input.active) {
-                if (input.name === 'angle') {
-                  inputs.push(data.angle);
-                  // inputList.push('"angle-' + data.motorID + '":' + data.angle);
-                } else if (input.name === 'velocity') {
-                  inputs.push(data.velocity);
-                  // inputList.push('"velocity-' + data.motorID + '":' + data.velocity);
-                } else if (input.name === 'direction') {
-                  inputs.push((data.velocity >= 0.00 ? 1 : 0));
-                  // inputList.push('"direction-' + data.motorID + '":' + (data.velocity >= 0.00 ? 1 : 0));
-                } else if (input.name === 'target') {
-                  inputs.push(data.target);
-                  // inputList.push('"target-' + data.motorID + '":' + data.target);
-                }
+            let inputs = this.getInputs(data);
 
-              }
-            }
             // const inputstr = inputList.join(',');
             // let inputObject = JSON.parse('{' + inputstr + '}');
 
@@ -69,12 +51,16 @@ export class TensorFlowJSComponent implements OnInit {
               this.hardwareService.updateDataSendTime(microcontroller.id);
 
             } else {
-
               this.tensorflowService.NN_Deploy(inputs, this.tensorflowService.selectedModel, data.serialPath);
             }
 
             //when gathering input data
           } else if (this.tensorflowService.dataSets.length > 0) {
+
+            if (this.tensorflowService.recording.starttime === null && this.tensorflowService.recording.active) {
+              this.tensorflowService.recording.starttime = new Date().getTime();
+            }
+
 
             if (this.tensorflowService.recording.active) {
               // let dataset = this.tensorflowService.dataSets.filter(d => d.open)[0]; //update dataset.open when select in dropdown
@@ -128,21 +114,18 @@ export class TensorFlowJSComponent implements OnInit {
                 const time = new Date().getTime() - this.tensorflowService.recording.starttime;
                 microcontrollerObject.inputdata = { name: "time", value: time };
 
-                if (time > this.tensorflowService.selectedDataset.bounds.xMax) {
-                  this.tensorflowService.selectedDataset.bounds.xMax = time + 2000;
+                if (time > this.tensorflowService.selectedDataset.bounds.xMax - 500) {
+                  this.tensorflowService.selectedDataset.bounds.xMax += 2000;
                   this.tensorflowDrawService.updateBounds(this.tensorflowService.selectedDataset.bounds);
                 }
-                // console.log(dataset);
                 if (this.tensorflowService.selectedDataset.d) {
                   this.tensorflowService.selectedDataset.d.inputs.push(microcontrollerObject);
+                  this.tensorflowDrawService.drawGraph();
                   this.tensorflowDrawService.drawTensorFlowGraphData(this.tensorflowService.selectedDataset, this.tensorflowService.selectedModel, this.tensorflowService.selectedMicrocontrollers);
                 }
               }
-              // const item = this.document.getElementById('dataSetItem-' + this.tensorflowService.selectedDataset.id);
-              // if (item) { item.click(); }
             }
           }
-
         }
       });
 
@@ -189,6 +172,10 @@ export class TensorFlowJSComponent implements OnInit {
         this.tensorflowDrawService.updateBounds(data);
       });
 
+      this.tensorflowService.updateGraph.subscribe(data => {
+        this.tensorflowDrawService.drawGraph();
+        this.tensorflowDrawService.drawTensorFlowGraphData(data.set, data.model, data.mcus);
+      });
 
       this.electronService.ipcRenderer.on('save-model', (event: Event) => {
         this.tensorflowService.saveModel();
@@ -215,7 +202,11 @@ export class TensorFlowJSComponent implements OnInit {
 
   ngOnInit(): void {
     this.tensorflowService.dataSets.push(new DataSet(uuid(), 'Data set ' + (this.tensorflowService.dataSets.length + 1)));
+    this.tensorflowService.dataSets[0].open = true;
+    this.tensorflowService.selectedDataset = this.tensorflowService.dataSets[0];
     this.tensorflowService.selectedModel.outputs.push(new Classifier('Classifier-' + (this.tensorflowService.selectedModel.outputs.length + 1)));
+    this.tensorflowService.selectedModel.outputs[0].active = true;
+    this.tensorflowService.addLabelToClassifier(0);
   }
 
 
@@ -223,6 +214,29 @@ export class TensorFlowJSComponent implements OnInit {
 
   }
 
+
+  getInputs(data: any) {
+    let inputs = [];
+    for (const input of this.tensorflowService.selectedModel.inputs) {
+      if (input.active) {
+        if (input.name === 'angle') {
+          inputs.push(data.angle);
+          // inputList.push('"angle-' + data.motorID + '":' + data.angle);
+        } else if (input.name === 'velocity') {
+          inputs.push(data.velocity);
+          // inputList.push('"velocity-' + data.motorID + '":' + data.velocity);
+        } else if (input.name === 'direction') {
+          inputs.push((data.velocity >= 0.00 ? 1 : 0));
+          // inputList.push('"direction-' + data.motorID + '":' + (data.velocity >= 0.00 ? 1 : 0));
+        } else if (input.name === 'target') {
+          inputs.push(data.target);
+          // inputList.push('"target-' + data.motorID + '":' + data.target);
+        }
+
+      }
+    }
+    return inputs;
+  }
 
 
 
@@ -291,7 +305,7 @@ export class TensorFlowJSComponent implements OnInit {
     if (orientation === 'horizontal') {
       this.document.getElementById('classifiers').style.height = division + 'px';
       this.document.getElementById('model').style.height = division + 'px';
-      this.document.getElementById('data').style.height = window.innerHeight * division + 'px';
+      this.document.getElementById('data').style.height = (window.innerHeight - division) + 'px';
       this.config.height = window.innerHeight - division - 120;
       this.config.horizontalScreenDivision = division;
       if (this.config.horizontalScreenDivision >= window.innerHeight - 80) {
@@ -321,8 +335,4 @@ export class TensorFlowJSComponent implements OnInit {
     }
   }
 
-
-
-
-
-};
+}

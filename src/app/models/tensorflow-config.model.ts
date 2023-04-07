@@ -9,8 +9,8 @@ export class TensorFlowConfig {
 
   bounds = new Bounds();
 
-  width = (window.innerWidth - 470);
-  height = (window.innerHeight * 0.55) - 120;
+  width = window.innerWidth - 470;
+  height = window.innerHeight - 340;
 
   margin = 30;
 
