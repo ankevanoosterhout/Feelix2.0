@@ -1,6 +1,7 @@
 
 import { DOCUMENT } from '@angular/common';
 import { Component, Inject } from '@angular/core';
+import { activation, ActivationLabelMapping, losses, LossesLabelMapping } from 'src/app/models/tensorflow.model';
 import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service';
 
 
@@ -11,24 +12,21 @@ import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service'
 })
 export class ModelComponent {
 
+  public ActivationLabelMapping = ActivationLabelMapping;
+  public LossesLabelMapping = LossesLabelMapping;
+  
+  public activationOptions = Object.values(activation);
+  public lossOptions = Object.values(losses);
 
-
-
-  constructor(@Inject(DOCUMENT) private document: Document, public tensorFlowService: TensorFlowMainService) { }
+  constructor(@Inject(DOCUMENT) private document: Document, public tensorFlowService: TensorFlowMainService) {  }
 
 
 
   initializeNN_Model() {
-    if (!this.tensorFlowService.processing) {
+    if (!this.tensorFlowService.processing && this.tensorFlowService.dataSets.length > 0) {
 
       this.tensorFlowService.processing = true;
       this.tensorFlowService.updateProgess('initializing model', 20);
-
-      if (this.tensorFlowService.dataSets.length === 0) {
-        this.tensorFlowService.processing = false;
-        this.tensorFlowService.updateProgess('no data', 0);
-        return false;
-      }
 
       let data = this.tensorFlowService.createJSONfromDataSet(this.tensorFlowService.dataSets, true);
 
@@ -49,6 +47,10 @@ export class ModelComponent {
       this.tensorFlowService.selectedModel.options.outputs = outputLabels;
 
       this.tensorFlowService.NN_createData(data, this.tensorFlowService.selectedModel);
+    } else {
+
+        this.tensorFlowService.updateProgess(this.tensorFlowService.processing ? 'training in progress': 'no data', 0);
+
     }
   }
 

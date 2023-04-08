@@ -43,13 +43,11 @@ export class DataComponent implements AfterViewInit {
       microcontroller.record = this.tensorflowService.recording.active;
 
       if (microcontroller.record) {
-        // for (const motor of microcontroller.motors) {
-          // if (motor.record) {
-          this.tensorflowService.updateProgess('connecting to motor ' + microcontroller.serialPort.path, 0);
-          const model = new ConnectModel(microcontroller);
-          this.electronService.ipcRenderer.send('requestData', model);
-          // }
-        // }
+
+        // this.tensorflowService.updateProgess('connecting to microcontroller ' + microcontroller.serialPort.path, 0);
+        const model = new ConnectModel(microcontroller);
+        this.electronService.ipcRenderer.send('requestData', model);
+
       } else {
         this.tensorflowService.classify = false;
       }

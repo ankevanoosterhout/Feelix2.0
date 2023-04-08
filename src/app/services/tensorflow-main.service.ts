@@ -17,9 +17,9 @@ import * as tf from '@tensorflow/tfjs';
 export class TensorFlowMainService {
 
     public modelSet = [
-      new Model(uuid(), 'model', 'NeuralNetwork', new NN_options('classification', false, 0.2, 5), { epochs: 32, batchSize: 12 }),
-      new Model(uuid(), 'model', 'KNNClassifier', {}, {}),
-      new Model(uuid(), 'model', 'kMeans', { k_clusters: 3, max_iterations: 4, threshold: 0.5 }, {}),
+      new Model(uuid(), 'model', 'NeuralNetwork', new NN_options('classification', false, 0.2, 4)),
+      new Model(uuid(), 'model', 'KNNClassifier', {}),
+      new Model(uuid(), 'model', 'kMeans', { k_clusters: 3, max_iterations: 4, threshold: 0.5 }),
     ];
 
     // public NN_task_options = [ 'classification' ];
@@ -68,9 +68,11 @@ export class TensorFlowMainService {
       if (set) {
         const index = this.dataSets.indexOf(set);
         this.dataSets.splice(index, 1);
+        if (this.dataSets.length > 0) {
+          this.selectDataSet(this.dataSets[0].id);
+        }
       }
     }
-
 
     addDataSet() {
       const newID = uuid();
@@ -86,7 +88,6 @@ export class TensorFlowMainService {
       }
     }
 
-
     exportDataSet() {
       const dataSet = this.dataSets.filter(d => d.open)[0];
       if (dataSet) {
@@ -98,7 +99,6 @@ export class TensorFlowMainService {
         this.updateProgess('No data set selected', 0);
       }
     }
-
 
     importDataSet() {
       //open dialogue window
@@ -162,6 +162,8 @@ export class TensorFlowMainService {
         // const outputstr = outputs.join(',');
         // const outputObject = JSON.parse('{' + outputstr + '}');
 
+        console.log(set.d.inputs);
+
         set.d.inputs.forEach(input => {
           let inputs = [];
 
@@ -172,19 +174,10 @@ export class TensorFlowMainService {
                 inputs.push(motor[_i].data.value);
                 // inputs.push('"' + motor[_i].data.name + '-' + motor[_i].motor + '":' + motor[_i].data.value);
               }
+              inputs.push(motor.index);
             }
+            inputs.push(input.port);
           }
-          const input_var = this.selectedModel.inputs.filter(i => i.name === input.inputdata.name)[0];
-          if (input_var.active) {
-            // console.log(input_var, input.inputdata.value);
-            // const input_var_value = input.inputdata.value.split(':');
-            inputs.push(parseFloat(input.inputdata.value));
-          }
-
-          // const inputstr = inputs.join(',');
-          // let inputObject = JSON.parse('{' + inputstr + '}');
-          // console.log(input, inputstr, inputObject);
-
           data.push({ xs: inputs, ys: outputs });
         });
       });
@@ -291,34 +284,28 @@ export class TensorFlowMainService {
 
       this.selectedModel.model.name = modelObj.name;
 
-      this.updateProgess('model created', 40);
+      this.updateProgess('model created', 10);
 
       if (data.length > 0) {
-        const outputs = [];
-        const inputs = [];
+        let outputs = [];
+        let inputs = [];
         data.forEach(item => {
           // console.log(item);
-          // const input = tf.tensor(item.xs, [ item.xs.length ]);
           inputs.push(item.xs);
-          // const output = tf.tensor(item.ys, [ item.ys.length ]);
           outputs.push(item.ys);
-          // input.print();
         });
-        console.log(inputs);
-        console.log(inputs.length, inputs[0].length);
-        console.log(outputs);
-        console.log(outputs.length, outputs[0].length);
-        const iTensor = tf.tensor(inputs, [ inputs.length,  inputs[0].length ]);
+        // console.log(this.selectedModel.options.trainingOptions.batchSize, outputs[0].length);
+        const iTensor = tf.tensor(inputs, [ inputs.length, inputs[0].length ]);
         const oTensor = tf.tensor(outputs, [ outputs.length, outputs[0].length ]);
-        // const iTensor = tf.tensor(inputs, [ null,  inputs[0].length ]);
-        // const oTensor = tf.tensor(outputs, [ null, outputs[0].length ]);
+        // const iTensor = tf.tensor(inputs, [ inputs.length,  inputs[0].length ]);
+        // const oTensor = tf.tensor(outputs, [ outputs.length, outputs[0].length ]);
         console.log(iTensor, oTensor);
 
         for (let layer = 0; layer < modelObj.options.hiddenUnits; layer++) {
           const hiddenLayer = tf.layers.dense({
             units: inputs[0].length,
             inputShape: [ inputs[0].length ], // [ number of inputs, batch size ]
-            activation: 'sigmoid' // make activation function adjustable in model settings
+            activation: this.selectedModel.options.activation // make activation function adjustable in model settings
           });
 
           console.log(hiddenLayer);
@@ -328,7 +315,7 @@ export class TensorFlowMainService {
 
         const outputLayer = tf.layers.dense({
           units: outputs[0].length,
-          activation: 'sigmoid'
+          activation: this.selectedModel.options.activation
         });
 
         this.selectedModel.model.add(outputLayer);
@@ -337,16 +324,24 @@ export class TensorFlowMainService {
 
         this.selectedModel.model.compile({
           optimizer: sgdOpt,
-          loss: tf.losses.meanSquaredError //make adjustable
+          loss: this.selectedModel.options.losses //make adjustable
         });
 
         console.log(this.selectedModel.model);
       //   this.selectedModel.model.normalizeData();
 
-        this.updateProgess('training model', 60);
+        this.updateProgess('training model', 20);
 
-        this.train(iTensor, oTensor, modelObj.trainingOptions).then(() => {
-          console.log('training is complete')
+        this.train(iTensor, oTensor, modelObj.options.trainingOptions).then(() => {
+          console.log('training is complete');
+
+          this.processing = false;
+
+          iTensor.dispose();
+          oTensor.dispose();
+
+          console.log("memory " + tf.memory().numTensors);
+
         });
 
       //   this.selectedModel.model.train(model.trainingOptions, this.whileTraining, this.finishedTraining);
@@ -358,48 +353,35 @@ export class TensorFlowMainService {
     }
 
 
-
     async train(iTensor: any, oTensor: any, options: any) {
 
-      const response = await this.selectedModel.model.fit(iTensor, oTensor, {
-        batchSize: options.batchSize,
-        epochs: options.epochs
-      });
+      const nrOfIterations = options.epochs > 10 ? Math.ceil(options.epochs / 10) : options.epochs;
 
-      iTensor.dispose();
-      oTensor.dispose();
-
-      console.log(tf.memory().numTensors);
-      console.log(response.history.loss[0]);
-      this.updateProgess('training is complete, loss = ' + response.history.loss[response.history.loss.length - 1], 100);
-      console.log(response);
+      for (let i = 0; i < options.epochs; i++) {
+        const response = await this.selectedModel.model.fit(iTensor, oTensor, {
+          verbose: true,
+          shuffle: true,
+          batchSize: options.batchSize,
+          epochs: nrOfIterations < options.epochs ? 10 : 1
+        });
+        if (i < nrOfIterations - 1) {
+          this.updateProgess('training, loss = ' + response.history.loss[0], ((80/nrOfIterations) * i) + 20);
+        } else {
+          this.updateProgess('finished training ' + response.history.loss[0], 100);
+        }
+      }
     }
-
-
-    whileTraining = ((epoch: any, loss: any) => {
-      console.log(epoch, loss);
-      this.loss = loss;
-      this.updateProgess('epoch: ' + epoch + ' loss: ' + loss.loss, 80);
-    }).bind(this);
-
-    finishedTraining = (() => {
-      this.processing = false;
-
-      this.updateProgess('finished training ' + (this.loss ? 'loss: ' + this.loss.loss : ''), 100);
-    }).bind(this);
-
-
 
     NN_Deploy(input: any, selectedModel: any, path: string) {
 
       this.serialPath = path;
       console.log(input);
-      // console.log(selectedModel.multiple);
+      console.log(input.length);
 
       if (selectedModel.options.task === 'classification') {
-        const iTensor = tf.tensor2d([ input ]);
-        const outputs = this.selectedModel.model.predict(iTensor) as any;
-        const prediction = Array.from(outputs.dataSync());
+        const iTensor = tf.tensor2d(input);
+        const outputs = this.selectedModel.model.predict(iTensor);
+        const prediction = Array.from((outputs as any).dataSync());
         console.log(outputs);
         console.log(prediction);
         this.updatePredictionClassifiers(prediction);
@@ -583,8 +565,8 @@ export class TensorFlowMainService {
           (this.document.getElementById('learningRate') as HTMLInputElement).value = model.options.learningRate;
           (this.document.getElementById('hiddenUnits') as HTMLInputElement).value = model.options.hiddenUnits;
 
-          (this.document.getElementById('epochs') as HTMLInputElement).value = model.trainingOptions.epochs;
-          (this.document.getElementById('batchsize') as HTMLInputElement).value = model.trainingOptions.batchSize;
+          (this.document.getElementById('epochs') as HTMLInputElement).value = model.options.trainingOptions.epochs;
+          (this.document.getElementById('batchsize') as HTMLInputElement).value = model.options.trainingOptions.batchSize;
         }
 
         (this.document.getElementById('modelName') as HTMLInputElement).value = model.name;

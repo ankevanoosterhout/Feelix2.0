@@ -2,46 +2,64 @@
 
   <!-- option column -->
 
-  <div class="column fixed-height" id="NN_options" *ngIf="this.tensorFlowService.selectedModel">
+  <div class="column-40 fixed-height" id="NN_options" *ngIf="this.tensorFlowService.selectedModel">
 
     <div class="form-group">
-      <label class="labelRow">Model</label>
+      <label class="label">Name</label>
+      <input type="text" class="number blue" id="modelName" [(ngModel)]="this.tensorFlowService.selectedModel.name" name="modelName">
+    </div>
+
+    <div class="form-group">
+      <label class="label">Model</label>
       <select class="form-control playWindow" id="model_type" name="model_type" [(ngModel)]="this.tensorFlowService.selectedModel.type">
         <option *ngFor="let item of this.tensorFlowService.modelOptions" [ngValue]="item">{{ item }}</option>
       </select>
     </div>
 
     <div class="form-group">
-      <label class="labelRow">Name</label>
-      <input type="text" class="number blue" id="modelName" [(ngModel)]="this.tensorFlowService.selectedModel.name" name="modelName">
-    </div>
-
-    <div class="form-group">
-      <label class="labelRow">Task</label>
+      <label class="label">Task</label>
       <select class="form-control playWindow" id="task" name="task" [(ngModel)]="this.tensorFlowService.selectedModel.options.task">
         <option *ngFor="let item of this.tensorFlowService.NN_task_options" [ngValue]="item.option" [disabled]="!item.enabled">{{ item.option }}</option>
       </select>
     </div>
 
     <div class="form-group">
-      <label class="label"><div class="question-mark" title="Set learning rate">?</div>Learning rate</label>
+      <label class="label">Activation</label>
+      <select class="form-control playWindow" id="task" name="task" [(ngModel)]="this.tensorFlowService.selectedModel.options.activation">
+        <option *ngFor="let item of this.activationOptions" [ngValue]="item">{{ ActivationLabelMapping[item] }}</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="label"><div class="question-mark" title="Number of hidden layers">?</div>Hidden units</label>
+      <input type="number" class="number small blue" id="hiddenUnits" [(ngModel)]="this.tensorFlowService.selectedModel.options.hiddenUnits" name="hiddenUnits">
+    </div>
+
+    <div class="form-group">
+      <label class="label"><div class="question-mark" title="The learning rate to use for the SGD algorithm">?</div>Learning rate</label>
       <input type="number" class="number small blue" id="learningRate" [(ngModel)]="this.tensorFlowService.selectedModel.options.learningRate" name="learningRate">
     </div>
 
     <div class="form-group">
-      <label class="label"><div class="question-mark" title="Set number of hidden units neural network">?</div>Hidden units</label>
-      <input type="number" class="number small blue" id="hiddenUnits" [(ngModel)]="this.tensorFlowService.selectedModel.options.hiddenUnits" name="hiddenUnits">
+      <label class="label">Losses</label>
+      <select class="form-control playWindow" id="task" name="task" [(ngModel)]="this.tensorFlowService.selectedModel.options.losses">
+        <option *ngFor="let item of this.lossOptions" [ngValue]="item">{{ LossesLabelMapping[item] }}</option>
+      </select>
     </div>
+  </div>
 
+
+
+  <div class="column-30">
 
     <div class="form-group">
-      <label class="label"><div class="question-mark" title="Set number of epochs">?</div>Epochs</label>
-      <input type="number" class="number small blue" id="epochs" [(ngModel)]="this.tensorFlowService.selectedModel.trainingOptions.epochs" name="epochs">
+      <label class="label"><div class="question-mark" title="Number of samples per gradient update">?</div>Batch size</label>
+      <input type="number" class="number small blue" id="batchsize" [(ngModel)]="this.tensorFlowService.selectedModel.options.trainingOptions.batchSize" name="batchsize">
     </div>
 
     <div class="form-group">
-      <label class="label"><div class="question-mark" title="Set batch size">?</div>Batch size</label>
-      <input type="number" class="number small blue" id="batchsize" [(ngModel)]="this.tensorFlowService.selectedModel.trainingOptions.batchSize" name="batchsize">
+      <label class="label"><div class="question-mark" title="Number of times to iterate over the training data arrays">?</div>Epochs</label>
+      <input type="number" class="number small blue" id="epochs" [(ngModel)]="this.tensorFlowService.selectedModel.options.trainingOptions.epochs" name="epochs">
     </div>
 
     <!-- <div class="form-group">
@@ -51,12 +69,12 @@
       </label>
     </div> -->
 
-
   </div>
 
-  <!-- input column -->
 
-  <div id="inputs" class="column">
+  <!-- output column  -->
+
+  <div id="inputs" class="column-20">
     <label class="labelRow">Inputs</label>
     <ul>
       <li *ngFor="let input of this.tensorFlowService.selectedModel.inputs">
@@ -66,14 +84,9 @@
         </label>
       </li>
     </ul>
-
   </div>
-
-
-  <!-- output column  -->
-
-  <div id="outputs" class="column">
-    <label class="labelRow">Outputs</label>
+  <div id="inputs" class="column-20">
+    <label class="labelRow">Output</label>
     <ul>
       <li *ngFor="let output of this.tensorFlowService.selectedModel.outputs">
         <label class="radio-container"><span id="label-{{ output.name }}">{{ output.name }}</span>

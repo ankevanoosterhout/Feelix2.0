@@ -23,6 +23,7 @@ export class TensorFlowJSComponent implements OnInit {
   public progress = 0;
 
   inputArray = [];
+  stopRecordingCounter = 0;
 
   constructor(@Inject(DOCUMENT) private document: Document, public motorControlService: MotorControlService, public hardwareService: HardwareService,
     private electronService: ElectronService, public tensorflowService: TensorFlowMainService, private tensorflowDrawService: TensorFlowDrawService) {
@@ -32,79 +33,73 @@ export class TensorFlowJSComponent implements OnInit {
 
       this.electronService.ipcRenderer.on('motorData', (event: Event, data: any) => {
 
-        if (data.velocity > 0.03 || data.velocity < -0.03) {
-          //when classifying input data
-          if (this.tensorflowService.classify && this.tensorflowService.selectedModel.model) {
-            let inputs = this.getInputs(data);
+        //when classifying input data
+        if (this.tensorflowService.classify && (data.velocity > 0.03 || data.velocity < -0.03) && this.tensorflowService.selectedModel.model) {
+          let inputs = this.getInputs(data);
 
-            // const inputstr = inputList.join(',');
-            // let inputObject = JSON.parse('{' + inputstr + '}');
-
-            if (this.tensorflowService.selectedModel.multiple) {
-              const microcontroller = this.tensorflowService.selectedMicrocontrollers.filter(m => m.serialPort.path === data.serialPath)[0];
-              if (this.inputArray.length > 0 && this.hardwareService.getDataSendTime(microcontroller.id) - new Date().getTime() > microcontroller.updateSpeed * 3) {
-                this.tensorflowService.NN_Deploy(this.inputArray, this.tensorflowService.selectedModel, data.serialPath);
-              } else {
-                this.inputArray.push(inputs);
-              }
-
-              this.hardwareService.updateDataSendTime(microcontroller.id);
-
+          if (this.tensorflowService.selectedModel.multiple) {
+            // const microcontroller = this.tensorflowService.selectedMicrocontrollers.filter(m => m.serialPort.path === data.serialPath)[0];
+            if (this.inputArray.length >= this.tensorflowService.selectedModel.options.trainingOptions.batchSize) {
+              this.tensorflowService.NN_Deploy(this.inputArray, this.tensorflowService.selectedModel, data.serialPath);
+              this.inputArray = [];
             } else {
-              this.tensorflowService.NN_Deploy(inputs, this.tensorflowService.selectedModel, data.serialPath);
+              this.inputArray.push(inputs);
             }
-
-            //when gathering input data
-          } else if (this.tensorflowService.dataSets.length > 0) {
-
-            if (this.tensorflowService.recording.starttime === null && this.tensorflowService.recording.active) {
-              this.tensorflowService.recording.starttime = new Date().getTime();
-            }
+          } else {
+            this.tensorflowService.NN_Deploy([ inputs ], this.tensorflowService.selectedModel, data.serialPath);
+          }
 
 
-            if (this.tensorflowService.recording.active) {
-              // let dataset = this.tensorflowService.dataSets.filter(d => d.open)[0]; //update dataset.open when select in dropdown
-              // let dataset = this.tensorflowService.selectedDataset;
+
+          //when gathering input data
+        } else if (this.tensorflowService.dataSets.length > 0) {
+
+          if (this.tensorflowService.recording.active && this.tensorflowService.recording.starttime === null && (data.velocity > 0.03 || data.velocity < -0.03)) {
+            this.tensorflowService.recording.starttime = new Date().getTime();
+          }
+
+
+          if (this.tensorflowService.recording.starttime !== null) {
+
+            if (data.velocity === 0.0) { this.stopRecordingCounter++; } else if (data.velocity > 0.03 || data.velocity < -0.03) { this.stopRecordingCounter = 0; }
+
+            if (this.stopRecordingCounter < 10) {
+
               const microcontroller = this.tensorflowService.selectedMicrocontrollers.filter(m => m.serialPort.path === data.serialPath)[0];
 
               if (microcontroller && this.tensorflowService.selectedDataset) {
 
-                let microcontrollerObject = { port: microcontroller.serialPort.path, motors: [], inputdata: { name: null, value: null } };
+                let microcontrollerObject = { port: microcontroller.serialPort.path, motors: [], time: null };
                 let m = 0;
                 for (const motor of microcontroller.motors) {
 
                   let i = 0;
                   let dataList = [];
+
                   for (const input of this.tensorflowService.selectedModel.inputs) {
-                      let dataObject = { motor: motor.id, index: m, data: { name: input.name, value: null } }
-                      if (input.name === 'angle' || input.name === 'velocity' || input.name === 'target' || input.name === 'direction') {
 
-                        if (motor.id === data.motorID) {
+                    let dataObject = { motor: motor.id, index: m, data: { name: input.name, value: null } }
+                    if (input.name === 'angle' || input.name === 'velocity' || input.name === 'target' || input.name === 'direction') {
 
-                          if (input.name === 'angle') {
-                            dataObject.data.value = data.angle;
-                          } else if (input.name === 'velocity') {
-                            dataObject.data.value = data.velocity;
-                          } else if (input.name === 'direction') {
-                            dataObject.data.value = (data.velocity >= 0.00 ? 1 : 0);
-                          } else if (input.name === 'target') {
-                            dataObject.data.value = data.target;
-                          }
-                          dataList.push(dataObject);
+                      if (motor.id === data.motorID) {
 
-                          if (dataObject.data.value > this.tensorflowService.selectedDataset.bounds.yMax) {
-                            this.tensorflowService.selectedDataset.bounds.yMax = Math.ceil(dataObject.data.value);
-                            this.tensorflowDrawService.updateBounds(this.tensorflowService.selectedDataset.bounds);
-
-                          } else if (dataObject.data.value < this.tensorflowService.selectedDataset.bounds.yMin) {
-                            this.tensorflowService.selectedDataset.bounds.yMin = Math.floor(dataObject.data.value);
-                            this.tensorflowDrawService.updateBounds(this.tensorflowService.selectedDataset.bounds);
-                          }
-
-                          if (i == 2) {
-                            microcontrollerObject.motors[m] = dataList;
-                          }
+                        if (input.name === 'angle') {
+                          dataObject.data.value = data.angle;
+                        } else if (input.name === 'velocity') {
+                          dataObject.data.value = data.velocity;
+                        } else if (input.name === 'direction') {
+                          dataObject.data.value = (data.velocity >= 0.00 ? 1 : 0);
+                        } else if (input.name === 'target') {
+                          dataObject.data.value = data.target;
                         }
+                        dataList.push(dataObject);
+
+                        this.checkBounds(dataObject.data.value);
+
+                        if (i == 2) {
+                          microcontrollerObject.motors[m] = dataList;
+                        }
+                      }
                         i++;
                     }
                   }
@@ -112,10 +107,10 @@ export class TensorFlowJSComponent implements OnInit {
                 }
 
                 const time = new Date().getTime() - this.tensorflowService.recording.starttime;
-                microcontrollerObject.inputdata = { name: "time", value: time };
+                microcontrollerObject.time = time;
 
                 if (time > this.tensorflowService.selectedDataset.bounds.xMax - 500) {
-                  this.tensorflowService.selectedDataset.bounds.xMax += 2000;
+                  this.tensorflowService.selectedDataset.bounds.xMax *= 1.1;
                   this.tensorflowDrawService.updateBounds(this.tensorflowService.selectedDataset.bounds);
                 }
                 if (this.tensorflowService.selectedDataset.d) {
@@ -127,6 +122,7 @@ export class TensorFlowJSComponent implements OnInit {
             }
           }
         }
+
       });
 
 
@@ -143,8 +139,7 @@ export class TensorFlowJSComponent implements OnInit {
             }
           }
           if (this.tensorflowService.dataSets.length > 0) {
-            const item = this.document.getElementById('dataSetItem-' + this.tensorflowService.dataSets[(this.tensorflowService.dataSets.length - 1)].id);
-            if (item) { item.click(); }
+            this.tensorflowService.selectDataSet(this.tensorflowService.dataSets[this.tensorflowService.dataSets.length - 1].id);
           }
         }
       });
@@ -196,8 +191,6 @@ export class TensorFlowJSComponent implements OnInit {
       this.electronService.ipcRenderer.on('train-model', (event: Event) => {
         this.document.getElementById('initialize').click();
       });
-
-
   }
 
   ngOnInit(): void {
@@ -207,6 +200,20 @@ export class TensorFlowJSComponent implements OnInit {
     this.tensorflowService.selectedModel.outputs.push(new Classifier('Classifier-' + (this.tensorflowService.selectedModel.outputs.length + 1)));
     this.tensorflowService.selectedModel.outputs[0].active = true;
     this.tensorflowService.addLabelToClassifier(0);
+  }
+
+
+
+  checkBounds(value: number) {
+    //update graph size
+    if (value > this.tensorflowService.selectedDataset.bounds.yMax) {
+      this.tensorflowService.selectedDataset.bounds.yMax = value > 10 ? Math.ceil(value/10) * 10 : Math.ceil(value);
+      this.tensorflowDrawService.updateBounds(this.tensorflowService.selectedDataset.bounds);
+
+    } else if (value < this.tensorflowService.selectedDataset.bounds.yMin) {
+      this.tensorflowService.selectedDataset.bounds.yMin = value < -10 ? Math.floor(value/10) * 10 : Math.floor(value);
+      this.tensorflowDrawService.updateBounds(this.tensorflowService.selectedDataset.bounds);
+    }
   }
 
 

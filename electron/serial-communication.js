@@ -16,7 +16,7 @@ const softwareVersion = { major: 3, minor: 0, patch: 0 };
 function listSerialPorts(callback) {
   let portsList = [];
   SerialPort.list().then(ports => {
-    ports.forEach((item)=>{
+    ports.forEach((item) => {
       let vendor = 'unknown';
 
       if (item.vendorId !== undefined && item.productId !== undefined) {
@@ -35,8 +35,6 @@ function listSerialPorts(callback) {
       portsList.push({ serialPort: item, vendor: vendor });
     });
     callback(portsList);
-
-
   })
 };
 
@@ -49,7 +47,7 @@ function checkIfAvailable(serialData, callback, connect) {
 }
 
 function writeDataString(data, COM) {
-  sp.write(data, function (err) {
+  sp.write(data, (err) => {
       if (err) {
           // reconnect(data, COM);
           main.updateSerialProgress({ progress: 0, str: err.message });
@@ -93,15 +91,18 @@ function ifSerialAvailable(serialData, portlist, connect) {
       if (connect) {
         if (selectedPort) {
           console.log("OPEN IF NOT OPEN " + selectedPort.sp.IsOpen + " or " + selectedPort.sp.opening);
-          if (selectedPort.sp && !selectedPort.sp.opening) { selectedPort.sp.open(); }
+          if (selectedPort.sp && !activePorts.includes(selectedPort.COM)) {
+            selectedPort.sp.open();
+          } //!selectedPort.sp.opening
         } else {
           updateProgress(100, (serialData.port.path + ' is connected'));
           createConnection(serialData);
         }
       } else {
         if (selectedPort) {
-          console.log("CLOSE IF OPEN " + selectedPort.sp.IsOpen + " or " + selectedPort.sp.opening);
-          if (selectedPort.sp && selectedPort.sp.opening) { selectedPort.sp.close(); }
+          if (selectedPort.sp && activePorts.includes(selectedPort.COM)) {
+            selectedPort.sp.close();
+          }
         } else {
           const sp = new newSerialPort(serialData, port);
           ports.push(sp);
@@ -141,7 +142,7 @@ class newSerialPort {
 
 
   writeData(data) {
-    this.sp.write(data, function (err) {
+    this.sp.write(data, (err) => {
         if (err) {
           main.updateSerialProgress({ progress: 0, str: err.message });
           return;
@@ -540,10 +541,10 @@ function tryToEstablishConnection(receivingPort, uploadContent, callback) {
   if (!receivingPort && uploadContent && uploadContent.config) {
     createConnection({ port: uploadContent.config.serialPort, type: uploadContent.config.vendor, baudrate: uploadContent.config.baudrate });
     receivingPort = ports.filter(p => p.COM === uploadContent.config.serialPort.path)[0];
-  } else if (receivingPort && !receivingPort.sp.opening) { //sp.IsOpen
-    receivingPort.sp.open();
+  } else if (receivingPort) { //&& !receivingPort.sp.IsOpen
+
     if (!activePorts.includes(receivingPort.COM)) {
-      activePorts.push(receivingPort.COM);
+      receivingPort.sp.open();
     }
   }
   if (uploadContent && uploadContent.config) {
@@ -566,20 +567,12 @@ function uploadData(uploadContent) {
 
 function upload_to_receivedPort(port, uploadContent) {
   receivingPort = port;
-  // console.log(uploadContent.config.motors);
-  // for (const motor of uploadContent.config.motors) {
-
-  //   if (motor.id === uploadContent.config.motorID) {
-  //     datalist.unshift('FM' + motor.id + 'F');
-  //     datalist = prepareMotorData(uploadContent, motor, datalist);
-  //     if (uploadContent.data) {
-  //       datalist = prepareEffectData(uploadContent, motor, datalist);
-  //     }
-  //   }
-  // }
 
   let index = 0;
-  datalist.unshift('FM0#'); //reset library and pneumatic actuator data (FeelixAir)
+
+  if (uploadContent.config.motors.filter(m => m.type === 2).length > 0) {
+    datalist.unshift('FM0#'); //reset library and pneumatic actuator data (FeelixAir)
+  }
 
   for (const motor of uploadContent.config.motors) {
     if (motor.type !== 2) { datalist.unshift('FM' + motor.id + 'F'); }
@@ -592,7 +585,6 @@ function upload_to_receivedPort(port, uploadContent) {
 
   dataSendWaitList.push({ port: uploadContent.config.serialPort.path, data: datalist, totalItems: datalist.length, collection: uploadContent.config.collection });
   dataSendWaitList.filter(d => d.port === uploadContent.config.serialPort.path)[0].data.unshift('FC' + (uploadContent.config.motorID ? uploadContent.config.motorID : 'A'));
-  // console.log('FC' + (uploadContent.config.motorID ? uploadContent.config.motorID : 'A'));
   // console.log(JSON.stringify(dataSendWaitList));
   uploadFromWaitList(receivingPort);
 }
@@ -602,12 +594,14 @@ function requestData(data)  {
   // console.log(data);
   receivingPort = ports.filter(p => p.COM === data.config.serialPort.path)[0];
 
-  // console.log("port: " + receivingPort);
-  // if (receivedPort === undefined || (receivedPort.sp && !receivedPort.sp.opening)) {
-  tryToEstablishConnection(receivingPort, data, receivedPort);
-  // }
+  if (!activePorts.includes(receivingPort.COM)) {
+    tryToEstablishConnection(receivingPort, data, receivedPort);
 
-  sendDataStr([ 'FMK' ],  data.config.serialPort.path); //'FMQ'
+    sendDataStr([ 'FC', 'FMK1' ], data.config.serialPort.path);
+    main.updateSerialProgress({ progress: 100, str: ('Connecting to microcontroller at ' + data.config.serialPort.path) });
+  } else {
+    sendDataStr([ 'FC', 'FMK1' ], data.config.serialPort.path);
+  }
 }
 
 
@@ -894,6 +888,9 @@ function sendDataStr(str, port) {
   // console.log(dataSendWaitList);
   uploadFromWaitList(receivingPort);
 }
+
+
+
 
 
 

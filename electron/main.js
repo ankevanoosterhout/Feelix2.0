@@ -724,7 +724,7 @@ function createWindow() {
 function createTensorFlowWindow() {
   if (!tensorflowWindow) {
     tensorflowWindow = new BrowserWindow({
-      width: 1000,
+      width: 1200,
       height: 650,
       title: 'tensorflow',
       titleBarStyle: 'hidden',

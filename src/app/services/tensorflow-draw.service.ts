@@ -118,7 +118,7 @@ export class TensorFlowDrawService {
                     .attr('stroke', input.color)
                     .attr('stroke-width', 1.5)
                     .attr('d', d3.line()
-                      .x((d: { inputdata: { value: any; }; }) => { return this.config.scaleX(d.inputdata.value) })
+                      .x((d: { time: number; }) => { return this.config.scaleX(d.time) })
                       .y((d: { motors: { data: { value: any; }; }[][]; }) => { return this.config.scaleY(d.motors[m][i].data.value) }))
                       .append('svg:title')
                         .text(() => mcu.name + '-' + motor.id);
