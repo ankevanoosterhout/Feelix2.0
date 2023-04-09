@@ -94,7 +94,8 @@ export class TensorFlowDrawService {
   }
 
 
-  drawTensorFlowGraphData(data: DataSet, tensorflowModel: Model, mcus: Array<MicroController>) {
+  drawTensorFlowGraphData(data: DataSet, tensorflowModel: Model, trimLines: any) {
+
 
     if (data && data.m.length > 0) {
       d3.selectAll('#dataGroup').remove();
@@ -103,7 +104,6 @@ export class TensorFlowDrawService {
         .attr('id', 'dataGroup')
         .attr('transform', 'translate(0,0)');
 
-      let i = 0;
       for (const m of data.m) {
         if (m.record && m.visible) {
           for (const input of tensorflowModel.inputs) {
@@ -118,18 +118,28 @@ export class TensorFlowDrawService {
                   .x((d: { time: number; }) => {
                     return this.config.scaleX(d.time)
                   })
-                  .y((d: { inputs: { value: any; }[]; }) => {
-                    return this.config.scaleY(d.inputs[i].value)
+                  .y((d: { inputs: { value: any; name: string }[]; }) => {
+                    const inputItem = d.inputs.filter(n => n.name === input.name)[0];
+                    if (inputItem) {
+                      return this.config.scaleY(inputItem.value);
+                    }
                   }))
                   .append('svg:title')
                     .text(() => m.mcu.name + '-' + m.id);
 
-              i++;
             }
           }
         }
       }
+
+      if (trimLines) {
+        this.drawTrimLines(data.bounds, true, trimLines);
+      }
     }
+  }
+
+  removeTrimlines() {
+    d3.selectAll('#dataTrimLines').remove();
   }
 
 
@@ -158,9 +168,9 @@ export class TensorFlowDrawService {
         .append('line')
         .attr('id', (d: { id: number }) => 'trimLine_' + d.id)
         .attr('x1', (d: { value: number; }) => this.config.scaleX(d.value))
-        .attr('y1', this.config.scaleY(bounds.yMin * 1.1))
+        .attr('y1', this.config.scaleY(bounds.yMin * 1.05))
         .attr('x2', (d: { value: number; }) => this.config.scaleX(d.value))
-        .attr('y2', this.config.scaleY(bounds.yMax * 1.1))
+        .attr('y2', this.config.scaleY(bounds.yMax * 1.05))
         .style('shape-rendering', 'crispEdges')
         .style('stroke', '#FF0000')
         .style('stroke-width', 1)

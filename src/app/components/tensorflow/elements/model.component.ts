@@ -34,6 +34,8 @@ export class ModelComponent {
   initializeNN_Model() {
     if (!this.tensorFlowService.processing && this.tensorFlowService.dataSets.length > 0) {
 
+      this.document.body.style.cursor = 'wait';
+
       this.tensorFlowService.processing = true;
       this.tensorFlowService.updateProgess('initializing model', 20);
 

@@ -6,9 +6,9 @@
     <div class="column offset-left">
       <div class="datalist_dropdown">
         <label class="labelRow small">Data set</label>
-        <select class="form-control" id="select_dataset" [(ngModel)]="this.tensorflowService.selectedDataset" (change)="this.tensorflowService.selectDataSet()"
+        <select class="form-control playWindow microcontroller" id="select_dataset" [(ngModel)]="this.tensorflowService.selectedDataset" (change)="this.tensorflowService.selectDataSet()"
             name="select_dataset" [compareWith]="compareID">
-          <option [ngValue]="undefined" selected="selected">-- select dataset --</option>
+          <option class="placeholder" value="undefined" selected="selected">-- select dataset --</option>
           <option *ngFor="let set of this.tensorflowService.dataSets" [ngValue]="set">{{ set.name }}</option>
         </select>
       </div>
@@ -18,18 +18,20 @@
       <div class="row variable_name" class="data_element selectbox" *ngFor="let output of this.tensorflowService.selectedModel.outputs; let o=index;" [ngClass]="{ invisible: !output.active }">
 
         <label class="labelRow small">{{ output.name }}</label>
-        <select class="form-control" id="{{ this.tensorflowService.selectedDataset.id }}-output-{{ o }}" name="{{ this.tensorflowService.selectedDataset.id }}-output-{{ o }}"
-          [(ngModel)]="this.tensorflowService.selectedDataset.outputs[o]" (change)="this.tensorflowService.updateOutputDataSet(this.tensorflowService.selectedDataset.id, o)" required>
-          <option value="undefined" selected="selected">-- select label --</option>
+        <select class="form-control playWindow microcontroller" id="{{ this.tensorflowService.selectedDataset.id }}-output-{{ o }}" name="{{ this.tensorflowService.selectedDataset.id }}-output-{{ o }}"
+            [(ngModel)]="this.tensorflowService.selectedDataset.outputs[o]" (change)="this.tensorflowService.updateOutputDataSet(this.tensorflowService.selectedDataset.id, o)"
+            title="select label that is associated with the selected data set">
+          <option class="placeholder" value="undefined" selected="selected">-- select label --</option>
           <option *ngFor="let label of output.labels" [ngValue]="label.name">{{ label.name }}</option>
         </select>
       </div>
     </div>
 
     <ul class="buttons-list">
-      <li id="new" (click)="this.tensorflowService.addDataSet()"><img src="./assets/icons/tools/collections.svg" title="Add data set"></li>
+      <li id="new" (click)="this.tensorflowService.addDataSet()"><img src="./assets/icons/tools/collections.svg" title="Create new data set"></li>
       <li id="load" (click)="this.tensorflowService.loadDataSet()"><img src="./assets/icons/buttons/open.svg" title="Load data set"></li>
       <li id="save" (click)="this.tensorflowService.saveDataSet()"><img src="./assets/icons/buttons/save.svg" title="Save data set"></li>
+      <li id="save" (click)="this.tensorflowService.saveCopyDataSet()"><img src="./assets/icons/buttons/save-copy.svg" title="Save copy of data set"></li>
       <!-- <li id="export_json" (click)="this.tensorflowService.exportDataSet()"><img src="./assets/icons/buttons/export.svg" title="Export datasets as json file"></li>
       <li id="export_json" (click)="this.tensorflowService.importDataSet()"><img src="./assets/icons/buttons/import.svg" title="Import datasets as json file"></li> -->
       <li id="delete" (click)="this.tensorflowService.deleteDataSet()"><img src="./assets/icons/buttons/bin.svg" title="Delete data set"></li>
@@ -52,7 +54,7 @@
 
     <div class="form-group microcontroller">
       <select class="form-control playWindow microcontroller" id="microcontroller" name="microcontroller" [(ngModel)]="this.tensorflowService.selectOptionMicrocontroller" required>
-        <option class="placeholder" value="" selected>-- select microcontroller --</option>
+        <option class="placeholder" value="" selected="selected">-- select microcontroller --</option>
         <option *ngFor="let item of this.hardwareService.microcontrollers" [ngValue]="item">{{ item.name }}</option>
       </select>
       <button class="add" (click)="this.tensorflowService.addMicrocontroller()" title="add">Add</button>
@@ -99,6 +101,11 @@
       <div class="form-group absolute" *ngIf="this.tensorflowService.selectedDataset">
         <!-- <label class="label">Dataset</label> -->
         <input type="text" id="dataSetName" [(ngModel)]="this.tensorflowService.selectedDataset.name" name="dataSetName">
+
+        <div class="buttons trim" *ngIf="this.tensorflowService.trimLinesVisible">
+          <button id="cancel" (click)="this.cancelTrim()">Cancel</button>
+          <button id="trim" (click)="this.trimDataSet()">Trim</button>
+        </div>
       </div>
 
       <div id="svg_graph"></div>

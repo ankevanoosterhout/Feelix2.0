@@ -119,4 +119,15 @@ export class DataComponent implements AfterViewInit {
   compareID(el1: any, el2: any) {
     return el1 && el2 ? el1.id === el2.id : el1 === el2;
   }
+
+
+  cancelTrim() {
+    this.tensorflowDrawService.removeTrimlines();
+    this.tensorflowService.trimLinesVisible = false;
+  }
+
+  trimDataSet() {
+    this.tensorflowService.trimSet();
+    this.tensorflowDrawService.removeTrimlines();
+  }
 }

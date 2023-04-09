@@ -260,18 +260,16 @@
   width: 280px;
 }
 
-
-
 .checkbox-container, .radio-container {
   margin-bottom: 0;
+  margin-left: 4px;
 }
 
 label {
-  padding: 0px 20px;
+  padding: 0px 18px;
   height: 19px;
   line-height: 20px;
   vertical-align: top;
-  margin-top: -1px;
 }
 
 input.nextToArrow {
@@ -351,6 +349,10 @@ select#microcontroller {
   margin-right: 15px;
   top:auto!important;
   height: 50px;
+}
+
+.buttons.trim {
+  top:-8px!important;
 }
 
 .labelRow {
@@ -487,7 +489,7 @@ label {
   display: inline-flex;
   position: relative;
   overflow: hidden;
-  height: 65vh;
+  height: 100%;
   width: calc(100vw - 200px);
   vertical-align: top;
 }
@@ -818,6 +820,7 @@ input.html-slider {
 
 .form-group.absolute {
   position: absolute;
+  width: calc(100% - 320px);
   display: inline-block;
   margin: 10px 0 0 28px;
   z-index: 10;
@@ -827,4 +830,5 @@ input.html-slider {
   font-size: 13px;
   margin-left: -3px;
   font-weight: 600;
+  max-width: none;
 }

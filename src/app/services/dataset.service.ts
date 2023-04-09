@@ -77,7 +77,14 @@ export class DataSetService {
     }
   }
 
-
+  copyDataSet(dataSet: DataSet) {
+    if (dataSet) {
+      const copy = this.cloneService.deepClone(dataSet);
+      copy.id = uuid();
+      copy.selected = false;
+      return copy;
+    }
+  }
 
 
   clear() {

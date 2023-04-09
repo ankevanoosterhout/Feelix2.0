@@ -99,7 +99,8 @@ export class TensorFlowJSComponent implements OnInit {
                   this.tensorflowDrawService.updateBounds(this.tensorflowService.selectedDataset.bounds);
                 }
                 this.tensorflowDrawService.drawGraph();
-                this.tensorflowDrawService.drawTensorFlowGraphData(this.tensorflowService.selectedDataset, this.tensorflowService.selectedModel, this.tensorflowService.selectedMicrocontrollers);
+                this.tensorflowDrawService.drawTensorFlowGraphData(this.tensorflowService.selectedDataset, this.tensorflowService.selectedModel,
+                  this.tensorflowService.trimLinesVisible ? this.tensorflowService.trimLines : null);
               }
             }
           }
@@ -118,10 +119,19 @@ export class TensorFlowJSComponent implements OnInit {
           for (const dataset of data) {
             if (this.tensorflowService.dataSets.filter(d => d.id === dataset.id).length === 0) {
               this.tensorflowService.dataSets.unshift(dataset);
+              for (const motor of dataset.m) {
+                if (this.tensorflowService.selectedMicrocontrollers.filter(m => m.id === motor.mcu.id).length === 0) {
+                  const mcu = this.hardwareService.microcontrollers.filter(m => m.id === motor.mcu.id)[0];
+                  if (mcu) {
+                    this.tensorflowService.selectOptionMicrocontroller = mcu;
+                    this.tensorflowService.addMicrocontroller();
+                  }
+                }
+              }
             }
           }
           if (this.tensorflowService.dataSets.length > 0) {
-            this.tensorflowService.selectDataSet(this.tensorflowService.dataSets[this.tensorflowService.dataSets.length - 1].id);
+            this.tensorflowService.selectDataSet(this.tensorflowService.dataSets[0].id);
           }
         }
       });
@@ -151,7 +161,7 @@ export class TensorFlowJSComponent implements OnInit {
 
       this.tensorflowService.updateGraph.subscribe(data => {
         this.tensorflowDrawService.drawGraph();
-        this.tensorflowDrawService.drawTensorFlowGraphData(data.set, data.model, data.mcus);
+        this.tensorflowDrawService.drawTensorFlowGraphData(data.set, data.model, data.trimLines);
       });
 
       this.tensorflowService.drawTrimLines.subscribe(data => {
@@ -286,10 +296,12 @@ export class TensorFlowJSComponent implements OnInit {
   onResize(event: Event) {
     this.config.width = (window.innerWidth - 470);
     this.config.height = window.innerHeight - this.config.horizontalScreenDivision - 120;
+    this.document.getElementById('data').style.height = (window.innerHeight - this.config.horizontalScreenDivision) + 'px';
     this.document.getElementById('model').style.width = (window.innerWidth * this.config.verticalScreenDivision / 100) + 'px';
     this.document.getElementById('classifiers').style.width = (window.innerWidth * (100-this.config.verticalScreenDivision) / 100) + 'px';
     this.tensorflowDrawService.drawGraph();
-    this.tensorflowDrawService.drawTensorFlowGraphData(this.tensorflowService.selectedDataset, this.tensorflowService.selectedModel, this.tensorflowService.selectedMicrocontrollers);
+    this.tensorflowDrawService.drawTensorFlowGraphData(this.tensorflowService.selectedDataset, this.tensorflowService.selectedModel,
+      this.tensorflowService.trimLinesVisible ? this.tensorflowService.trimLines : null);
   }
 
 
@@ -321,7 +333,8 @@ export class TensorFlowJSComponent implements OnInit {
           this.document.getElementById('toggleDataSection').classList.remove('hidden');
         }
         this.tensorflowDrawService.drawGraph();
-        this.tensorflowDrawService.drawTensorFlowGraphData(this.tensorflowService.selectedDataset, this.tensorflowService.selectedModel, this.tensorflowService.selectedMicrocontrollers);
+        this.tensorflowDrawService.drawTensorFlowGraphData(this.tensorflowService.selectedDataset, this.tensorflowService.selectedModel,
+          this.tensorflowService.trimLinesVisible ? this.tensorflowService.trimLines : null);
       }
 
 

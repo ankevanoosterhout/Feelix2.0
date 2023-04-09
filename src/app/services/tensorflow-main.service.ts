@@ -83,11 +83,20 @@ export class TensorFlowMainService {
       this.selectDataSet(newID);
     }
 
-    saveDataSet() {
-      const dataSet = this.dataSets.filter(d => d.open)[0];
+    saveDataSet(dataSet: DataSet = this.selectedDataset) {
       if (dataSet) {
         this.dataSetService.saveDataSet(dataSet);
         this.updateProgess(dataSet.name + ' saved', 100);
+      }
+    }
+
+    saveCopyDataSet() {
+      const copy = this.dataSetService.copyDataSet(this.selectedDataset);
+      if (copy) {
+        copy.name += '-copy';
+        this.dataSets.push(copy);
+        this.saveDataSet(copy);
+        this.selectDataSet(copy.id);
       }
     }
 
@@ -110,45 +119,50 @@ export class TensorFlowMainService {
     trimDataSet() {
       if (this.selectedDataset && this.selectedDataset.m.length > 0) {
 
-        this.trimLinesVisible = !this.trimLinesVisible;
+        this.trimLinesVisible = true;
 
-        if (this.trimLinesVisible) {
-          this.trimLines[0].value = this.selectedDataset.bounds.xMin + 100;
-          this.trimLines[1].value = this.selectedDataset.bounds.xMax - 100;
+        this.trimLines[0].value = this.selectedDataset.bounds.xMin + 100;
+        this.trimLines[1].value = this.selectedDataset.bounds.xMax - 100;
 
-          this.drawTrimLines.next({ bounds: this.selectedDataset.bounds, visible: this.trimLinesVisible, lines: this.trimLines });
+        this.drawTrimLines.next({ bounds: this.selectedDataset.bounds, visible: this.trimLinesVisible, lines: this.trimLines });
+      }
+    }
 
-        } else {
 
-          let Ymin = -1;
-          let Ymax = 1
-          for (const m of this.selectedDataset.m) {
-            if (m.d.length > 0) {
-              for (let i = m.d.length - 1; i >= 0; i--) {
-                if (m.d[i].time < this.trimLines[0].value || m.d[i].time > this.trimLines[1].value) {
-                  m.d.splice(i, 1);
-                } else {
-                  m.d[i].time -= Math.floor(this.trimLines[0].value);
-                  for (const el of m.d[i].inputs) {
-                    if (el.name !== 'direction' && this.selectedModel.inputs.filter(i => i.name === el.name && i.active && i.visible).length > 0) {
-                      if (el.value > Ymax) { Ymax = el.value; } else if (el.value < Ymin) { Ymin = el.value; }
-                    }
-                  }
+    trimSet() {
+      let Ymin = -1;
+      let Ymax = 1;
+      const dataSetCopy = this.dataSetService.copyDataSet(this.selectedDataset);
+      dataSetCopy.name = this.selectedDataset.name + '-copy';
+
+      for (const m of dataSetCopy.m) {
+        if (m.d.length > 0) {
+          for (let i = m.d.length - 1; i >= 0; i--) {
+            if (m.d[i].time < this.trimLines[0].value || m.d[i].time > this.trimLines[1].value) {
+              m.d.splice(i, 1);
+            } else {
+              m.d[i].time -= Math.floor(this.trimLines[0].value);
+              for (const el of m.d[i].inputs) {
+                if (el.name !== 'direction' && this.selectedModel.inputs.filter(i => i.name === el.name && i.active && i.visible).length > 0) {
+                  if (el.value > Ymax) { Ymax = el.value; } else if (el.value < Ymin) { Ymin = el.value; }
                 }
               }
             }
           }
-          const span = this.trimLines[1].value - this.trimLines[0].value;
-
-          this.selectedDataset.bounds.xMin = 0;
-          this.selectedDataset.bounds.xMax = span < 1000 ? Math.ceil(span / 100) * 100 : span < 3000 ? Math.ceil(span / 200) * 200 : Math.ceil(span / 500) * 500;
-          this.selectedDataset.bounds.yMin = Ymin < -10 || Ymax > 10 ? Math.floor(Ymin/10) * 10 : Math.floor(Ymin/2) * 2;
-          this.selectedDataset.bounds.yMax = Ymin < -10 || Ymax > 10 ? Math.ceil(Ymax/10) * 10 : Math.ceil(Ymax/2) * 2;
-
-          this.updateGraphBounds.next(this.selectedDataset.bounds);
-          this.updateGraph.next({ set: this.selectedDataset, model: this.selectedModel, mcus: this.selectedMicrocontrollers });
         }
       }
+      const span = this.trimLines[1].value - this.trimLines[0].value;
+
+      dataSetCopy.bounds.xMin = 0;
+      dataSetCopy.bounds.xMax = span < 1000 ? Math.ceil(span / 100) * 100 : span < 3000 ? Math.ceil(span / 200) * 200 : Math.ceil(span / 500) * 500;
+      dataSetCopy.bounds.yMin = Ymin < -10 || Ymax > 10 ? Math.floor(Ymin/10) * 10 : Math.floor(Ymin/2) * 2;
+      dataSetCopy.bounds.yMax = Ymin < -10 || Ymax > 10 ? Math.ceil(Ymax/10) * 10 : Math.ceil(Ymax/2) * 2;
+
+      this.trimLinesVisible = false;
+
+      this.dataSets.push(dataSetCopy);
+      this.selectDataSet(dataSetCopy.id);
+
     }
 
 
@@ -192,6 +206,8 @@ export class TensorFlowMainService {
       }
     }).bind(this);
 
+
+
     createJSONfromDataSet(dataSets: Array<DataSet>, train = true) {
       let data = [];
 
@@ -201,8 +217,6 @@ export class TensorFlowMainService {
         let i = 0;
 
         for (const classifier of this.selectedModel.outputs) {
-
-
           if (classifier.active) {
             for (const label of classifier.labels) {
               label.name === set.outputs[i] ? outputs.push(1) : outputs.push(0);
@@ -216,16 +230,20 @@ export class TensorFlowMainService {
           return false;
         }
 
+        console.log(outputs);
+
         // const outputstr = outputs.join(',');
         // const outputObject = JSON.parse('{' + outputstr + '}');
 
         console.log(set.m);
-        let motorInputArray = [];
+
+        // let inputArray = [];
+
         set.m.forEach(motor => {
-          let inputArray = [];
-          let motorItem = [];
 
           if (motor.d.length > 0) {
+            const mcu = this.selectedMicrocontrollers.filter(m => m.id === motor.mcu.id)[0];
+
             for (const d of motor.d) {
               let inputs = [];
               let i = 0;
@@ -238,16 +256,13 @@ export class TensorFlowMainService {
               i ++;
               i %= this.selectedModel.options.trainingOptions.batchSize;
               inputs.push(i);
+              inputs.push(motor.index);
+              inputs.push(this.selectedMicrocontrollers.indexOf(mcu));
 
-              inputArray.push(inputs);
+              // inputArray.push(inputs);
+              data.push({ xs: inputs, ys: outputs }); // shape [[2][[inputs.length]]]
             }
-            const mcu = this.selectedMicrocontrollers.filter(m => m.id === motor.mcu.id)[0];
-            motorItem.push(this.selectedMicrocontrollers.indexOf(mcu));
-            motorItem.push(motor.index);
-
-            motorInputArray.push(motorItem, inputArray);
           }
-          data.push({ xs: motorInputArray, ys: outputs }); // shape [[2][[inputs.length]]]
         });
 
       });
@@ -261,9 +276,10 @@ export class TensorFlowMainService {
         if (set.open) {
           this.updateGraphBounds.next(set.bounds);
           this.selectedDataset = set;
-          this.updateGraph.next({ set: set, model: this.selectedModel, mcus: this.selectedMicrocontrollers });
+          this.updateGraph.next({ set: set, model: this.selectedModel, mcus: this.selectedMicrocontrollers, trimLines: this.trimLinesVisible ? this.trimLines : null });
         }
       }
+      this.trimLinesVisible = false;
     }
 
     updateBoundsActiveDataset() {
@@ -271,7 +287,7 @@ export class TensorFlowMainService {
         const endTime = this.selectedDataset.m[0].d[this.selectedDataset.m[0].d.length - 1].time;
         this.selectedDataset.bounds.xMax = endTime < 3000 ? (Math.ceil(endTime / 200) * 200) : (Math.ceil(endTime / 500) * 500);
         this.updateGraphBounds.next(this.selectedDataset.bounds);
-        this.updateGraph.next({ set: this.selectedDataset, model: this.selectedModel, mcus: this.selectedMicrocontrollers });
+        this.updateGraph.next({ set: this.selectedDataset, model: this.selectedModel, mcus: this.selectedMicrocontrollers, trimLines: this.trimLinesVisible ? this.trimLines : null });
       }
     }
 
@@ -404,18 +420,18 @@ export class TensorFlowMainService {
           inputs.push(item.xs);
           outputs.push(item.ys);
         });
-        console.log(inputs,inputs[0][1][0].length);
         // console.log(this.selectedModel.options.trainingOptions.batchSize, outputs[0].length);
-        const iTensor = tf.tensor3d(inputs);
-        const oTensor = tf.tensor2d(outputs);
-        // const iTensor = tf.tensor(inputs, [ inputs.length,  inputs[0].length ]);
-        // const oTensor = tf.tensor(outputs, [ outputs.length, outputs[0].length ]);
+        // const iTensor = tf.tensor2d(inputs);
+        // const oTensor = tf.tensor2d(outputs);
+        const iTensor = tf.tensor(inputs, [ inputs.length,  inputs[0].length ]);
+        const oTensor = tf.tensor(outputs, [ outputs.length, outputs[0].length ]);
+
         console.log(iTensor, oTensor);
 
         for (let layer = 0; layer < this.selectedModel.options.hiddenUnits; layer++) {
           const hiddenLayer = tf.layers.dense({
-            units: inputs[0][1][0].length,
-            inputShape: iTensor.shape, // [ number of inputs, batch size ]
+            units: inputs[0].length,
+            inputShape: [ inputs[0].length ], // [ number of inputs, batch size ]
             activation: this.selectedModel.options.activation // make activation function adjustable in model settings
           });
 
@@ -442,10 +458,12 @@ export class TensorFlowMainService {
         console.log(this.selectedModel.model);
       //   this.selectedModel.model.normalizeData();
 
-        this.updateProgess('training model', 20);
+        this.updateProgess('start training', 20);
 
         this.train(iTensor, oTensor, this.selectedModel.options.trainingOptions).then(() => {
           console.log('training is complete');
+
+          this.document.body.style.cursor = 'default';
 
           this.processing = false;
 
@@ -459,6 +477,9 @@ export class TensorFlowMainService {
       } else {
         this.updateProgess('no data found, training canceled', 0);
         this.processing = false;
+
+        this.document.body.style.cursor = 'default';
+
         return false;
       }
     }
