@@ -22,5 +22,5 @@ export class TensorFlowConfig {
   resultWindowVisible = true;
 
   horizontalScreenDivision = 220;
-  verticalScreenDivision = 30;
+  verticalScreenDivision = 70;
 }

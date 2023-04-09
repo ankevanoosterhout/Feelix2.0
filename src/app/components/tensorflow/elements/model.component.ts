@@ -1,9 +1,9 @@
 
 import { DOCUMENT } from '@angular/common';
 import { Component, Inject } from '@angular/core';
-import { activation, ActivationLabelMapping, losses, LossesLabelMapping } from 'src/app/models/tensorflow.model';
+import { activation, ActivationLabelMapping } from 'src/app/models/tensorflow.model';
 import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service';
-
+import * as tf from '@tensorflow/tfjs';
 
 @Component({
   selector: 'app-model',
@@ -13,10 +13,19 @@ import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service'
 export class ModelComponent {
 
   public ActivationLabelMapping = ActivationLabelMapping;
-  public LossesLabelMapping = LossesLabelMapping;
-  
   public activationOptions = Object.values(activation);
-  public lossOptions = Object.values(losses);
+
+  public lossOptions = [
+    { name: 'absoluteDifference', value: tf.losses.absoluteDifference },
+    { name: 'computeWeightedLoss', value: tf.losses.computeWeightedLoss },
+    { name: 'cosineDistance', value: tf.losses.cosineDistance },
+    { name: 'hingeLoss', value: tf.losses.hingeLoss },
+    { name: 'huberLoss', value: tf.losses.huberLoss },
+    { name: 'logLoss', value: tf.losses.logLoss },
+    { name: 'meanSquaredError', value: tf.losses.meanSquaredError },
+    { name: 'sigmoidCrossEntropy', value: tf.losses.sigmoidCrossEntropy },
+    { name: 'softmaxCrossEntropy', value: tf.losses.softmaxCrossEntropy }
+  ]
 
   constructor(@Inject(DOCUMENT) private document: Document, public tensorFlowService: TensorFlowMainService) {  }
 
@@ -47,9 +56,10 @@ export class ModelComponent {
       this.tensorFlowService.selectedModel.options.outputs = outputLabels;
 
       this.tensorFlowService.NN_createData(data, this.tensorFlowService.selectedModel);
+
     } else {
 
-        this.tensorFlowService.updateProgess(this.tensorFlowService.processing ? 'training in progress': 'no data', 0);
+      this.tensorFlowService.updateProgess(this.tensorFlowService.processing ? 'training in progress': 'no data', 0);
 
     }
   }

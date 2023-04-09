@@ -14,12 +14,12 @@
       </div>
     </div>
 
-    <div class="column tableheader" *ngIf="this.tensorflowService.selectedDataset && this.tensorflowService.selectedDataset.d && this.tensorflowService.selectedModel">
+    <div class="column tableheader" *ngIf="this.tensorflowService.selectedDataset && this.tensorflowService.selectedModel">
       <div class="row variable_name" class="data_element selectbox" *ngFor="let output of this.tensorflowService.selectedModel.outputs; let o=index;" [ngClass]="{ invisible: !output.active }">
 
         <label class="labelRow small">{{ output.name }}</label>
         <select class="form-control" id="{{ this.tensorflowService.selectedDataset.id }}-output-{{ o }}" name="{{ this.tensorflowService.selectedDataset.id }}-output-{{ o }}"
-          [(ngModel)]="this.tensorflowService.selectedDataset.d.outputs[o]" (change)="this.tensorflowService.updateOutputDataSet(this.tensorflowService.selectedDataset.id, o)" required>
+          [(ngModel)]="this.tensorflowService.selectedDataset.outputs[o]" (change)="this.tensorflowService.updateOutputDataSet(this.tensorflowService.selectedDataset.id, o)" required>
           <option value="undefined" selected="selected">-- select label --</option>
           <option *ngFor="let label of output.labels" [ngValue]="label.name">{{ label.name }}</option>
         </select>
@@ -80,7 +80,7 @@
             <ul class="motor-list">
               <li *ngFor="let motor of microcontroller.motors">
                 <label class="radio-container">{{ motor.id }}
-                  <input type="checkbox" class="type" id="motor-{{ motor.id }}" name="motor-{{ motor.id }}" [(ngModel)]="motor.record" [checked]="motor.record">
+                  <input type="checkbox" class="type" id="motor-{{ motor.id }}" name="motor-{{ motor.id }}" [(ngModel)]="motor.record" [checked]="motor.record" (change)="toggleRecordMotor(microcontroller.id, motor)">
                   <span class="checkmark radio tensorflow"></span>
                 </label>
               </li>
@@ -105,17 +105,13 @@
 
 
       <div class="graph_controls">
-        <div class="row" *ngIf="this.tensorflowService.selectedMicrocontrollers.length > 0">
+        <div class="row" *ngIf="this.tensorflowService.selectedDataset.m.length > 0">
           <div class="opencloseArrow open controls" id="open_motors" (click)="openCloseItem('motors')"><div></div></div>
           <label class="labelRow nextToArrow">Motors</label>
           <div class="row" id="section_motors">
             <ul class="motor-list-buttons">
-              <li *ngFor="let microcontroller of this.tensorflowService.selectedMicrocontrollers">
-                <ul>
-                  <li class="motor-list-button-item" *ngFor="let motor of microcontroller.motors">
-                    <div [ngClass]="{'active': motor.visible }" *ngIf="motor.record" (click)="toggleVisibilityMotor(microcontroller, motor.id)">{{ microcontroller.name }} - {{ motor.id }}</div>
-                  </li>
-                </ul>
+              <li class="motor-list-button-item" *ngFor="let m of this.tensorflowService.selectedDataset.m">
+                <div [ngClass]="{'active': m.visible }" *ngIf="m.record" (click)="toggleVisibilityMotor(m)">{{ m.mcu.name }} - {{ m.id }}</div>
               </li>
             </ul>
           </div>

@@ -18,7 +18,7 @@
 
 #classifiers {
   position: absolute;
-  display: inline-block;
+  display: inline-flex;
   width: 30%;
   height: 230px;
   vertical-align: top;
@@ -27,6 +27,7 @@
   overflow:hidden;
   min-width: 250px;
   right: 0;
+  background: #333;
 }
 
 #data {
@@ -781,7 +782,7 @@ input.html-slider {
 }
 
 
-/* .input-list-button-item:hover, .motor-list-button-item:hover {
+/* .input-list-button-item div:hover, .motor-list-button-item div:hover {
 
 }
 

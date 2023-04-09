@@ -6,7 +6,8 @@ import { ConnectModel } from 'src/app/models/effect-upload.model';
 import { UploadService } from 'src/app/services/upload.service';
 import { DOCUMENT } from '@angular/common';
 import { TensorFlowDrawService } from 'src/app/services/tensorflow-draw.service';
-import { MicroController } from 'src/app/models/hardware.model';
+import { MicroController, Motor } from 'src/app/models/hardware.model';
+import { MotorEl } from 'src/app/models/tensorflow.model';
 
 
 
@@ -49,6 +50,7 @@ export class DataComponent implements AfterViewInit {
         this.electronService.ipcRenderer.send('requestData', model);
 
       } else {
+        this.tensorflowService.updateBoundsActiveDataset();
         this.tensorflowService.classify = false;
       }
     }
@@ -68,11 +70,21 @@ export class DataComponent implements AfterViewInit {
     }
   }
 
-  toggleVisibilityMotor(mcu: MicroController, motor_id: string) {
-    const motor = mcu.motors.filter(m => m.id === motor_id)[0];
-    motor.visible = !motor.visible;
-    if (this.tensorflowService.selectedDataset) {
+  toggleVisibilityMotor(m: MotorEl) {
+    if (m) {
+      m.visible = !m.visible;
       this.tensorflowDrawService.drawTensorFlowGraphData(this.tensorflowService.selectedDataset, this.tensorflowService.selectedModel, this.tensorflowService.selectedMicrocontrollers);
+    }
+  }
+
+  toggleRecordMotor(mcuID: string, motor: Motor) {
+    for (const set of this.tensorflowService.dataSets) {
+      for (const m of set.m) {
+        if (m.mcu.id === mcuID && m.id === motor.id) {
+          m.record = motor.record;
+          m.visible = true;
+        }
+      }
     }
   }
 

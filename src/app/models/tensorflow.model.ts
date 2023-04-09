@@ -1,29 +1,7 @@
 import { Filter } from "./filter.model";
+import * as tf from '@tensorflow/tfjs';
+import { MicroController } from "./hardware.model";
 
-
-export enum losses {
-  absoluteDifference = 'absoluteDifference',
-  computeWeightedLoss = 'computeWeightedLoss',
-  cosineDistance = 'cosineDistance',
-  hingeLoss = 'hingeLoss',
-  huberLoss = 'huberLoss',
-  logLoss = 'logLoss',
-  meanSquaredError = 'meanSquaredError',
-  sigmoidCrossEntropy = 'sigmoidCrossEntropy',
-  softmaxCrossEntropy = 'softmaxCrossEntropy'
-};
-
-export const LossesLabelMapping: Record<losses, string> = {
-  [losses.absoluteDifference]: 'absoluteDifference',
-  [losses.computeWeightedLoss]: 'computeWeightedLoss',
-  [losses.cosineDistance]: 'cosineDistance',
-  [losses.hingeLoss]: 'hingeLoss',
-  [losses.huberLoss]: 'huberLoss',
-  [losses.logLoss]: 'logLoss',
-  [losses.meanSquaredError]: 'meanSquaredError',
-  [losses.sigmoidCrossEntropy]: 'sigmoidCrossEntropy',
-  [losses.softmaxCrossEntropy]: 'softmaxCrossEntropy'
-};
 
 export enum activation {
   elu = 'elu',
@@ -122,7 +100,7 @@ export class NN_options {
   outputs: Array<any> = [];
   trainingOptions = new TrainingOptions();
   activation: activation = activation.sigmoid;
-  losses: losses = losses.meanSquaredError;
+  losses: any = tf.losses.meanSquaredError;
 
   constructor(task: string, debug: boolean, learningRate: number, hiddenUnits: number, trainingOptions: TrainingOptions = null) {
     this.task = task;
@@ -175,11 +153,41 @@ export class Bounds {
   yMax = 2;
 }
 
+export class InputItem {
+  name: string;
+  value: number;
 
+  constructor(name: string) {
+    this.name = name;
+  }
+}
 
-export class Data  {
-  inputs: Array<any> = [];
-  outputs: Array<any> = [];
+export class Data {
+  inputs: Array<InputItem> = [];
+  time: number;
+}
+
+export class McuEl {
+  id: string;
+  name: string;
+  serialPath: string;
+}
+
+export class MotorEl {
+  mcu = new McuEl();
+  id: string;
+  index: number;
+  d: Array<Data> = [];
+  record: boolean = true;
+  visible: boolean = true;
+
+  constructor(mcuID: string, mcuName: string, serialPath: string, id: string, index: number) {
+    this.mcu.id = mcuID;
+    this.mcu.name = mcuName;
+    this.mcu.serialPath = serialPath;
+    this.id = id;
+    this.index = index;
+  }
 }
 
 
@@ -187,15 +195,29 @@ export class DataSet {
   id: String;
   name: String;
   date: any;
-  d = new Data();
+  // d = new Data();
+  m: Array<MotorEl> = [];
+  outputs: Array<any> = [];
   open = true;
   selected = false;
   bounds = new Bounds();
   offsetTime = 0;
 
-  constructor(id: String, name: String) {
+  constructor(id: String, name: String, selectedMCUs: Array<MicroController>) {
     this.id = id;
     this.date = new Date().getTime();
     this.name = name;
+
+    if (selectedMCUs) {
+      for (const mcu of selectedMCUs) {
+        for (const m of mcu.motors) {
+          if (m.record) {
+            const index = mcu.motors.indexOf(m);
+            const motorEl = new MotorEl(mcu.id, mcu.name, mcu.serialPort.path, m.id, index);
+            this.m.push(motorEl);
+          }
+        }
+      }
+    }
   }
 }

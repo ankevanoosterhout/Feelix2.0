@@ -43,7 +43,7 @@
     <div class="form-group">
       <label class="label">Losses</label>
       <select class="form-control playWindow" id="task" name="task" [(ngModel)]="this.tensorFlowService.selectedModel.options.losses">
-        <option *ngFor="let item of this.lossOptions" [ngValue]="item">{{ LossesLabelMapping[item] }}</option>
+        <option *ngFor="let item of this.lossOptions" [ngValue]="item.value">{{ item.name }}</option>
       </select>
     </div>
   </div>

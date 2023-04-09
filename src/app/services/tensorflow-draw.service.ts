@@ -96,42 +96,77 @@ export class TensorFlowDrawService {
 
   drawTensorFlowGraphData(data: DataSet, tensorflowModel: Model, mcus: Array<MicroController>) {
 
-    if (data && data.d.inputs.length > 0) {
+    if (data && data.m.length > 0) {
       d3.selectAll('#dataGroup').remove();
 
       const dataGroup = this.config.dataSVG.append('g')
         .attr('id', 'dataGroup')
-        .attr('transform', 'translate(20,0)');
+        .attr('transform', 'translate(0,0)');
 
       let i = 0;
-      let m = 0;
-      for (const mcu of mcus) {
-        for (const motor of mcu.motors) {
-          if (motor.record) {
-            if (motor.visible) {
-              for (const input of tensorflowModel.inputs) {
-                if (input.active && input.visible && input.name !== 'time') {
+      for (const m of data.m) {
+        if (m.record && m.visible) {
+          for (const input of tensorflowModel.inputs) {
+            if (input.active && input.visible) {
 
-                  dataGroup.append('path')
-                    .datum(data.d.inputs)
-                    .attr('fill', 'none')
-                    .attr('stroke', input.color)
-                    .attr('stroke-width', 1.5)
-                    .attr('d', d3.line()
-                      .x((d: { time: number; }) => { return this.config.scaleX(d.time) })
-                      .y((d: { motors: { data: { value: any; }; }[][]; }) => { return this.config.scaleY(d.motors[m][i].data.value) }))
-                      .append('svg:title')
-                        .text(() => mcu.name + '-' + motor.id);
+              dataGroup.append('path')
+                .datum(m.d)
+                .attr('fill', 'none')
+                .attr('stroke', input.color)
+                .attr('stroke-width', 1.5)
+                .attr('d', d3.line()
+                  .x((d: { time: number; }) => {
+                    return this.config.scaleX(d.time)
+                  })
+                  .y((d: { inputs: { value: any; }[]; }) => {
+                    return this.config.scaleY(d.inputs[i].value)
+                  }))
+                  .append('svg:title')
+                    .text(() => m.mcu.name + '-' + m.id);
 
-
-                  }
-                i++;
-              }
+              i++;
             }
-            m++;
           }
         }
       }
+    }
+  }
+
+
+  drawTrimLines(bounds: Bounds, visible: boolean, lines: any) {
+
+    d3.selectAll('#dataTrimLines').remove();
+
+    if (visible) {
+
+      const trimLinesGroup = this.config.dataSVG.append('g')
+        .attr('id', 'dataTrimLines')
+        .attr('transform', 'translate(0,0)');
+
+      const dragLine = d3
+            .drag()
+            .on('drag', (event: any, d: { id: number; value: number } ) => {
+              d.value = this.config.scaleX.invert(event.x);
+              d3.select('#trimLine_' + d.id).attr('x1', event.x);
+              d3.select('#trimLine_' + d.id).attr('x2', event.x);
+            });
+
+
+      trimLinesGroup.selectAll('line.trim')
+        .data(lines)
+        .enter()
+        .append('line')
+        .attr('id', (d: { id: number }) => 'trimLine_' + d.id)
+        .attr('x1', (d: { value: number; }) => this.config.scaleX(d.value))
+        .attr('y1', this.config.scaleY(bounds.yMin * 1.1))
+        .attr('x2', (d: { value: number; }) => this.config.scaleX(d.value))
+        .attr('y2', this.config.scaleY(bounds.yMax * 1.1))
+        .style('shape-rendering', 'crispEdges')
+        .style('stroke', '#FF0000')
+        .style('stroke-width', 1)
+        .attr('cursor', 'e-resize')
+        .call(dragLine);
+
     }
   }
 
