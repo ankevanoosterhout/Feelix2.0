@@ -49,14 +49,13 @@ function checkIfAvailable(serialData, callback, connect) {
 function writeDataString(data, COM) {
   sp.write(data, (err) => {
       if (err) {
-          // reconnect(data, COM);
           main.updateSerialProgress({ progress: 0, str: err.message });
           dataSendWaitList = [];
-          // return console.log('Error: ', err.message);
           return;
-      } else {
-        // console.log('write data ', data);
       }
+      // else {
+        // console.log('write data ', data);
+      // }
   });
 }
 
@@ -119,13 +118,24 @@ function ifSerialAvailable(serialData, portlist, connect) {
 
 
 
-function createConnection(serialData) {
+function createConnection(serialData, data = null, callback = null) {
   // console.log(serialData);
   if (serialData && serialData.port) {
     if (ports.filter(d => d.path === serialData.port.path).length === 0) {
       const sp = new newSerialPort(serialData, port);
       sp.createSerialPort();
       ports.push(sp);
+
+      // if (data) {
+      //   console.log("data available");
+      //   const intervalSendData = setInterval(() => {
+      //     if (sp.connected) {
+      //       callback(sp, data);
+      //       console.log("CHECK IF PORT IS CONNECTED 2");
+      //       clearInterval(intervalSendData);
+      //     }
+      //   }, 100);
+      // }
     }
   }
 }
@@ -146,9 +156,10 @@ class newSerialPort {
         if (err) {
           main.updateSerialProgress({ progress: 0, str: err.message });
           return;
-        } else {
-          //  console.log('written ', data);
         }
+        // else {
+        //    console.log('written ', data);
+        // }
     });
   }
 
@@ -176,12 +187,15 @@ class newSerialPort {
       this.sp = new SerialPort(this.COM, {
           baudRate: this.baudrate,
           autoOpen: true
-      }, function (err) {
-          if (err) {
-            main.updateSerialProgress({ progress: 0, str: 'Error: ' + err.message });
-            return;
+      }, (error) => {
+          if (error) {
+            main.updateSerialProgress({ progress: 0, str: 'Error: ' + error.message });
+            // return;
           }
-          sendDataStr([ 'FS' ],  this.COM);
+          // else {
+          //   console.log("CHECK SOFTWARE VERSION1");
+          //   // sendDataStr([ 'FS' ],  this.COM);
+          // }
       });
 
       let Readline = SerialPort.parsers.Readline; // make instance of Readline parser
@@ -194,10 +208,8 @@ class newSerialPort {
           updateProgress(0, ('Error opening ' + this.COM + ' ' + error));
           this.sp.close();
         } else {
-          updateProgress(100, (this.COM + ' has been added'));
-          sendDataStr([ 'FS' ],  this.COM);
-          this.connected = true;
-          main.updateSerialStatus({ microcontroller: this.portData, connected: this.connected });
+          updateProgress(50, (this.COM + ' has been added'));
+
           if (!activePorts.includes(this.COM)) {
             activePorts.push(this.COM);
           }
@@ -211,10 +223,9 @@ class newSerialPort {
         //   console.log('received data ', d);
         // } else
         if (d.charAt(0) === '*') {
-          // console.log('received data ', d);
-          if (dataSendWaitList.filter(d => d.port === this.COM)) {
+          if (dataSendWaitList.filter(d => d.port === this.COM).length > 0) {
             uploadFromWaitList(ports.filter(p => p.COM === this.COM)[0]);
-          }
+          } 
         } else if (d.charAt(0) === 'A') {
           const dataArray = d.substr(1).split(':');
           let incomingData;
@@ -298,6 +309,10 @@ class newSerialPort {
             main.showMessageConfirmation({ msg: "The software version of Feelix does not match the software version on the microcontroller (v"
               + (data.major + '.' + data.minor + '.' + data.patch) + "), update to v" + (softwareVersion.major + '.' + softwareVersion.minor + '.X'), action:"updateVersion", type: "message", d: this.COM });
                           // this.sp.close();
+          } else {
+            if (dataSendWaitList.filter(d => d.port === this.COM).length > 0) {
+              uploadFromWaitList(ports.filter(p => p.COM === this.COM)[0]);
+            }
           }
         } else if (d.charAt(0) === 'R') {
           const dataArray = d.substr(1).split(':');
@@ -309,6 +324,12 @@ class newSerialPort {
           }
           main.returnData(data);
           main.updateSerialProgress({ progress: 100, str: 'value received' });
+
+        } else if (d.charAt(0) === 'H') {
+          sendDataStr([ 'FS' ],  this.COM, true);
+          this.connected = true;
+          main.updateSerialStatus({ microcontroller: this.portData, connected: this.connected });
+          updateProgress(100, ('Connected to ' + this.COM));
         }
 
     });
@@ -400,37 +421,37 @@ function prepareMotorData(uploadContent, motor, datalist, index) {
 
 
 
-function preparePneumaticData(uploadContent, motor, datalist, index) {
+function preparePneumaticData(uploadContent, motor, datalist) {
 
   // datalist.unshift('FM' + motor.id + 'F');
 
-  datalist.unshift('FM' + index + 'I' + motor.id);
+  // datalist.unshift('FM' + index + 'I' + motor.id);
   if (motor.config.supplyVoltage) {
-    datalist.unshift('FM' + index + 'S' + motor.config.supplyVoltage);
+    datalist.unshift('FM' + motor.id + 'S' + motor.config.supplyVoltage);
   }
   if (motor.config.pressureLimit) {
-    datalist.unshift('FM' + index + 'P' + motor.config.pressureLimit);
+    datalist.unshift('FM' + motor.id + 'P' + motor.config.pressureLimit);
   }
 
-  datalist.unshift('FM' + index + 'C' + (motor.config.closedLoop ? 1 : 0));
+  datalist.unshift('FM' + motor.id + 'C' + (motor.config.closedLoop ? 1 : 0));
 
-  if (motor.config.closedLoop && motor.config.sensorCommunication === 1) {
-    datalist.unshift('FM' + index + 'A' + parseInt(motor.config.sensorAddress, 16));
-  } else if (motor.config.closedLoop && motor.config.sensorCommunication === 0) {
-    datalist.unshift('FM' + index + 'B' + motor.config.sensorCSS);
-  }
+  // if (motor.config.closedLoop && motor.config.sensorCommunication === 1) {
+  //   datalist.unshift('FM' + index + 'A' + parseInt(motor.config.sensorAddress, 16));
+  // } else if (motor.config.closedLoop && motor.config.sensorCommunication === 0) {
+  //   datalist.unshift('FM' + index + 'B' + motor.config.sensorCSS);
+  // }
 
-  if (motor.config.closedLoop) {
-    datalist.unshift('FM' + index + 'D' + motor.config.sensorCommunication);
-  }
+  // if (motor.config.closedLoop) {
+  //   datalist.unshift('FM' + index + 'D' + motor.config.sensorCommunication);
+  // }
 
-  datalist.unshift('FM' + index + 'N' + motor.config.pin);
+  // datalist.unshift('FM' + index + 'N' + motor.config.pin);
 
   if (uploadContent.config) {
-    datalist.unshift('FM' + index + 'T' + uploadContent.config.updateSpeed);
-    datalist.unshift('FM' + index + 'J' + uploadContent.config.range);
-    datalist.unshift('FM' + index + 'H' + uploadContent.config.loop);
-    // datalist.unshift('FM' + index + 'L' + uploadContent.config.constrain_range);
+    datalist.unshift('FM' + motor.id + 'T' + uploadContent.config.updateSpeed);
+    datalist.unshift('FM' + motor.id + 'J' + uploadContent.config.range);
+    datalist.unshift('FM' + motor.id + 'H' + uploadContent.config.loop);
+    datalist.unshift('FM' + motor.id + 'L' + uploadContent.config.constrain_range);
   }
 
   // datalist.unshift('FM' + motor.id + 'B' + uploadContent.baudRate);
@@ -459,7 +480,9 @@ function prepareEffectData(uploadContent, motor, datalist) {
   for (const d of uploadContent.data.overlay) {
     datalist.unshift('FE' + motor.id + i + 'C:' + d.position.start.toFixed(5));
     datalist.unshift('FE' + motor.id + i + 'A:' + (d.data.length - 1));
-    datalist.unshift('FE' + motor.id + i + 'D:' + (d.direction.cw ? 1 : -1) + ':' + (d.direction.ccw ? 1 : -1) );
+    if (d.type < 2) {
+      datalist.unshift('FE' + motor.id + i + 'D:' + (d.direction.cw ? 1 : -1) + ':' + (d.direction.ccw ? 1 : -1) );
+    }
     datalist.unshift('FE' + motor.id + i + 'I:' + (d.infinite ? 1 : -1));
     datalist.unshift('FE' + motor.id + i + 'R:' + d.pointer);
     let type = 0;
@@ -528,7 +551,7 @@ function prepareEffectData(uploadContent, motor, datalist) {
       }
     }
   }
-
+  // console.log(JSON.stringify(datalist));
   return datalist;
 
 }
@@ -537,10 +560,9 @@ function prepareEffectData(uploadContent, motor, datalist) {
 
 
 function tryToEstablishConnection(receivingPort, uploadContent, callback) {
-
   if (!receivingPort && uploadContent && uploadContent.config) {
     createConnection({ port: uploadContent.config.serialPort, type: uploadContent.config.vendor, baudrate: uploadContent.config.baudrate });
-    receivingPort = ports.filter(p => p.COM === uploadContent.config.serialPort.path)[0];
+    // receivingPort = ports.filter(p => p.COM === uploadContent.config.serialPort.path)[0];
   } else if (receivingPort) { //&& !receivingPort.sp.IsOpen
 
     if (!activePorts.includes(receivingPort.COM)) {
@@ -550,7 +572,6 @@ function tryToEstablishConnection(receivingPort, uploadContent, callback) {
   if (uploadContent && uploadContent.config) {
     callback(receivingPort, uploadContent);
   }
-  // return receivingPort;
 }
 
 
@@ -570,13 +591,13 @@ function upload_to_receivedPort(port, uploadContent) {
 
   let index = 0;
 
-  if (uploadContent.config.motors.filter(m => m.type === 2).length > 0) {
-    datalist.unshift('FM0#'); //reset library and pneumatic actuator data (FeelixAir)
+  if (uploadContent.newMCU && uploadContent.config.motors.filter(m => m.type === 2).length > 0) {
+    datalist.unshift('FMR'); //reset library and pneumatic actuator data (FeelixAir)
   }
 
   for (const motor of uploadContent.config.motors) {
     if (motor.type !== 2) { datalist.unshift('FM' + motor.id + 'F'); }
-    datalist = motor.type === 2 ? preparePneumaticData(uploadContent, motor, datalist, index) : prepareMotorData(uploadContent, motor, datalist, index);
+    datalist = motor.type === 2 ? preparePneumaticData(uploadContent, motor, datalist, index) : prepareMotorData(uploadContent, motor, datalist);
     if (uploadContent.data) {
       datalist = prepareEffectData(uploadContent, motor, datalist);
     }
@@ -611,17 +632,15 @@ function receivedPort(port, NULL) {
 
 
 function uploadFromWaitList(receivingPort) {
-  if (receivingPort) {
+  if (receivingPort && receivingPort.connected) {
     const datalist = dataSendWaitList.filter(d => d.port === receivingPort.COM)[0];
 
     if (datalist && datalist.data.length > 0) {
       let item = datalist.data[datalist.data.length - 1];
-      // console.log(item);
       if (item) {
         if (item.length > 19) {
           item = item.slice(0, (19 - item.length));
         }
-        // console.log(item);
         receivingPort.writeData(item + '&');
         datalist.data.pop();
       }
@@ -639,11 +658,13 @@ function uploadFromWaitList(receivingPort) {
       }
       return;
     }
-
-
   } else {
     if (!receivingPort) {
       main.updateSerialProgress({ progress: 0, str: 'Port is not available' });
+    } else if (receivingPort && !receivingPort.connected) {
+      setTimeout(() => {
+        uploadFromWaitList(receivingPort);
+      }, 100);
     }
   }
 }
@@ -832,7 +853,6 @@ function updateMotorSettingCallback(port, uploadContent) {
 
     if (datalist.length > 0) {
       datalist.unshift('FC' + uploadContent.config.motorID);
-
       dataSendWaitList.push({ port: uploadContent.config.serialPort.path, data: datalist, totalItems: datalist.length });
 
       main.updateSerialProgress({ progress: 0, str: 'Updating settings at ' + receivingPort.COM });
@@ -856,7 +876,6 @@ function updateMotorSettingCallback(port, uploadContent) {
 
 function listDevices(motor_id, port) {
   const datastr = 'FL' + motor_id;
-  // console.log(datastr + ' ' + port);
   sendDataStr([ datastr ], port);
   main.updateSerialProgress({ progress: 50, str: 'list devices at ' + port + ' motor ' + motor_id });
 }
@@ -876,16 +895,18 @@ function updateMotorControlVariable(char, data, motor_id, port) {
 
 function getValue(motor_id, port, char) {
   const datastr = 'FG' + motor_id + char;
-  // console.log(datastr + ' ' + port);
   sendDataStr([ datastr ], port);
   main.updateSerialProgress({ progress: 50, str: 'request value' });
 }
 
 
-function sendDataStr(str, port) {
+function sendDataStr(str, port, first = false) {
   receivingPort = ports.filter(p => p.COM === port)[0];
-  dataSendWaitList.push({ port: port, data: str, totalItems: 1 });
-  // console.log(dataSendWaitList);
+  if (!first) {
+    dataSendWaitList.push({ port: port, data: str, totalItems: 1 });
+  } else {
+    dataSendWaitList.unshift({ port: port, data: str, totalItems: 1 });
+  }
   uploadFromWaitList(receivingPort);
 }
 

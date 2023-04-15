@@ -5,7 +5,7 @@ import { FileService } from 'src/app/services/file.service';
 import { v4 as uuid } from 'uuid';
 import { Router } from '@angular/router';
 import { Effect, Unit } from 'src/app/models/effect.model';
-import { EffectType, EffectTypeLabelMapping } from 'src/app/models/configuration.model';
+import { EffectType, EffectTypeColor, EffectTypeLabelMapping } from 'src/app/models/configuration.model';
 
 
 @Component({
@@ -137,11 +137,11 @@ export class EffectSettingsComponent implements OnInit {
   public submit() {
 
     if (!this.updateMode) {
-      if ((this.effect.type === EffectType.velocity && this.effect.grid.yUnit.name === '%') || this.effect.type === EffectType.pneumatic) {
+      if ((this.effect.type === EffectType.velocity && this.effect.grid.yUnit.name === '%') || this.effect.type === EffectType.torque) {
         this.effect.grid.yUnit = new Unit('%', 100);
-        this.effect.range_y.start = this.effect.type === EffectType.pneumatic ? 0 : -100;
+        this.effect.range_y.start = -100;
         this.effect.range_y.end = 100;
-      } else if (this.effect.type === EffectType.position) {
+      } else if (this.effect.type === EffectType.position || this.effect.type === EffectType.pneumatic) {
         this.effect.range_y.start = 0;
       }
       this.fileService.addEffect(this.effect);

@@ -73,6 +73,8 @@ export class TensorFlowMainService {
         this.dataSets.splice(index, 1);
         if (this.dataSets.length > 0) {
           this.selectDataSet(this.dataSets[0].id);
+        } else {
+          this.updateGraph.next();
         }
       }
     }
@@ -214,14 +216,11 @@ export class TensorFlowMainService {
       dataSets.forEach(set => {
         let outputs = [];
 
-        let i = 0;
-
         for (const classifier of this.selectedModel.outputs) {
           if (classifier.active) {
             for (const label of classifier.labels) {
-              label.name === set.outputs[i] ? outputs.push(1) : outputs.push(0);
+              label.id === set.output.id ? outputs.push(1) : outputs.push(0);
             }
-            i++;
           }
         }
         if (train && outputs.length === 0) {
@@ -243,19 +242,22 @@ export class TensorFlowMainService {
 
           if (motor.d.length > 0) {
             const mcu = this.selectedMicrocontrollers.filter(m => m.id === motor.mcu.id)[0];
+            let i = 0;
 
             for (const d of motor.d) {
               let inputs = [];
-              let i = 0;
               for (const input of d.inputs) {
                 const input_variable = this.selectedModel.inputs.filter(i => i.name === input.name)[0];
                 if (input_variable && input_variable.active) {
                   inputs.push(input.value);
                 }
               }
-              i ++;
-              i %= this.selectedModel.options.trainingOptions.batchSize;
-              inputs.push(i);
+
+              if (this.selectedModel.multiple) {
+                i ++;
+                i %= this.selectedModel.options.trainingOptions.batchSize;
+                inputs.push(i);
+              }
               inputs.push(motor.index);
               inputs.push(this.selectedMicrocontrollers.indexOf(mcu));
 
@@ -264,13 +266,15 @@ export class TensorFlowMainService {
             }
           }
         });
-
       });
+
       console.log(data);
       return data;
     }
 
     selectDataSet(id: String = this.selectedDataset.id) {
+      this.trimLinesVisible = false;
+
       for (const set of this.dataSets) {
         set.open = set.id === id ? true : false;
         if (set.open) {
@@ -279,7 +283,6 @@ export class TensorFlowMainService {
           this.updateGraph.next({ set: set, model: this.selectedModel, mcus: this.selectedMicrocontrollers, trimLines: this.trimLinesVisible ? this.trimLines : null });
         }
       }
-      this.trimLinesVisible = false;
     }
 
     updateBoundsActiveDataset() {
@@ -291,10 +294,11 @@ export class TensorFlowMainService {
       }
     }
 
-    updateOutputDataSet(id: String, output_list_index: number) {
-      const value = (this.document.getElementById(id + '-output-' + output_list_index) as HTMLInputElement).value;
-      this.dataSets.filter(d => d.id === id)[0].outputs[output_list_index] = value.substring(3);
-    }
+    // updateOutputDataSet(id: String, output_list_index: number) {
+    //   const value = (this.document.getElementById(id + '-output-' + output_list_index) as HTMLInputElement).value;
+    //   this.dataSets.filter(d => d.id === id)[0].output = value.substring(3);
+    //   console.log(this.dataSets.filter(d => d.id === id)[0].output.id);
+    // }
 
     updateDataSetName(id: String) {
       const value = (this.document.getElementById('dataSet-' + id) as HTMLInputElement).value;
@@ -306,7 +310,7 @@ export class TensorFlowMainService {
     }
 
     addClassifier() {
-      this.selectedModel.outputs.push(new Classifier('Classifier-' + (this.selectedModel.outputs.length + 1)));
+      this.selectedModel.outputs.push(new Classifier(uuid(), 'Classifier-' + (this.selectedModel.outputs.length + 1)));
     }
 
 
@@ -318,7 +322,7 @@ export class TensorFlowMainService {
 
     addLabelToClassifier(i: number) {
       this.selectedModel.outputs[i].open = true;
-      this.selectedModel.outputs[i].labels.push(new Label('label-' + (this.selectedModel.outputs[i].labels.length + 1)));
+      this.selectedModel.outputs[i].labels.push(new Label(uuid(), 'label-' + (this.selectedModel.outputs[i].labels.length + 1)));
     }
 
     deleteLabel(classifier_name: String, i:number) {

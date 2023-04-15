@@ -241,13 +241,13 @@ export class FileService {
         file.effects.filter(e => e.id === file.activeEffect.id)[0] = this.cloneService.deepClone(file.activeEffect);
         file.effects.filter(e => e.id === file.activeEffect.id)[0].paths = this.cloneService.deepClone(file.activeEffect.paths);
         file.effects.filter(e => e.id === file.activeEffect.id)[0].size = this.cloneService.deepClone(file.activeEffect.size);
-        file.effects.filter(e => e.id === file.activeEffect.id)[0].grid.yUnit = this.cloneService.deepClone(file.activeEffect.grid.yUnit);
-        file.effects.filter(e => e.id === file.activeEffect.id)[0].grid.xUnit = this.cloneService.deepClone(file.activeEffect.grid.xUnit);
         file.effects.filter(e => e.id === file.activeEffect.id)[0].type = file.activeEffect.type;
         file.effects.filter(e => e.id === file.activeEffect.id)[0].rotation = file.activeEffect.rotation;
         file.effects.filter(e => e.id === file.activeEffect.id)[0].range = this.cloneService.deepClone(file.activeEffect.range);
         file.effects.filter(e => e.id === file.activeEffect.id)[0].range_y = this.cloneService.deepClone(file.activeEffect.range_y);
         file.effects.filter(e => e.id === file.activeEffect.id)[0].date.modified = new Date().getTime();
+        file.effects.filter(e => e.id === file.activeEffect.id)[0].grid = this.cloneService.deepClone(file.activeEffect.grid);
+        file.effects.filter(e => e.id === file.activeEffect.id)[0].colors = this.cloneService.deepClone(file.activeEffect.colors);
       }
     }
   }
@@ -640,7 +640,9 @@ export class FileService {
 
     activeFile.activeEffect.range.end = activeFile.activeEffect.range.end * (newUnits.PR / activeFile.activeEffect.grid.xUnit.PR);
     activeFile.activeEffect.range.start = activeFile.activeEffect.range.start * (newUnits.PR / activeFile.activeEffect.grid.xUnit.PR);
+
     activeFile.activeEffect.grid.settings.spacingX = activeFile.activeEffect.grid.settings.spacingX * (newUnits.PR / activeFile.activeEffect.grid.xUnit.PR);
+
     activeFile.activeEffect.grid.xUnit = newUnits;
     let effect = activeFile.effects.filter(e => e.id === activeFile.activeEffect.id)[0];
 

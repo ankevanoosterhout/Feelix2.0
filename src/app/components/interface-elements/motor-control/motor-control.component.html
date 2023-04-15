@@ -15,7 +15,7 @@
             </ul>
           </div>
 
-          <div class="form-row left" title="select microcontroller"  *ngIf="this.motorControlService.width > 100">
+          <div class="form-row left" title="select microcontroller"  *ngIf="this.motorControlService.width > 200">
             <select class="form-control" id="comport" [(ngModel)]="collection.microcontroller" (change)="saveCollection(collection)" name="comport" [compareWith]="compareCOM">
               <option *ngIf="!collection.microcontroller" [ngValue]="this.undefinedVar" disabled selected="selected">-- select --</option>
               <option *ngFor="let mcu of microcontrollers" [ngValue]="mcu">{{ mcu.name }}</option>
@@ -23,7 +23,7 @@
           </div>
 
           <div class="form-row left" *ngIf="collection.microcontroller && this.motorControlService.width > 200" title="motor identifier">
-            <select class="form-control" id="motorID" [(ngModel)]="collection.motorID.name" (change)="updateMotorID(collection)" name="comport" [compareWith]="compareID">
+            <select class="form-control" id="motorID" [(ngModel)]="collection.motorID.name" (change)="updateMotorID(collection)" name="motorID">
                 <option *ngFor="let motor of collection.microcontroller.motors" [ngValue]="motor.id">{{ motor.id }}</option>
             </select>
           </div>
@@ -41,7 +41,7 @@
               </ul>
           </div>
 
-          <div id="rangeValues" *ngIf="collection.effectDataList.length === 0 && this.motorControlService.file.configuration.collectionDisplay === 'large' && this.motorControlService.width > 600">
+          <div id="rangeValues" *ngIf="!collection.playing && this.motorControlService.file.configuration.collectionDisplay === 'large'">
             <label>x</label>
             <input type="number" (focus)="this.motorControlService.deselectElements()" *ngIf="collection.rotation.units.name !== 'ms' && collection.rotation.units.name !== 'sec'" id="range-start"
               name="rotation-start-{{ collection.id }}" [(ngModel)]="collection.rotation.start" (change)="this.motorControlService.updateCollection(collection)">

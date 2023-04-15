@@ -19,10 +19,10 @@
 
         <label class="labelRow small">{{ output.name }}</label>
         <select class="form-control playWindow microcontroller" id="{{ this.tensorflowService.selectedDataset.id }}-output-{{ o }}" name="{{ this.tensorflowService.selectedDataset.id }}-output-{{ o }}"
-            [(ngModel)]="this.tensorflowService.selectedDataset.outputs[o]" (change)="this.tensorflowService.updateOutputDataSet(this.tensorflowService.selectedDataset.id, o)"
-            title="select label that is associated with the selected data set">
+            [(ngModel)]="this.tensorflowService.selectedDataset.output" title="select label that is associated with the selected data set">
+            <!-- (change)="this.tensorflowService.updateOutputDataSet(this.tensorflowService.selectedDataset.id, o)" -->
           <option class="placeholder" value="undefined" selected="selected">-- select label --</option>
-          <option *ngFor="let label of output.labels" [ngValue]="label.name">{{ label.name }}</option>
+          <option *ngFor="let label of output.labels" [ngValue]="label">{{ label.name }}</option>
         </select>
       </div>
     </div>

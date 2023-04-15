@@ -1,7 +1,6 @@
 import { Component, OnInit, Inject, HostListener } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { ElectronService } from 'ngx-electron';
-import { ToolService } from 'src/app/services/tool.service';
 import { DrawingPlaneConfig } from 'src/app/models/drawing-plane-config.model';
 import { DrawingService } from 'src/app/services/drawing.service';
 import { MotorControlService } from 'src/app/services/motor-control.service';
@@ -135,7 +134,7 @@ export class MotorControlToolbarComponent implements OnInit {
 
   // tslint:disable-next-line: variable-name
   constructor(@Inject(DOCUMENT) private document: Document, private electronService: ElectronService,
-              public toolService: ToolService, private drawingService: DrawingService, public motorControlService: MotorControlService) {
+              private drawingService: DrawingService, public motorControlService: MotorControlService) {
 
     this.config = this.drawingService.config;
 
@@ -170,9 +169,15 @@ export class MotorControlToolbarComponent implements OnInit {
       } else if (id === 3) {
         this.electronService.ipcRenderer.send('uploadAll');
       } else if (id === 4) {
-        this.electronService.ipcRenderer.send('playAll');
+        const src = (this.document.getElementById('tool-motor-control-4') as HTMLImageElement).src.split('/');
+        const play = src[src.length - 1] === 'play_all.svg' ? true : false;
+        this.electronService.ipcRenderer.send('playAll', play);
       } else if (id === 5) {
-        this.electronService.ipcRenderer.send('playAllSequenceWindow');
+        const src = (this.document.getElementById('tool-motor-control-4') as HTMLImageElement).src.split('/');
+        const play = src[src.length - 1] === 'play_all.svg' ? true : false;
+        if (play) {
+          this.electronService.ipcRenderer.send('playAllSequenceWindow');
+        }
       }
     }
   }

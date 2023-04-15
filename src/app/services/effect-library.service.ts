@@ -112,7 +112,7 @@ export class EffectLibraryService {
   }
 
   store() {
-    console.log(this.effectLibrary);
+    // console.log(this.effectLibrary);
     this.localSt.store('effectLibrary', this.effectLibrary);
   }
 

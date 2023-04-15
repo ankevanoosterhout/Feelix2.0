@@ -568,6 +568,16 @@ export class DrawingService {
     }
   }
 
+  updateYunitsActiveEffect(value: string) {
+    if (this.file.activeEffect) {
+      const newYunits = this.config.yAxisOptions_pneumatic.filter(p => p.name === value)[0];
+      console.log(value);
+      if (newYunits) {
+        //write function to update Y axis
+      }
+    }
+  }
+
   resetSelectedModule(xMin: number, xMax: number, yMin: number, yMax: number) {
     this.config.editBounds.xMin = xMin;
     this.config.editBounds.xMax = xMax;
@@ -1002,7 +1012,7 @@ export class DrawingService {
   }
 
   updateEffectType() {
-    console.log(this.file.activeEffect);
+    // console.log(this.file.activeEffect);
     if (this.file.activeEffect.type === EffectType.velocity || this.file.activeEffect.type === EffectType.pneumatic) {
       this.file.activeEffect.grid.yUnit = new Unit('%', 100);
       if (this.file.activeEffect.grid.xUnit.name !== 'ms') {
@@ -1019,9 +1029,10 @@ export class DrawingService {
       this.file.activeEffect.grid.yUnit = new Unit('%', 100);
     }
     this.file.activeEffect.range_y.start = (this.file.activeEffect.type === EffectType.position || this.file.activeEffect.type === EffectType.pneumatic) ? 0 : -100;
+    // this.file.activeEffect.range_y.start = this.file.activeEffect.type === EffectType.position ? 0 : -100;
     this.file.activeEffect.range_y.end = 100;
 
-    console.log(this.config.editBounds);
+    // console.log(this.config.editBounds);
 
     if (this.config.editBounds.yMin < 0 && (this.file.activeEffect.type === EffectType.position || this.file.activeEffect.type === EffectType.pneumatic)) {
       this.scaleActiveEffectFromTorqueToPosition(0.5, 100);

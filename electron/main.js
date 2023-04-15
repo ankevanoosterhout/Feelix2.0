@@ -1178,7 +1178,7 @@ ipcMain.on('playEffect', function(e, data) {
 });
 
 ipcMain.on('playAll', function(e, data) {
-  mainWindow.webContents.send('playAll');
+  mainWindow.webContents.send('playAll', data);
 });
 
 
@@ -1415,10 +1415,10 @@ function updateSerialStatus(status) {
   }
 }
 
-function updateSerialProgress(progress) {
-  mainWindow.webContents.send('updateProgress', progress);
+function updateSerialProgress(data) {
+  mainWindow.webContents.send('updateProgress', data);
   if (tensorflowWindow !== null) {
-    tensorflowWindow.webContents.send('updateProgress', progress);
+    tensorflowWindow.webContents.send('updateProgress', data);
   }
 }
 

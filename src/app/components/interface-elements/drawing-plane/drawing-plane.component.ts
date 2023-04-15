@@ -698,7 +698,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
             }
           } else if (type === 'message') {
             if (action === 'updateVersion' && d) {
-              const microcontroller = this.hardwareService.deleteMicroController(d);
+              // const microcontroller = this.hardwareService.deleteMicroController(d);
             }
           }
           return false;
@@ -740,7 +740,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
     dialogConfig.afterClosed().subscribe(
         data => {
           if (data) {
-            this.motorControlService.playAll.next(data);
+            this.motorControlService.playAll.next({d: data, play: true });
           }
           return false;
         }

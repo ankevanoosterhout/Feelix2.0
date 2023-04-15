@@ -259,14 +259,15 @@ export class EffectVisualizationService {
   }
 
 
-  drawCollectionFeedback(collection: Collection, width: number, height: number) {
+  drawCollectionFeedback(collection: Collection, width: number, height: number, view: any) {
 
     d3.select('#svgFeedback-' + collection.id).remove();
 
     const feedbackData = collection.config.svg.append('g')
       .attr('id', 'svgFeedback-' + collection.id)
       .attr('width', width)
-      .attr('height', height);
+      .attr('height', height - 39)
+      .attr('transform', (view === 'small' ? 'translate(0, 0)' : 'translate(0, 26)'));
 
     feedbackData.selectAll('circle.feedback_' + collection.id)
       .data(collection.feedbackData)

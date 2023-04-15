@@ -444,7 +444,7 @@ export class UploadService {
 
   createUploadModel(collection: Collection, microcontroller: MicroController) {
     let model = new UploadModel(collection, microcontroller);
-    console.log(model);
+    // console.log(model);
     return model;
   }
 

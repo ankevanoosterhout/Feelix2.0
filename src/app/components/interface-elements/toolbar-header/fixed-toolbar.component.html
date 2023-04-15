@@ -26,40 +26,52 @@
 
     <div class="form-row" *ngIf="this.drawingService.file.activeEffect && this.drawingService.file.activeEffect.type < 2" title="select units x-axis">
       <label class="select axes">x </label>
-      <select class="form-control" id="select" value="{{ this.drawingService.file.activeEffect.grid.xUnit.name }}" (change)="this.drawingService.updateUnitsActiveEffect($event.target.value)"
-        name="x-axis">
+      <select class="form-control" id="select" value="{{ this.drawingService.file.activeEffect.grid.xUnit.name }}"
+        (change)="this.drawingService.updateUnitsActiveEffect($event.target.value)" name="x-axis">
           <option *ngFor="let type of this.drawingService.config.xAxisOptions" [ngValue]="type">{{ type.name }}</option>
       </select>
     </div>
 
     <div class="form-row" *ngIf="this.drawingService.file.activeEffect && this.drawingService.file.activeEffect.type >= 2" title="select units x-axis">
       <label class="select axes">x </label>
-      <select class="form-control" id="select" value="{{ this.drawingService.file.activeEffect.grid.xUnit.name }}" (change)="this.drawingService.updateUnitsActiveEffect($event.target.value)"
-        name="x-axis">
+      <select class="form-control small" id="select" value="{{ this.drawingService.file.activeEffect.grid.xUnit.name }}"
+          (change)="this.drawingService.updateUnitsActiveEffect($event.target.value)" name="x-axis">
           <option *ngFor="let type of this.drawingService.config.xAxisOptions_velocity" [ngValue]="type">{{ type.name }}</option>
       </select>
     </div>
 
     <div class="form-row" *ngIf="this.drawingService.file.activeEffect && this.drawingService.file.activeEffect.type < 2" title="units y-axis: % of max voltage">
       <label class="select axes">y </label>
-      <select class="form-control" id="select" [(ngModel)]="this.drawingService.file.activeEffect.grid.yUnit" name="y-axis" [compareWith]="compareUnits">
+      <select class="form-control small" id="select" [(ngModel)]="this.drawingService.file.activeEffect.grid.yUnit" name="y-axis" [compareWith]="compareUnits">
           <option *ngFor="let type of this.drawingService.config.yAxisOptions" [ngValue]="type">{{ type.name }}</option>
       </select>
     </div>
 
     <div class="form-row" *ngIf="this.drawingService.file.activeEffect && this.drawingService.file.activeEffect.type === 2" title="units y-axis: degrees or % of max velocity">
       <label class="select axes">y </label>
-      <select class="form-control" id="select" [(ngModel)]="this.drawingService.file.activeEffect.grid.yUnit" name="y-axis" [compareWith]="compareUnits">
+      <select class="form-control small" id="select" [(ngModel)]="this.drawingService.file.activeEffect.grid.yUnit" name="y-axis" [compareWith]="compareUnits">
           <option *ngFor="let type of this.drawingService.config.yAxisOptions_velocity" [ngValue]="type">{{ type.name }}</option>
       </select>
     </div>
 
-    <div class="form-row" *ngIf="this.drawingService.file.activeEffect && this.drawingService.file.activeEffect.type === 3" title="units y-axis: % of max valve opening">
+    <div class="form-row" *ngIf="this.drawingService.file.activeEffect && this.drawingService.file.activeEffect.type === 3" title="units y-axis: % of max pressure">
       <label class="select axes">y </label>
-      <select class="form-control" id="select" [(ngModel)]="this.drawingService.file.activeEffect.grid.yUnit" name="y-axis" [compareWith]="compareUnits">
-          <option *ngFor="let type of this.drawingService.config.yAxisOptions_velocity" [ngValue]="type">{{ type.name }}</option>
+      <select class="form-control small" id="select" [(ngModel)]="this.drawingService.file.activeEffect.grid.yUnit" name="y-axis"
+          (change)="this.drawingService.updateYunitsActiveEffect($event.target.value)" [compareWith]="compareUnits">
+          <option *ngFor="let type of this.drawingService.config.yAxisOptions_pneumatic" [ngValue]="type">{{ type.name }}</option>
       </select>
     </div>
+
+    <div class="form-row" *ngIf="this.drawingService.file.activeEffect && innerWidth > 1125">
+      <ul class="buttons-list equation">
+        <li id="new" (click)="mathInputVisible = !mathInputVisible"><img src="./assets/icons/buttons/fx.svg" title="Design effect based on mathematical equation"></li>
+      </ul>
+    </div>
+
+    <div class="form-row" *ngIf="mathInputVisible && this.drawingService.file.activeEffect && innerWidth > 1125">
+      <input type="text" class="math" id="mathEquation" name="mathEquation" [(ngModel)]="equation" (change)="updateEquation()">
+    </div>
+
 
     <div class="form-row" *ngIf="this.drawingService.file.activeEffect && this.drawingService.file.activeEffect.type < 2" title="select type of haptic effect">
       <label class="select"></label>

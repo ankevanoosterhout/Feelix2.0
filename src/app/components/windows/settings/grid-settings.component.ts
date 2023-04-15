@@ -86,7 +86,7 @@ export class GridSettingsComponent implements OnInit {
     { hash: '#000000', name: 'Black' }
   ];
   // tslint:disable-next-line: variable-name
-  constructor(private electronService: ElectronService, public fileService: FileService, private drawingService: DrawingService) { }
+  constructor(private electronService: ElectronService, public fileService: FileService) { }
 
   public submit() {
     // if (this.selectedUnit.name !== this.file.grid.xUnit.name) {

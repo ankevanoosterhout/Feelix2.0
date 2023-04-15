@@ -114,6 +114,7 @@ export class DrawingPlaneConfig {
   xAxisOptions_velocity = [ new Unit('ms', 1000), new Unit('sec', 1) ];
   yAxisOptions = [ new Unit('%', 100) ];
   yAxisOptions_velocity = [ new Unit('%', 100), new Unit('deg', 360) ];
+  yAxisOptions_pneumatic = [ new Unit('%', 100), new Unit('BIN', 1) ];
 }
 
 

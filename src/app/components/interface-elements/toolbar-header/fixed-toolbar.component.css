@@ -216,6 +216,12 @@ input {
   pointer-events: auto !important;
 }
 
+input[type=text] {
+  width: 120px;
+  margin: 4px 0 0 -5px;
+  text-align: left;
+}
+
 input:focus {
   outline: none;
 }
@@ -277,6 +283,10 @@ select {
   color:#bbb;
 }
 
+select.small {
+  width: 60px;
+}
+
 select option {
   height: 30px;
 }
@@ -302,8 +312,9 @@ label.color-picker.t1:after {
   left: 135px;
 }
 label.select.axes:after {
-  left: 93px;
+  left: 62px;
 }
+
 .rotation-setting-icon {
   position: relative;
   display: inline-block;
@@ -642,4 +653,8 @@ ul#playButtons {
 #toggleDrawPlane.hidden .attach-arrow {
   border-top: none;
   border-bottom: 5px solid #ccc;
+}
+
+.buttons-list.equation {
+  margin-left: 20px!important;
 }

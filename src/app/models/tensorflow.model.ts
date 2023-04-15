@@ -62,23 +62,27 @@ export class ModelVariable {
 }
 
 export class Label {
+  id: string;
   name: string;
   confidence: number;
   prediction: number;
 
-  constructor(name: string) {
+  constructor(id: string, name: string) {
+    this.id = id;
     this.name = name;
   }
 }
 
 
 export class Classifier  {
+  id: string;
   name: string;
   labels: Array<Label> = [];
   open = false;
   active = false;
 
-  constructor(name: string) {
+  constructor(id: string, name: string) {
+    this.id = id;
     this.name = name;
   }
 }
@@ -138,6 +142,7 @@ export class Model {
       new ModelVariable('angle', true, true, '#43E6D5'),
       new ModelVariable('velocity', true, true, '#00AEEF'),
       new ModelVariable('direction', true, false, '#E18257'),
+      new ModelVariable('pressure', false, false, '#4390E6'),
       new ModelVariable('target', false, false, '#7778E0')
       // new ModelVariable('time', false, false, '#4390E6')
     ]
@@ -160,6 +165,12 @@ export class InputItem {
   constructor(name: string) {
     this.name = name;
   }
+}
+
+export class OutputItem {
+  label: string;
+  label_id: string;
+  classifier_id: string;
 }
 
 export class Data {
@@ -195,9 +206,9 @@ export class DataSet {
   id: String;
   name: String;
   date: any;
-  // d = new Data();
   m: Array<MotorEl> = [];
-  outputs: Array<any> = [];
+  output: Label = undefined;
+  // outputs: Array<any> = []; //convert to single outputItem
   open = true;
   selected = false;
   bounds = new Bounds();

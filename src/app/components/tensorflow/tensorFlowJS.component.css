@@ -52,7 +52,7 @@
 .datalist_dropdown {
   position: relative;
   display: inline-block;
-  margin: 3px 0;
+  margin: 5px 0;
   z-index: 10;
 }
 
@@ -399,7 +399,7 @@ label {
 }
 
 .column.tableheader {
-  margin: 3px 0;
+  margin: 5px 0;
 }
 
 .row.hidden {

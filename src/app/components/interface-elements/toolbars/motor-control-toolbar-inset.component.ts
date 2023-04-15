@@ -1,7 +1,6 @@
 import { Component, OnInit, Inject } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { ElectronService } from 'ngx-electron';
-import { ToolService } from 'src/app/services/tool.service';
 import { DrawingPlaneConfig } from 'src/app/models/drawing-plane-config.model';
 import { DrawingService } from 'src/app/services/drawing.service';
 import { MotorControlService } from 'src/app/services/motor-control.service';
@@ -125,7 +124,7 @@ export class MotorControlToolbarInsetComponent implements OnInit {
 
   // tslint:disable-next-line: variable-name
   constructor(@Inject(DOCUMENT) private document: Document, private electronService: ElectronService,
-              public toolService: ToolService, private drawingService: DrawingService, public motorControlService: MotorControlService) {
+              private drawingService: DrawingService, public motorControlService: MotorControlService) {
 
     this.config = this.drawingService.config;
 
@@ -146,9 +145,15 @@ export class MotorControlToolbarInsetComponent implements OnInit {
       } else if (id === 3) {
         this.motorControlService.uploadAllCollections.next();
       } else if (id === 4) {
-        this.motorControlService.playAllCollections.next();
+        const src = (this.document.getElementById('tool-motor-control-4') as HTMLImageElement).src.split('/');
+        const play = src[src.length - 1] === 'play_all.svg' ? true : false;
+        this.motorControlService.playAllCollections.next(play);
       } else if (id === 5) {
-        this.motorControlService.playSequence.next();
+        const src = (this.document.getElementById('tool-motor-control-4') as HTMLImageElement).src.split('/');
+        const play = src[src.length - 1] === 'play_all_delay.svg' ? true : false;
+        if (play) {
+          this.motorControlService.playSequence.next();
+        }
       }
     }
   }

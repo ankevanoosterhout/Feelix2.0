@@ -34,6 +34,9 @@ export class FixedToolbarComponent implements OnInit {
   pointsCopy: any;
   enabled = true;
 
+  mathInputVisible = false;
+  equation: any;
+
   // typeOptions = [EffectType.torque, EffectType.position, EffectType.velocity, EffectType.pneumatic];
   public typeOptions = Object.values(EffectType).filter(value => typeof value === 'number');
   rotationOptions = ['independent', 'dependent'];
@@ -269,6 +272,10 @@ export class FixedToolbarComponent implements OnInit {
     }
     this.drawingService.updateActiveEffect(this.drawingService.file);
     this.drawingService.redraw();
+  }
+
+  updateEquation() {
+
   }
 
 }

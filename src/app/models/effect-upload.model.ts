@@ -66,7 +66,8 @@ export class ConfigModel {
 }
 
 export class EffectModel {
-  id: String = null;
+  id: string = null;
+  motorID: string = null;
   position: Model = null;
   angle: Model = null;
   scale: Model = null;
@@ -80,7 +81,7 @@ export class EffectModel {
   pointer: number = null;
   quality: Model = null;
 
-  constructor(collEffect: Details, effect: any, units: string) {
+  constructor(collEffect: Details, effect: any, units: string, motorID: string) {
     this.id = effect.id;
     this.position = new Model('P',
     [ Math.round(collEffect.position.x) !== collEffect.position.x ? collEffect.position.x.toFixed(5) : collEffect.position.x,
@@ -96,6 +97,7 @@ export class EffectModel {
       this.angle.value *= 1000;
       this.position.value[0] *= 1000;
     }
+    this.motorID = motorID;
 
     this.scale = new Model('S', [ Math.round(collEffect.scale.x) !== collEffect.scale.x ? (collEffect.scale.x / 100).toFixed(5) : (collEffect.scale.x / 100),
       Math.round(collEffect.scale.y) !== collEffect.scale.y ? (collEffect.scale.y / 100).toFixed(5) : (collEffect.scale.y / 100) ]);
@@ -119,7 +121,6 @@ export class EffectModel {
       } else {
         this.vis_type = new Model('T', 2);
       }
-
     }
 
     this.quality = new Model('Q', collEffect.quality);
@@ -160,13 +161,14 @@ export class UploadModel {
   config: ConfigModel = null;
   vendor: string = null;
   data: DataModel = null;
+  newMCU = true;
 
   constructor(collection: Collection, microcontroller: MicroController) {
     if (collection) {
       for (const collEffect of collection.effects) {
         const effectData = collection.effectDataList.filter(e => e.id === collEffect.effectID)[0];
         if (effectData && effectData.data.length > 0) {
-          const effectModel = new EffectModel(collEffect, effectData, collection.rotation.units.name);
+          const effectModel = new EffectModel(collEffect, effectData, collection.rotation.units.name, collection.motorID.name);
           this.effects.push(effectModel);
         }
       }
@@ -178,6 +180,20 @@ export class UploadModel {
     this.vendor = microcontroller.vendor;
   }
 }
+
+// export class CombinedUploadModel {
+//   effects: Array<EffectModel> = [];
+//   config: Array<ConfigModel> = [];
+//   vendor: string = null;
+//   data: DataModel = null;
+
+//   constructor(uploadModels: Array<UploadModel>) {
+//     for (const model of uploadModels) {
+//       this.effects.concat(model.effects);
+//       this.config.concat(model.config);
+//     }
+//   }
+// }
 
 
 export class UploadStringModel {

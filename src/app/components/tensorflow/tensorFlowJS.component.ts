@@ -34,17 +34,18 @@ export class TensorFlowJSComponent implements OnInit {
       this.electronService.ipcRenderer.on('motorData', (event: Event, data: any) => {
 
         //when classifying input data
-        if (this.tensorflowService.classify && (data.velocity > 0.03 || data.velocity < -0.03) && this.tensorflowService.selectedModel.model) {
+        if (this.tensorflowService.classify && (data.velocity > 0.02 || data.velocity < -0.02) && this.tensorflowService.selectedModel.model) {
           let inputs = this.getInputs(data);
 
           if (this.tensorflowService.selectedModel.multiple) {
             // const microcontroller = this.tensorflowService.selectedMicrocontrollers.filter(m => m.serialPort.path === data.serialPath)[0];
+            this.inputArray.push(inputs);
+
             if (this.inputArray.length >= this.tensorflowService.selectedModel.options.trainingOptions.batchSize) {
               this.tensorflowService.NN_Deploy(this.inputArray, this.tensorflowService.selectedModel, data.serialPath);
               this.inputArray = [];
-            } else {
-              this.inputArray.push(inputs);
             }
+
           } else {
             this.tensorflowService.NN_Deploy([ inputs ], this.tensorflowService.selectedModel, data.serialPath);
           }
@@ -161,7 +162,9 @@ export class TensorFlowJSComponent implements OnInit {
 
       this.tensorflowService.updateGraph.subscribe(data => {
         this.tensorflowDrawService.drawGraph();
-        this.tensorflowDrawService.drawTensorFlowGraphData(data.set, data.model, data.trimLines);
+        if (data) {
+          this.tensorflowDrawService.drawTensorFlowGraphData(data.set, data.model, data.trimLines);
+        }
       });
 
       this.tensorflowService.drawTrimLines.subscribe(data => {
@@ -193,7 +196,7 @@ export class TensorFlowJSComponent implements OnInit {
     this.tensorflowService.dataSets.push(new DataSet(uuid(), 'Data set ' + (this.tensorflowService.dataSets.length + 1), this.tensorflowService.selectedMicrocontrollers));
     this.tensorflowService.dataSets[0].open = true;
     this.tensorflowService.selectedDataset = this.tensorflowService.dataSets[0];
-    this.tensorflowService.selectedModel.outputs.push(new Classifier('Classifier-' + (this.tensorflowService.selectedModel.outputs.length + 1)));
+    this.tensorflowService.selectedModel.outputs.push(new Classifier(uuid(), 'Classifier-' + (this.tensorflowService.selectedModel.outputs.length + 1)));
     this.tensorflowService.selectedModel.outputs[0].active = true;
     this.tensorflowService.addLabelToClassifier(0);
   }
@@ -220,12 +223,11 @@ export class TensorFlowJSComponent implements OnInit {
   getInputs(data: any) {
     let inputs = [];
     const microcontroller = this.tensorflowService.selectedMicrocontrollers.filter(m => m.serialPort.path === data.serialPath)[0];
+    const microcontrollerIndex = this.tensorflowService.selectedMicrocontrollers.indexOf(microcontroller);
 
     if (microcontroller) {
       const motor = microcontroller.motors.filter(m => m.id === data.motorID)[0];
       const motorIndex = microcontroller.motors.indexOf(motor);
-
-      // [motordata][inputArray]
 
       for (const input of this.tensorflowService.selectedModel.inputs) {
         if (input.active) {
@@ -242,12 +244,19 @@ export class TensorFlowJSComponent implements OnInit {
             } else {
               inputs.push((data.velocity > 0.00 ? 1 : -1));
             }
+          } else if (input.name === 'pressure') {
+            inputs.push(data.pressure);
+
           } else if (input.name === 'target') {
             inputs.push(data.target);
           }
         }
       }
-      // inputs.push(motorIndex);
+      if (this.tensorflowService.selectedModel.multiple) {
+        inputs.push(this.inputArray.length);
+      }
+      inputs.push(motorIndex);
+      inputs.push(microcontrollerIndex);
     }
     return inputs;
   }
