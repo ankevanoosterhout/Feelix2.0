@@ -1,9 +1,10 @@
 
 import { DOCUMENT } from '@angular/common';
 import { Component, Inject } from '@angular/core';
-import { activation, ActivationLabelMapping } from 'src/app/models/tensorflow.model';
+import { activation, ActivationLabelMapping, Data, DataSet } from 'src/app/models/tensorflow.model';
 import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service';
 import * as tf from '@tensorflow/tfjs';
+import { TensorFlowData } from 'src/app/models/tensorflow-data.model';
 
 @Component({
   selector: 'app-model',
@@ -14,6 +15,7 @@ export class ModelComponent {
 
   public ActivationLabelMapping = ActivationLabelMapping;
   public activationOptions = Object.values(activation);
+  public d: TensorFlowData;
 
   public lossOptions = [
     { name: 'absoluteDifference', value: tf.losses.absoluteDifference },
@@ -24,44 +26,61 @@ export class ModelComponent {
     { name: 'logLoss', value: tf.losses.logLoss },
     { name: 'meanSquaredError', value: tf.losses.meanSquaredError },
     { name: 'sigmoidCrossEntropy', value: tf.losses.sigmoidCrossEntropy },
-    { name: 'softmaxCrossEntropy', value: tf.losses.softmaxCrossEntropy }
+    { name: 'softmaxCrossEntropy', value: tf.losses.softmaxCrossEntropy },
+    { name: 'categoricalCrossentropy', value: tf.metrics.categoricalCrossentropy }
+  ];
+
+  public metricsOptions = [
+    { name: 'binaryAccuracy', value: tf.metrics.binaryAccuracy },
+    { name: 'binaryCrossentropy', value: tf.metrics.binaryCrossentropy },
+    { name: 'categoricalAccuracy', value: tf.metrics.categoricalAccuracy },
+    { name: 'categoricalCrossentropy', value: tf.metrics.categoricalCrossentropy },
+    { name: 'cosineProximity', value: tf.metrics.cosineProximity },
+    { name: 'meanAbsoluteError', value: tf.metrics.meanAbsoluteError },
+    { name: 'meanAbsolutePercentageError', value: tf.metrics.meanAbsolutePercentageError },
+    { name: 'meanSquaredError', value: tf.metrics.meanSquaredError },
+    { name: 'precision', value: tf.metrics.precision },
+    { name: 'recall', value: tf.metrics.recall },
+    { name: 'sparseCategoricalAccuracy', value: tf.metrics.sparseCategoricalAccuracy }
   ]
 
-  constructor(@Inject(DOCUMENT) private document: Document, public tensorFlowService: TensorFlowMainService) {  }
+  constructor(@Inject(DOCUMENT) private document: Document, public tensorflowService: TensorFlowMainService) {
+    this.d = this.tensorflowService.d;
+  }
 
 
 
   initializeNN_Model() {
-    if (!this.tensorFlowService.processing && this.tensorFlowService.dataSets.length > 0) {
+    if (!this.d.processing && this.d.dataSets.length > 0) {
 
       this.document.body.style.cursor = 'wait';
 
-      this.tensorFlowService.processing = true;
-      this.tensorFlowService.updateProgess('initializing model', 20);
+      this.d.processing = true;
+      this.tensorflowService.updateProgess('initializing model', 20);
 
-      let data = this.tensorFlowService.createJSONfromDataSet(this.tensorFlowService.dataSets, true);
+      const data = this.tensorflowService.createJSONfromDataSet(this.d.dataSets, true);
 
       const inputLabels = [];
       const outputLabels = [];
 
-      for (const input of this.tensorFlowService.selectedModel.inputs) {
+      for (const input of this.d.selectedModel.inputs) {
         if (input.active) { inputLabels.push(input.name); }
       }
 
-      for (const output of this.tensorFlowService.selectedModel.outputs) {
+      for (const output of this.d.selectedModel.outputs) {
         for (const label of output.labels) {
           if (!outputLabels.includes(label.name)) { outputLabels.push(label.name); }
         }
       }
 
-      this.tensorFlowService.selectedModel.options.inputs = inputLabels;
-      this.tensorFlowService.selectedModel.options.outputs = outputLabels;
+      this.d.selectedModel.options.inputs = inputLabels;
+      this.d.selectedModel.options.outputs = outputLabels;
 
-      this.tensorFlowService.NN_createData(data, this.tensorFlowService.selectedModel);
+      this.tensorflowService.NN_createData(data, this.d.selectedModel);
 
     } else {
 
-      this.tensorFlowService.updateProgess(this.tensorFlowService.processing ? 'training in progress': 'no data', 0);
+      this.tensorflowService.updateProgess(this.d.processing ? 'training in progress': 'no data', 0);
 
     }
   }
@@ -70,22 +89,23 @@ export class ModelComponent {
 
 
   selectClassifier(id: string) {
-    this.tensorFlowService.selectClassifier(id);
+    this.tensorflowService.selectClassifier(id);
   }
 
 
   classifyAtRunTime() {
-    if (this.tensorFlowService.selectedModel.model) {
-      if (!this.tensorFlowService.classify) {
-        this.tensorFlowService.processing = false;
-        this.tensorFlowService.classify = true;
-        this.tensorFlowService.updateProgess('deploy', 100);
+    if (this.d.selectedModel.model) {
+      if (!this.d.classify) {
+        this.d.processing = false;
+        this.d.classify = true;
+        this.tensorflowService.updateProgess('deploy', 100);
         this.document.getElementById('record-button').click();
       } else {
-        this.tensorFlowService.processing = false;
-        this.tensorFlowService.classify = false;
-        this.tensorFlowService.updateProgess('stopped', 0);
-        this.tensorFlowService.resetFiltersMicrocontroller();
+        this.d.processing = false;
+        this.d.classify = false;
+        this.d.predictionDataset = null;
+        this.tensorflowService.updateProgess('stopped', 0);
+        this.tensorflowService.resetFiltersMicrocontroller();
       }
     }
   }

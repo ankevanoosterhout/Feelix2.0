@@ -312,7 +312,20 @@ button.add.labelRowItem {
 select.playWindow {
   margin-top: 0;
   width: 115px;
+  height: 22px;
   padding-right: 8px;
+}
+
+select.playWindow::-webkit-scrollbar {
+  width: 6px;
+}
+
+select.playWindow::-webkit-scrollbar-track {
+  background: 'transparent';
+}
+
+select.playWindow::-webkit-scrollbar-thumb {
+  background: #1c1c1c;
 }
 
 

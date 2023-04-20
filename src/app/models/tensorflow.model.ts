@@ -103,8 +103,10 @@ export class NN_options {
   inputs: Array<any> = [];
   outputs: Array<any> = [];
   trainingOptions = new TrainingOptions();
-  activation: activation = activation.sigmoid;
-  losses: any = tf.losses.meanSquaredError;
+  activation: activation = activation.relu;
+  activationOutputLayer: activation = activation.softmax;
+  losses: any = tf.metrics.categoricalCrossentropy;
+  metrics: any = tf.metrics.categoricalAccuracy;
 
   constructor(task: string, debug: boolean, learningRate: number, hiddenUnits: number, trainingOptions: TrainingOptions = null) {
     this.task = task;

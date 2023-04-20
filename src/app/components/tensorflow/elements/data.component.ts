@@ -8,6 +8,7 @@ import { DOCUMENT } from '@angular/common';
 import { TensorFlowDrawService } from 'src/app/services/tensorflow-draw.service';
 import { MicroController, Motor } from 'src/app/models/hardware.model';
 import { MotorEl } from 'src/app/models/tensorflow.model';
+import { TensorFlowData } from 'src/app/models/tensorflow-data.model';
 
 
 
@@ -20,11 +21,13 @@ export class DataComponent implements AfterViewInit {
 
 
   dataVisible = true;
-
+  public d: TensorFlowData;
 
 
   constructor(@Inject(DOCUMENT) private document: Document,public tensorflowService: TensorFlowMainService, public hardwareService: HardwareService,
-              private electronService: ElectronService, private uploadService: UploadService, private tensorflowDrawService: TensorFlowDrawService) {}
+              private electronService: ElectronService, private uploadService: UploadService, private tensorflowDrawService: TensorFlowDrawService) {
+                this.d = this.tensorflowService.d;
+              }
 
 
   ngAfterViewInit(): void {
@@ -34,14 +37,14 @@ export class DataComponent implements AfterViewInit {
 
 
   record() {
-    this.tensorflowService.recording.active = !this.tensorflowService.recording.active;
+    this.d.recording.active = !this.d.recording.active;
 
-    if (!this.tensorflowService.recording.active) {
-      this.tensorflowService.recording.starttime = null;
+    if (!this.d.recording.active) {
+      this.d.recording.starttime = null;
     }
 
-    for (const microcontroller of this.tensorflowService.selectedMicrocontrollers) {
-      microcontroller.record = this.tensorflowService.recording.active;
+    for (const microcontroller of this.d.selectedMicrocontrollers) {
+      microcontroller.record = this.d.recording.active;
 
       if (microcontroller.record) {
 
@@ -51,7 +54,7 @@ export class DataComponent implements AfterViewInit {
 
       } else {
         this.tensorflowService.updateBoundsActiveDataset();
-        this.tensorflowService.classify = false;
+        this.d.classify = false;
       }
     }
   }
@@ -63,22 +66,22 @@ export class DataComponent implements AfterViewInit {
   }
 
   toggleVisibilityInput(name: string) {
-    const input = this.tensorflowService.selectedModel.inputs.filter(n => n.name == name)[0];
+    const input = this.d.selectedModel.inputs.filter(n => n.name == name)[0];
     input.visible = !input.visible;
-    if (this.tensorflowService.selectedDataset) {
-      this.tensorflowDrawService.drawTensorFlowGraphData(this.tensorflowService.selectedDataset, this.tensorflowService.selectedModel, this.tensorflowService.selectedMicrocontrollers);
+    if (this.d.selectedDataset) {
+      this.tensorflowDrawService.drawTensorFlowGraphData(this.d.selectedDataset, this.d.selectedModel, this.d.selectedMicrocontrollers);
     }
   }
 
   toggleVisibilityMotor(m: MotorEl) {
     if (m) {
       m.visible = !m.visible;
-      this.tensorflowDrawService.drawTensorFlowGraphData(this.tensorflowService.selectedDataset, this.tensorflowService.selectedModel, this.tensorflowService.selectedMicrocontrollers);
+      this.tensorflowDrawService.drawTensorFlowGraphData(this.d.selectedDataset, this.d.selectedModel, this.d.selectedMicrocontrollers);
     }
   }
 
   toggleRecordMotor(mcuID: string, motor: Motor) {
-    for (const set of this.tensorflowService.dataSets) {
+    for (const set of this.d.dataSets) {
       for (const m of set.m) {
         if (m.mcu.id === mcuID && m.id === motor.id) {
           m.record = motor.record;
@@ -89,7 +92,7 @@ export class DataComponent implements AfterViewInit {
   }
 
   updateCommunicationSpeed(id: string) {
-    const microcontroller = this.tensorflowService.selectedMicrocontrollers.filter(m => m.id === id)[0];
+    const microcontroller = this.d.selectedMicrocontrollers.filter(m => m.id === id)[0];
     if (microcontroller) {
       this.hardwareService.updateMicroController(microcontroller);
       const uploadModel = this.uploadService.createUploadModel(null, microcontroller);
@@ -123,7 +126,7 @@ export class DataComponent implements AfterViewInit {
 
   cancelTrim() {
     this.tensorflowDrawService.removeTrimlines();
-    this.tensorflowService.trimLinesVisible = false;
+    this.d.trimLinesVisible = false;
   }
 
   trimDataSet() {

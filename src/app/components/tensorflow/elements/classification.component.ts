@@ -11,11 +11,11 @@ import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service'
 export class ClassificationComponent {
 
 
-  constructor(public tensorFlowService: TensorFlowMainService, public filterService: FilterService) {
+  constructor(public tensorflowService: TensorFlowMainService, public filterService: FilterService) {
 
     this.filterService.addFilterToModel.subscribe(data => {
       if (data) {
-        this.tensorFlowService.selectedModel.filters.push(data);
+        this.tensorflowService.d.selectedModel.filters.push(data);
       }
     });
 
