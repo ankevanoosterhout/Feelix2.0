@@ -19,8 +19,8 @@
 
         <label class="labelRow small">{{ output.name }}</label>
         <select class="form-control playWindow microcontroller" id="{{ this.tensorflowService.selectedDataset.id }}-output-{{ o }}" name="{{ this.tensorflowService.selectedDataset.id }}-output-{{ o }}"
-            [(ngModel)]="this.tensorflowService.selectedDataset.output" title="select label that is associated with the selected data set">
-            <!-- (change)="this.tensorflowService.updateOutputDataSet(this.tensorflowService.selectedDataset.id, o)" -->
+            [(ngModel)]="this.tensorflowService.selectedDataset.output.label" title="select label that is associated with the selected data set"
+            (change)="this.tensorflowService.updateOutputDataSet(o)" [compareWith]="compareID">
           <option class="placeholder" value="undefined" selected="selected">-- select label --</option>
           <option *ngFor="let label of output.labels" [ngValue]="label">{{ label.name }}</option>
         </select>
@@ -105,6 +105,10 @@
         <div class="buttons trim" *ngIf="this.tensorflowService.trimLinesVisible">
           <button id="cancel" (click)="this.cancelTrim()">Cancel</button>
           <button id="trim" (click)="this.trimDataSet()">Trim</button>
+        </div>
+
+        <div class="data-size" *ngIf="this.tensorflowService.selectedDataset && this.tensorflowService.selectedDataset.m.length > 0 && !this.tensorflowService.trimLinesVisible">
+          size: {{ this.tensorflowService.selectedDataset.m[0].d.length }}
         </div>
       </div>
 

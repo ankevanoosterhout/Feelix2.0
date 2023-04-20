@@ -210,6 +210,13 @@ class newSerialPort {
         } else {
           updateProgress(50, (this.COM + ' has been added'));
 
+          if (this.portData.type !== 'Arduino MEGA') {
+            sendDataStr([ 'FS' ],  this.COM, true);
+            this.connected = true;
+            main.updateSerialStatus({ microcontroller: this.portData, connected: this.connected });
+            updateProgress(100, ('Connected to ' + this.COM));
+          }
+
           if (!activePorts.includes(this.COM)) {
             activePorts.push(this.COM);
           }
@@ -225,7 +232,7 @@ class newSerialPort {
         if (d.charAt(0) === '*') {
           if (dataSendWaitList.filter(d => d.port === this.COM).length > 0) {
             uploadFromWaitList(ports.filter(p => p.COM === this.COM)[0]);
-          } 
+          }
         } else if (d.charAt(0) === 'A') {
           const dataArray = d.substr(1).split(':');
           let incomingData;
@@ -591,12 +598,12 @@ function upload_to_receivedPort(port, uploadContent) {
 
   let index = 0;
 
-  if (uploadContent.newMCU && uploadContent.config.motors.filter(m => m.type === 2).length > 0) {
-    datalist.unshift('FMR'); //reset library and pneumatic actuator data (FeelixAir)
-  }
-
   for (const motor of uploadContent.config.motors) {
-    if (motor.type !== 2) { datalist.unshift('FM' + motor.id + 'F'); }
+    if (index === 0 && uploadContent.newMCU) {
+      datalist.unshift('FR');
+      // console.log("RESET");
+    }
+    datalist.unshift('FM' + motor.id + 'F');
     datalist = motor.type === 2 ? preparePneumaticData(uploadContent, motor, datalist, index) : prepareMotorData(uploadContent, motor, datalist);
     if (uploadContent.data) {
       datalist = prepareEffectData(uploadContent, motor, datalist);

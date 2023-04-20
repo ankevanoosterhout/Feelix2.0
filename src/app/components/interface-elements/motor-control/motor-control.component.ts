@@ -198,6 +198,8 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
         if (selectedCollection.rotation.units.name !== 'ms' && selectedCollection.rotation.units.name !== 'sec') {
           selectedCollection.playing = true;
           this.motorControlService.updateCollection(selectedCollection);
+        } else {
+          selectedCollection.feedbackData = [];
         }
       }
     });

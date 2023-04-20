@@ -1,7 +1,7 @@
 import { DOCUMENT } from '@angular/common';
 import { Component, OnInit, Inject, HostListener } from '@angular/core';
 import { ElectronService } from 'ngx-electron';
-import { Classifier, Data, DataSet, InputItem } from 'src/app/models/tensorflow.model';
+import { Classifier, Data, DataSet, InputItem, Label } from 'src/app/models/tensorflow.model';
 import { HardwareService } from 'src/app/services/hardware.service';
 import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service';
 import { MotorControlService } from 'src/app/services/motor-control.service';
@@ -116,6 +116,7 @@ export class TensorFlowJSComponent implements OnInit {
 
 
       this.electronService.ipcRenderer.on('load-datasets', (event: Event, data: any) => {
+        console.log(data);
         if (data) {
           for (const dataset of data) {
             if (this.tensorflowService.dataSets.filter(d => d.id === dataset.id).length === 0) {
@@ -128,6 +129,19 @@ export class TensorFlowJSComponent implements OnInit {
                     this.tensorflowService.addMicrocontroller();
                   }
                 }
+              }
+            }
+            if (dataset.output.classifier_id) {
+              const outputClassifierInModel = this.tensorflowService.selectedModel.outputs.filter(o => o.id === dataset.output.classifier_id)[0];
+
+              if (!outputClassifierInModel) {
+                const newClassifier = new Classifier(dataset.output.classifier_id, dataset.output.classifier_name);
+                this.tensorflowService.selectedModel.outputs.push(newClassifier);
+                this.tensorflowService.selectClassifier(newClassifier.id);
+                this.checkIfHasLabel(newClassifier, dataset.output.label);
+              } else {
+                this.checkIfHasLabel(outputClassifierInModel, dataset.output.label);
+                this.tensorflowService.selectClassifier(outputClassifierInModel.id);
               }
             }
           }
@@ -201,6 +215,15 @@ export class TensorFlowJSComponent implements OnInit {
     this.tensorflowService.addLabelToClassifier(0);
   }
 
+  checkIfHasLabel(classifier: Classifier, label: Label) {
+    if (label && classifier) {
+      const l = classifier.labels.filter(l => l.id === label.id)[0];
+      if (!l) {
+        const newLabel = new Label(label.id, label.name);
+        classifier.labels.push(newLabel);
+      }
+    }
+  }
 
 
   checkBounds(value: number) {
@@ -212,11 +235,6 @@ export class TensorFlowJSComponent implements OnInit {
       this.tensorflowService.selectedDataset.bounds.yMin = value <= -10 || this.tensorflowService.selectedDataset.bounds.yMax >= 10 ? Math.floor(value/10) * 10 : Math.floor(value / 2) * 2;
       this.tensorflowDrawService.updateBounds(this.tensorflowService.selectedDataset.bounds);
     }
-  }
-
-
-  updateClassifier(item: String, index: number) {
-
   }
 
 

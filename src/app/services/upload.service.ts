@@ -234,7 +234,7 @@ export class UploadService {
   }
 
   translateEffectData(collEffect: Details, effectData: Effect) {
-    console.log(collEffect, effectData);
+    // console.log(collEffect, effectData);
     let copyEffectList = this.cloneService.deepClone(effectData);
     let multiply = 1;
 
@@ -259,7 +259,7 @@ export class UploadService {
       }
     }
     data = this.reduceDataPoints(data_complete, collEffect.quality, multiply);
-    console.log(data);
+    // console.log(data);
 
     return { id: collEffect.effectID, type: effectData.type, size: effectData.size, rotation: effectData.rotation, infinite: collEffect.infinite, yUnit: effectData.grid.yUnit.name, data: data, data_complete: data_complete };
   }
@@ -444,7 +444,7 @@ export class UploadService {
 
   createUploadModel(collection: Collection, microcontroller: MicroController) {
     let model = new UploadModel(collection, microcontroller);
-    // console.log(model);
+    console.log(model);
     return model;
   }
 

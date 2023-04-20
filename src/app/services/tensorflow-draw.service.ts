@@ -95,7 +95,7 @@ export class TensorFlowDrawService {
 
 
   drawTensorFlowGraphData(data: DataSet, tensorflowModel: Model, trimLines: any) {
-
+    // console.log(data);
 
     if (data && data.m.length > 0) {
       d3.selectAll('#dataGroup').remove();

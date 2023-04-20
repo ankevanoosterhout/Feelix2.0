@@ -168,9 +168,9 @@ export class InputItem {
 }
 
 export class OutputItem {
-  label: string;
-  label_id: string;
+  label = new Label(null, null);
   classifier_id: string;
+  classifier_name: string;
 }
 
 export class Data {
@@ -207,7 +207,7 @@ export class DataSet {
   name: String;
   date: any;
   m: Array<MotorEl> = [];
-  output: Label = undefined;
+  output = new OutputItem();
   // outputs: Array<any> = []; //convert to single outputItem
   open = true;
   selected = false;
