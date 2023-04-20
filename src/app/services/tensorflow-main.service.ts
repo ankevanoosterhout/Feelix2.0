@@ -213,7 +213,6 @@ export class TensorFlowMainService {
           if (i >= this.d.predictionDataset.m.length && collectData) {
 
             const data = this.createJSONfromDataSet([this.d.predictionDataset], false);
-            console.log(data);
             this.NN_Deploy(data.xs, this.d.selectedModel);
             this.clearCollectedData();
           }

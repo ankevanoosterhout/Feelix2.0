@@ -89,7 +89,10 @@ export class TensorFlowJSComponent implements OnInit {
                       else if (input.name === 'target') { inputItem.value = data.target; }
 
                       dataObject.inputs.push(inputItem);
-                      this.checkBounds(inputItem.value);
+
+                      if (!this.d.classify) {
+                        this.checkBounds(inputItem.value);
+                      }
                     }
                   }
 
@@ -102,19 +105,14 @@ export class TensorFlowJSComponent implements OnInit {
                     this.tensorflowService.predictOutput();
                   }
 
-                  if (motorEl.d[0].time > 100) {
-                    dataSetEl.bounds.xMin = motorEl.d[0].time - 50;
-                  }
-
-                  if (time > dataSetEl.bounds.xMax - 500) {
+                  if (!this.d.classify && time > dataSetEl.bounds.xMax - 500) {
                     dataSetEl.bounds.xMax = dataSetEl.bounds.xMax < 3000 ?
                       Math.ceil(dataSetEl.bounds.xMax * 0.006) * 200 : Math.ceil(dataSetEl.bounds.xMax * 0.0024) * 500;
 
                     this.tensorflowDrawService.updateBounds(dataSetEl.bounds);
                   }
                   this.tensorflowDrawService.drawGraph();
-                  this.tensorflowDrawService.drawTensorFlowGraphData(dataSetEl, this.d.selectedModel,
-                    this.d.trimLinesVisible ? this.d.trimLines : null);
+                  this.tensorflowDrawService.drawTensorFlowGraphData(dataSetEl, this.d.selectedModel, this.d.trimLinesVisible ? this.d.trimLines : null);
 
               }
             }
@@ -197,7 +195,13 @@ export class TensorFlowJSComponent implements OnInit {
 
       this.tensorflowService.createPredictionModel.subscribe(data => {
         this.d.predictionDataset = new DataSet(uuid(), 'Prediction', this.d.selectedMicrocontrollers);
-        console.log(this.d.predictionDataset);
+        this.d.predictionDataset.bounds = {
+          xMin: 0,
+          xMax: 700,
+          yMin: 10,
+          yMax: -10
+        }
+        // console.log(this.d.predictionDataset);
       });
 
       this.tensorflowService.drawTrimLines.subscribe(data => {
