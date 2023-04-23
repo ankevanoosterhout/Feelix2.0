@@ -62,17 +62,6 @@
       </select>
     </div>
 
-    <div class="form-row" *ngIf="this.drawingService.file.activeEffect && innerWidth > 1125">
-      <ul class="buttons-list equation">
-        <li id="new" (click)="mathInputVisible = !mathInputVisible"><img src="./assets/icons/buttons/fx.svg" title="Design effect based on mathematical equation"></li>
-      </ul>
-    </div>
-
-    <div class="form-row" *ngIf="mathInputVisible && this.drawingService.file.activeEffect && innerWidth > 1125">
-      <input type="text" class="math" id="mathEquation" name="mathEquation" [(ngModel)]="equation" (change)="updateEquation()">
-    </div>
-
-
     <div class="form-row" *ngIf="this.drawingService.file.activeEffect && this.drawingService.file.activeEffect.type < 2" title="select type of haptic effect">
       <label class="select"></label>
       <select class="form-control" id="select" [(ngModel)]="this.drawingService.file.activeEffect.rotation"
@@ -81,12 +70,24 @@
       </select>
     </div>
 
-
     <div class="form-row range" *ngIf="this.drawingService.file.activeEffect && this.drawingService.file.activeEffect.type === 2 && (this.drawingService.file.activeEffect.grid.yUnit.name === 'rad' || this.drawingService.file.activeEffect.grid.yUnit.name === 'deg')"
       title="specify range y-axis (deg)">
       <label>range</label>
       <input type="number" class="small" id="range-start" name="range-start" [(ngModel)]="this.drawingService.file.activeEffect.range_y.start" (change)="updateRange()">
       <input type="number" class="small" id="range-end" name="range-end" [(ngModel)]="this.drawingService.file.activeEffect.range_y.end" (change)="updateRange()">
+    </div>
+
+
+    
+
+    <div class="form-row" *ngIf="this.drawingService.file.activeEffect && innerWidth > 1125">
+      <ul class="buttons-list equation">
+        <li id="new" (click)="mathInputVisible = !mathInputVisible"><img src="./assets/icons/buttons/fx.svg" title="Design effect based on mathematical equation"></li>
+      </ul>
+    </div>
+
+    <div class="form-row" *ngIf="mathInputVisible && this.drawingService.file.activeEffect && innerWidth > 1125">
+      <input type="text" class="math" id="mathEquation" name="mathEquation" [(ngModel)]="equation" (change)="updateEquation()">
     </div>
 
     <ul>

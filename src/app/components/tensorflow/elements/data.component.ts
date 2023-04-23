@@ -41,6 +41,12 @@ export class DataComponent implements AfterViewInit {
 
     if (!this.d.recording.active) {
       this.d.recording.starttime = null;
+    } else {
+      if (!this.d.classify && this.d.selectedDataset  && this.d.selectedDataset.m.length > 0) {
+        if (this.d.selectedDataset.m[0].d.length > 0) {
+          this.tensorflowService.addDataSet();
+        }
+      }
     }
 
     for (const microcontroller of this.d.selectedMicrocontrollers) {

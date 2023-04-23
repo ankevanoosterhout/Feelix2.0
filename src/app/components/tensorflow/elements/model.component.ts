@@ -5,6 +5,7 @@ import { activation, ActivationLabelMapping, Data, DataSet } from 'src/app/model
 import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service';
 import * as tf from '@tensorflow/tfjs';
 import { TensorFlowData } from 'src/app/models/tensorflow-data.model';
+import { TensorFlowTrainService } from 'src/app/services/tensorflow-train.service';
 
 @Component({
   selector: 'app-model',
@@ -44,7 +45,7 @@ export class ModelComponent {
     { name: 'sparseCategoricalAccuracy', value: tf.metrics.sparseCategoricalAccuracy }
   ]
 
-  constructor(@Inject(DOCUMENT) private document: Document, public tensorflowService: TensorFlowMainService) {
+  constructor(@Inject(DOCUMENT) private document: Document, private tensorflowService: TensorFlowMainService, private tensorflowTrainService: TensorFlowTrainService) {
     this.d = this.tensorflowService.d;
   }
 
@@ -58,7 +59,7 @@ export class ModelComponent {
       this.d.processing = true;
       this.tensorflowService.updateProgess('initializing model', 20);
 
-      const data = this.tensorflowService.createJSONfromDataSet(this.d.dataSets, true);
+      const data = this.tensorflowTrainService.createJSONfromDataSet(this.d.dataSets, true);
 
       const inputLabels = [];
       const outputLabels = [];
@@ -76,16 +77,12 @@ export class ModelComponent {
       this.d.selectedModel.options.inputs = inputLabels;
       this.d.selectedModel.options.outputs = outputLabels;
 
-      this.tensorflowService.NN_createData(data, this.d.selectedModel);
+      this.tensorflowTrainService.NN_createData(data, this.d.selectedModel);
 
     } else {
-
       this.tensorflowService.updateProgess(this.d.processing ? 'training in progress': 'no data', 0);
-
     }
   }
-
-
 
 
   selectClassifier(id: string) {

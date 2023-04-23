@@ -52,12 +52,14 @@ export class ModelVariable {
   active: boolean;
   color: string;
   visible = false;
+  slug: string;
 
-  constructor(name: string, active: boolean, visible: boolean, color: string) {
+  constructor(name: string, active: boolean, visible: boolean, color: string, slug: string) {
     this.name = name;
     this.active = active;
     this.visible = visible;
     this.color = color;
+    this.slug = slug;
   }
 }
 
@@ -141,17 +143,15 @@ export class Model {
     this.type = type;
     this.options = options;
     this.inputs = [
-      new ModelVariable('angle', true, true, '#43E6D5'),
-      new ModelVariable('velocity', true, true, '#00AEEF'),
-      new ModelVariable('direction', true, false, '#E18257'),
-      new ModelVariable('pressure', false, false, '#4390E6'),
-      new ModelVariable('target', false, false, '#7778E0')
+      new ModelVariable('angle', true, true, '#43E6D5', 'A'),
+      new ModelVariable('velocity', true, true, '#00AEEF', 'V'),
+      new ModelVariable('direction', true, false, '#E18257', 'D'),
+      new ModelVariable('pressure', false, false, '#4390E6', 'P'),
+      new ModelVariable('target', false, false, '#7778E0', 'G')
       // new ModelVariable('time', false, false, '#4390E6')
     ]
   }
 }
-
-
 
 export class Bounds {
   xMin = 0;

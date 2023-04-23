@@ -43,14 +43,16 @@ export class TensorFlowModelService {
   saveModel(model: Model) {
     this.getDataFromLocalStorage();
     let modelItem = this.models.filter(m => m.id === model.id)[0];
+    console.log(modelItem);
     if (modelItem) {
-      const model_str =  JSON.stringify(model);
+      const model_str = JSON.stringify(model);
       modelItem = JSON.parse(model_str);
-      return model.id;
+      return modelItem.id;
     } else {
       model.id = uuid();
       this.models.push(model);
       this.store();
+      console.log(this.models)
       return model.id;
     }
   }

@@ -10,35 +10,22 @@ import { TensorFlowModelService } from './tensorFlow-model.service';
 import { FilterModel, UploadStringModel } from '../models/effect-upload.model';
 import { ElectronService } from 'ngx-electron';
 import { FileSaverService } from 'ngx-filesaver';
-import * as tf from '@tensorflow/tfjs';
+// import * as tf from '@tensorflow/tfjs';
 import { TensorFlowData } from '../models/tensorflow-data.model';
 // import { Tensor2D } from '@tensorflow/tfjs';
 
 @Injectable()
 export class TensorFlowMainService {
 
-    public modelSet = [
-      new Model(uuid(), 'model', 'NeuralNetwork', new NN_options('classification', false, 0.2, 4)),
-      new Model(uuid(), 'model', 'KNNClassifier', {}),
-      new Model(uuid(), 'model', 'kMeans', { k_clusters: 3, max_iterations: 4, threshold: 0.5 }),
-    ];
+    public learningType = ['supervised learning', 'unsupervised learning', 'reinforcement learning' ];
 
-    // public NN_task_options = [ 'classification' ];
-    public NN_task_options = [{ option: 'classification', enabled: true }, { option: 'regression', enabled: false }];
-    public modelOptions = [ 'NeuralNetwork' ];
-    // public modelOptions = [ 'NeuralNetwork', 'KNNClassifier', 'kMeans' ];
-
-
-    public kMeans_options = [
-      { name: 'k clusters', value: 3 },
-      { name: 'Max iterations', value: 4 },
-      { name: 'threshold', value: 0.5 }
-    ];
+    // public modelSet = [
+    //   new Model(uuid(), 'model', 'NeuralNetwork', new NN_options('classification', false, 0.2, 4)),
+    //   new Model(uuid(), 'model', 'KNNClassifier', {}),
+    //   new Model(uuid(), 'model', 'kMeans', { k_clusters: 3, max_iterations: 4, threshold: 0.5 }),
+    // ];
 
     public d: TensorFlowData;
-
-    // loss: any = null;
-    serialPath: any;
 
     updateTensorflowProgress: Subject<any> = new Subject();
     reloadPage: Subject<any> = new Subject();
@@ -46,10 +33,10 @@ export class TensorFlowMainService {
     updateGraphBounds: Subject<any> = new Subject();
     updateGraph: Subject<any> = new Subject();
     drawTrimLines: Subject<any> = new Subject();
-    createPredictionModel: Subject<any> = new Subject();
+    createJSON: Subject<any> = new Subject();
 
     constructor(@Inject(DOCUMENT) private document: Document, public hardwareService: HardwareService, private dataSetService: DataSetService,
-                private tensorflowService: TensorFlowModelService, private electronService: ElectronService, private _FileSaverService: FileSaverService) {
+                private tensorflowModelService: TensorFlowModelService, private electronService: ElectronService, private _FileSaverService: FileSaverService) {
 
                   this.d = new TensorFlowData();
                 }
@@ -96,7 +83,7 @@ export class TensorFlowMainService {
     exportDataSet() {
       const dataSet = this.d.dataSets.filter(d => d.open)[0];
       if (dataSet) {
-        const data = { data: this.createJSONfromDataSet([dataSet], false) };
+        const data = { data: this.createJSON.next({ data: [dataSet], train: false }) };
         const blob = new Blob([JSON.stringify(data)], { type: 'text/plain' });
         const fileName = dataSet.name + '.json';
         this._FileSaverService.save(blob, fileName, 'text/plain');
@@ -200,119 +187,9 @@ export class TensorFlowMainService {
     }).bind(this);
 
 
-    predictOutput() {
-      let collectData = true;
-      let i = 0;
-      if (this.d.predictionDataset) {
-        for (const motor of this.d.predictionDataset.m) {
-          if (motor.d.length <= 20 && motor.d.length !== 0) {
-            collectData = false;
-          }
-          i++;
-
-          if (i >= this.d.predictionDataset.m.length && collectData) {
-
-            const data = this.createJSONfromDataSet([this.d.predictionDataset], false);
-            this.NN_Deploy(data.xs, this.d.selectedModel);
-            this.clearCollectedData();
-          }
-        }
-      }
-    }
-
-    clearCollectedData() {
-      this.d.recording.starttime = new Date().getTime();
-      for (const motor of this.d.predictionDataset.m) {
-        motor.d = [];
-      }
-    }
 
 
-    createJSONfromDataSet(dataSets: Array<DataSet>, train = true) {
-      const data = { xs: [], ys: [] };
 
-      dataSets.forEach(set => {
-
-        let outputs = [];
-
-        if (train && set.output.label.id) {
-
-          for (const classifier of this.d.selectedModel.outputs) {
-            if (classifier.active && classifier.id === set.output.classifier_id) {
-              for (const label of classifier.labels) {
-                label.id === set.output.label.id ? outputs.push(1) : outputs.push(0);
-              }
-            }
-          }
-          if (outputs.length === 0) {
-            this.d.processing = false;
-            this.updateProgess('cannot find outputs', 0);
-            return false;
-          }
-          // console.log(outputs);
-        }
-
-        // const outputstr = outputs.join(',');
-        // const outputObject = JSON.parse('{' + outputstr + '}');
-
-        // console.log(set.m);
-
-        let m = 0;
-
-        set.m.forEach(motor => {
-          let inputArray = [];
-          let i = 0;
-          let n = 0;
-
-          if (motor.d.length > 0) {
-
-            // const mcu = this.selectedMicrocontrollers.filter(m => m.id === motor.mcu.id)[0];
-            // let i = 0;
-
-            for (const d of motor.d) {
-              const inputs = [];
-              for (const input of d.inputs) {
-                const input_variable = this.d.selectedModel.inputs.filter(i => i.name === input.name)[0];
-                if (input_variable && input_variable.active) {
-                  inputs.push(input.value);
-                }
-              }
-
-
-              if (m !== 0) {
-                data.xs[n][i].push(inputs);
-              } else {
-                inputArray.push([inputs]);
-              }
-
-              i++;
-
-              if (i >= 20) {
-                if (m === 0) {
-                  data.xs.push(inputArray);
-                  data.ys.push(outputs);
-                } else {
-                  n++;
-                }
-                i = 0;
-                inputArray = [];
-              }
-
-              // inputs.push(this.selectedMicrocontrollers.indexOf(mcu));
-
-              // inputArray.push(inputs);
-              // data.push({ xs: inputs, ys: outputs }); // shape [[2][[inputs.length]]]
-            }
-          }
-          // motors.push(inputArray);
-          m++;
-        });
-      });
-
-      console.log(data);
-
-      return data;
-    }
 
     selectDataSet(id: String = this.d.selectedDataset.id) {
       this.d.trimLinesVisible = false;
@@ -410,15 +287,15 @@ export class TensorFlowMainService {
     }
 
     addMicrocontroller() {
-      if (this.d.selectOptionMicrocontroller && this.d.selectedMicrocontrollers.filter(m => m.id === this.d.selectOptionMicrocontroller.id).length === 0) {
+      if (this.d.selectOptionMicrocontroller !== undefined && this.d.selectedMicrocontrollers.filter(m => m.id === this.d.selectOptionMicrocontroller.id).length === 0) {
         for (const motor of this.d.selectOptionMicrocontroller.motors) {
           motor.record = true;
         }
         this.d.selectedMicrocontrollers.push(this.d.selectOptionMicrocontroller);
-      }
-      for (const set of this.d.dataSets) {
-        if (set.m.filter(m => m.mcu.id === this.d.selectOptionMicrocontroller.id).length === 0) {
-          this.addMicrocontrollerToDataSet(this.d.selectOptionMicrocontroller, set);
+        for (const set of this.d.dataSets) {
+          if (set.m.filter(m => m.mcu.id === this.d.selectOptionMicrocontroller.id).length === 0) {
+            this.addMicrocontrollerToDataSet(this.d.selectOptionMicrocontroller, set);
+          }
         }
       }
     }
@@ -455,262 +332,13 @@ export class TensorFlowMainService {
 
 
 
-
-    NN_createData(data: any, modelObj: Model) {
-
-      this.d.selectedModel.model = tf.sequential();
-
-
-      this.createPredictionModel.next();
-
-      console.log(this.d.predictionDataset);
-
-      this.d.selectedModel.model.name = modelObj.name;
-
-      this.updateProgess('model created', 10);
-
-      if (data.xs && data.ys) {
-
-        const inputShape = [null, data.xs[0].length, data.xs[0][0].length, data.xs[0][0][0].length];
-        const outputShape = [null, data.ys[0].length]
-
-        const numSamples = data.xs.length;
-        const inputTensor = tf.tensor(data.xs, [numSamples, data.xs[0].length, data.xs[0][0].length, data.xs[0][0][0].length]);
-        const outputTensor = tf.tensor(data.ys, [numSamples, data.ys[0].length]);
-
-        console.log(inputTensor, outputTensor);
-
-        for (let layer = 0; layer < this.d.selectedModel.options.hiddenUnits; layer++) {
-          const hiddenLayer = tf.layers.dense({
-            units: inputShape[1],
-            inputShape: inputShape.slice(1), // [ number of inputs, batch size ]
-            activation: this.d.selectedModel.options.activation // make activation function adjustable in model settings
-          });
-
-          console.log(hiddenLayer);
-
-          this.d.selectedModel.model.add(hiddenLayer);
-
-          // this.selectedModel.model.add(tf.layers.maxPooling2d({ poolSize: 2 }));
-
-        }
-
-        this.d.selectedModel.model.add(tf.layers.flatten());
-
-
-        const outputLayer = tf.layers.dense({
-          units: outputShape[1],
-          activation: this.d.selectedModel.options.activationOutputLayer
-        });
-
-        this.d.selectedModel.model.add(outputLayer);
-
-        // const val = this.selectedModel.model.layers[0].computeOutputShape(hiddenLayer.batchInputShape);
-
-        //   // Printing output
-        //   console.log(val);
-
-        const sgdOpt = tf.train.sgd(this.d.selectedModel.options.learningRate);
-        // console.log(sgdOpt);
-
-        this.d.selectedModel.model.compile({
-          optimizer: sgdOpt,
-          loss: this.d.selectedModel.options.losses,
-          metrics: [ this.d.selectedModel.options.metrics ]
-        });
-        // console.log(this.d.selectedModel.options);
-        // console.log(this.d.selectedModel.model);
-      //   this.selectedModel.model.normalizeData();
-
-        this.updateProgess('start training', 20);
-
-
-
-
-        this.train(inputTensor, outputTensor, this.d.selectedModel.options.trainingOptions).then(() => {
-          console.log('training is complete');
-
-          this.document.body.style.cursor = 'default';
-
-          this.d.processing = false;
-
-          inputTensor.dispose();
-          outputTensor.dispose();
-
-          console.log("memory " + tf.memory().numTensors);
-
-        });
-
-      } else {
-        this.updateProgess('no data found, training canceled', 0);
-        this.d.processing = false;
-
-        this.document.body.style.cursor = 'default';
-
-        return false;
-      }
-    }
-
-
-    async train(iTensor: any, oTensor: any, options: any) {
-      // console.log(iTensor, oTensor);
-      for (let i = 0; i < options.epochs; i++) {
-        const response = await this.d.selectedModel.model.fit(iTensor, oTensor, {
-          verbose: true,
-          shuffle: true,
-          batchSize: options.batchSize,
-          epochs: 1
-        });
-        if (i < options.epochs - 1) {
-          if (i % 10 === 0) {
-            this.updateProgess('training, loss = ' + response.history.loss[0], ((80/options.epochs) * i) + 20);
-          }
-        } else {
-          this.updateProgess('finished training ' + response.history.loss[0], 100);
-        }
-      }
-    }
-
-
-
-
-    NN_Deploy(input: any, selectedModel: any) {
-
-      // this.serialPath = path;
-      console.log('predict');
-      console.log(input);
-
-      if (selectedModel.options.task === 'classification') {
-        const iTensor = tf.tensor(input);
-        console.log(iTensor);
-        const outputs = this.d.selectedModel.multiple ? this.d.selectedModel.model.predictOnBatch(iTensor) : this.d.selectedModel.model.predict(iTensor);
-        console.log(outputs);
-        const prediction = Array.from((outputs as any).dataSync());
-        console.log(prediction);
-        this.updatePredictionClassifiers(prediction);
-
-        iTensor.dispose();
-      }
-    }
-
-
-
     stopTraining() {
       this.d.processing = false;
       this.d.selectedModel.model.stopTraining = true;
     }
 
-    updatePredictionClassifiers(results: Array<any>) {
-      console.log(this.d.selectedModel.outputs);
-      for (const classifier of this.d.selectedModel.outputs) {
-        let i  = 0;
-        for (const label of classifier.labels) {
-          console.log(label);
-          label.confidence = results[i];
-          (this.document.getElementById('bar-' + classifier.id + '-' + label.id) as HTMLElement).style.width = (label.confidence * 100) + '%';
-          (this.document.getElementById('confidence-' + classifier.id + '-' + label.id) as HTMLElement).innerHTML = (label.confidence * 100).toFixed(2) + '%';
-
-          i++;
-        }
-      }
-    }
 
 
-
-    handleRegressionResults = ((error: any, result: any) => {
-      if(error){
-        this.updateProgess(error, 0);
-        this.d.classify = false;
-        console.error(error);
-        return;
-      }
-      for (const output of this.d.selectedModel.outputs) {
-        for (const label of output.labels) {
-          const result_label = result.filter((r: { label: string; }) => r.label == label.name)[0];
-          // label.prediction = result_label.;
-          // this.document.getElementById('bar-' + output.name + '-' + label.name).style.width = (label.prediction * 100) + '%';
-          // this.document.getElementById('confidence-' + output.name + '-' + label.name).innerHTML = (label.prediction  * 100).toFixed(2) + '%';
-        }
-      }
-    }).bind(this);
-
-
-
-    handleClassificationResults = ((error: any, result: any) => {
-      if(error){
-        this.updateProgess(error, 0);
-        this.d.classify = false;
-        // console.error(error);
-        return;
-      }
-      for (const output of this.d.selectedModel.outputs) {
-        for (const label of output.labels) {
-          const result_label = result.filter((r: { label: string; }) => r.label == label.name)[0];
-          // console.log(result_label);
-          if (result_label) {
-            label.confidence = result_label.confidence;
-            this.document.getElementById('bar-' + output.name + '-' + label.name).style.width = (label.confidence * 100) + '%';
-            this.document.getElementById('confidence-' + output.name + '-' + label.name).innerHTML = (label.confidence * 100).toFixed(2) + '%';
-          }
-        }
-      }
-
-      let filterArray = [];
-      let n = 0;
-
-      for (const filter of this.d.selectedModel.filters) {
-        const classifier = this.d.selectedModel.outputs.filter(o => o.name === filter.classifier.name)[0];
-        if (classifier && classifier.labels.length > 0) {
-          const highestConfidenceLabel = this.getHighestConfidenceLabel(classifier);
-          // console.log(highestConfidenceLabel.name);
-          let index = classifier.labels.indexOf(highestConfidenceLabel);
-
-          if (index > -1) {
-
-
-            if ((filter.type.name === 'amplify' || filter.type.name === 'constrain') && filter.functionVariable.value[index] !== filter.functionVariable.prevValue) {
-
-              let filterObj = { type: filter.type.slug, value: filter.functionVariable.value[index], smoothness: filter.type.interpolate };
-              filterArray.push(filterObj);
-
-              filter.functionVariable.prevValue = filter.functionVariable.value[index];
-
-            } else if (filter.type.name === 'noise') {
-
-              const newRandom = (Math.floor(Math.random() * ((filter.functionVariable.value[index] * 100) * 2)) - (filter.functionVariable.value[index] * 100)) / 100;
-              let filterObj = { type: filter.type.slug, value: newRandom, smoothness: filter.type.interpolate };
-
-              filterArray.push(filterObj);
-            }
-          }
-        }
-        if (n === this.d.selectedModel.filters.length - 1) {
-          if (filterArray.length > 0) {
-            // console.log('update filter');
-            const microcontroller = this.d.selectedMicrocontrollers.filter(m => m.serialPort.path === this.serialPath)[0];
-            if (microcontroller) {
-              const filterModel = new FilterModel(filterArray, microcontroller);
-              // console.log(filterModel);
-              this.electronService.ipcRenderer.send('updateFilter', filterModel);
-            }
-          }
-        }
-        n++;
-      }
-
-    }).bind(this);
-
-
-
-    getHighestConfidenceLabel(classifier: Classifier): Label {
-      let maxConfidence = classifier.labels[0];
-      for (const label of classifier.labels) {
-        if (label.confidence > maxConfidence.confidence) {
-          maxConfidence = label;
-        }
-      }
-      return maxConfidence;
-    }
 
 
     resetFiltersMicrocontroller() {
@@ -739,37 +367,40 @@ export class TensorFlowMainService {
     }
 
     loadModel(id: String) {
-      const model = this.tensorflowService.getModel(id);
-      // console.log(model);
-      const modelStr = JSON.stringify(model.model);
-      if (model) {
-        this.d.selectedModel = model;
-        this.d.selectedModel.model = JSON.parse(modelStr);
-        // console.log(this.selectedModel.model);
+      const modelData = this.tensorflowModelService.getModel(id);
+      console.log(modelData);
+      if (modelData) {
+        this.d.selectedModel = modelData;
+        if (modelData.model) {
+          const modelStr = JSON.stringify(modelData.model);
+          console.log(modelStr);
+          this.d.selectedModel.model = JSON.parse(modelStr);
+          // console.log(this.selectedModel.model);
+        }
         this.updateModelSettings(this.d.selectedModel);
         this.updateProgess('Model loaded', 100);
       } else {
-        this.updateProgess('Error: no model found', 0);
+        this.updateProgess('Error loading model', 0);
       }
     }
 
     saveModel() {
       if (this.d.selectedModel) {
-        this.d.selectedModel.id = this.tensorflowService.saveModel(this.d.selectedModel);
+        this.d.selectedModel.id = this.tensorflowModelService.saveModel(this.d.selectedModel);
         this.updateProgess('model saved', 100);
       }
     }
 
     updateModelSettings(model: Model) {
-      const item = this.modelOptions.filter(m => m === model.type)[0];
-      const index = this.modelOptions.indexOf(item);
+      const item = this.d.modelOptions.filter(m => m.option === model.type)[0];
+      const index = this.d.modelOptions.indexOf(item);
 
       if (index > -1) {
         (this.document.getElementById('model_type') as HTMLSelectElement).selectedIndex = index;
 
         if (model.type === 'NeuralNetwork') {
-          const task = this.NN_task_options.filter(m => m === model.options.task)[0];
-          const task_index = this.NN_task_options.indexOf(task);
+          const task = this.d.NN_task_options.filter(m => m === model.options.task)[0];
+          const task_index = this.d.NN_task_options.indexOf(task);
           (this.document.getElementById('task') as HTMLSelectElement).selectedIndex = task_index;
 
           (this.document.getElementById('learningRate') as HTMLInputElement).value = model.options.learningRate;

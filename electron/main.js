@@ -768,7 +768,7 @@ function createTensorFlowWindow() {
 
 
 
-function drawTemporaryWindow(width, height, title, resizable, hash, details = null, parent = mainWindow) {
+function drawTemporaryWindow(width, minWidth, height, minHeight, title, resizable, hash, details = null, parent = mainWindow) {
 
   if (tmpWindow !== null) {
     tmpWindow.close();
@@ -780,6 +780,8 @@ function drawTemporaryWindow(width, height, title, resizable, hash, details = nu
     show: false,
     width: width,
     height: height,
+    minWidth: minWidth,
+    minHeight: minHeight,
     title: title,
     backgroundColor: '#333',
     alwaysOnTop: true,
@@ -964,23 +966,23 @@ function createKinematicsWindow() {
 
 
 function createFileSettingWindow(filepath) {
-  drawTemporaryWindow(380, 180, 'File Settings', false, filepath);
+  drawTemporaryWindow(380, 380, 180, 180, 'File Settings', false, filepath);
 }
 
 function createLoadDataSetWindow(filepath) {
-  drawTemporaryWindow(300, 350, 'Load Data Sets', false, filepath);
+  drawTemporaryWindow(300, 300, 400, 300, 'Load Data Sets', true, filepath);
 }
 
 function createEffectSettingWindow(filepath) {
-  drawTemporaryWindow(400, (filepath === "effect-settings" ? 370 : 350), 'Effect Settings', false, filepath);
+  drawTemporaryWindow(400, 400, (filepath === "effect-settings" ? 370 : 350), 350, 'Effect Settings', false, filepath);
 }
 
 function createMotorSettingsWindow() {
-  drawTemporaryWindow(520, 450, 'Microcontroller settings', true, 'motor-settings');
+  drawTemporaryWindow(520, 400, 450, 300, 'Microcontroller settings', true, 'motor-settings');
 }
 
 function adjustGridSettings() {
-  drawTemporaryWindow(400, 480, 'Grid size', false, 'grid-settings');
+  drawTemporaryWindow(400, 400, 480, 480, 'Grid size', false, 'grid-settings');
 }
 
 
@@ -989,7 +991,7 @@ function adjustGridSettings() {
 // }
 
 function createTransform() {
-  drawTemporaryWindow(400, 270, 'Transform', false, 'transform');
+  drawTemporaryWindow(400, 400, 270, 270, 'Transform', false, 'transform');
 }
 
 function createConnectToCOM(comPorts) {

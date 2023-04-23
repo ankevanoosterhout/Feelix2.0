@@ -236,27 +236,32 @@ class newSerialPort {
         } else if (d.charAt(0) === 'A') {
           const dataArray = d.substr(1).split(':');
           let incomingData;
-          if (dataArray.length <= 5) {
-            incomingData = {
-                motorID: dataArray[0],
-                angle: parseFloat(dataArray[1]),
-                velocity: parseFloat(dataArray[2]),
-                time: parseInt(dataArray[3]),
-                target: parseFloat(dataArray[4]),
-                serialPath: this.COM
-            };
-          } else {
-            incomingData = {
-              motorID: dataArray[0],
-              angle: parseFloat(dataArray[1]),
-              velocity: parseFloat(dataArray[2]),
-              time: parseInt(dataArray[3]),
-              target: parseFloat(dataArray[4]),
-              current_a: parseFloat(dataArray[5]),
-              current_b: parseFloat(dataArray[6]),
-              serialPath: this.COM
-            };
+          // if (dataArray.length <= 5) {
+          const vel = parseFloat(dataArray[2]);
+          const dataList = [ { name: 'angle', val: parseFloat(dataArray[1]), slug: 'A' },
+                             { name: 'velocity', val: vel, slug: 'V' },
+                             { name: 'direction', val: vel === 0.0 ? 0 : vel > 0.0 ? 1 : -1, slug: 'D' },
+                             { name: 'target', val: parseFloat(dataArray[4]), slug: 'G' },
+                             { name: 'time', val: parseFloat(dataArray[3]), slug: 'T' } ];
+
+          if (dataArray.length > 5) {
+            for (let i = 5; i < dataArray.length; i++) {
+              dataList.push({ name: 'val-' + i, val: parseFloat(dataArray[i]), slug: 'V' + i });
+            }
           }
+          incomingData = { d: dataList, motorID: dataArray[0], serialPath: this.COM };
+          // } else {
+          //   incomingData = {
+          //     motorID: dataArray[0],
+          //     angle: parseFloat(dataArray[1]),
+          //     velocity: parseFloat(dataArray[2]),
+          //     time: parseInt(dataArray[3]),
+          //     target: parseFloat(dataArray[4]),
+          //     current_a: parseFloat(dataArray[5]),
+          //     current_b: parseFloat(dataArray[6]),
+          //     serialPath: this.COM
+          //   };
+          // }
           main.visualizaMotorData(incomingData);
 
         } else if (d.charAt(0) === 'J') {

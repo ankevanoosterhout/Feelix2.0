@@ -89,7 +89,7 @@ export class EffectVisualizationService {
 
       const yPos = collection.config.newYscale(collEffect.position.top * (collEffect.scale.y / 100)) - (pixHeight * (collEffect.position.y / domainSize));
 
-      const offset = effect.type === EffectType.position ? pixHeight * ((100-collEffect.scale.y)/100) - (pixHeight * (collEffect.position.y / 100)) :
+      const offset = effect.range_y.start === 0 ? pixHeight * ((100-collEffect.scale.y)/100) - (pixHeight * (collEffect.position.y / 100)) :
                                                   pixHeight * (((100-collEffect.scale.y)/100) / 2) - (pixHeight * (collEffect.position.y / 100) / 2);
 
       const height = pixHeight * (collEffect.scale.y/100);

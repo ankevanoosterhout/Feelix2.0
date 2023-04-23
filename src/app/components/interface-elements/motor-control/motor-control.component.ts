@@ -120,28 +120,37 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
 
 
     this.electronService.ipcRenderer.on('playData', (event: Event, data: any) => {
+      const d_angle = data.d.filter(d => d.name === 'angle')[0];
+      const d_velocity = data.d.filter(d => d.name === 'velocity')[0];
       const selectedCollection = this.motorControlService.file.collections.filter(c => c.microcontroller && c.microcontroller.serialPort.path === data.serialPath && c.playing && c.motorID && c.motorID.name === data.motorID)[0];
-      if (selectedCollection) {
-        let angle = selectedCollection.rotation.units.name === 'deg' ? data.angle * (180/Math.PI) : data.angle;
+
+      if (selectedCollection && d_angle && d_velocity) {
+        let angle = selectedCollection.rotation.units.name === 'deg' ? d_angle.val * (180/Math.PI) : d_angle.val;
+
         if (selectedCollection.rotation.loop) {
+
           const range = selectedCollection.rotation.end - selectedCollection.rotation.start;
-          angle = this.fmod(data.angle * (180/Math.PI), range);
-          if (angle < 0) {
-            if (selectedCollection.rotation.units.name === 'deg') {
-              angle += range;
-            } else {
-              angle += (range * (Math.PI/180));
-            }
+          // angle = this.fmod(d_angle.val * (180/Math.PI), range)
+          angle = this.fmod(angle, range);
+          if (angle < selectedCollection.rotation.start) {
+            angle += range;
+            // if (selectedCollection.rotation.units.name === 'deg') {
+            //   angle += range;
+            // } else {
+            //   angle += (range * (Math.PI/180));
+            // }
           }
         }
-
-        const velocity = selectedCollection.rotation.units.name === 'deg' ? data.velocity * (180/Math.PI) : data.velocity;
-
         selectedCollection.microcontroller.motors.filter(m => m.id === selectedCollection.motorID.name)[0].state.position.current = angle;
+
+
+        const velocity = selectedCollection.rotation.units.name === 'deg' ? d_velocity.val * (180/Math.PI) : d_velocity.val;
         selectedCollection.microcontroller.motors.filter(m => m.id === selectedCollection.motorID.name)[0].state.speed = velocity;
-        selectedCollection.time = data.time;
+
+        selectedCollection.time = data.d.filter(d => d.name === 'time')[0].val;
+        
         if (this.document.getElementById('position-' + selectedCollection.id) !== null) {
-          if (selectedCollection.rotation.units.name !== 'ms') {
+          if (selectedCollection.rotation.units.name !== 'ms' && selectedCollection.rotation.units.name !== 'sec') {
             (this.document.getElementById('position-' + selectedCollection.id) as HTMLElement).innerHTML = (Math.round(angle * 100) / 100) + ' ';
           }
         }
@@ -149,21 +158,22 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
           (this.document.getElementById('speed-' + selectedCollection.id) as HTMLElement).innerHTML = (Math.round(velocity * 100) / 100) + ' ';
         }
         if (this.document.getElementById('time-' + selectedCollection.id) !== null) {
-          if (selectedCollection.rotation.units.name === 'ms') {
-            (this.document.getElementById('time-' + selectedCollection.id) as HTMLElement).innerHTML = selectedCollection.time + ' ';
+          if (selectedCollection.rotation.units.name === 'ms' ||  selectedCollection.rotation.units.name === 'sec') {
+            (this.document.getElementById('time-' + selectedCollection.id) as HTMLElement).innerHTML =
+              (selectedCollection.rotation.units.name === 'ms' ? selectedCollection.time : selectedCollection.time /1000)  + ' ';
           }
         }
         this.motorControlService.drawCursor(selectedCollection);
 
-        const microcontroller = this.microcontrollers.filter(m => m.serialPort.path === data.serialPath)[0];
-        if (microcontroller && selectedCollection.microcontroller.motors.filter(m => m.id === selectedCollection.motorID.name)[0].config.inlineCurrentSensing) {
-          if (this.document.getElementById('current_sense_a-' + selectedCollection.id) !== null) {
-            const current_a = (Math.round(data.current_a * 100) / 100);
-            const current_b = (Math.round(data.current_b * 100) / 100);
-            (this.document.getElementById('current_sense_a-' + selectedCollection.id) as HTMLElement).innerHTML = current_a === 0 ? 'a: 0.00' : 'a: ' + current_a + ' ';
-            (this.document.getElementById('current_sense_b-' + selectedCollection.id) as HTMLElement).innerHTML = current_b === 0 ? 'b: 0.00' : 'b: ' + current_b + ' ';
-          }
-        }
+        // const microcontroller = this.microcontrollers.filter(m => m.serialPort.path === data.serialPath)[0];
+        // if (microcontroller && selectedCollection.microcontroller.motors.filter(m => m.id === selectedCollection.motorID.name)[0].config.inlineCurrentSensing) {
+        //   if (this.document.getElementById('current_sense_a-' + selectedCollection.id) !== null) {
+        //     const current_a = (Math.round(data.current_a * 100) / 100);
+        //     const current_b = (Math.round(data.current_b * 100) / 100);
+        //     (this.document.getElementById('current_sense_a-' + selectedCollection.id) as HTMLElement).innerHTML = current_a === 0 ? 'a: 0.00' : 'a: ' + current_a + ' ';
+        //     (this.document.getElementById('current_sense_b-' + selectedCollection.id) as HTMLElement).innerHTML = current_b === 0 ? 'b: 0.00' : 'b: ' + current_b + ' ';
+        //   }
+        // }
       }
     });
 

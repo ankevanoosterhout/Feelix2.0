@@ -67,6 +67,7 @@ import { KinematicsCursorComponent } from './components/kinematics/control/kinem
 import { DragControlsService } from './services/drag-controls.service';
 import { IKService } from './services/IK.service';
 import { PlaySequenceComponent } from './components/windows/play-sequence.component';
+import { TensorFlowTrainService } from './services/tensorflow-train.service';
 
 @NgModule({
   declarations: [
@@ -134,6 +135,7 @@ import { PlaySequenceComponent } from './components/windows/play-sequence.compon
     CloneService,
     TensorFlowMainService,
     TensorFlowDrawService,
+    TensorFlowTrainService,
     DataSetService,
     TensorFlowModelService,
     FilterService,

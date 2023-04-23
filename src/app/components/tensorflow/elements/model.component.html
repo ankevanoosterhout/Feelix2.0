@@ -12,14 +12,14 @@
     <div class="form-group">
       <label class="label">Model</label>
       <select class="form-control playWindow" id="model_type" name="model_type" [(ngModel)]="this.d.selectedModel.type">
-        <option *ngFor="let item of this.tensorflowService.modelOptions" [ngValue]="item">{{ item }}</option>
+        <option *ngFor="let item of this.d.modelOptions" [ngValue]="item.option" [disabled]="!item.enabled">{{ item.option }}</option>
       </select>
     </div>
 
     <div class="form-group">
       <label class="label">Task</label>
       <select class="form-control playWindow" id="task" name="task" [(ngModel)]="this.d.selectedModel.options.task">
-        <option *ngFor="let item of this.tensorflowService.NN_task_options" [ngValue]="item.option" [disabled]="!item.enabled">{{ item.option }}</option>
+        <option *ngFor="let item of this.d.NN_task_options" [ngValue]="item.option" [disabled]="!item.enabled">{{ item.option }}</option>
       </select>
     </div>
 
@@ -83,13 +83,6 @@
         <span class="checkmark radio tensorflow"></span>
       </label>
     </div>
-
-    <!-- <div class="form-group">
-      <label class="radio-container">Debug
-        <input type="checkbox" class="type" id="debug" name="debug" [(ngModel)]="this.tensorflowService.selectedModel.options.debug" [checked]="this.tensorflowService.selectedModel.options.debug">
-        <span class="checkmark radio tensorflow"></span>
-      </label>
-    </div> -->
 
   </div>
 

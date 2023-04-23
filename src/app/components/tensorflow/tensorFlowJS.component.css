@@ -141,12 +141,13 @@
 }
 
 .column-20 {
-  width: 15%;
+  width: 20%;
   min-width: 110px;
 }
 
 .column-30 {
-  width: 180px;
+  width: 30%;
+  min-width: 180px;
 }
 
 
@@ -155,7 +156,8 @@
 }
 
 .column-40 {
-  width: 240px;
+  width: 30%;
+  min-width: 240px;
 }
 
 .flex-row {
@@ -769,7 +771,7 @@ ul.motor-list li.header > span {
   flex-direction: row;
   flex-wrap: nowrap;
   overflow: visible;
-
+  width: 100%;
 }
 
 
