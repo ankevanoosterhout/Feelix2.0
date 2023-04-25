@@ -2,7 +2,7 @@ import { DOCUMENT } from '@angular/common';
 import { Injectable, Inject } from '@angular/core';
 import { v4 as uuid } from 'uuid';
 import { MicroController } from '../models/hardware.model';
-import { Model, DataSet, Classifier, Data, NN_options, Label, MotorEl } from '../models/tensorflow.model';
+import { Model, DataSet, Classifier, Data, NN_options, Label, MotorEl, ModelVariable, ModelType, Regression_options } from '../models/tensorflow.model';
 import { HardwareService } from './hardware.service';
 import { DataSetService } from './dataset.service';
 import { Subject } from 'rxjs';
@@ -18,12 +18,6 @@ import { TensorFlowData } from '../models/tensorflow-data.model';
 export class TensorFlowMainService {
 
     public learningType = ['supervised learning', 'unsupervised learning', 'reinforcement learning' ];
-
-    // public modelSet = [
-    //   new Model(uuid(), 'model', 'NeuralNetwork', new NN_options('classification', false, 0.2, 4)),
-    //   new Model(uuid(), 'model', 'KNNClassifier', {}),
-    //   new Model(uuid(), 'model', 'kMeans', { k_clusters: 3, max_iterations: 4, threshold: 0.5 }),
-    // ];
 
     public d: TensorFlowData;
 
@@ -224,13 +218,37 @@ export class TensorFlowMainService {
       }
     }
 
-
     updateDataSetName(id: String) {
       const value = (this.document.getElementById('dataSet-' + id) as HTMLInputElement).value;
       this.d.dataSets.filter(d => d.id === id)[0].name = value;
     }
 
+    updateModelType() {
+      this.d.selectedModel.options = this.d.selectedModel.type === ModelType.neuralNetwork ? new NN_options() : new Regression_options();
+    }
+
+    addInputItem() {
+      const nrOfInputs = this.d.selectedModel.inputs.length;
+      this.d.selectedModel.inputs.push(new ModelVariable('untitled-' + (nrOfInputs - 5), false, false, '#FFFFFF', 'V' + (nrOfInputs - 5)));
+    }
+
+    deleteInputItem(i: number) {
+      this.d.selectedModel.inputs.splice(i, 1);
+    }
+
+    updateInput(i: number) {
+      const value = (this.document.getElementById('input-' + i) as HTMLInputElement).value;
+      this.d.selectedModel.inputs[i].name = value;
+    }
+
     deleteClassifier(i: number) {
+
+      if (this.d.selectedModel.outputs.length === 1) {
+        this.addClassifier();
+      }
+      if (this.d.selectedModel.outputs[i].active) {
+        this.d.selectedModel.outputs.filter(o => o.id !== this.d.selectedModel.outputs[i].id && !o.active)[0].active = true;
+      }
       this.d.selectedModel.outputs.splice(i, 1);
     }
 
@@ -238,11 +256,11 @@ export class TensorFlowMainService {
       this.d.selectedModel.outputs.push(new Classifier(uuid(), 'Classifier-' + (this.d.selectedModel.outputs.length + 1)));
     }
 
-
-
-    updateClassifier(i: number) {
-      const value = (this.document.getElementById('classifier-' + i) as HTMLInputElement).value;
+    updateClassifier(i: number, pos: number) {
+      console.log(i, pos);
+      const value = (this.document.getElementById('classifier-' + pos + '-' + i) as HTMLInputElement).value;
       this.d.selectedModel.outputs[i].name = value;
+      (this.document.getElementById('classifier-' + (pos === 1 ? 2 : 1) + '-' + i) as HTMLInputElement).value = value;
     }
 
     addLabelToClassifier(i: number) {
@@ -392,29 +410,20 @@ export class TensorFlowMainService {
     }
 
     updateModelSettings(model: Model) {
-      const item = this.d.modelOptions.filter(m => m.option === model.type)[0];
-      const index = this.d.modelOptions.indexOf(item);
+      (this.document.getElementById('model_type') as HTMLSelectElement).selectedIndex = ModelType.neuralNetwork;
 
-      if (index > -1) {
-        (this.document.getElementById('model_type') as HTMLSelectElement).selectedIndex = index;
+      if (model.type === ModelType.neuralNetwork) {
+        (this.document.getElementById('learningRate') as HTMLInputElement).value = model.options.learningRate;
+        (this.document.getElementById('hiddenUnits') as HTMLInputElement).value = model.options.hiddenUnits;
 
-        if (model.type === 'NeuralNetwork') {
-          const task = this.d.NN_task_options.filter(m => m === model.options.task)[0];
-          const task_index = this.d.NN_task_options.indexOf(task);
-          (this.document.getElementById('task') as HTMLSelectElement).selectedIndex = task_index;
-
-          (this.document.getElementById('learningRate') as HTMLInputElement).value = model.options.learningRate;
-          (this.document.getElementById('hiddenUnits') as HTMLInputElement).value = model.options.hiddenUnits;
-
-          (this.document.getElementById('epochs') as HTMLInputElement).value = model.options.trainingOptions.epochs;
-          (this.document.getElementById('batchsize') as HTMLInputElement).value = model.options.trainingOptions.batchSize;
-        }
-
-        (this.document.getElementById('modelName') as HTMLInputElement).value = model.name;
-
-        this.updateVariables(model.inputs);
-        this.updateVariables(model.outputs);
+        (this.document.getElementById('epochs') as HTMLInputElement).value = model.options.trainingOptions.epochs;
+        (this.document.getElementById('batchsize') as HTMLInputElement).value = model.options.trainingOptions.batchSize;
       }
+
+      (this.document.getElementById('modelName') as HTMLInputElement).value = model.name;
+
+      this.updateVariables(model.inputs);
+      this.updateVariables(model.outputs);
     }
 
     updateVariables(variables: Array<any>) {

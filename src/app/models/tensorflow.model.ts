@@ -3,7 +3,7 @@ import * as tf from '@tensorflow/tfjs';
 import { MicroController } from "./hardware.model";
 
 
-export enum activation {
+export enum Activation {
   elu = 'elu',
   hardSigmoid = 'hardSigmoid',
   linear = 'linear',
@@ -19,21 +19,34 @@ export enum activation {
   mish = 'mish'
 };
 
-export const ActivationLabelMapping: Record<activation, string> = {
-  [activation.elu]: 'elu',
-  [activation.hardSigmoid]: 'hardSigmoid',
-  [activation.linear]: 'linear',
-  [activation.relu]: 'relu',
-  [activation.relu6]: 'relu6',
-  [activation.selu]: 'selu',
-  [activation.sigmoid]: 'sigmoid',
-  [activation.softmax]: 'softmax',
-  [activation.softplus]: 'softplus',
-  [activation.softsign]: 'softsign',
-  [activation.tanh]: 'tahn',
-  [activation.swish]: 'swish',
-  [activation.mish]: 'mish'
+export const ActivationLabelMapping: Record<Activation, string> = {
+  [Activation.elu]: 'elu',
+  [Activation.hardSigmoid]: 'hardSigmoid',
+  [Activation.linear]: 'linear',
+  [Activation.relu]: 'relu',
+  [Activation.relu6]: 'relu6',
+  [Activation.selu]: 'selu',
+  [Activation.sigmoid]: 'sigmoid',
+  [Activation.softmax]: 'softmax',
+  [Activation.softplus]: 'softplus',
+  [Activation.softsign]: 'softsign',
+  [Activation.tanh]: 'tahn',
+  [Activation.swish]: 'swish',
+  [Activation.mish]: 'mish'
 };
+
+export enum ModelType {
+  neuralNetwork = 0,
+  regression = 1
+  // KNNClassifier = 2,
+  // kMeans = 3
+};
+
+export const ModelTypeMapping: Record<ModelType, string> = {
+  [ModelType.neuralNetwork]: 'NeuralNetwork',
+  [ModelType.regression]: 'Regression'
+};
+
 
 
 export class Input {
@@ -90,36 +103,34 @@ export class Classifier  {
 }
 
 
+
+export class Options {
+  inputs: Array<any> = [];
+  outputs: Array<any> = [];
+  optimizer: any = tf.train.sgd;
+  learningRate: number = 0.1;
+  // debug: boolean = false; // determines whether or not to show the training visualizatio
+}
+
 export class TrainingOptions {
   epochs: number = 100;
   batchSize: number = 32;
 }
 
-
-export class NN_options {
-  // layers: Array<any> = []; // custom layers
-  task: string; // 'classification', 'regression'
-  debug: boolean = false; // determines whether or not to show the training visualization
-  learningRate: number = 0.2;
+export class NN_options extends Options {
   hiddenUnits: number = 4;
-  inputs: Array<any> = [];
-  outputs: Array<any> = [];
-  trainingOptions = new TrainingOptions();
-  activation: activation = activation.relu;
-  activationOutputLayer: activation = activation.softmax;
-  losses: any = tf.metrics.categoricalCrossentropy;
+  activation: Activation = Activation.relu;
+  activationOutputLayer: Activation = Activation.softmax;
   metrics: any = tf.metrics.categoricalAccuracy;
-
-  constructor(task: string, debug: boolean, learningRate: number, hiddenUnits: number, trainingOptions: TrainingOptions = null) {
-    this.task = task;
-    this.debug = debug;
-    this.learningRate = learningRate;
-    this.hiddenUnits = hiddenUnits;
-    if (trainingOptions) {
-      this.trainingOptions = trainingOptions;
-    }
-  }
+  trainingOptions = new TrainingOptions();
+  losses: any = tf.metrics.categoricalCrossentropy;
 }
+
+export class Regression_options extends Options {
+  degree: number = 1;
+  losses: any = tf.metrics.meanSquaredError;
+}
+
 
 
 
@@ -127,7 +138,7 @@ export class Model {
   id: string;
   name: string;
   date: any;
-  type: string;
+  type: ModelType;
   inputs: Array<ModelVariable> = [];
   outputs: Array<Classifier> = [];
   options: any;
@@ -136,12 +147,14 @@ export class Model {
   filters: Array<Filter> = [];
   multiple = true;
 
-  constructor(id: string, name: string, type: string, options: any) {
+  constructor(id: string, name: string, type: ModelType) {
     this.id = id;
     this.name = name;
     this.date = new Date().getTime();
     this.type = type;
-    this.options = options;
+
+    this.options =  this.type === ModelType.neuralNetwork ? new NN_options() : new Regression_options();
+
     this.inputs = [
       new ModelVariable('angle', true, true, '#43E6D5', 'A'),
       new ModelVariable('velocity', true, true, '#00AEEF', 'V'),

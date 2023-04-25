@@ -35,7 +35,7 @@ export class KinematicsControlComponent implements AfterViewInit {
     new Model(0, 'revolute', true, 'active_joint_3.png', [ { g:'A', url:'active_joint_stator_Z_top.obj'} ], 0xcc0000, { x: -(Math.PI/2), y:0, z: 0 },
     new ConnectorSize(1, 1, 16.5, 15.5, new THREE.Vector3(0,1,0)), new ConnectorSize(1, 1, 16.5, 15.5, new THREE.Vector3(0,1,0)), 0, [ { g:'A', url:'active_joint_stator_Z_bottom.obj'} ]),
 
-    new Model(0, 'revolute', false, 'passive_joint_3.png', [ { g:'B', url:'passive_joint_stator_Y.obj'} ], 0x0000e6, {   x: -(Math.PI/2), y:0, z: 0 },
+    new Model(0, 'revolute', false, 'passive_joint_3.png', [ { g:'B', url:'passive_joint_stator_Y.obj'} ], 0x0000e6, { x: -(Math.PI/2), y:0, z: 0 },
     new ConnectorSize(1, 1, 16.5, 15.5, new THREE.Vector3(0,1,0)), new ConnectorSize(1, 1, 16.5, 15.5, new THREE.Vector3(0,1,0)), 0),
 
     new Model(0, 'fixed', false, 'fixed_joint.png', [ { g:'B', url:'fixed_joint_base.obj'}, { g:'Z', url: 'fixed_joint_connector_X.obj' }], 0x222222, { x: 0, y: 0, z: Math.PI },
@@ -160,25 +160,25 @@ export class KinematicsControlComponent implements AfterViewInit {
 
 
 
-  deletePoint(id: string, point_id: string) {
-    const joint = this.kinematicService.frames.filter(j => j.id === id)[0];
+  // deletePoint(id: string, point_id: string) {
+  //   const joint = this.kinematicService.frames.filter(j => j.id === id)[0];
 
-    if (joint) {
-      const point = joint.connectors.filter(p => p.id === point_id)[0];
+  //   if (joint) {
+  //     const point = joint.connectors.filter(p => p.id === point_id)[0];
 
-      if (point) {
-        this.removeConnectorImage(point);
-        const index = joint.connectors.indexOf(point);
-        if (index > -1) { joint.connectors.splice(index, 1); }
-      }
-    }
-  }
+  //     if (point) {
+  //       this.removeConnectorImage(point);
+  //       const index = joint.connectors.indexOf(point);
+  //       if (index > -1) { joint.connectors.splice(index, 1); }
+  //     }
+  //   }
+  // }
 
   addFrame(model: Model) {
 
     if (this.ikService.ikConfig.drag.selected && this.ikService.ikConfig.drag.selected.parent) {
       const selectedFrame = this.kinematicService.getFrame(this.ikService.ikConfig.drag.selected.parent.name);
-      // console.log(selectedFrame);
+      console.log(model);
       const updatedModel = this.updatePosition(selectedFrame, model);
       if (selectedFrame instanceof URFD_Joint) {
         this.addLink(updatedModel, this.ikService.ikConfig.drag.selected, null, true);
@@ -254,12 +254,10 @@ export class KinematicsControlComponent implements AfterViewInit {
 
     // const position2 = new THREE.Vector3(x2, y2, z2);
 
-    // console.log(position, this.ikService.ikConfig.drag.selected.parent.position);
+    console.log("PARENT", this.ikService.ikConfig.drag.selected.parent);
 
     position.applyMatrix4(this.ikService.ikConfig.drag.selected.parent.matrixWorld);
     const updatedPosition = this.dragControlService.getRotatedPosition(this.ikService.ikConfig.drag.selected.parent, position);
-
-    // console.log(updatedPosition);
 
     const translationMatrix = new THREE.Matrix4()
         .makeTranslation(this.ikService.ikConfig.drag.selected.parent.position.x,
@@ -273,7 +271,7 @@ export class KinematicsControlComponent implements AfterViewInit {
 
     // console.log(updatedPosition);
     //lookAt
-    //const rotationMatrix = new THREE.Matrix4().makeRotationFromQuaternion(this.ikService.ikConfig.drag.selected.parent.quaternion);
+    // const rotationMatrix = new THREE.Matrix4().makeRotationFromQuaternion(this.ikService.ikConfig.drag.selected.parent.quaternion);
 
     modelCopy.origin.x = updatedPosition.x;
     modelCopy.origin.y = updatedPosition.y;
@@ -281,14 +279,14 @@ export class KinematicsControlComponent implements AfterViewInit {
 
     // console.log('updated position ', updatedPosition);
 
-    const a = new THREE.Euler();
-    a.setFromQuaternion(this.ikService.ikConfig.drag.selected.parent.quaternion);
+    // const a = new THREE.Euler();
+    // a.setFromQuaternion(this.ikService.ikConfig.drag.selected.parent.quaternion);
 
-    modelCopy.rpy.x += a.x;
-    modelCopy.rpy.y += a.y;
-    modelCopy.rpy.z += modelCopy.startAngle;
+    console.log(this.ikService.ikConfig.drag.selected.parent.rotation);
 
-    if (model.rpy.x !== 0) { modelCopy.rpy.y -= a.z }
+    modelCopy.rpy.x = this.ikService.ikConfig.drag.selected.parent.rotation.x;
+    modelCopy.rpy.y = this.ikService.ikConfig.drag.selected.parent.rotation.y;
+    modelCopy.rpy.z = this.ikService.ikConfig.drag.selected.parent.rotation.z + modelCopy.startAngle;
 
     return modelCopy;
   }
@@ -374,18 +372,18 @@ export class KinematicsControlComponent implements AfterViewInit {
   updateModelsFromRoot(roots: any) {
     // console.log(roots);
     // for (const root of roots) {
-      // root.traverse( c => {
-      //   console.log(c.position, c.quaternion);
-      //   const frameObject = this.config.scene.getObjectByName(c.name);
-      //   console.log(frameObject.position, frameObject.quaternion);
-      //   // if (frameObject) {
-      //     // frameObject.quaternion.set(c.quaternion.x, c.quaternion.y, c.quaternion.z, c.quaternion.w);
-      //     // frameObject.position.set(c.position.x, c.position.y, c.position.z);
-      //   //   // frameObject.applyMatrix4(c.matrixWorld);
-      //     // frameObject.updateMatrix();
-      //   //   this.kinematicService.updateFramePositionFromObject(frameObject);
-      //   // }
-      // });
+    //   root.traverse( c => {
+    //     console.log(c.position, c.quaternion);
+    //     const frameObject = this.config.scene.getObjectByName(c.name);
+    //     console.log(frameObject.position, frameObject.quaternion);
+        // if (frameObject) {
+          // frameObject.quaternion.set(c.quaternion.x, c.quaternion.y, c.quaternion.z, c.quaternion.w);
+          // frameObject.position.set(c.position.x, c.position.y, c.position.z);
+        //   // frameObject.applyMatrix4(c.matrixWorld);
+          // frameObject.updateMatrix();
+        //   this.kinematicService.updateFramePositionFromObject(frameObject);
+        // }
+    //   });
     // }
     // console.log(this.ikService.ikFrames);
 

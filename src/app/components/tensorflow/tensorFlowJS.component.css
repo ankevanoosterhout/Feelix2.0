@@ -13,7 +13,7 @@
   vertical-align: top;
   min-height: 200px;
   overflow:hidden!important;
-  min-width: 700px;
+  min-width: 750px;
 }
 
 #classifiers {
@@ -293,6 +293,11 @@ input[type=text] {
   vertical-align: top;
 }
 
+input[type=text].inputList {
+  width: 80px;
+  padding: 1px;
+}
+
 button {
   margin-left: 10px;
   margin-top: 10px;
@@ -472,6 +477,14 @@ label {
   justify-content: space-between;
   align-items: flex-start;
   width: 100%;
+}
+
+.flexbox-row-even.input {
+  display: inline-flex;
+  width: 105px;
+  margin-left: -20px;
+  margin-top: 1px;
+  vertical-align: top;
 }
 
 
@@ -658,35 +671,42 @@ ul.motor-list li.header > span {
 .buttonPlayWindow {
   width: 20px;
   height: 20px;
-  background: transparent;
+  background: transparent!important;
   float: right;
   border: none!important;
   cursor: default!important;
 }
 
+.buttonPlayWindow:hover, .buttonPlayWindow:active {
+  background: transparent!important;
+}
+
 .buttonPlayWindow.dataSetList {
   margin: 2px 2px 2px 0;
   color: #ccc;
+  line-height: 19px;
   font-weight: 600;
   justify-content: center;
   text-align: center;
+  font-size: 16px;
 }
 
 .buttonPlayWindow.dataSetList.delete {
-  margin: 1px 2px 2px 0;
+  margin: 0px 4px 2px 0;
 }
 
 #delete.buttonPlayWindow.dataSetList img {
   padding: 4px 0;
 }
 
-.buttonPlayWindow.text-button {
-  height: 18px;;
-}
+/* .buttonPlayWindow.text-button {
+  height: 18px;
+} */
 
 .buttonPlayWindow img {
-  padding: 15%;
+  padding: 3px 0;
   height: 75%;
+  margin-left: -1px;
 }
 
 .opencloseArrow {
@@ -783,6 +803,10 @@ ul.motor-list li.header > span {
 
 #toggleDataSection.hidden #toolbar-content {
   display: none;
+}
+
+#toolbar-content {
+  min-width: 970px;
 }
 
 

@@ -1,7 +1,7 @@
 
 import { DOCUMENT } from '@angular/common';
 import { Component, Inject } from '@angular/core';
-import { activation, ActivationLabelMapping, Data, DataSet } from 'src/app/models/tensorflow.model';
+import { Activation, ActivationLabelMapping, ModelType, ModelTypeMapping } from 'src/app/models/tensorflow.model';
 import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service';
 import * as tf from '@tensorflow/tfjs';
 import { TensorFlowData } from 'src/app/models/tensorflow-data.model';
@@ -14,9 +14,13 @@ import { TensorFlowTrainService } from 'src/app/services/tensorflow-train.servic
 })
 export class ModelComponent {
 
-  public ActivationLabelMapping = ActivationLabelMapping;
-  public activationOptions = Object.values(activation);
   public d: TensorFlowData;
+
+  public ActivationLabelMapping = ActivationLabelMapping;
+  public activationOptions = Object.values(Activation);
+
+  public ModelTypeMapping = ModelTypeMapping;
+  public modelTypeOptions = Object.values(ModelType).filter(value => typeof value === 'number');
 
   public lossOptions = [
     { name: 'absoluteDifference', value: tf.losses.absoluteDifference },
@@ -43,7 +47,16 @@ export class ModelComponent {
     { name: 'precision', value: tf.metrics.precision },
     { name: 'recall', value: tf.metrics.recall },
     { name: 'sparseCategoricalAccuracy', value: tf.metrics.sparseCategoricalAccuracy }
-  ]
+  ];
+
+  public optimizerOptions = [
+    { name: 'sgd', value: tf.train.sgd },
+    { name: 'momentum', value: tf.train.momentum },
+    { name: 'adagrad', value: tf.train.adagrad },
+    { name: 'adadelta', value: tf.train.adadelta },
+    { name: 'adam', value: tf.train.adam },
+    { name: 'rmsprop', value: tf.train.rmsprop },
+  ];
 
   constructor(@Inject(DOCUMENT) private document: Document, private tensorflowService: TensorFlowMainService, private tensorflowTrainService: TensorFlowTrainService) {
     this.d = this.tensorflowService.d;
@@ -84,6 +97,13 @@ export class ModelComponent {
     }
   }
 
+
+
+  initializeRegression_Model() {
+    if (!this.d.processing) {
+      
+    }
+  }
 
   selectClassifier(id: string) {
     this.tensorflowService.selectClassifier(id);

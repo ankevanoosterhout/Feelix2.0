@@ -133,6 +133,9 @@ export class TensorFlowTrainService {
   }
 
 
+  Regression_createModel(data: any, modelObj: Model) {
+
+  }
 
 
   NN_createData(data: any, modelObj: Model) {
@@ -183,11 +186,11 @@ export class TensorFlowTrainService {
 
       this.d.selectedModel.model.add(outputLayer);
 
-      const sgdOpt = tf.train.sgd(this.d.selectedModel.options.learningRate);
-      // console.log(sgdOpt);
+      // const sgdOpt = tf.train.sgd(this.d.selectedModel.options.learningRate);
+      const optimizerFunction = this.d.selectedModel.options.optimizer(this.d.selectedModel.options.learningRate);
 
       this.d.selectedModel.model.compile({
-        optimizer: sgdOpt,
+        optimizer: optimizerFunction,
         loss: this.d.selectedModel.options.losses,
         metrics: [ this.d.selectedModel.options.metrics ]
       });
@@ -253,7 +256,7 @@ export class TensorFlowTrainService {
     console.log('predict');
     console.log(input);
 
-    if (selectedModel.options.task === 'classification') {
+    if (selectedModel.type !== 'Regression') {
       const iTensor = tf.tensor(input);
       const inputTensor = tf.reshape(iTensor, [input.length, input[0][0][0].length, (input[0][0].length * input[0].length) ]);
       console.log(iTensor, inputTensor);
@@ -302,7 +305,7 @@ export class TensorFlowTrainService {
     //     }
     //   }
     // }).bind(this);
-    
+
 
     //   let filterArray = [];
     //   let n = 0;

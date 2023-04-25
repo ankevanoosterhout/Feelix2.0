@@ -2,10 +2,10 @@ import { Injectable } from '@angular/core';
 import { Subject } from 'rxjs';
 import { v4 as uuid } from 'uuid';
 import { LocalStorageService } from 'ngx-webstorage';
-import { JointLink, Object3D, Connector, Point, ConnectorSize, ModelFile, URFD_Joint, Model, URFD_Link } from '../models/kinematic.model';
+import { JointLink, Object3D, Connector, Point, ModelFile, URFD_Joint, Model, URFD_Link } from '../models/kinematic.model';
 import * as THREE from 'three';
 import { FileSaverService } from 'ngx-filesaver';
-import { RAD2DEG } from 'three/src/math/MathUtils';
+// import { RAD2DEG } from 'three/src/math/MathUtils';
 
 
 @Injectable()
@@ -277,9 +277,9 @@ export class KinematicService {
     const similarObjects = this.frames.filter(l => l instanceof URFD_Link).length;
     urfd_link.name += '-' + (similarObjects + 1);
 
-    // console.log(urfd_link);
+    console.log(urfd_link);
     this.frames.push(urfd_link);
-    // console.log(this.frames);
+    console.log(this.frames);
     // this.store();
 
     return urfd_link;
@@ -348,6 +348,7 @@ export class KinematicService {
 
 
   updateAngle(id: string, rotationZ: number, linkAngle: number) {
+    console.log("UPDATE ANGLE JOINT");
     const frame = this.frames.filter(f => f.id === id)[0];
 
     if (frame) {

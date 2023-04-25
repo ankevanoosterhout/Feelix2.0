@@ -10,45 +10,44 @@
     </div>
 
     <div class="form-group">
-      <label class="label">Model</label>
-      <select class="form-control playWindow" id="model_type" name="model_type" [(ngModel)]="this.d.selectedModel.type">
-        <option *ngFor="let item of this.d.modelOptions" [ngValue]="item.option" [disabled]="!item.enabled">{{ item.option }}</option>
+      <label class="label">Model type</label>
+      <select class="form-control playWindow" id="model_type" name="model_type" [(ngModel)]="this.d.selectedModel.type" (change)="this.tensorflowService.updateModelType()">
+        <option *ngFor="let item of this.modelTypeOptions" [ngValue]="item">{{ ModelTypeMapping[item] }}</option>
       </select>
     </div>
 
-    <div class="form-group">
-      <label class="label">Task</label>
-      <select class="form-control playWindow" id="task" name="task" [(ngModel)]="this.d.selectedModel.options.task">
-        <option *ngFor="let item of this.d.NN_task_options" [ngValue]="item.option" [disabled]="!item.enabled">{{ item.option }}</option>
-      </select>
-    </div>
-
-
-    <div class="form-group">
+    <div class="form-group" *ngIf="this.d.selectedModel.options.activation">
       <label class="label">Activation</label>
       <select class="form-control playWindow" id="task" name="task" [(ngModel)]="this.d.selectedModel.options.activation">
         <option *ngFor="let item of this.activationOptions" [ngValue]="item">{{ ActivationLabelMapping[item] }}</option>
       </select>
     </div>
 
-    <div class="form-group">
+    <div class="form-group" *ngIf="this.d.selectedModel.options.activationOutputLayer">
       <label class="label">Activation output</label>
       <select class="form-control playWindow" id="task" name="task" [(ngModel)]="this.d.selectedModel.options.activationOutputLayer">
         <option *ngFor="let item of this.activationOptions" [ngValue]="item">{{ ActivationLabelMapping[item] }}</option>
       </select>
     </div>
 
-    <div class="form-group">
+    <div class="form-group" *ngIf="this.d.selectedModel.options.losses">
       <label class="label">Loss function</label>
       <select class="form-control playWindow" id="task" name="task" [(ngModel)]="this.d.selectedModel.options.losses">
         <option *ngFor="let item of this.lossOptions" [ngValue]="item.value">{{ item.name }}</option>
       </select>
     </div>
 
-    <div class="form-group">
+    <div class="form-group" *ngIf="this.d.selectedModel.options.metrics">
       <label class="label">Metrics</label>
       <select class="form-control playWindow" id="task" name="task" [(ngModel)]="this.d.selectedModel.options.metrics">
         <option *ngFor="let item of this.metricsOptions" [ngValue]="item.value">{{ item.name }}</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="label">Optimizer</label>
+      <select class="form-control playWindow" id="task" name="task" [(ngModel)]="this.d.selectedModel.options.optimizer">
+        <option *ngFor="let item of this.optimizerOptions" [ngValue]="item.value">{{ item.name }}</option>
       </select>
     </div>
   </div>
@@ -57,27 +56,32 @@
 
   <div class="column-30">
 
-    <div class="form-group">
+    <div class="form-group" *ngIf="this.d.selectedModel.options.hiddenUnits">
       <label class="label"><div class="question-mark" title="Number of hidden layers">?</div>Hidden units</label>
       <input type="number" class="number small blue" id="hiddenUnits" [(ngModel)]="this.d.selectedModel.options.hiddenUnits" name="hiddenUnits">
     </div>
 
-    <div class="form-group">
-      <label class="label"><div class="question-mark" title="The learning rate to use for the SGD algorithm">?</div>Learning rate</label>
-      <input type="number" class="number small blue" id="learningRate" [(ngModel)]="this.d.selectedModel.options.learningRate" name="learningRate">
+    <div class="form-group" *ngIf="this.d.selectedModel.options.degree">
+      <label class="label"><div class="question-mark" title="Number of degrees polynomial equation, a high number may resulting in overfitting">?</div>Equation degree</label>
+      <input type="number" class="number small blue" id="degree" [(ngModel)]="this.d.selectedModel.options.degree" name="degree">
     </div>
 
     <div class="form-group">
+      <label class="label"><div class="question-mark" title="The learning rate to use for the optimizer algorithm, higher rate results in overshooting values">?</div>Learning rate</label>
+      <input type="number" class="number small blue" id="learningRate" [(ngModel)]="this.d.selectedModel.options.learningRate" name="learningRate">
+    </div>
+
+    <div class="form-group" *ngIf="this.d.selectedModel.options.trainingOptions">
       <label class="label"><div class="question-mark" title="Number of samples per gradient update">?</div>Batch size</label>
       <input type="number" class="number small blue" id="batchsize" [(ngModel)]="this.d.selectedModel.options.trainingOptions.batchSize" name="batchsize">
     </div>
 
-    <div class="form-group">
+    <div class="form-group" *ngIf="this.d.selectedModel.options.trainingOptions">
       <label class="label"><div class="question-mark" title="Number of times to iterate over the training data arrays">?</div>Epochs</label>
       <input type="number" class="number small blue" id="epochs" [(ngModel)]="this.d.selectedModel.options.trainingOptions.epochs" name="epochs">
     </div>
 
-    <div class="row">
+    <div class="row" *ngIf="this.d.selectedModel.options.trainingOptions">
       <label class="radio-container">Classify batch <div class="question-mark" title="classify multiple inputs simultaneously">?</div>
         <input type="checkbox" class="type" id="multiple" name="interpolate" [(ngModel)]="this.d.selectedModel.multiple" [checked]="this.d.selectedModel.multiple">
         <span class="checkmark radio tensorflow"></span>
@@ -90,24 +94,34 @@
   <!-- output column  -->
 
   <div id="inputs" class="column-20">
-    <label class="labelRow">Inputs</label>
+    <label class="labelRow">Inputs <div class="buttonPlayWindow dataSetList" (click)="this.tensorflowService.addInputItem()" title="add input item">+</div></label>
     <ul>
-      <li *ngFor="let input of this.d.selectedModel.inputs">
-        <label class="radio-container"><span id="label-{{ input.id }}">{{ input.name }}</span>
+      <li *ngFor="let input of this.d.selectedModel.inputs; let i = index" [attr.data-index]="i">
+        <label class="radio-container">
+          <span *ngIf="i < 5" id="label-{{ input.slug }}">{{ input.name }}</span>
           <input type="checkbox" class="type" id="{{ input.id }}" name="{{ input.id }}" [(ngModel)]="input.active" [checked]="input.active">
           <span class="checkmark radio tensorflow"></span>
         </label>
+        <div class="row flexbox-row-even input" *ngIf="i >= 5" id="label-{{ input.slug }}">
+          <input type="text" class="list-item inputList" id="input-{{ i }}" value="{{ input.name }}" name="input-{{ i }}" (change)="this.tensorflowService.updateInput(i)">
+          <div class="buttonPlayWindow dataSetList delete" (click)="this.tensorflowService.deleteInputItem(i)" title="delete input item">-</div>
+        </div>
       </li>
     </ul>
   </div>
   <div id="inputs" class="column-20">
-    <label class="labelRow">Output</label>
+    <label class="labelRow">Output <div class="buttonPlayWindow dataSetList" (click)="this.tensorflowService.addClassifier()" title="add output item">+</div></label>
+
     <ul>
-      <li *ngFor="let output of this.d.selectedModel.outputs">
-        <label class="radio-container"><span id="label-{{ output.name }}">{{ output.name }}</span>
+      <li *ngFor="let output of this.d.selectedModel.outputs; let i = index" [attr.data-index]="i">
+        <label class="radio-container">
           <input type="checkbox" class="type" id="{{ output.name }}" name="{{ output.name }}" [(ngModel)]="output.active" [checked]="output.active" (change)="selectClassifier(output.name)">
           <span class="checkmark radio tensorflow"></span>
         </label>
+        <div class="row flexbox-row-even input" id="label-{{ output.id }}">
+          <input type="text" class="list-item inputList" id="classifier-1-{{ i }}" value="{{ output.name }}" name="classifier-1-{{ i }}" (change)="this.tensorflowService.updateClassifier(i, 1)">
+          <div class="buttonPlayWindow dataSetList delete" (click)="this.tensorflowService.deleteClassifier(i)" title="delete input item">-</div>
+        </div>
       </li>
     </ul>
   </div>

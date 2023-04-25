@@ -240,6 +240,7 @@ export class KinematicsDrawingService {
     this.config.scene.add( grid );
   }
 
+  
   animate() {
     this.config.orbit.update();
     requestAnimationFrame( () => this.animate );
