@@ -148,8 +148,8 @@ export class IKService {
   }
 
 
-  updateAngle(id: string, angle: number) {
-    // console.log('update root angles ', id, quaternion);
+  updateAngle(id: string, quaternion: any) {
+    console.log('update root angles ', id, quaternion);
     for (const root of this.ikConfig.ikRoot) {
       root.traverse( c => {
 
@@ -157,12 +157,11 @@ export class IKService {
 
           const name = c.name;
           if (name === id) {
-
+            console.log(c);
             // c.setWorldPosition( position.x, position.y, position.z);
-            c.setJointValue(angle);
-            // c.setWorldQuaternion( quaternion._x, quaternion._y, quaternion._z, quaternion._w );
-            c.updateMatrixWorld(true);
-            // console.log(c);
+            c.setWorldQuaternion( quaternion._x, quaternion._y, quaternion._z, quaternion._w );
+            c.updateMatrix();
+            // c.updateMatrixWorld(true);
           }
         // }
         // this.createRootsHelper(root);

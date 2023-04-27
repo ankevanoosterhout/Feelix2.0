@@ -347,13 +347,13 @@ export class KinematicService {
   }
 
 
-  updateAngle(id: string, rotationZ: number, linkAngle: number) {
+  updateAngle(id: string, rotation: number, linkAngle: number) {
     console.log("UPDATE ANGLE JOINT");
     const frame = this.frames.filter(f => f.id === id)[0];
 
     if (frame) {
 
-      const delta = frame instanceof URFD_Joint ? linkAngle - rotationZ : rotationZ - linkAngle;
+      const delta = frame instanceof URFD_Joint ? linkAngle - rotation : rotation - linkAngle;
       // console.log('delta ', delta);
       if (frame instanceof URFD_Joint) {
         frame.angle = delta;
@@ -364,8 +364,8 @@ export class KinematicService {
         // console.log('angle ', frame.angle, rotationZ);
       }
     }
-
-    frame.dimensions.rpy.z = rotationZ;
+    
+    frame.dimensions.rpy.z = rotation;
 
     if (this.selectedFrames[0] && this.selectedFrames[0].id === id) {
       this.selectedFrames[0].dimensions.rpy.z = frame.dimensions.rpy.z;

@@ -27,16 +27,16 @@ export class KinematicsControlComponent implements AfterViewInit {
 
   models = [
     new Model(0, 'revolute', true, 'active_joint_1.png', [ { g:'B', url:'active_joint_stator.obj'} ], 0xcc0000, { x: 0, y: 0, z: Math.PI },
-    new ConnectorSize(1.5, 1, 25.075, 23.575, new THREE.Vector3(0,1,0)), new ConnectorSize(2.5, 1, 29, 26.5, new THREE.Vector3(0,1,0)), new THREE.Vector3(0,0,1), Math.PI, [ { g:'A', url:'joint_rotor.obj'} ]),
+    new ConnectorSize(1.5, 1, 25.075, 23.575, new THREE.Vector3(0,1,0)), new ConnectorSize(2.5, 1, 29, 26.5, new THREE.Vector3(0,1,0)), new THREE.Vector3(0,0,1), Math.PI, [ { g:'A', url:'joint_rotor.obj' } ]),
 
     new Model(0, 'revolute', false, 'passive_joint_1.png', [ { g:'B', url:'passive_joint_stator.obj'} ], 0x0000e6, { x: 0, y: 0, z: Math.PI },
-    new ConnectorSize(1.5, 1, 19.93, 18.43, new THREE.Vector3(0,1,0)), new ConnectorSize(2.5, 1, 25.5, 23, new THREE.Vector3(0,1,0)), new THREE.Vector3(0,0,1), Math.PI, [ { g:'A', url:'passive_joint_rotor.obj'} ]),
+    new ConnectorSize(1.5, 1, 19.93, 18.43, new THREE.Vector3(0,1,0)), new ConnectorSize(2.5, 1, 25.5, 23, new THREE.Vector3(0,1,0)), new THREE.Vector3(0,0,1), Math.PI, [ { g:'A', url:'passive_joint_rotor.obj' } ]),
 
     new Model(0, 'revolute', true, 'active_joint_3.png', [ { g:'A', url:'active_joint_stator_Z_top.obj'} ], 0xcc0000, { x: 0, y:0, z: 0 },
-    new ConnectorSize(1, 1, 16.5, 15.5, new THREE.Vector3(0,1,0)), new ConnectorSize(1, 1, 16.5, 15.5, new THREE.Vector3(0,-1,0)), new THREE.Vector3(0,1,0), 0, [ { g:'A', url:'active_joint_stator_Z_bottom.obj'} ]),
+    new ConnectorSize(1.5, 1, 17, 15.5, new THREE.Vector3(0,1,0)), new ConnectorSize(1.5, 1, 17, 15.5, new THREE.Vector3(0,-1,0)), new THREE.Vector3(0,1,0), 0, [ { g:'A', url:'active_joint_stator_Z_bottom.obj' } ]),
 
-    new Model(0, 'revolute', false, 'passive_joint_3.png', [ { g:'B', url:'passive_joint_stator_Y.obj'} ], 0x0000e6, { x: (Math.PI/2), y:0, z: 0 },
-    new ConnectorSize(1, 1, 16.5, 15.5, new THREE.Vector3(0,1,0)), new ConnectorSize(1, 1, 16.5, 15.5, new THREE.Vector3(0,-1,0)), new THREE.Vector3(0,1,0), 0),
+    new Model(0, 'revolute', false, 'passive_joint_3.png', [ { g:'B', url:'passive_joint_stator_Z_top.obj'} ], 0x0000e6, { x: (Math.PI/2), y:0, z: 0 },
+    new ConnectorSize(1.5, 1, 17, 15.5, new THREE.Vector3(0,1,0)), new ConnectorSize(1.5, 1, 17, 15.5, new THREE.Vector3(0,-1,0)), new THREE.Vector3(0,1,0), 0, [ { g:'A', url:'passive_joint_stator_Z_bottom.obj' } ]),
 
     new Model(0, 'fixed', false, 'fixed_joint.png', [ { g:'B', url:'fixed_joint_base.obj'}, { g:'Z', url: 'fixed_joint_connector_X.obj' }], 0x222222, { x: 0, y: 0, z: Math.PI },
     new ConnectorSize(1.5, 1, 25.075, 23.575, new THREE.Vector3(0,1,0)), new ConnectorSize(1.5, 1, 25.075, 23.575, new THREE.Vector3(0,1,0)), new THREE.Vector3(0,0,1))
@@ -405,18 +405,19 @@ export class KinematicsControlComponent implements AfterViewInit {
 
 
   updateModelsFromRoot(roots: any) {
-    console.log(roots);
+    // console.log(roots);
     for (const root of roots) {
       root.traverse( c => {
-        // console.log(c.position, c.quaternion);
+        console.log(c);
         const frameObject = this.config.scene.getObjectByName(c.name);
-        console.log(frameObject.position, frameObject.quaternion);
+        console.log(frameObject);
         if (frameObject) {
-          frameObject.quaternion.set(c.quaternion.x, c.quaternion.y, c.quaternion.z, c.quaternion.w);
-          frameObject.position.set(c.position.x, c.position.y, c.position.z);
+          frameObject.quaternion.set(c.quaternion[0], c.quaternion[1], c.quaternion[2], c.quaternion[3]);
+          frameObject.position.set(c.position[0], c.position[1], c.position[2]);
           // frameObject.applyMatrix4(c.matrixWorld);
-          frameObject.updateMatrixWorld();
-          // this.kinematicService.updateFramePositionFromObject(frameObject);
+          // frameObject.updateMatrixWorld();
+          frameObject.updateMatrix();
+          this.kinematicService.updateFramePositionFromObject(frameObject);
         }
       });
     }
@@ -430,7 +431,7 @@ export class KinematicsControlComponent implements AfterViewInit {
     //   frameObject.updateMatrix();
     // }
 
-    this.kinematicsDrawingService.animate();
+    // this.kinematicsDrawingService.animate();
   }
 
 
@@ -630,14 +631,16 @@ export class KinematicsControlComponent implements AfterViewInit {
       frame.size.scale = (frame.size.value - frame.size.offset) / frame.size.original;
       if (sceneObject) {
         sceneObject.traverseVisible( ( child: any ) => {
-          if ( child.name === 'Gray:A:0' ) {
+          if (child.name === 'Gray:A:0' ) {
             child.scale.y = frame.size.scale;
             child.position.y = (frame.size.scale - 1) * -frame.size.offset;
-          } else if ( child.name === 'Gray:A:1' ) {
-            child.scale.z = frame.size.scale;
-            child.position.z = (frame.size.scale - 1) * -frame.size.offset;
-          } else if( child.name === 'Yellow:XY:0') {
+          } else if (child.name === 'Gray:A:1' ) {
+            child.scale.y = frame.size.scale;
+            child.position.y = (frame.size.scale - 1) * frame.size.offset;
+          } else if(child.name === 'Yellow:XY:0') {
             child.position.y = frame.size.value - frame.size.offset - frame.size.original;
+          } else if(child.name === 'Yellow:XY:-1') {
+            child.position.y = (frame.size.value - frame.size.offset - frame.size.original) * -1;
           }
         });
 

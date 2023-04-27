@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import * as THREE from 'three';
 // import { RAD2DEG } from 'three/src/math/MathUtils';
 import { IKConfig } from '../models/ik-config.model';
-import { JointType } from '../models/kinematic.model';
+import { JointType, URFD_Joint } from '../models/kinematic.model';
 import { IKService } from './IK.service';
 import { KinematicService } from './kinematic.service';
 import { KinematicsDrawingService } from './kinematics-drawing.service';
@@ -132,8 +132,6 @@ export class DragControlsService {
       .transformDirection(matrixWorld)
       .normalize();
 
-    // console.log(this.c.drag.tempVector);
-
     this.c.drag.pivotPoint
       .set(0, 0, 0)
       .applyMatrix4(matrixWorld);
@@ -155,27 +153,19 @@ export class DragControlsService {
       .transformDirection(model.matrixWorld)
       .normalize();
 
-    this.kinematicDrawingService.drawArrowHelper(model.position, this.c.drag.tempVector, 0x2121d8);
-    console.log(dir, this.c.drag.tempVector);
-
     this.c.drag.pivotPoint
       .set(0, 0, 0)
       .applyMatrix4(model.matrixWorld);
-
-    console.log(this.c.drag.pivotPoint);
-
     this.c.drag.plane
       .setFromNormalAndCoplanarPoint(this.c.drag.tempVector, this.c.drag.pivotPoint);
 
-    // console.log(this.plane);
+
     this.c.drag.plane.projectPoint(startPoint, this.c.drag.projectedStartPoint);
     this.c.drag.plane.projectPoint(endPoint, this.c.drag.projectedEndPoint);
 
     // get the directions relative to the pivot
     this.c.drag.projectedStartPoint.sub(this.c.drag.pivotPoint);
     this.c.drag.projectedEndPoint.sub(this.c.drag.pivotPoint);
-
-    // console.log(this.pivotPoint, this.projectedStartPoint, this.projectedEndPoint);
 
     this.c.drag.tempVector.crossVectors(this.c.drag.projectedStartPoint, this.c.drag.projectedEndPoint);
 
@@ -195,7 +185,7 @@ export class DragControlsService {
 
       let delta = 0;
       const frame = this.kinematicService.getFrame(this.c.drag.manipulating.parent.name);
-      console.log(frame, this.c.drag.manipulating.parent);
+      // console.log(frame, this.c.drag.manipulating.parent);
 
       if (frame) {
 
@@ -206,7 +196,7 @@ export class DragControlsService {
           if (frame.type === JointType.revolute || frame.type === JointType.continuous) {
 
               delta = this.getRevoluteDelta(this.c.drag.manipulating.parent, frame.axis, this.c.drag.prevHitPoint, this.c.drag.newHitPoint);
-              console.log(delta);
+              // console.log(delta);
 
           } else if (frame.type === JointType.prismatic) {
 
@@ -228,7 +218,7 @@ export class DragControlsService {
             }
             this.c.drag.manipulating.parent.updateMatrixWorld();
 
-            // if (frame) {
+            if (frame) {
               // const linkedObject = this.kinematicDrawingService.getObjectFromScene((frame instanceof URFD_Joint ? frame.id + '-link' : frame.id.slice(0,-5)));
               // console.log(linkedObject);
               // if (linkedObject) {
@@ -239,11 +229,13 @@ export class DragControlsService {
               // const frameQuaternion = new THREE.Quaternion();
               // this.c.drag.manipulating.parent.getWorldQuaternion(frameQuaternion);
 
+              // console.log(frameQuaternion);
+
               // if (frameQuaternion.x !== NaN && frameQuaternion.x !== undefined) {
               //   this.ikService.updateAngle(frame.id, frameQuaternion);
               // }
               // this.updateAngle(frame, this.c.drag.manipulating.parent.rotation.z);
-            // }
+            }
             // this.updateJoint(selectedJoint, selectedJoint.angle + delta);
             // console.log(this.c.drag.manipulating.parent.name);
 
