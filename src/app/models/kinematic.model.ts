@@ -28,12 +28,13 @@ export class Model {
   origin = new Vector3();
   linkObjectUrls: Array<ObjectUrl>;
   rpy = new Vector3();
+  axis = new Vector3();
   baseSize = new ConnectorSize(1.5, 1, 25.075, 23.575, new THREE.Vector3(0,1,0));
   linkSize = new ConnectorSize(2.5, 1, 29, 26.5, new THREE.Vector3(0,1,0));
   startAngle = 0;
 
   constructor(id: number, type: string, active: boolean, thumbnail: string, objectUrls: Array<ObjectUrl>,
-              color: number, rpy: Vector3, baseSize: ConnectorSize, linkSize: ConnectorSize, angle = 0, link = null) {
+              color: number, rpy: Vector3, baseSize: ConnectorSize, linkSize: ConnectorSize, axis: Vector3, angle = 0, link = null) {
     this.id = id;
     this.type = type;
     this.active = active;
@@ -47,6 +48,7 @@ export class Model {
     this.rpy.y = rpy.y;
     this.rpy.z = rpy.z;
     this.startAngle = angle;
+    this.axis = axis;
     this.baseSize = baseSize;
     this.linkSize = linkSize;
   }
@@ -164,13 +166,14 @@ export class URFD_Joint {
     this.object3D.objectUrls = model.objectUrls;
     this.object3D.color = model.color;
     this.type = JointType.revolute;
-    this.axis.z = 1;
+    // this.axis.z = 1;
     this.angle = model.startAngle;
     this.dimensions.origin = model.origin;
     this.dimensions.rpy = model.rpy;
     if (parent) {
       this.dimensions.rpy.z += model.startAngle;
     }
+    this.axis = model.axis;
 
     this.size = model.baseSize;
     this.modelID = model.id;
@@ -189,6 +192,7 @@ export class URFD_Link {
   object3D = new Object3D();
   modelID: number;
   selected = false;
+  axis = new Vector3();
 
   constructor(id: string, model: Model, parent = false) {
     this.id = id;
@@ -205,6 +209,7 @@ export class URFD_Link {
     }
     this.size = model.linkSize;
     this.modelID = model.id;
+    this.axis = model.axis;
   }
 }
 

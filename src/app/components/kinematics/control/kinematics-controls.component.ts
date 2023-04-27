@@ -27,19 +27,19 @@ export class KinematicsControlComponent implements AfterViewInit {
 
   models = [
     new Model(0, 'revolute', true, 'active_joint_1.png', [ { g:'B', url:'active_joint_stator.obj'} ], 0xcc0000, { x: 0, y: 0, z: Math.PI },
-    new ConnectorSize(1.5, 1, 25.075, 23.575, new THREE.Vector3(0,1,0)), new ConnectorSize(2.5, 1, 29, 26.5, new THREE.Vector3(0,1,0)), Math.PI, [ { g:'A', url:'joint_rotor.obj'} ]),
+    new ConnectorSize(1.5, 1, 25.075, 23.575, new THREE.Vector3(0,1,0)), new ConnectorSize(2.5, 1, 29, 26.5, new THREE.Vector3(0,1,0)), new THREE.Vector3(0,0,1), Math.PI, [ { g:'A', url:'joint_rotor.obj'} ]),
 
     new Model(0, 'revolute', false, 'passive_joint_1.png', [ { g:'B', url:'passive_joint_stator.obj'} ], 0x0000e6, { x: 0, y: 0, z: Math.PI },
-    new ConnectorSize(1.5, 1, 19.93, 18.43, new THREE.Vector3(0,1,0)), new ConnectorSize(2.5, 1, 25.5, 23, new THREE.Vector3(0,1,0)), Math.PI, [ { g:'A', url:'passive_joint_rotor.obj'} ]),
+    new ConnectorSize(1.5, 1, 19.93, 18.43, new THREE.Vector3(0,1,0)), new ConnectorSize(2.5, 1, 25.5, 23, new THREE.Vector3(0,1,0)), new THREE.Vector3(0,0,1), Math.PI, [ { g:'A', url:'passive_joint_rotor.obj'} ]),
 
-    new Model(0, 'revolute', true, 'active_joint_3.png', [ { g:'A', url:'active_joint_stator_Z_top.obj'} ], 0xcc0000, { x: -(Math.PI/2), y:0, z: 0 },
-    new ConnectorSize(1, 1, 16.5, 15.5, new THREE.Vector3(0,1,0)), new ConnectorSize(1, 1, 16.5, 15.5, new THREE.Vector3(0,1,0)), 0, [ { g:'A', url:'active_joint_stator_Z_bottom.obj'} ]),
+    new Model(0, 'revolute', true, 'active_joint_3.png', [ { g:'A', url:'active_joint_stator_Z_top.obj'} ], 0xcc0000, { x: 0, y:0, z: 0 },
+    new ConnectorSize(1, 1, 16.5, 15.5, new THREE.Vector3(0,1,0)), new ConnectorSize(1, 1, 16.5, 15.5, new THREE.Vector3(0,-1,0)), new THREE.Vector3(0,1,0), 0, [ { g:'A', url:'active_joint_stator_Z_bottom.obj'} ]),
 
-    new Model(0, 'revolute', false, 'passive_joint_3.png', [ { g:'B', url:'passive_joint_stator_Y.obj'} ], 0x0000e6, { x: -(Math.PI/2), y:0, z: 0 },
-    new ConnectorSize(1, 1, 16.5, 15.5, new THREE.Vector3(0,1,0)), new ConnectorSize(1, 1, 16.5, 15.5, new THREE.Vector3(0,1,0)), 0),
+    new Model(0, 'revolute', false, 'passive_joint_3.png', [ { g:'B', url:'passive_joint_stator_Y.obj'} ], 0x0000e6, { x: (Math.PI/2), y:0, z: 0 },
+    new ConnectorSize(1, 1, 16.5, 15.5, new THREE.Vector3(0,1,0)), new ConnectorSize(1, 1, 16.5, 15.5, new THREE.Vector3(0,-1,0)), new THREE.Vector3(0,1,0), 0),
 
     new Model(0, 'fixed', false, 'fixed_joint.png', [ { g:'B', url:'fixed_joint_base.obj'}, { g:'Z', url: 'fixed_joint_connector_X.obj' }], 0x222222, { x: 0, y: 0, z: Math.PI },
-    new ConnectorSize(1.5, 1, 25.075, 23.575, new THREE.Vector3(0,1,0)), new ConnectorSize(1.5, 1, 25.075, 23.575, new THREE.Vector3(0,1,0)))
+    new ConnectorSize(1.5, 1, 25.075, 23.575, new THREE.Vector3(0,1,0)), new ConnectorSize(1.5, 1, 25.075, 23.575, new THREE.Vector3(0,1,0)), new THREE.Vector3(0,0,1))
   ];
 
 
@@ -214,6 +214,7 @@ export class KinematicsControlComponent implements AfterViewInit {
 
 
 
+
   addLink(model: Model, selected: any, urfd_joint: URFD_Joint = null, parent = false) {
     let selectedName = null;
 
@@ -239,54 +240,88 @@ export class KinematicsControlComponent implements AfterViewInit {
 
     // console.log('update position');
     // console.log(SF, model, this.ikService.ikConfig.drag.selected.parent);
-    // const frame = this.kinematicService.getFrame(this.dragControlService.selected.parent.name);
     const modelType = SF instanceof URFD_Link ? model.baseSize : model.linkSize;
     const modelCopy = JSON.parse(JSON.stringify(model));
     const x = SF.size.axis.x === 1 ? SF.size.value + modelType.value : 0;
     const y = SF.size.axis.y === 1 ? SF.size.value + modelType.value : 0;
     const z = SF.size.axis.z === 1 ? SF.size.value + modelType.value : 0;
 
-    // const x2 = modelType.axis.x === 1 ? SF.size.value + modelType.value : 0;
-    // const y2 = modelType.axis.y === 1 ? SF.size.value + modelType.value : 0;
-    // const z2 = modelType.axis.z === 1 ? SF.size.value + modelType.value : 0;
+    // console.log(SF, modelType.value);
 
-    const position = new THREE.Vector3(x, y, z);
+    const positionVector = new THREE.Vector3(x, y, z);
 
-    // const position2 = new THREE.Vector3(x2, y2, z2);
 
-    console.log("PARENT", this.ikService.ikConfig.drag.selected.parent);
+    // rotationVector.applyMatrix4(this.ikService.ikConfig.drag.selected.parent.matrix);
 
-    position.applyMatrix4(this.ikService.ikConfig.drag.selected.parent.matrixWorld);
-    const updatedPosition = this.dragControlService.getRotatedPosition(this.ikService.ikConfig.drag.selected.parent, position);
+    positionVector.applyMatrix4(this.ikService.ikConfig.drag.selected.parent.matrixWorld);
+
+    // console.log(this.ikService.ikConfig.drag.selected.parent.matrixWorld);
+
+    const updatedPosition = this.dragControlService.getRotatedPosition(this.ikService.ikConfig.drag.selected.parent.matrixWorld, SF.axis, positionVector);
 
     const translationMatrix = new THREE.Matrix4()
         .makeTranslation(this.ikService.ikConfig.drag.selected.parent.position.x,
                          this.ikService.ikConfig.drag.selected.parent.position.y,
                          this.ikService.ikConfig.drag.selected.parent.position.z);
 
-
+    // const rotationMatrix  = new THREE.Matrix4()
+    //     .makeRotationFromEuler(new THREE.Euler( this.ikService.ikConfig.drag.selected.parent.rotation.x,
+    //                                             this.ikService.ikConfig.drag.selected.parent.rotation.y,
+    //                                             this.ikService.ikConfig.drag.selected.parent.rotation.z, 'XYZ'));
     // console.log(translationMatrix);
 
     updatedPosition.applyMatrix4(translationMatrix);
 
+    // rotationVector.applyMatrix4(rotationMatrix);
+
     // console.log(updatedPosition);
     //lookAt
-    // const rotationMatrix = new THREE.Matrix4().makeRotationFromQuaternion(this.ikService.ikConfig.drag.selected.parent.quaternion);
+
+
+    // const rotationMatrix = new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler( model.rpy.x, model.rpy.y, model.rpy.z, 'XYZ'));
+
+    // updatedPosition.applyMatrix4(rotationMatrix);
+
 
     modelCopy.origin.x = updatedPosition.x;
     modelCopy.origin.y = updatedPosition.y;
     modelCopy.origin.z = updatedPosition.z;
 
+    // modelCopy.rpy.x = rotationVector.x;
+    // modelCopy.rpy.y = rotationVector.y;
+    // modelCopy.rpy.z = rotationVector.z;
     // console.log('updated position ', updatedPosition);
 
     // const a = new THREE.Euler();
     // a.setFromQuaternion(this.ikService.ikConfig.drag.selected.parent.quaternion);
 
-    console.log(this.ikService.ikConfig.drag.selected.parent.rotation);
+    // console.log(this.ikService.ikConfig.drag.selected.parent.rotation);
 
+    // const originalVector = new THREE.Vector3();
+    // this.ikService.ikConfig.drag.selected.parent.rotation.copy(originalVector);
+
+    // const rotationVector = new THREE.Vector3(model.rpy.x, model.rpy.y, model.rpy.z);
+
+    // rotationVector.projectOnVector(originalVector);
+
+    // rotationVector.transformDirection(this.ikService.ikConfig.drag.selected.parent.matrix);
+
+    // rotationVector.applyQuaternion(this.ikService.ikConfig.drag.selected.parent.quaternion);
+    console.log(model.rpy, modelCopy.rpy, modelCopy.startAngle);
+    // if (model.rpy.z !== 0) {
     modelCopy.rpy.x = this.ikService.ikConfig.drag.selected.parent.rotation.x;
     modelCopy.rpy.y = this.ikService.ikConfig.drag.selected.parent.rotation.y;
     modelCopy.rpy.z = this.ikService.ikConfig.drag.selected.parent.rotation.z + modelCopy.startAngle;
+
+
+    // console.log("MODEL VECTOR", rotationVector);
+
+    // }
+    // else {
+    //   modelCopy.rpy.x = rotationVector.x;
+    //   modelCopy.rpy.y = rotationVector.y;
+    //   modelCopy.rpy.z = rotationVector.z;
+    // // }
 
     return modelCopy;
   }
@@ -370,21 +405,21 @@ export class KinematicsControlComponent implements AfterViewInit {
 
 
   updateModelsFromRoot(roots: any) {
-    // console.log(roots);
-    // for (const root of roots) {
-    //   root.traverse( c => {
-    //     console.log(c.position, c.quaternion);
-    //     const frameObject = this.config.scene.getObjectByName(c.name);
-    //     console.log(frameObject.position, frameObject.quaternion);
-        // if (frameObject) {
-          // frameObject.quaternion.set(c.quaternion.x, c.quaternion.y, c.quaternion.z, c.quaternion.w);
-          // frameObject.position.set(c.position.x, c.position.y, c.position.z);
-        //   // frameObject.applyMatrix4(c.matrixWorld);
-          // frameObject.updateMatrix();
-        //   this.kinematicService.updateFramePositionFromObject(frameObject);
-        // }
-    //   });
-    // }
+    console.log(roots);
+    for (const root of roots) {
+      root.traverse( c => {
+        // console.log(c.position, c.quaternion);
+        const frameObject = this.config.scene.getObjectByName(c.name);
+        console.log(frameObject.position, frameObject.quaternion);
+        if (frameObject) {
+          frameObject.quaternion.set(c.quaternion.x, c.quaternion.y, c.quaternion.z, c.quaternion.w);
+          frameObject.position.set(c.position.x, c.position.y, c.position.z);
+          // frameObject.applyMatrix4(c.matrixWorld);
+          frameObject.updateMatrixWorld();
+          // this.kinematicService.updateFramePositionFromObject(frameObject);
+        }
+      });
+    }
     // console.log(this.ikService.ikFrames);
 
     // for (const frame of this.ikService.ikFrames) {
@@ -395,7 +430,7 @@ export class KinematicsControlComponent implements AfterViewInit {
     //   frameObject.updateMatrix();
     // }
 
-    // this.kinematicsDrawingService.animate();
+    this.kinematicsDrawingService.animate();
   }
 
 

@@ -219,7 +219,7 @@ export class KinematicsDrawingService {
   drawArrowHelper(origin : THREE.Vector3, dir: THREE.Vector3, color: number) {
     //normalize the direction vector (convert to vector of length 1)
     dir.normalize();
-    const length = 20;
+    const length = 50;
 
     const arrowHelper = new THREE.ArrowHelper( dir, origin, length, color );
     this.config.scene.add( arrowHelper );
@@ -240,7 +240,7 @@ export class KinematicsDrawingService {
     this.config.scene.add( grid );
   }
 
-  
+
   animate() {
     this.config.orbit.update();
     requestAnimationFrame( () => this.animate );

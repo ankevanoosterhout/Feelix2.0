@@ -87,7 +87,11 @@ export class IKService {
 
     const joint = new Joint();
     joint.name = urfd_joint.id;
-    joint.setDoF(DOF.Z);
+    if (urfd_joint.axis.z === 1) {
+      joint.setDoF(DOF.Z);
+    } else if (urfd_joint.axis.y === 1) {
+      joint.setDoF(DOF.Y);
+    }
     // joint.setDoFValue(DOF.EZ, Math.PI * 2);
 
     joint.setPosition(urfd_joint.dimensions.origin.x, urfd_joint.dimensions.origin.y, urfd_joint.dimensions.origin.z);
@@ -144,7 +148,7 @@ export class IKService {
   }
 
 
-  updateAngle(id: string, quaternion: any) {
+  updateAngle(id: string, angle: number) {
     // console.log('update root angles ', id, quaternion);
     for (const root of this.ikConfig.ikRoot) {
       root.traverse( c => {
@@ -155,7 +159,8 @@ export class IKService {
           if (name === id) {
 
             // c.setWorldPosition( position.x, position.y, position.z);
-            c.setWorldQuaternion( quaternion._x, quaternion._y, quaternion._z, quaternion._w );
+            c.setJointValue(angle);
+            // c.setWorldQuaternion( quaternion._x, quaternion._y, quaternion._z, quaternion._w );
             c.updateMatrixWorld(true);
             // console.log(c);
           }
@@ -170,8 +175,9 @@ export class IKService {
     this.updateModels.next(this.ikConfig.ikRoot);
 
     this.showRootsHelper(true);
-
   }
+
+
 
 
   getFrames() {
@@ -225,6 +231,9 @@ export class IKService {
       });
     }
   }
+
+
+
 
 
 
