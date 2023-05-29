@@ -1,6 +1,7 @@
 # Feelix
 
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 8.1.1. and electron version ^5.0.13
+
 Node version v14.19.1  
 
 ## Build installer
