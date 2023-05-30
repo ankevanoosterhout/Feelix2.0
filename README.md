@@ -29,11 +29,15 @@ windows: node build installer
 
 npm install
 
-npm install --save-dev electron-rebuild
+remove from node-modules 'serialport' and '@serialport' folders
+
+remove package-lock.json
+
+npm i
 
 ./node_modules/.bin/electron-rebuild
 
-npm run rebuild
+it is important to run './node_modules/.bin/electron-rebuild' directly after 'npm i'
 
 Run `npm run electron`
 
