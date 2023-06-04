@@ -350,11 +350,7 @@ export class MotorControlService {
     this.resetWidth();
 
     for (const collection of collections) {
-      if (this.file.configuration.collectionDisplayTranslation === 'linear') {
         this.drawCollection(collection);
-      } else {
-        this.drawCollectionCircular(collection);
-      }
     }
   }
 
