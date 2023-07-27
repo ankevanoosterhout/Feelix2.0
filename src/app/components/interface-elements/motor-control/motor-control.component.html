@@ -27,12 +27,15 @@
                 <option *ngFor="let motor of collection.microcontroller.motors" [ngValue]="motor.id">{{ motor.id }}</option>
             </select>
           </div>
-
+          
+          <!-- TODO Upload function here -->
           <div id="buttonsMotorControl" *ngIf="this.motorControlService.width > 350 && collection.microcontroller">
             <ul class="dropdown-buttons">
               <li id="render-{{ collection.id }}" [ngClass]="{ active: collection.effectDataList.length > 0 }" (click)="render(collection)" title="render collection">
                 <img class="no-pointer-events" src="./assets/icons/buttons/render.svg"></li>
               <li id="upload" (click)="upload(collection)" title="upload collection"><img class="no-pointer-events" src="./assets/icons/buttons/upload.svg"></li>
+
+              <li id="collection_send" *ngIf="collection.microcontroller && collection.microcontroller.motors[0].type === 3" (click)="send_collection(collection)" title="Send Collection"><img class="no-pointer-events" src="./assets/icons/buttons/upload.svg"></li>
               <li id="play"  [ngClass]="{ active: collection.renderedData && collection.renderedData.length > 0 }" (click)="play(!collection.playing, collection)"
                   *ngIf="collection.visualizationType >= 2 || collection.playing" title="play or stop collection">
                 <span class="no-pointer-events" *ngIf="!collection.playing"><div class="play-arrow no-pointer-events"></div></span>
@@ -41,6 +44,9 @@
               </ul>
           </div>
 
+          
+
+          
           <div id="rangeValues" *ngIf="!collection.playing && this.motorControlService.file.configuration.collectionDisplay === 'large'">
             <label>x</label>
             <input type="number" (focus)="this.motorControlService.deselectElements()" *ngIf="collection.rotation.units.name !== 'ms' && collection.rotation.units.name !== 'sec'" id="range-start"

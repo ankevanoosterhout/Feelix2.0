@@ -68,9 +68,12 @@ import { DragControlsService } from './services/drag-controls.service';
 import { IKService } from './services/IK.service';
 import { PlaySequenceComponent } from './components/windows/play-sequence.component';
 import { TensorFlowTrainService } from './services/tensorflow-train.service';
+import { TorqueTunerSettingsComponent } from './components/TorqueTuner/torquetuner-settings.component';
+
 
 @NgModule({
   declarations: [
+    TorqueTunerSettingsComponent,
     AppComponent,
     InfoPageComponent,
     MainPageComponent,

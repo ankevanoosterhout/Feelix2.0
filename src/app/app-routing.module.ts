@@ -23,6 +23,7 @@ import { KinematicsToolbarComponent } from './components/interface-elements/tool
 import { KinematicsControlComponent } from './components/kinematics/control/kinematics-controls.component';
 import { KinematicsCursorComponent } from './components/kinematics/control/kinematics-cursor.component';
 import { PlaySequenceComponent } from './components/windows/play-sequence.component';
+import { TorqueTunerSettingsComponent } from './components/TorqueTuner/torquetuner-settings.component';
 
 
 const routes: Routes = [
@@ -45,6 +46,7 @@ const routes: Routes = [
     { path: 'motor-control-toolbar-inset', component: MotorControlToolbarInsetComponent },
     { path: 'motor-control-toolbar', component: MotorControlToolbarComponent },
     { path: 'motor-settings', component: MotorSettingsComponent },
+    { path: 'torquetuner-settings', component: TorqueTunerSettingsComponent },
     { path: 'load-dataset', component: LoadDataSetsComponent },
     { path: 'load-model', component: LoadDataSetsComponent },
     { path: 'play-all', component: PlaySequenceComponent },

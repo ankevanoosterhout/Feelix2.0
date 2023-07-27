@@ -3,7 +3,7 @@ import { MicroController, Motor } from '../models/hardware.model';
 import { Path } from '../models/node.model';
 import { BezierService } from './bezier.service';
 import { NodeService } from './node.service';
-import { Linear, UploadModel } from '../models/effect-upload.model';
+import { Linear, UploadModel, UploadModel_TT } from '../models/effect-upload.model';
 import { Collection } from '../models/collection.model';
 import { Details, Effect } from '../models/effect.model';
 import { CloneService } from './clone.service';
@@ -441,13 +441,18 @@ export class UploadService {
 
 
 
-
+  // TODO: UPLOAD MODEL CREATION
   createUploadModel(collection: Collection, microcontroller: MicroController) {
     let model = new UploadModel(collection, microcontroller);
     console.log(model);
     return model;
   }
-
+  // TODO: Revise this section too
+  createUploadModel_TT(message, microcontroller: MicroController) {
+    let model = new UploadModel_TT(message, microcontroller);
+    console.log(model);
+    return model;
+  }
 
   translateEffectForExport(effect: any, quality: number) {
     let data = '';

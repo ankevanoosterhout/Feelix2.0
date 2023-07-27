@@ -2,7 +2,7 @@ import { AfterViewInit, Component, Inject, OnInit } from '@angular/core';
 import { Collection, Layer } from 'src/app/models/collection.model';
 import { Details } from 'src/app/models/effect.model';
 import { v4 as uuid } from 'uuid';
-import { MicroController } from 'src/app/models/hardware.model';
+import { ActuatorType, MicroController } from 'src/app/models/hardware.model';
 import { HardwareService } from 'src/app/services/hardware.service';
 import { MotorControlService } from 'src/app/services/motor-control.service';
 import { DOCUMENT } from '@angular/common';
@@ -11,6 +11,8 @@ import { UploadService } from 'src/app/services/upload.service';
 import { ElectronService } from 'ngx-electron';
 import { EffectType, EffectTypeLabelMapping } from 'src/app/models/configuration.model';
 import { UploadModel } from 'src/app/models/effect-upload.model';
+import { ipcRenderer } from 'electron';
+
 
 @Component({
     selector: 'app-motor-control',
@@ -117,7 +119,6 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
         }
       }
     });
-
 
     this.electronService.ipcRenderer.on('playData', (event: Event, data: any) => {
       const d_angle = data.d.filter(d => d.name === 'angle')[0];
@@ -322,22 +323,28 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
   }
 
 
-
+  send_collection(collection: Collection) {
+    this.electronService.ipcRenderer.send('send_collection_data', collection);
+  }
   upload(collection: Collection, newMCU = true) {
     if (collection.effectDataList.length > 0) {
       const microcontroller = this.hardwareService.getMicroControllerByCOM(collection.microcontroller.serialPort.path);
-      const uploadModel = this.uploadService.createUploadModel(collection, microcontroller);
+      
+      // TODO: Revise this section tooooo
+      
+        const uploadModel = this.uploadService.createUploadModel(collection, microcontroller);
 
-      const activeCollection = this.motorControlService.file.collections.filter(c => c.microcontroller && c.microcontroller.serialPort.path === collection.microcontroller.serialPort.path && c.playing && c.motorID === collection.motorID)[0];
-      if (activeCollection) {
-        activeCollection.playing = false;
-        this.motorControlService.updateCollection(activeCollection);
-      }
-      uploadModel.newMCU = newMCU;
-
-      // console.log('upload to ' + microcontroller.serialPort.path + 'newMCU ' + newMCU);
-      // console.log(uploadModel);
-      this.electronService.ipcRenderer.send('upload', uploadModel);
+        const activeCollection = this.motorControlService.file.collections.filter(c => c.microcontroller && c.microcontroller.serialPort.path === collection.microcontroller.serialPort.path && c.playing && c.motorID === collection.motorID)[0];
+        if (activeCollection) {
+          activeCollection.playing = false;
+          this.motorControlService.updateCollection(activeCollection);
+        }
+        uploadModel.newMCU = newMCU;
+  
+        // console.log('upload to ' + microcontroller.serialPort.path + 'newMCU ' + newMCU);
+        // console.log(uploadModel);
+        this.electronService.ipcRenderer.send('upload', uploadModel);
+      
 
     } else {
       this.render(collection, true);

@@ -183,7 +183,6 @@ class newSerialPort {
       if (this.connected && this.sp) {
          this.sp.close();
       }
-
       this.sp = new SerialPort(this.COM, {
           baudRate: this.baudrate,
           autoOpen: true
@@ -211,10 +210,12 @@ class newSerialPort {
           updateProgress(50, (this.COM + ' has been added'));
 
           if (this.portData.type !== 'Arduino MEGA') {
-            sendDataStr([ 'FS' ],  this.COM, true);
+            // sendDataStr([ 'FS' ],  this.COM, true);
+          
             this.connected = true;
             main.updateSerialStatus({ microcontroller: this.portData, connected: this.connected });
             updateProgress(100, ('Connected to ' + this.COM));
+            
           }
 
           if (!activePorts.includes(this.COM)) {
@@ -224,11 +225,12 @@ class newSerialPort {
       });
 
       parser.on('data', (d) => {
-
+        // console.log("parser on");
         // console.log('received data ', d);
-        // if (d.charAt(0) === '#') {
-        //   console.log('received data ', d);
-        // } else
+        console.log(d);
+        if (d.charAt(0) === '#') {
+          console.log(d);
+        } else
         if (d.charAt(0) === '*') {
           if (dataSendWaitList.filter(d => d.port === this.COM).length > 0) {
             uploadFromWaitList(ports.filter(p => p.COM === this.COM)[0]);
@@ -330,7 +332,6 @@ class newSerialPort {
           main.updateSerialStatus({ microcontroller: this.portData, connected: this.connected });
           updateProgress(100, ('Connected to ' + this.COM));
         }
-
     });
 
 
@@ -363,7 +364,17 @@ function updateProgress(_progress, _str) {
 }
 
 
-
+function prepareTorqueTunerData(uploadContent, motor, datalist, index){
+  if (uploadContent.config) {
+    datalist.unshift('FM' + motor.id + 'T' + uploadContent.config.updateSpeed);
+    datalist.unshift('FM' + motor.id + 'J' + uploadContent.config.range);
+    datalist.unshift('FM' + motor.id + 'H' + uploadContent.config.loop);
+    datalist.unshift('FM' + motor.id + 'L' + uploadContent.config.constrain_range);
+  }
+  console.log("Datalist Value = ",datalist);
+  // datalist.unshift('FM' + motor.id + 'B' + uploadContent.baudRate);
+  return datalist;
+}
 function prepareMotorData(uploadContent, motor, datalist, index) {
 
   // datalist.unshift('FM' + motor.id + 'F');
@@ -556,12 +567,28 @@ function prepareEffectData(uploadContent, motor, datalist) {
 }
 
 
-
+function tryToEstablishConnection_TT(Microcontroller){
+  receivingPort = ports.filter(d => d.COM === Microcontroller.serialPort.path);
+  console.log("List of ports with this microcontroller: ",receivedPort);
+  if (receivingPort.length === 0) {
+    serialData = {port:Microcontroller.serialPort, type:Microcontroller.vendor, baudrate:Microcontroller.baudrate}; 
+    const sp = new newSerialPort(serialData, port);
+    sp.createSerialPort();
+    ports.push(sp);
+    if (!activePorts.includes(sp.COM)) {
+      sp.open();
+    }
+  }
+  else if (!activePorts.includes(receivedPort[0].COM)){
+    receivedPort[0].sp.open();
+  }
+}
 
 function tryToEstablishConnection(receivingPort, uploadContent, callback) {
   if (!receivingPort && uploadContent && uploadContent.config) {
     createConnection({ port: uploadContent.config.serialPort, type: uploadContent.config.vendor, baudrate: uploadContent.config.baudrate });
     // receivingPort = ports.filter(p => p.COM === uploadContent.config.serialPort.path)[0];
+    
   } else if (receivingPort) { //&& !receivingPort.sp.IsOpen
 
     if (!activePorts.includes(receivingPort.COM)) {
@@ -569,6 +596,7 @@ function tryToEstablishConnection(receivingPort, uploadContent, callback) {
     }
   }
   if (uploadContent && uploadContent.config) {
+    console.log("Connection made");
     callback(receivingPort, uploadContent);
   }
 }
@@ -584,28 +612,34 @@ function uploadData(uploadContent) {
 }
 
 
-
+// TODO: check here
 function upload_to_receivedPort(port, uploadContent) {
   receivingPort = port;
 
   let index = 0;
 
   for (const motor of uploadContent.config.motors) {
+    
     if (index === 0 && uploadContent.newMCU) {
       datalist.unshift('FR');
       // console.log("RESET");
     }
+    /// TODO: Extend here to accept TorqueTuner Data Config
     datalist.unshift('FM' + motor.id + 'F');
-    datalist = motor.type === 2 ? preparePneumaticData(uploadContent, motor, datalist, index) : prepareMotorData(uploadContent, motor, datalist);
+    datalist = (motor.type === 2 ? datalist = preparePneumaticData(uploadContent, motor, datalist, index) : 
+               (motor.type === 3 ? prepareTorqueTunerData(uploadContent, motor, datalist, index) : prepareMotorData(uploadContent, motor, datalist))); 
     if (uploadContent.data) {
       datalist = prepareEffectData(uploadContent, motor, datalist);
     }
     index++;
+    
+    
   }
 
   dataSendWaitList.push({ port: uploadContent.config.serialPort.path, data: datalist, totalItems: datalist.length, collection: uploadContent.config.collection });
   dataSendWaitList.filter(d => d.port === uploadContent.config.serialPort.path)[0].data.unshift('FC' + (uploadContent.config.motorID ? uploadContent.config.motorID : 'A'));
   // console.log(JSON.stringify(dataSendWaitList));
+  console.log(dataSendWaitList);
   uploadFromWaitList(receivingPort);
 }
 
@@ -633,13 +667,20 @@ function receivedPort(port, NULL) {
 function uploadFromWaitList(receivingPort) {
   if (receivingPort && receivingPort.connected) {
     const datalist = dataSendWaitList.filter(d => d.port === receivingPort.COM)[0];
-
+    console.log("Datalist", datalist.data);
+    if (datalist.data.length === undefined){
+      datalist.data = [datalist.data];
+    }
+    
     if (datalist && datalist.data.length > 0) {
+      console.log("Item created");
       let item = datalist.data[datalist.data.length - 1];
+      console.log("Item:", item);
       if (item) {
         if (item.length > 19) {
           item = item.slice(0, (19 - item.length));
         }
+        
         receivingPort.writeData(item + '&');
         datalist.data.pop();
       }
@@ -662,8 +703,9 @@ function uploadFromWaitList(receivingPort) {
       main.updateSerialProgress({ progress: 0, str: 'Port is not available' });
     } else if (receivingPort && !receivingPort.connected) {
       setTimeout(() => {
+        console.log("SECOND SENT");
         uploadFromWaitList(receivingPort);
-      }, 100);
+      }, 100);  
     }
   }
 }
@@ -913,7 +955,7 @@ function sendDataStr(str, port, first = false) {
 
 
 
-
+exports.tryToEstablishConnection_TT = tryToEstablishConnection_TT;
 exports.listSerialPorts = listSerialPorts;
 exports.writeDataString = writeDataString;
 exports.createConnection = createConnection;

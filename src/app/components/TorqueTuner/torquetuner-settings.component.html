@@ -1,0 +1,11 @@
+<div id ="top-section">
+    <button (click)="print_collections()"> Get Collections</button>
+
+    <ul>
+        <li *ngFor="let collec of this.collections">
+            <div>
+                <button (click)="print_collection(collec)"> Print Collections</button>
+            </div>
+        </li>
+    </ul>
+</div>

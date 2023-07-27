@@ -20,4 +20,7 @@ export class Encoder {
   pullup: string = 'USE_EXTERN';
 }
 
+export class Potentiometer {
+  
+}
 

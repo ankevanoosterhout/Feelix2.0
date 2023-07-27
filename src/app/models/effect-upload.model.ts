@@ -1,3 +1,4 @@
+import { StringSplit } from '@tensorflow/tfjs';
 import { Collection } from './collection.model';
 import { EffectType } from './configuration.model';
 import { Details, Effect } from './effect.model';
@@ -64,6 +65,25 @@ export class ConfigModel {
     }
   }
 }
+// TODO: Revise this section
+export class ConfigModel_TT {
+  serialPort: any;
+  motors: Array<Motor>;
+  vendor: string;
+  updateSpeed: number;
+  baudrate: number;
+  motorID: string;
+
+  constructor(microcontroller: MicroController) {
+    this.serialPort = microcontroller.serialPort;
+    this.vendor = microcontroller.vendor;
+    this.updateSpeed = microcontroller.updateSpeed;
+    this.baudrate = microcontroller.baudrate;
+    this.motors = [microcontroller.motors[0]];
+    this.motorID = microcontroller.motors[0].id;
+  }
+}
+
 
 export class EffectModel {
   id: string = null;
@@ -176,6 +196,22 @@ export class UploadModel {
     }
 
     this.config = new ConfigModel(collection, microcontroller);
+
+    this.vendor = microcontroller.vendor;
+  }
+}
+
+export class UploadModel_TT {
+  message = "";
+  config: ConfigModel_TT = null;
+  vendor: string = null;
+  newMCU = true;
+
+  constructor(message, microcontroller: MicroController) {
+    
+    this.message = message;
+
+    this.config = new ConfigModel_TT(microcontroller);
 
     this.vendor = microcontroller.vendor;
   }

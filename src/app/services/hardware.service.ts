@@ -125,10 +125,12 @@ export class HardwareService {
   }
 
   updateMicroController(microcontroller: MicroController) {
+    console.log("Hellio");
     if (microcontroller) {
       let controller = this.microcontrollers.filter(m => m.serialPort.path === microcontroller.serialPort.path)[0];
       if (controller) {
         controller = microcontroller;
+        
         this.store();
       }
     }

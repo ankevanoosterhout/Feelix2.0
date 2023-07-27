@@ -8,8 +8,8 @@ import { MotorControlService } from '../services/motor-control.service';
       <app-file-list [list]="list"></app-file-list>
       <div id="top-section">
         <div id="motor-control">
-          <app-motor-control-toolbar-inset></app-motor-control-toolbar-inset>
-          <app-motor-control></app-motor-control>
+        <app-motor-control-toolbar-inset></app-motor-control-toolbar-inset>
+        <app-motor-control></app-motor-control>
         </div>
         <div class="resize-vertical" (mousedown)="updateVerticalScreenDivision = true"></div>
         <div id="library">

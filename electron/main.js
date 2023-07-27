@@ -11,7 +11,7 @@ const serialPort = require('./serial-communication.js');
 global['window'] = fs.wi;
 global['HTMLVideoElement'] = fs.HTMLVideoElement;
 
-let mainWindow, infoWindow = null, helpWindow = null, kinematicWindow = null;
+let mainWindow, infoWindow = null, helpWindow = null, kinematicWindow = null, TorqueTunerWindow = null;
 let toolbars = [];
 let mainMenu, displays, kinematicsMenu;
 let gridSnap = false, gridVisible = false, guidesLock = false;
@@ -33,9 +33,6 @@ app.on('window-all-closed', function () {
 app.on('activate', function () {
   if (mainWindow === null) createWindow()
 })
-
-
-
 
 
 
@@ -304,6 +301,13 @@ const mainMenuTemplate = [
         }
       },
       {
+        label: 'TorqueTuner settings',
+        accelerator: process.platform == 'darwin' ? 'Command+T' : 'Ctrl+T',
+        click() {
+          createTorqueTunersWindow();
+        }
+      },
+      {
         label: 'Reset microcontroller data',
         click() {
           serialPort.closeAllSerialPorts();
@@ -338,6 +342,18 @@ const mainMenuTemplate = [
       {
         label: 'Open development tools',
         click() { mainWindow.webContents.openDevTools(); }
+      }
+    ]
+  }
+];
+
+const torquetunerMenuTemplate = [
+  {
+    label: 'Help',
+    submenu: [
+      {
+        label: 'Open development tools',
+        click() { TorqueTunerWindow.webContents.openDevTools(); }
       }
     ]
   }
@@ -669,7 +685,20 @@ function saveChanges(file, type, extension = '.feelix') {
 
   });
 }
+function setWindowMenu(win, menu) {
+  // On Mac we have to use Menu.setApplicationMenu whenever
+  // the focus changes. On Linux/Windows we can just give
+  // each window a unique menu.
+  if (process.platform === "darwin") {
+    Menu.setApplicationMenu(menu);
 
+    win.on("focus", () => {
+      Menu.setApplicationMenu(menu);
+    });
+  } else {
+    win.setMenu(menu);
+  }
+}
 
 /****** create windows *****/
 
@@ -707,6 +736,10 @@ function createWindow() {
 
   Menu.setApplicationMenu(mainMenu);
 
+  mainWindow.on("focus", () => {
+    Menu.setApplicationMenu(mainMenu);
+  });
+
   const promise = localStorage.getItem('ngx-webstorage|showInfo');
 
   promise.then(data => {
@@ -727,7 +760,7 @@ function createTensorFlowWindow() {
       width: 1200,
       height: 650,
       title: 'tensorflow',
-      titleBarStyle: 'hidden',
+      // titleBarStyle: 'hidden',
       backgroundColor: '#333',
       resizable: true,
       movable: true,
@@ -740,8 +773,17 @@ function createTensorFlowWindow() {
     })
 
     const tensorflowMenu = Menu.buildFromTemplate(ml_control_menu_template);
+    if(process.platform === "darwin"){
+      Menu.setApplicationMenu(tensorflowMenu);
+  
+      tensorflowWindow.on("focus", () => {
+        Menu.setApplicationMenu(tensorflowMenu);
+      });
+    }
+    else{
+      tensorflowWindow.setMenu(tensorflowMenu);
+    }
 
-    tensorflowWindow.setMenu(tensorflowMenu);
 
     tensorflowWindow.loadURL(
       url.format({
@@ -756,6 +798,7 @@ function createTensorFlowWindow() {
       tensorflowWindow.show()
     });
 
+    
     // tensorflowWindow.webContents.openDevTools();
 
     tensorflowWindow.on('close', function () {
@@ -921,12 +964,60 @@ function createToolbar(hash, width, type) {
 
 }
 
+function createTorqueTunersWindow() {
+  // drawTemporaryWindow(520,400,450,300, 'TorqueTuner Settings', true, 'torquetuner-settings');
+  TorqueTunerWindow = new BrowserWindow({
+    width: 520,
+    height: 450,
+    title: 'TorqueTuner',
+    backgroundColor: '#4a4a4a',
+    resizable: true,
+    movable: true,
+    show: false,
+    icon: path.join(__dirname, '../src/assets/icons/png/64x64.png'),
+    parent: mainWindow,
+    webPreferences: {
+      nodeIntegration: true
+    }
+  })
+  const torquetunerMenu = Menu.buildFromTemplate(torquetunerMenuTemplate);
+  if(process.platform === "darwin"){
+    Menu.setApplicationMenu(torquetunerMenu);
+
+    TorqueTunerWindow.on("focus", () => {
+      Menu.setApplicationMenu(torquetunerMenu);
+    });
+  }
+  else{
+    TorqueTunerWindow.setMenu(torquetunerMenu);
+  }
+
+  TorqueTunerWindow.loadURL(
+    url.format({
+      pathname: path.join(__dirname, `../dist/feelix/index.html`),
+      protocol: "file:",
+      slashes: true,
+      hash: '/torquetuner-settings'
+    })
+  );
+
+  TorqueTunerWindow.once('ready-to-show', () => {
+    TorqueTunerWindow.show()
+  });
+
+  // TorqueTunerWindow.webContents.openDevTools();
+
+  TorqueTunerWindow.on('close', function () {
+    TorqueTunerWindow = null
+  })
+}
+
 function createKinematicsWindow() {
   kinematicWindow = new BrowserWindow({
     width: 800,
     height: 600,
     title: 'Kinematics',
-    titleBarStyle: 'hidden',
+    // titleBarStyle: 'hidden',
     backgroundColor: '#e0e0e0',
     resizable: true,
     movable: true,
@@ -940,7 +1031,17 @@ function createKinematicsWindow() {
 
   kinematicsMenu = Menu.buildFromTemplate(kinematics_menu_template);
 
-  kinematicWindow.setMenu(kinematicsMenu);
+  if(process.platform === "darwin"){
+    Menu.setApplicationMenu(kinematicsMenu);
+
+    kinematicWindow.on("focus", () => {
+      Menu.setApplicationMenu(kinematicsMenu);
+    });
+  }
+  else{
+    kinematicWindow.setMenu(kinematicsMenu);
+  }
+  
 
   kinematicWindow.loadURL(
     url.format({
@@ -981,6 +1082,8 @@ function createMotorSettingsWindow() {
   drawTemporaryWindow(520, 400, 450, 300, 'Microcontroller settings', true, 'motor-settings');
 }
 
+
+ 
 function adjustGridSettings() {
   drawTemporaryWindow(400, 400, 480, 480, 'Grid size', false, 'grid-settings');
 }
@@ -1058,6 +1161,9 @@ ipcMain.on('showToolbarMotor', function() {
 });
 
 
+ipcMain.on('send_collection_data', function(e, data) {
+  TorqueTunerWindow.webContents.send('collections_update', data);
+});
 
 ipcMain.on('closeTmpWindow', function () {
   tmpWindow.close();
@@ -1190,6 +1296,10 @@ ipcMain.on('playAllSequenceWindow', function(e, data) {
 
 ipcMain.on('motorSettings', function (e, data) {
   createMotorSettingsWindow();
+});
+
+ipcMain.on('torquetunerSettings', function (e, data){
+  createTorqueTunersWindow();
 });
 
 ipcMain.on('changeViewSettings', function(e, data) {
@@ -1390,6 +1500,9 @@ ipcMain.on('newModel', (event, data) => {
   if (kinematicWindow !== null) {
     kinematicWindow.webContents.send('newModel', data);
   }
+});
+ipcMain.on('tryToEstablishConnection_TT', (event, data) => {
+  serialPort.tryToEstablishConnection_TT(data.microcontroller);
 });
 
 ipcMain.on('listDevices', (event, data) => {

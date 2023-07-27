@@ -5,7 +5,7 @@ import { FileService } from 'src/app/services/file.service';
 import { UploadService } from 'src/app/services/upload.service';
 import { Router } from '@angular/router';
 import { DOCUMENT } from '@angular/common';
-import { ActuatorLabelMapping, ActuatorType, BLDCConfig, MicroController, Motor, PneuConfig, SensorCommunication, SensorCommunicationMapping, StepperConfig, Unit } from 'src/app/models/hardware.model';
+import { ActuatorLabelMapping, ActuatorType, BLDCConfig, MicroController, Motor, PneuConfig, SensorCommunication, SensorCommunicationMapping, StepperConfig, TorqueTunerConfig, Unit } from 'src/app/models/hardware.model';
 import { MagneticSensor, Encoder } from 'src/app/models/position-sensors.model';
 
 
@@ -208,7 +208,6 @@ export class MotorSettingsComponent implements OnInit {
       this.electronService.ipcRenderer.send('deleteMicrocontrollerCollections', microcontroller);
     }
   }
-
   updateMicrocontroller(microcontroller: any) {
     this.hardwareService.updateMicroController(microcontroller);
   }
@@ -235,16 +234,19 @@ export class MotorSettingsComponent implements OnInit {
   updateActuatorType(microcontroller: MicroController, motor_id: string) {
     const motor = microcontroller.motors.filter(m => m.id === motor_id)[0];
     if (motor) {
-      if (motor.type === ActuatorType.bldc && (motor.config instanceof PneuConfig || motor.config instanceof StepperConfig)) {
+      if (motor.type === ActuatorType.bldc) {
         motor.config = new BLDCConfig();
-      } else if (motor.type === ActuatorType.pneumatic && (motor.config instanceof BLDCConfig || motor.config instanceof StepperConfig)) {
+      } else if (motor.type === ActuatorType.pneumatic) {
         motor.config = new PneuConfig();
-      } else if (motor.type === ActuatorType.stepper && (motor.config instanceof BLDCConfig || motor.config instanceof PneuConfig)) {
+      } else if (motor.type === ActuatorType.stepper) {
         motor.config = new StepperConfig();
+      } else if (motor.type === ActuatorType.torquetuner) {
+        motor.config = new TorqueTunerConfig();
       }
     }
+    this.hardwareService.updateMicroController(microcontroller);
   }
-
+  
 
   updateRange(position: string, motor_id: string, microcontroller: MicroController) {
     const value = (this.document.getElementById(position + 'Position-offset-' + microcontroller.serialPort.path + '-' + motor_id) as HTMLInputElement).value;
