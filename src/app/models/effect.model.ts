@@ -135,7 +135,7 @@ export class Details {
 export class Effect {
   id: string = null;
   name: string = 'effect-1';
-  date = new Dates();
+  date = new Dates();        
   type: EffectType = EffectType.torque;
   rotation = 'dependent';
   paths: Array<Path> = [];

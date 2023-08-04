@@ -2,7 +2,8 @@ export enum EffectType {
   torque = 0,
   position = 1,
   velocity = 2,
-  pneumatic = 3
+  pneumatic = 3,
+  midi = 4
 };
 
 
@@ -10,7 +11,8 @@ export const EffectTypeLabelMapping: Record<EffectType, string> = {
   [EffectType.torque]: 'torque',
   [EffectType.position]: 'position',
   [EffectType.velocity]: 'velocity',
-  [EffectType.pneumatic]: 'pneumatic'
+  [EffectType.pneumatic]: 'pneumatic',
+  [EffectType.midi]: 'midi'
 };
 
 
@@ -59,5 +61,6 @@ export class Configuration {
     [ new EffectTypeColor(EffectType.torque, ['#0f4d9d']),
       new EffectTypeColor(EffectType.velocity, ['#ed1a75']),
       new EffectTypeColor(EffectType.position, ['#d94313', '#d5afaf']),
-      new EffectTypeColor(EffectType.pneumatic, ['#37DEF8']) ];
+      new EffectTypeColor(EffectType.pneumatic, ['#37DEF8']),
+      new EffectTypeColor(EffectType.midi, ['#0011ff'])];
 };
