@@ -600,7 +600,15 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
         collection.rotation.units = { name: 'sec', PR: 1 };
         this.changeUnits(collection);
         collection.rotation.units_y = { name: '%', PR: 100 };
+    } else if (collection.visualizationType === EffectType.midi) {
+      collection.rotation.start_y = 0;
+      collection.rotation.end_y = 127;
+      this.oldUnits = collection.rotation.units;
+        collection.rotation.units = { name: 'deg', PR: 360 };
+        this.changeUnits(collection);
+        collection.rotation.units_y = { name: 'v', PR: 127 };
     }
+    
     this.motorControlService.drawCollection(collection);
   }
 

@@ -153,6 +153,7 @@ export class FixedToolbarComponent implements OnInit {
 
   public updateEffectType() {
     this.drawingService.updateEffectType();
+    console.log(this.drawingService.file.activeEffect.type);
     this.electronService.ipcRenderer.send('updateToolbar', { type: this.drawingService.file.activeEffect.type });
   }
 

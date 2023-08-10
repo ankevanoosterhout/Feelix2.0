@@ -14,7 +14,7 @@
       <span>
         <input type="color" id="color-picker" name="color-picker" [(ngModel)]="this.dataService.color" (change)="updateColor()">
       </span>
-      <span *ngIf="this.drawingService.file.activeEffect.type === 1">
+      <span *ngIf="this.drawingService.file.activeEffect.type === 4">
         <input type="color" id="color-picker" name="color-picker-2" [(ngModel)]="this.dataService.color2" (change)="updateColor2()">
       </span>
 

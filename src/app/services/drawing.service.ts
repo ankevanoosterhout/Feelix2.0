@@ -12,6 +12,7 @@ import { EffectVisualizationService } from './effect-visualization.service';
 import { Details, Effect, Unit } from '../models/effect.model';
 import { Collection } from '../models/collection.model';
 import { Configuration, EffectType } from '../models/configuration.model';
+import { until } from 'protractor';
 
 
 
@@ -1020,7 +1021,15 @@ export class DrawingService {
       }
       this.file.activeEffect.range.start = 0;
       this.file.activeEffect.range.end = 1000;
-    } else {
+    } 
+    if (this.file.activeEffect.type === EffectType.midi) {
+      if (this.file.activeEffect.grid.xUnit.name === 'ms') {
+        this.file.activeEffect.grid.xUnit = new Unit('deg', 360);
+        this.file.activeEffect.range.start = 0;
+        this.file.activeEffect.range.end = 360;
+      }
+      this.file.activeEffect.grid.yUnit = new Unit('v', 127);
+    }else {
       if (this.file.activeEffect.grid.xUnit.name === 'ms') {
         this.file.activeEffect.grid.xUnit = new Unit('deg', 360);
         this.file.activeEffect.range.start = 0;
@@ -1028,9 +1037,9 @@ export class DrawingService {
       }
       this.file.activeEffect.grid.yUnit = new Unit('%', 100);
     }
-    this.file.activeEffect.range_y.start = (this.file.activeEffect.type === EffectType.position || this.file.activeEffect.type === EffectType.pneumatic) ? 0 : -100;
+    this.file.activeEffect.range_y.start = (this.file.activeEffect.type === EffectType.position || this.file.activeEffect.type === EffectType.pneumatic || this.file.activeEffect.type === EffectType.midi) ? 0 : -100;
     // this.file.activeEffect.range_y.start = this.file.activeEffect.type === EffectType.position ? 0 : -100;
-    this.file.activeEffect.range_y.end = 100;
+    this.file.activeEffect.range_y.end = (this.file.activeEffect.type === EffectType.midi ? 127 : 100);
 
     // console.log(this.config.editBounds);
 
