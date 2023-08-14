@@ -62,6 +62,6 @@ export class Configuration {
       new EffectTypeColor(EffectType.velocity, ['#ed1a75']),
       new EffectTypeColor(EffectType.position, ['#d94313', '#d5afaf']),
       new EffectTypeColor(EffectType.pneumatic, ['#37DEF8']),
-      new EffectTypeColor(EffectType.midi, ['#0f4d9d', '#d5afaf'])
+      new EffectTypeColor(EffectType.midi, ['#0f4d9d']),
     ];
 };

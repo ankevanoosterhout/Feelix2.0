@@ -161,7 +161,7 @@ export class FixedToolbarComponent implements OnInit {
     this.drawingService.toggleDrawPlane();
   }
 
-  ngOnInit(): void {
+  ngOnInit(): void {  
     this.dataService.dataObservable.subscribe(data => {
       this.toolbar = data;
     });
@@ -219,6 +219,7 @@ export class FixedToolbarComponent implements OnInit {
     this.document.getElementById('y-value').blur();
     this.document.getElementById('w-value').blur();
     this.document.getElementById('h-value').blur();
+    this.document.getElementById('cc-value').blur();
   }
 
   updateColor() {
@@ -273,6 +274,10 @@ export class FixedToolbarComponent implements OnInit {
     }
     this.drawingService.updateActiveEffect(this.drawingService.file);
     this.drawingService.redraw();
+  }
+  updateCC(){
+    this.drawingService.updateActiveEffect(this.drawingService.file);
+    console.log(this.drawingService.file.activeEffect);
   }
 
   updateEquation() {

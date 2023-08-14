@@ -14,7 +14,7 @@
       <span>
         <input type="color" id="color-picker" name="color-picker" [(ngModel)]="this.dataService.color" (change)="updateColor()">
       </span>
-      <span *ngIf="this.drawingService.file.activeEffect.type === 4">
+      <span *ngIf="this.drawingService.file.activeEffect.type === 1">
         <input type="color" id="color-picker" name="color-picker-2" [(ngModel)]="this.dataService.color2" (change)="updateColor2()">
       </span>
 
@@ -22,6 +22,11 @@
       <select class="form-control" id="select" (change)="this.updateEffectType()" [(ngModel)]="this.drawingService.file.activeEffect.type" name="type" title="select effect visualization type">
           <option *ngFor="let type of typeOptions" [ngValue]="type">{{ EffectTypeLabelMapping[type] }}</option>
       </select>
+    </div>
+
+    <div class="form-row" *ngIf="this.drawingService.file.activeEffect.type === 4" title="CC value">
+      <label class="select axes" (click)="updateCC()" >cc</label>
+      <input type="number" class="small" id="cc-value" name="cc-value" [(ngModel)]="this.drawingService.file.activeEffect.midi_config.data1" (click)="updateCC()">
     </div>
 
     <div class="form-row" *ngIf="this.drawingService.file.activeEffect && this.drawingService.file.activeEffect.type < 2" title="select units x-axis">
@@ -32,7 +37,7 @@
       </select>
     </div>
 
-    <div class="form-row" *ngIf="this.drawingService.file.activeEffect && this.drawingService.file.activeEffect.type >= 2" title="select units x-axis">
+    <div class="form-row" *ngIf="this.drawingService.file.activeEffect && this.drawingService.file.activeEffect.type >= 2 && this.drawingService.file.activeEffect.type < 4" title="select units x-axis">
       <label class="select axes">x </label>
       <select class="form-control small" id="select" value="{{ this.drawingService.file.activeEffect.grid.xUnit.name }}"
           (change)="this.drawingService.updateUnitsActiveEffect($event.target.value)" name="x-axis">
@@ -80,11 +85,6 @@
 
     
 
-    <div class="form-row" *ngIf="this.drawingService.file.activeEffect && innerWidth > 1125">
-      <ul class="buttons-list equation">
-        <li id="new" (click)="mathInputVisible = !mathInputVisible"><img src="./assets/icons/buttons/fx.svg" title="Design effect based on mathematical equation"></li>
-      </ul>
-    </div>
 
     <div class="form-row" *ngIf="mathInputVisible && this.drawingService.file.activeEffect && innerWidth > 1125">
       <input type="text" class="math" id="mathEquation" name="mathEquation" [(ngModel)]="equation" (change)="updateEquation()">
@@ -112,7 +112,10 @@
                 (click)="selectReferencePoint(point);"></div>
           </div>
       </li>
-
+      <li id="current-cc" class="scaling-options" *ngIf="this.innerWidth > 1070">
+        
+      </li>
+      
       <li id="current-x" class="scaling-options" *ngIf="this.innerWidth > 1070">
         <label class="coordinates-label">x</label>
         <input type="number" id="x-value" name="points-x" [(ngModel)]="toolbar.points.x"

@@ -452,6 +452,10 @@ ul#playButtons {
 }
 
 
+.cc-button:active {
+  background: #404040;
+}
+
 .setting-button img {
   width: 85%;
   margin: 5% 7.5%;

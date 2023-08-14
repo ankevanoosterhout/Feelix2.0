@@ -2,7 +2,6 @@ export class Coords {
   x: number = null;
   y: number = null;
 }
-
 export class Node {
   id: string = null;
   cp: string = null;

@@ -3,6 +3,7 @@ export class Points {
   y: number = null;
   w: number = null;
   h: number = null;
+  cc: number = null;
 }
 
 export class ReferencePoint {

@@ -110,6 +110,31 @@ export class Direction {
   ccw = true;
 }
 
+export class Midi_config {
+  // This is a class for configuring midi messages. 
+  // The standard format of a midi message goes as such:
+  // Status Bytes: 
+  //  Binary -> (1000-1111)(0000-1111) or Hex -> (8-F)(0-F) or Decimal -> (8-15)(0-15)
+  //  Data Bytes: Binary -> 
+  //                Data 1 -> (00000000 - 01111111) Usually is the Note Number, Control Change, Program change etc, dependent on the Status Byte
+  //                Data 2 -> (00000000 - 01111111) Usually is the Velocity of the defined message This can be controlled independent to the Note Number and would usually be concidered as aftertouch in this case
+  //                                                 Aftertouch, the change of the notes velocity after it is pressed.
+  //              Hex -> 
+  //                Data 1 -> (00 - 7F) 
+  //                Data 2 -> (00 - 7F)
+  //              Decimal -> 
+  //                Data 1 -> (00 - 127) 
+  //                Data 2 -> (00 - 127)
+  channel: number = null;
+  message_type: number = null;
+  data1: number = null;
+
+  constructor(message_type:number, channel: number, data1: number){
+    this.channel = channel;
+    this.message_type = message_type;
+    this.data1 = data1
+  }
+}
 export class Details {
   id: string = null;
   name: string = null;
@@ -145,6 +170,8 @@ export class Effect {
   range = new Range(0, 360);
   range_y = new Range(-100, 100);
   size = new Size(0,0,0,0);
+  //Creating a midi config for CC values as a preset.
+  midi_config = new Midi_config(176,0,0);
   storedIn = 'file';
 
   constructor(id: string) {

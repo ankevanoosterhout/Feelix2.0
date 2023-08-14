@@ -100,6 +100,7 @@ export class EffectModel {
   datasize: Model = null;
   pointer: number = null;
   quality: Model = null;
+  midi_
 
   constructor(collEffect: Details, effect: any, units: string, motorID: string) {
     this.id = effect.id;
@@ -141,6 +142,8 @@ export class EffectModel {
       } else {
         this.vis_type = new Model('T', 2);
       }
+    } else if (effect.type === EffectType.midi) {
+      this.vis_type = new Model('T',4);
     }
 
     this.quality = new Model('Q', collEffect.quality);

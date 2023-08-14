@@ -248,6 +248,7 @@ export class FileService {
         file.effects.filter(e => e.id === file.activeEffect.id)[0].date.modified = new Date().getTime();
         file.effects.filter(e => e.id === file.activeEffect.id)[0].grid = this.cloneService.deepClone(file.activeEffect.grid);
         file.effects.filter(e => e.id === file.activeEffect.id)[0].colors = this.cloneService.deepClone(file.activeEffect.colors);
+        file.effects.filter(e => e.id === file.activeEffect.id)[0].midi_config = this.cloneService.deepClone(file.activeEffect.midi_config);
       }
     }
   }
