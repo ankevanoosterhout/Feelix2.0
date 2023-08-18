@@ -25,7 +25,7 @@
     </div>
 
     <div class="form-row" *ngIf="this.drawingService.file.activeEffect.type === 4" title="CC value">
-      <label class="select axes" (click)="updateCC()" >cc</label>
+      <label class="select axes" (click)="updateCC()">cc</label>
       <input type="number" class="small" id="cc-value" name="cc-value" [(ngModel)]="this.drawingService.file.activeEffect.midi_config.data1" (click)="updateCC()">
     </div>
 

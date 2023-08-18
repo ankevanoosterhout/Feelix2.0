@@ -100,10 +100,13 @@ export class EffectModel {
   datasize: Model = null;
   pointer: number = null;
   quality: Model = null;
-  midi_
+  midi_config: Model = null;
 
   constructor(collEffect: Details, effect: any, units: string, motorID: string) {
     this.id = effect.id;
+    this.midi_config = new Model('M', [effect.midi_config.channel,
+                                       effect.midi_config.message_type,
+                                       effect.midi_config.data1]);
     this.position = new Model('P',
     [ Math.round(collEffect.position.x) !== collEffect.position.x ? collEffect.position.x.toFixed(5) : collEffect.position.x,
       Math.round(collEffect.position.y) !== collEffect.position.y ? (collEffect.position.y / 100).toFixed(5) : (collEffect.position.y / 100) ]);
@@ -191,6 +194,7 @@ export class UploadModel {
       for (const collEffect of collection.effects) {
         const effectData = collection.effectDataList.filter(e => e.id === collEffect.effectID)[0];
         if (effectData && effectData.data.length > 0) {
+          console.log(effectData);  
           const effectModel = new EffectModel(collEffect, effectData, collection.rotation.units.name, collection.motorID.name);
           this.effects.push(effectModel);
         }

@@ -470,6 +470,7 @@ function preparePneumaticData(uploadContent, motor, datalist) {
 
 
 function prepareEffectData(uploadContent, motor, datalist) {
+  console.log(uploadContent);
   let i = 0;
   let ptr = 0;
   for (const d of uploadContent.data.overlay) {
@@ -534,6 +535,7 @@ function prepareEffectData(uploadContent, motor, datalist) {
     if (effect.vis_type !== 2) {
       datalist.unshift('FE' + motor.id + i + effect.effect_type.identifier + ':' + effect.effect_type.value);
     }
+    datalist.unshift('FE' + motor.id + i + effect.midi_config.identifier + ':' + effect.midi_config.value[0] + ':' + effect.midi_config.value[1] + ':' + effect.midi_config.value[2]);
     datalist.unshift('FE' + motor.id + i + effect.datasize.identifier + ':' + effect.datasize.value);
     datalist.unshift('FE' + motor.id + i + effect.quality.identifier + ':' + effect.quality.value);
     datalist.unshift('FE' + motor.id + i + 'C:' + effect.position.value[0]);
