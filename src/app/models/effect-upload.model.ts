@@ -104,9 +104,7 @@ export class EffectModel {
 
   constructor(collEffect: Details, effect: any, units: string, motorID: string) {
     this.id = effect.id;
-    this.midi_config = new Model('M', [effect.midi_config.channel,
-                                       effect.midi_config.message_type,
-                                       effect.midi_config.data1]);
+    
     this.position = new Model('P',
     [ Math.round(collEffect.position.x) !== collEffect.position.x ? collEffect.position.x.toFixed(5) : collEffect.position.x,
       Math.round(collEffect.position.y) !== collEffect.position.y ? (collEffect.position.y / 100).toFixed(5) : (collEffect.position.y / 100) ]);
@@ -147,6 +145,10 @@ export class EffectModel {
       }
     } else if (effect.type === EffectType.midi) {
       this.vis_type = new Model('T',4);
+      this.midi_config = new Model('M', 
+                        [effect.midi_config.channel,
+                        effect.midi_config.message_type,
+                        effect.midi_config.data1]);
     }
 
     this.quality = new Model('Q', collEffect.quality);

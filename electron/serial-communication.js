@@ -535,7 +535,9 @@ function prepareEffectData(uploadContent, motor, datalist) {
     if (effect.vis_type !== 2) {
       datalist.unshift('FE' + motor.id + i + effect.effect_type.identifier + ':' + effect.effect_type.value);
     }
-    datalist.unshift('FE' + motor.id + i + effect.midi_config.identifier + ':' + effect.midi_config.value[0] + ':' + effect.midi_config.value[1] + ':' + effect.midi_config.value[2]);
+    if (effect.vis_type === 4) {
+      datalist.unshift('FE' + motor.id + i + effect.midi_config.identifier + ':' + effect.midi_config.value[0] + ':' + effect.midi_config.value[1] + ':' + effect.midi_config.value[2]);
+    }
     datalist.unshift('FE' + motor.id + i + effect.datasize.identifier + ':' + effect.datasize.value);
     datalist.unshift('FE' + motor.id + i + effect.quality.identifier + ':' + effect.quality.value);
     datalist.unshift('FE' + motor.id + i + 'C:' + effect.position.value[0]);
@@ -705,7 +707,6 @@ function uploadFromWaitList(receivingPort) {
       main.updateSerialProgress({ progress: 0, str: 'Port is not available' });
     } else if (receivingPort && !receivingPort.connected) {
       setTimeout(() => {
-        console.log("SECOND SENT");
         uploadFromWaitList(receivingPort);
       }, 100);  
     }

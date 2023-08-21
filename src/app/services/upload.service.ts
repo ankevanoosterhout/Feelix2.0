@@ -254,20 +254,20 @@ export class UploadService {
         start_pos = Math.ceil(nodes[0].pos.y * (Math.PI / 180));
       }
       if (path && path.nodes) {
-
         if (effectData.type === EffectType.midi){
-          data_complete.concat(this.translateMidiEffectData(path, multiply, effectData.range_y, 1, start_pos)); 
+          data_complete = data_complete.concat(this.translateMidiEffectData(path, multiply, effectData.range_y, 1, start_pos));
         }
-        else {        
-          data_complete = effectData.type === EffectType.position ?
-          data_complete.concat(this.translatePositionEffectData(path, multiply, 1)) :
-          data_complete.concat(this.translateTorqueEffectData(path, multiply, effectData.range_y, 1, start_pos));
-}
+        else if (effectData.type === EffectType.position) {
+          data_complete = data_complete.concat(this.translatePositionEffectData(path, multiply, 1))
+        }
+        else {
+          data_complete = data_complete.concat(this.translateTorqueEffectData(path, multiply, effectData.range_y, 1, start_pos));
+        }    
       }
     }
-    console.log(data_complete);
-    data = this.reduceDataPoints(data_complete, collEffect.quality, multiply);
     
+    data = this.reduceDataPoints(data_complete, collEffect.quality, multiply);
+    console.log(data);
 
     return { id: collEffect.effectID, type: effectData.type, size: effectData.size, rotation: effectData.rotation, infinite: collEffect.infinite, yUnit: effectData.grid.yUnit.name, data: data, data_complete: data_complete , midi_config: effectData.midi_config};
   }
@@ -297,13 +297,15 @@ export class UploadService {
     const startPos = Math.ceil(nodes[0].pos.x * multiply);
     let start: number;
     let end: number;
-
+    
     for (const node of nodes) {
       if (i < nodes.length - 1) {
         const pathSegment = this.nodeService.getNodesOfPath(node.id + '&&' + nodes[i + 1].id, path);
         const range = this.bezierService.getCurveLength(pathSegment);
+        
         const coords = this.bezierService.getAllCoordinates(range[0] * 4, (1 / (range[0] * 4)), pathSegment, multiply, 'force');
 
+        console.log("PathSegments: ", pathSegment, " Range: ", range, " coords: ", coords);
         start = offset === 0 ? Math.ceil(pathSegment[0].pos.x * multiply) : Math.round(pathSegment[0].pos.x * multiply) + offset;
         end = Math.round(pathSegment[pathSegment.length - 1].pos.x * multiply);
 
@@ -312,8 +314,9 @@ export class UploadService {
           let yValue = this.bezierService.closestY(m, coords);
           if (yValue > effect_range.end) { yValue = effect_range.end; }
           if (yValue < effect_range.start) { yValue = effect_range.start; }
-
+          console.log("yValue: ", yValue);
           const inlistValue = translatedData.filter(d => d.x === (m - startPos))[0] ? translatedData.filter(d => d.x === (m - startPos))[0] : null;
+          console.log("inlistValue: ", inlistValue);
           if (inlistValue) {
             const index = translatedData.indexOf(inlistValue);
             if (index > -1) {
@@ -323,16 +326,18 @@ export class UploadService {
 
           const coordinates = {
             x: (m - startPos),
-            y: inlistValue ? (inlistValue.y + (yValue / 100)) / 2 : (yValue / 100),
-            y2: inlistValue ? (inlistValue.y + (yValue / 100)) / 2 - start_from: (yValue / 100) - start_from
+            y: inlistValue ? (inlistValue.y + yValue) / 2 : yValue,
+            y2: inlistValue ? (inlistValue.y + yValue) / 2 - start_from: yValue - start_from
           };
-
+          console.log("Coordinates:",coordinates);
           translatedData.push(coordinates);
+          
         }
       }
       offset = quality - ((end - start) % quality);
       i++;
     }
+    console.log("translatedData: ",translatedData);
     return translatedData;
   }
   translateTorqueEffectData(path: Path, multiply: number, effect_range: any, quality = 1, start_from = 0) {
