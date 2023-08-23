@@ -17,7 +17,7 @@ Remove from `node-modules` folder the `serialport` and `@serialport` folders
 
 Remove the file `package-lock.json`
 
-Run `npm i` to install non-installed modules
+Run `npm run i` to install non-installed modules
 
 Run `./node_modules/.bin/electron-rebuild` (directly after `npm i`)
 
