@@ -25,6 +25,6 @@ Run `./node_modules/.bin/electron-rebuild` (directly after `npm i`)
 
 Run `npm run electron` to test the locally
 
-## Node version 14.19.1
+## Node version 16.20.2+
 
 
