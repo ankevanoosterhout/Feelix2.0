@@ -52,7 +52,7 @@
     "ngx-webstorage": "^4.0.2",
     "npm": "^7.11.1",
     "rxjs": "~6.4.0",
-    "serialport": "^9.0.7",
+    "serialport": "^11.0.1",
     "three": "^0.138.3",
     "three-ik": "^0.1.0",
     "tslib": "^1.9.0",
