@@ -315,10 +315,10 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
 
 
   setFilesInServices() {
-    this.drawingService.file = this.file;
-    this.drawElements.file = this.file;
-    this.historyService.file = this.file;
-    this.motorControlService.file = this.file;
+    Object.assign(this.drawingService.file,this.file);
+    Object.assign(this.drawElements.file,this.file);
+    Object.assign(this.historyService.file,this.file);
+    Object.assign(this.motorControlService.file,this.file);
 
   }
 
